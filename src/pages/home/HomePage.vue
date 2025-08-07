@@ -15,9 +15,19 @@
             text
             class="theme-btn"
           />
-          <el-button type="primary" @click="showLoginDialog = true">
-            登录
-          </el-button>
+          <template v-if="isLoggedIn">
+            <el-button @click="router.push('/admin')">
+              进入管理后台
+            </el-button>
+            <el-button type="danger" @click="handleLogout">
+              退出登录
+            </el-button>
+          </template>
+          <template v-else>
+            <el-button type="primary" @click="showLoginDialog = true">
+              登录
+            </el-button>
+          </template>
         </div>
       </div>
     </header>
@@ -103,9 +113,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { 
   Moon, 
   Sunny, 
@@ -115,11 +125,36 @@ import {
 } from '@element-plus/icons-vue'
 import { isDark, toggleTheme } from '@/utils/theme'
 import LoginDialog from '@/components/common/LoginDialog.vue'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
+const userStore = useUserStore()
 
 // 登录对话框状态
 const showLoginDialog = ref(false)
+
+// 用户登录状态
+const isLoggedIn = computed(() => !!userStore.getToken())
+
+// 退出登录
+const handleLogout = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '确定要退出登录吗？',
+      '提示',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+      }
+    )
+    
+    userStore.logout()
+    ElMessage.success('已退出登录')
+  } catch {
+    // 用户取消退出
+  }
+}
 
 // 特性列表
 const features = [

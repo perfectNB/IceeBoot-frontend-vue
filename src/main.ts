@@ -32,4 +32,28 @@ app.use(createPinia())
 app.use(router)
 app.use(ElementPlus)
 
+// 应用初始化
+const initApp = async () => {
+  const { useUserStore } = await import('./stores/user')
+  const userStore = useUserStore()
+  
+  // 如果有token，尝试恢复用户信息
+  const token = userStore.getToken()
+  if (token && !userStore.user) {
+    try {
+      await userStore.getUserInfo()
+      console.log('用户状态已恢复')
+    } catch (error) {
+      console.warn('恢复用户状态失败，可能token已过期:', error)
+      // 清除无效的token
+      userStore.clearToken()
+      userStore.clearUser()
+    }
+  }
+}
+
+// 挂载应用
 app.mount('#app')
+
+// 初始化应用状态
+initApp()

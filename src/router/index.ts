@@ -108,19 +108,37 @@ router.beforeEach(async (to, from, next) => {
     document.title = `${to.meta.title} - ZBoot Admin`
   }
   
+  // 获取token（会从localStorage恢复）
+  const token = userStore.getToken()
+  
   // 登录后访问首页强制跳转到管理后台
   // 注释：如需修改登录后的默认跳转页面，请修改下面的 '/admin' 路径
-  if (userStore.token && to.path === '/') {
+  if (token && to.path === '/') {
     next('/admin')
     return
   }
   
   // 检查是否需要认证
   if (to.meta.requiresAuth) {
-    if (!userStore.token) {
+    if (!token) {
       ElMessage.warning('请先登录')
       next('/')
       return
+    }
+    
+    // 如果有token但没有用户信息，尝试获取用户信息
+    if (token && !userStore.user) {
+      try {
+        await userStore.getUserInfo()
+      } catch (error) {
+        console.error('获取用户信息失败:', error)
+        // 如果获取用户信息失败，清除token并跳转到首页
+        userStore.clearToken()
+        userStore.clearUser()
+        ElMessage.error('登录状态已过期，请重新登录')
+        next('/')
+        return
+      }
     }
     
     // 检查权限

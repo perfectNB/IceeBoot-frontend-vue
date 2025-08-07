@@ -95,7 +95,7 @@ export class MockUserService {
   }
   
   // 创建用户
-  static async createUser(userData: Partial<User>): Promise<User> {
+  static async createUser(userData: Partial<User> & { password?: string }): Promise<User> {
     await mockDelay()
     mockLog('创建用户', userData)
     
@@ -149,6 +149,42 @@ export class MockUserService {
     
     mockUsers.splice(userIndex, 1)
     return true
+  }
+
+  // 重置用户密码
+  static async resetPassword(userId: number): Promise<{ newPassword: string }> {
+    await mockDelay()
+    mockLog('重置用户密码', { userId })
+    
+    const user = mockUsers.find(u => u.id === userId)
+    if (!user) {
+      throw new Error('用户不存在')
+    }
+    
+    // 生成新密码（实际应用中应该是随机生成）
+    const newPassword = '123456'
+    
+    return { newPassword }
+  }
+
+  // 更新用户状态
+  static async updateUserStatus(userId: number, status: 'active' | 'inactive'): Promise<void> {
+    await mockDelay()
+    mockLog('更新用户状态', { userId, status })
+    
+    const userIndex = mockUsers.findIndex(u => u.id === userId)
+    if (userIndex === -1) {
+      throw new Error('用户不存在')
+    }
+    
+    // 更新用户状态
+    const updatedUser: User = {
+      ...mockUsers[userIndex],
+      status,
+      updateTime: new Date().toISOString()
+    }
+    
+    mockUsers[userIndex] = updatedUser
   }
 }
 

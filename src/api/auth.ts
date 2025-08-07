@@ -1,6 +1,6 @@
 import { request } from '@/utils/request'
 import { isMockEnabled } from '@/config/mock'
-import { MockAuthService } from '@/mock/services'
+import { MockAuthService, MockUserService } from '@/mock/services'
 import type { LoginForm, LoginResponse, User } from '@/types'
 
 // 登录接口
@@ -19,8 +19,21 @@ export const logout = () => {
 }
 
 // 获取用户信息
-export const getUserInfo = () => {
-  return request.get<User>('/auth/user')
+export const getUserInfo = async () => {
+  if (isMockEnabled()) {
+    // Mock模式：获取当前登录用户信息
+    const token = localStorage.getItem('accessToken')
+    if (!token) {
+      throw new Error('未登录')
+    }
+    // 从token中解析用户ID（简化处理，实际应该从token中解析）
+    const userId = 1 // 默认管理员用户
+    const userInfo = await MockUserService.getUserInfo(userId)
+    return { data: userInfo }
+  } else {
+    const response = await request.get<User>('/auth/user')
+    return response
+  }
 }
 
 // 刷新token

@@ -1,9 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { User, LoginForm, LoginResponse } from '@/types'
-import { isMockEnabled } from '@/config/mock'
-import { MockAuthService, MockUserService } from '@/mock/services'
-// import { login as apiLogin, getUserInfo as apiGetUserInfo } from '@/api/auth'
+import { login as apiLogin, getUserInfo as apiGetUserInfo } from '@/api'
 
 export const useUserStore = defineStore('user', () => {
   // 状态
@@ -49,20 +47,12 @@ export const useUserStore = defineStore('user', () => {
   // 登录
   const login = async (loginForm: LoginForm): Promise<LoginResponse> => {
     try {
-      let response: LoginResponse
-      
-      if (isMockEnabled()) {
-        // 使用Mock数据
-        response = await MockAuthService.login(loginForm)
-      } else {
-        // 调用真实API
-        // response = await apiLogin(loginForm)
-        throw new Error('真实API未实现，请启用Mock模式')
-      }
-      
+      // 统一使用 auth.ts 中的登录接口
+      const response = await apiLogin(loginForm)
+
       setToken(response.accessToken)
       setUser(response.user)
-      
+
       return response
     } catch (error) {
       throw error
@@ -78,18 +68,10 @@ export const useUserStore = defineStore('user', () => {
   // 获取用户信息
   const getUserInfo = async (): Promise<User> => {
     try {
-      let userInfo: User
-      
-      if (isMockEnabled()) {
-        // 使用Mock数据 - 获取当前登录用户信息
-        const currentUserId = user.value?.id || 1
-        userInfo = await MockUserService.getUserInfo(Number(currentUserId))
-      } else {
-        // 调用真实API
-        // userInfo = await apiGetUserInfo()
-        throw new Error('真实API未实现，请启用Mock模式')
-      }
-      
+      // 统一使用 auth.ts 中的获取用户信息接口
+      const response = await apiGetUserInfo()
+      const userInfo = response.data
+
       setUser(userInfo)
       return userInfo
     } catch (error) {

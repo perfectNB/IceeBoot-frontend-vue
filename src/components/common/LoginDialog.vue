@@ -27,7 +27,7 @@
                 clearable
               />
             </el-form-item>
-            
+
             <el-form-item prop="password">
               <el-input
                 v-model="loginForm.password"
@@ -40,7 +40,7 @@
                 @keyup.enter="handleLogin"
               />
             </el-form-item>
-            
+
             <el-form-item>
               <el-button
                 type="primary"
@@ -53,12 +53,12 @@
               </el-button>
             </el-form-item>
           </el-form>
-          
+
           <div class="login-tips">
             <p>测试账号：admin / 111111</p>
           </div>
         </el-tab-pane>
-        
+
         <!-- 微信扫码登录 -->
         <el-tab-pane label="微信登录" name="wechat">
           <div class="wechat-login">
@@ -67,7 +67,7 @@
                 <el-icon class="is-loading"><Loading /></el-icon>
                 <p>二维码生成中...</p>
               </div>
-              
+
               <div v-else-if="qrCode" class="qrcode">
                 <img :src="qrCode" alt="微信登录二维码" />
                 <p class="qrcode-tip">请使用微信扫描二维码登录</p>
@@ -76,7 +76,7 @@
                   刷新二维码
                 </el-button>
               </div>
-              
+
               <div v-else class="qrcode-error">
                 <el-icon><Warning /></el-icon>
                 <p>二维码生成失败</p>
@@ -97,7 +97,7 @@ import { ref, computed, watch } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { User, Lock, Loading, Refresh, Warning } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
-import { getWechatQrCode, checkWechatLogin } from '@/api/auth'
+import { getWechatQrCode, checkWechatLogin } from '@/api'
 import { isMockEnabled } from '@/config/mock'
 import type { LoginForm } from '@/types'
 
@@ -153,14 +153,14 @@ const scene = ref('')
 // 账号密码登录
 const handleLogin = async () => {
   if (!loginFormRef.value) return
-  
+
   try {
     await loginFormRef.value.validate()
     loading.value = true
-    
+
     await userStore.login(loginForm.value)
-    
-    ElMessage.success('登录成功')
+
+    // 移除重复的登录成功提示，由父组件统一处理
     emit('success')
   } catch (error) {
     console.error('登录失败:', error)
@@ -174,7 +174,7 @@ const handleLogin = async () => {
 const generateQrCode = async () => {
   try {
     qrCodeLoading.value = true
-    
+
     if (isMockEnabled()) {
       // Mock模式：模拟生成二维码
       await new Promise(resolve => setTimeout(resolve, 1000))
@@ -186,7 +186,7 @@ const generateQrCode = async () => {
       qrCode.value = response.data.qrCode
       scene.value = response.data.scene
     }
-    
+
     // 开始轮询检查登录状态
     startPolling()
   } catch (error) {
@@ -210,7 +210,7 @@ const startPolling = () => {
   if (pollingTimer) {
     clearInterval(pollingTimer)
   }
-  
+
   pollingTimer = setInterval(async () => {
     try {
       if (!isMockEnabled()) {
@@ -219,7 +219,7 @@ const startPolling = () => {
         if (response.data.accessToken) {
           userStore.setToken(response.data.accessToken)
           userStore.setUser(response.data.user)
-          ElMessage.success('登录成功')
+          // 移除重复的登录成功提示，由父组件统一处理
           emit('success')
           stopPolling()
         }
@@ -242,7 +242,7 @@ const stopPolling = () => {
 const handleClose = () => {
   stopPolling()
   dialogVisible.value = false
-  
+
   // 重置表单
   loginForm.value = {
     username: '',
@@ -278,12 +278,12 @@ watch(dialogVisible, (visible) => {
     backdrop-filter: blur(20px);
     border: 1px solid var(--border-extra-light);
   }
-  
+
   :deep(.el-dialog__header) {
     text-align: center;
     padding: 30px 30px 0;
     border-bottom: none;
-    
+
     .el-dialog__title {
       font-size: 24px;
       font-weight: 700;
@@ -294,11 +294,11 @@ watch(dialogVisible, (visible) => {
       background-clip: text;
     }
   }
-  
+
   :deep(.el-dialog__body) {
     padding: 20px 30px 30px;
   }
-  
+
   :deep(.el-dialog__headerbtn) {
     top: 20px;
     right: 20px;
@@ -307,11 +307,11 @@ watch(dialogVisible, (visible) => {
     border-radius: 50%;
     background: var(--bg-color-page);
     transition: all var(--transition-duration);
-    
+
     &:hover {
       background: var(--danger-color);
       transform: rotate(90deg);
-      
+
       .el-dialog__close {
         color: #ffffff;
       }
@@ -327,25 +327,25 @@ watch(dialogVisible, (visible) => {
       border-radius: 12px;
       padding: 4px;
     }
-    
+
     :deep(.el-tabs__nav-wrap::after) {
       display: none;
     }
-    
+
     :deep(.el-tabs__item) {
       font-size: 16px;
       font-weight: 600;
       border-radius: 8px;
       margin: 0 2px;
       transition: all var(--transition-duration);
-      
+
       &.is-active {
         background: var(--bg-color);
         color: var(--primary-color);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       }
     }
-    
+
     :deep(.el-tabs__active-bar) {
       display: none;
     }
@@ -356,26 +356,26 @@ watch(dialogVisible, (visible) => {
   .el-form-item {
     margin-bottom: 24px;
   }
-  
+
   :deep(.el-input) {
     .el-input__wrapper {
       border-radius: 12px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
       border: 1px solid var(--border-lighter);
       transition: all var(--transition-duration);
-      
+
       &:hover {
         border-color: var(--primary-light);
         box-shadow: 0 4px 12px rgba(64, 158, 255, 0.1);
       }
-      
+
       &.is-focus {
         border-color: var(--primary-color);
         box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2);
       }
     }
   }
-  
+
   .login-btn {
     width: 100%;
     height: 48px;
@@ -386,12 +386,12 @@ watch(dialogVisible, (visible) => {
     border: none;
     box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
     transition: all var(--transition-duration);
-    
+
     &:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 20px rgba(64, 158, 255, 0.4);
     }
-    
+
     &:active {
       transform: translateY(0);
     }
@@ -401,7 +401,7 @@ watch(dialogVisible, (visible) => {
 .login-tips {
   text-align: center;
   margin-top: 20px;
-  
+
   p {
     color: var(--text-secondary);
     font-size: 14px;
@@ -427,12 +427,12 @@ watch(dialogVisible, (visible) => {
   align-items: center;
   gap: 16px;
   padding: 40px 0;
-  
+
   .el-icon {
     font-size: 32px;
     color: var(--text-secondary);
   }
-  
+
   p {
     color: var(--text-secondary);
     margin: 0;
@@ -446,7 +446,7 @@ watch(dialogVisible, (visible) => {
     border: 1px solid var(--border-lighter);
     border-radius: 8px;
   }
-  
+
   .qrcode-tip {
     margin: 16px 0 8px;
     color: var(--text-secondary);

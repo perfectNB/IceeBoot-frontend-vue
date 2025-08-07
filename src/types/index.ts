@@ -8,6 +8,7 @@ export interface User {
   phone?: string
   roles?: string[]
   permissions?: string[]
+  status?: 'active' | 'inactive'
   createTime?: string
   updateTime?: string
 }

@@ -84,8 +84,8 @@
         <el-table-column prop="phone" label="手机号" width="130" />
         <el-table-column label="角色" width="100">
           <template #default="{ row }">
-            <el-tag :type="getRoleType(row.role)" size="small">
-              {{ getRoleLabel(row.role) }}
+            <el-tag :type="getRoleType(row.roles?.[0] || '')" size="small">
+              {{ getRoleLabel(row.roles?.[0] || '') }}
             </el-tag>
           </template>
         </el-table-column>
@@ -170,8 +170,8 @@
         <el-form-item label="手机号" prop="phone">
           <el-input v-model="userForm.phone" placeholder="请输入手机号" />
         </el-form-item>
-        <el-form-item label="角色" prop="role">
-          <el-select v-model="userForm.role" placeholder="请选择角色" style="width: 100%">
+        <el-form-item label="角色" prop="roles">
+          <el-select v-model="userForm.roles" placeholder="请选择角色" multiple style="width: 100%">
             <el-option label="管理员" value="admin" />
             <el-option label="编辑" value="editor" />
             <el-option label="用户" value="user" />
@@ -217,18 +217,15 @@ import {
   Delete,
   Key
 } from '@element-plus/icons-vue'
-
-interface User {
-  id: number
-  username: string
-  email: string
-  phone: string
-  role: string
-  status: string
-  avatar?: string
-  lastLoginTime: string
-  createTime: string
-}
+import type { User } from '@/types'
+import {
+  getUserList,
+  createUser,
+  updateUser,
+  deleteUser,
+  resetUserPassword,
+  updateUserStatus
+} from '@/api'
 
 interface SearchForm {
   keyword: string
@@ -237,12 +234,12 @@ interface SearchForm {
 }
 
 interface UserForm {
-  id?: number
+  id?: string | number
   username: string
   email: string
   phone: string
-  role: string
-  status: string
+  roles: string[]
+  status: 'active' | 'inactive'
   password?: string
 }
 
@@ -273,7 +270,7 @@ const userForm = reactive<UserForm>({
   username: '',
   email: '',
   phone: '',
-  role: '',
+  roles: [],
   status: 'active',
   password: ''
 })
@@ -292,7 +289,7 @@ const formRules = {
     { required: true, message: '请输入手机号', trigger: 'blur' },
     { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号格式', trigger: 'blur' }
   ],
-  role: [
+  roles: [
     { required: true, message: '请选择角色', trigger: 'change' }
   ],
   password: [
@@ -301,39 +298,7 @@ const formRules = {
   ]
 }
 
-// 模拟数据
-const mockUsers: User[] = [
-  {
-    id: 1,
-    username: 'admin',
-    email: 'admin@example.com',
-    phone: '13800138000',
-    role: 'admin',
-    status: 'active',
-    lastLoginTime: '2024-01-15 10:30:00',
-    createTime: '2024-01-01 09:00:00'
-  },
-  {
-    id: 2,
-    username: 'editor',
-    email: 'editor@example.com',
-    phone: '13800138001',
-    role: 'editor',
-    status: 'active',
-    lastLoginTime: '2024-01-15 09:15:00',
-    createTime: '2024-01-02 10:00:00'
-  },
-  {
-    id: 3,
-    username: 'user1',
-    email: 'user1@example.com',
-    phone: '13800138002',
-    role: 'user',
-    status: 'inactive',
-    lastLoginTime: '2024-01-14 16:20:00',
-    createTime: '2024-01-03 11:00:00'
-  }
-]
+
 
 const tableData = ref<User[]>([])
 
@@ -364,11 +329,15 @@ const getRoleLabel = (role: string) => {
 const loadUsers = async () => {
   loading.value = true
   try {
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 500))
-    tableData.value = [...mockUsers]
-    pagination.total = mockUsers.length
-  } catch {
+    const result = await getUserList({
+      page: pagination.page,
+      size: pagination.size,
+      keyword: searchForm.keyword
+    })
+    tableData.value = result.list
+    pagination.total = result.total
+  } catch (error) {
+    console.error('加载用户数据失败:', error)
     ElMessage.error('加载用户数据失败')
   } finally {
     loading.value = false
@@ -406,7 +375,7 @@ const handleEdit = (row: User) => {
     username: row.username,
     email: row.email,
     phone: row.phone,
-    role: row.role,
+    roles: row.roles || [],
     status: row.status
   })
   dialogVisible.value = true
@@ -425,18 +394,14 @@ const handleDelete = async (row: User) => {
       }
     )
     
-    // 模拟删除API调用
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    const index = tableData.value.findIndex(item => item.id === row.id)
-    if (index > -1) {
-      tableData.value.splice(index, 1)
-      pagination.total--
+    await deleteUser(row.id)
+    ElMessage.success('用户删除成功')
+    await loadUsers()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除用户失败:', error)
+      ElMessage.error('删除用户失败')
     }
-    
-    ElMessage.success('删除成功')
-  } catch {
-    // 用户取消删除
   }
 }
 
@@ -453,26 +418,25 @@ const handleResetPassword = async (row: User) => {
       }
     )
     
-    // 模拟重置密码API调用
-    await new Promise(resolve => setTimeout(resolve, 500))
-    
-    ElMessage.success('密码重置成功，新密码已发送到用户邮箱')
-  } catch {
-    // 用户取消重置
+    const result = await resetUserPassword(row.id)
+    ElMessage.success(`密码重置成功，新密码为：${result.newPassword}`)
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('重置密码失败:', error)
+      ElMessage.error('重置密码失败')
+    }
   }
 }
 
 // 状态变更
 const handleStatusChange = async (row: User) => {
   try {
-    // 模拟状态更新API调用
-    await new Promise(resolve => setTimeout(resolve, 300))
-    
-    const statusText = row.status === 'active' ? '启用' : '禁用'
-    ElMessage.success(`用户状态已${statusText}`)
-  } catch {
+    await updateUserStatus(row.id, row.status!)
+    ElMessage.success(`用户状态已${row.status === 'active' ? '启用' : '禁用'}`)
+  } catch (error) {
     // 恢复原状态
     row.status = row.status === 'active' ? 'inactive' : 'active'
+    console.error('状态更新失败:', error)
     ElMessage.error('状态更新失败')
   }
 }
@@ -508,38 +472,31 @@ const handleSubmit = async () => {
     
     submitting.value = true
     
-    // 模拟API调用
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
     if (isEdit.value) {
       // 更新用户
-      const index = tableData.value.findIndex(item => item.id === userForm.id)
-      if (index > -1) {
-        Object.assign(tableData.value[index], {
-          username: userForm.username,
-          email: userForm.email,
-          phone: userForm.phone,
-          role: userForm.role,
-          status: userForm.status
-        })
-      }
-      ElMessage.success('用户更新成功')
-    } else {
-      // 创建用户
-      const newUser: User = {
-        id: Date.now(),
+      await updateUser(userForm.id!, {
         username: userForm.username,
         email: userForm.email,
         phone: userForm.phone,
-        role: userForm.role,
+        roles: userForm.roles,
+        status: userForm.status
+      })
+      ElMessage.success('用户更新成功')
+    } else {
+      // 创建用户
+      await createUser({
+        username: userForm.username,
+        email: userForm.email,
+        phone: userForm.phone,
+        roles: userForm.roles,
         status: userForm.status,
-        lastLoginTime: '-',
-        createTime: new Date().toLocaleString()
-      }
-      tableData.value.unshift(newUser)
-      pagination.total++
+        password: userForm.password
+      })
       ElMessage.success('用户创建成功')
     }
+    
+    // 重新加载用户列表
+    await loadUsers()
     
     dialogVisible.value = false
   } catch {
@@ -554,6 +511,8 @@ const handleDialogClose = () => {
   resetForm()
 }
 
+
+
 // 重置表单
 const resetForm = () => {
   Object.assign(userForm, {
@@ -561,7 +520,7 @@ const resetForm = () => {
     username: '',
     email: '',
     phone: '',
-    role: '',
+    roles: [],
     status: 'active',
     password: ''
   })

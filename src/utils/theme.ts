@@ -1,18 +1,30 @@
-import { useDark, useToggle } from '@vueuse/core'
+import { ref, watch } from 'vue'
 import type { ThemeMode } from '@/types'
 
-// 使用VueUse的useDark组合式函数
-export const isDark = useDark({
-  selector: 'html',
-  attribute: 'data-theme',
-  valueDark: 'dark',
-  valueLight: 'light',
-  storageKey: 'zboot-theme',
-  storage: localStorage
-})
+// 主题状态
+export const isDark = ref<boolean>(false)
+
+// 应用主题到DOM
+const applyTheme = (dark: boolean) => {
+  const html = document.documentElement
+  if (dark) {
+    html.setAttribute('data-theme', 'dark')
+  } else {
+    html.setAttribute('data-theme', 'light')
+  }
+  // 同时保存到localStorage
+  localStorage.setItem('zboot-theme', dark ? 'dark' : 'light')
+}
+
+// 监听主题变化
+watch(isDark, (newValue) => {
+  applyTheme(newValue)
+}, { immediate: true })
 
 // 切换主题
-export const toggleTheme = useToggle(isDark)
+export const toggleTheme = (): void => {
+  isDark.value = !isDark.value
+}
 
 // 设置主题
 export const setTheme = (theme: ThemeMode): void => {
@@ -27,12 +39,13 @@ export const getTheme = (): ThemeMode => {
 // 初始化主题
 export const initTheme = (): void => {
   const savedTheme = localStorage.getItem('zboot-theme')
-  if (savedTheme) {
-    setTheme(savedTheme as ThemeMode)
+  if (savedTheme && (savedTheme === 'dark' || savedTheme === 'light')) {
+    // 直接设置isDark的值，而不是通过setTheme函数
+    isDark.value = savedTheme === 'dark'
   } else {
     // 默认跟随系统主题
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
-    setTheme(prefersDark ? 'dark' : 'light')
+    isDark.value = prefersDark
   }
 }
 

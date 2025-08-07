@@ -266,19 +266,51 @@ watch(dialogVisible, (visible) => {
 
 <style scoped lang="scss">
 .login-dialog {
+  :deep(.el-dialog) {
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    background: var(--bg-color);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border-extra-light);
+  }
+  
   :deep(.el-dialog__header) {
     text-align: center;
-    padding: 20px 20px 0;
+    padding: 30px 30px 0;
+    border-bottom: none;
     
     .el-dialog__title {
-      font-size: 20px;
-      font-weight: 600;
+      font-size: 24px;
+      font-weight: 700;
       color: var(--text-primary);
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
     }
   }
   
   :deep(.el-dialog__body) {
-    padding: 20px;
+    padding: 20px 30px 30px;
+  }
+  
+  :deep(.el-dialog__headerbtn) {
+    top: 20px;
+    right: 20px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--bg-color-page);
+    transition: all var(--transition-duration);
+    
+    &:hover {
+      background: var(--danger-color);
+      transform: rotate(90deg);
+      
+      .el-dialog__close {
+        color: #ffffff;
+      }
+    }
   }
 }
 
@@ -286,6 +318,9 @@ watch(dialogVisible, (visible) => {
   .login-tabs {
     :deep(.el-tabs__header) {
       margin-bottom: 30px;
+      background: var(--bg-color-page);
+      border-radius: 12px;
+      padding: 4px;
     }
     
     :deep(.el-tabs__nav-wrap::after) {
@@ -294,21 +329,67 @@ watch(dialogVisible, (visible) => {
     
     :deep(.el-tabs__item) {
       font-size: 16px;
-      font-weight: 500;
+      font-weight: 600;
+      border-radius: 8px;
+      margin: 0 2px;
+      transition: all var(--transition-duration);
+      
+      &.is-active {
+        background: var(--bg-color);
+        color: var(--primary-color);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+    }
+    
+    :deep(.el-tabs__active-bar) {
+      display: none;
     }
   }
 }
 
 .login-form {
   .el-form-item {
-    margin-bottom: 20px;
+    margin-bottom: 24px;
+  }
+  
+  :deep(.el-input) {
+    .el-input__wrapper {
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      border: 1px solid var(--border-lighter);
+      transition: all var(--transition-duration);
+      
+      &:hover {
+        border-color: var(--primary-light);
+        box-shadow: 0 4px 12px rgba(64, 158, 255, 0.1);
+      }
+      
+      &.is-focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2);
+      }
+    }
   }
   
   .login-btn {
     width: 100%;
-    height: 44px;
+    height: 48px;
     font-size: 16px;
-    font-weight: 500;
+    font-weight: 600;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    border: none;
+    box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+    transition: all var(--transition-duration);
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(64, 158, 255, 0.4);
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
   }
 }
 

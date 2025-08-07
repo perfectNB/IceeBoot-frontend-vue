@@ -49,6 +49,7 @@ const activeMenu = computed(() => {
     line-height: 48px;
     margin: 4px 8px;
     border-radius: 6px;
+    color: var(--text-primary);
     transition: all var(--transition-duration) var(--transition-function);
     
     &:hover {
@@ -58,7 +59,7 @@ const activeMenu = computed(() => {
     
     &.is-active {
       background: var(--primary-color);
-      color: #ffffff;
+      color: #ffffff !important;
       
       &::before {
         display: none;
@@ -77,6 +78,7 @@ const activeMenu = computed(() => {
       line-height: 48px;
       margin: 4px 8px;
       border-radius: 6px;
+      color: var(--text-primary);
       transition: all var(--transition-duration) var(--transition-function);
       
       &:hover {
@@ -100,10 +102,16 @@ const activeMenu = computed(() => {
       .el-menu-item {
         margin: 2px 16px;
         padding-left: 40px !important;
+        color: var(--text-primary);
+        
+        &:hover {
+          background: var(--primary-extra-light);
+          color: var(--primary-color);
+        }
         
         &.is-active {
           background: var(--primary-color);
-          color: #ffffff;
+          color: #ffffff !important;
         }
       }
       
@@ -111,10 +119,27 @@ const activeMenu = computed(() => {
         .el-sub-menu__title {
           margin: 2px 16px;
           padding-left: 40px !important;
+          color: var(--text-primary);
+          
+          &:hover {
+            background: var(--primary-extra-light);
+            color: var(--primary-color);
+          }
         }
         
         .el-menu-item {
           padding-left: 60px !important;
+          color: var(--text-primary);
+          
+          &:hover {
+            background: var(--primary-extra-light);
+            color: var(--primary-color);
+          }
+          
+          &.is-active {
+            background: var(--primary-color);
+            color: #ffffff !important;
+          }
         }
       }
     }

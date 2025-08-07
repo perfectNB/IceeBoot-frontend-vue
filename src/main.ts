@@ -14,7 +14,13 @@ import router from './router'
 // 全局样式
 import './styles/index.scss'
 
+// 主题初始化
+import { initTheme } from './utils/theme'
+
 const app = createApp(App)
+
+// 初始化主题
+initTheme()
 
 // 注册 Element Plus 图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {

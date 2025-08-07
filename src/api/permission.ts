@@ -10,7 +10,7 @@ export const getPermissions = async (params: PageParams): Promise<PageResult<Per
     return await MockPermissionService.getPermissionList(params)
   } else {
     // 调用真实API
-    const response = await request.get<PageResult<Permission>>('/permission', { params })
+    const response = await request.get<PageResult<Permission>>('/api/v1/permissions', { params })
     return response.data
   }
 }
@@ -19,11 +19,10 @@ export const getPermissions = async (params: PageParams): Promise<PageResult<Per
 export const getAllPermissions = async (): Promise<Permission[]> => {
   if (isMockEnabled()) {
     // 使用Mock数据 - 返回所有权限
-    const result = await MockPermissionService.getPermissionList({ page: 1, size: 1000 })
-    return result.list
+    return await MockPermissionService.getAllPermissions()
   } else {
     // 调用真实API
-    const response = await request.get<Permission[]>('/permission/all')
+    const response = await request.get<Permission[]>('/api/v1/permissions')
     return response.data
   }
 }
@@ -31,11 +30,11 @@ export const getAllPermissions = async (): Promise<Permission[]> => {
 // 创建权限
 export const createPermission = async (data: Partial<Permission>): Promise<Permission> => {
   if (isMockEnabled()) {
-    // Mock暂不实现创建功能
-    throw new Error('Mock模式下暂不支持创建权限')
+    // 使用Mock数据
+    return await MockPermissionService.createPermission(data)
   } else {
     // 调用真实API
-    const response = await request.post<Permission>('/permission', data)
+    const response = await request.post<Permission>('/api/v1/permissions', data)
     return response.data
   }
 }
@@ -43,35 +42,34 @@ export const createPermission = async (data: Partial<Permission>): Promise<Permi
 // 更新权限
 export const updatePermission = async (id: string | number, data: Partial<Permission>): Promise<Permission> => {
   if (isMockEnabled()) {
-    // Mock暂不实现更新功能
-    throw new Error('Mock模式下暂不支持更新权限')
+    // 使用Mock数据
+    return await MockPermissionService.updatePermission(id, data)
   } else {
     // 调用真实API
-    const response = await request.put<Permission>(`/permission/${id}`, data)
+    const response = await request.put<Permission>(`/api/v1/permissions/${id}`, data)
     return response.data
   }
 }
 
 // 删除权限
-export const deletePermission = async (id: string | number): Promise<boolean> => {
+export const deletePermission = async (id: string | number): Promise<void> => {
   if (isMockEnabled()) {
-    // Mock暂不实现删除功能
-    throw new Error('Mock模式下暂不支持删除权限')
+    // 使用Mock数据
+    await MockPermissionService.deletePermission(id)
   } else {
     // 调用真实API
-    await request.delete(`/permission/${id}`)
-    return true
+    await request.delete(`/api/v1/permissions/${id}`)
   }
 }
 
 // 获取权限详情
 export const getPermissionById = async (id: string | number): Promise<Permission> => {
   if (isMockEnabled()) {
-    // Mock暂不实现获取详情功能
-    throw new Error('Mock模式下暂不支持获取权限详情')
+    // 使用Mock数据
+    return await MockPermissionService.getPermissionById(id)
   } else {
     // 调用真实API
-    const response = await request.get<Permission>(`/permission/${id}`)
+    const response = await request.get<Permission>(`/api/v1/permissions/${id}`)
     return response.data
   }
 }

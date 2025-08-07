@@ -111,6 +111,8 @@ import {
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { getUserMenus } from '@/api/menu'
+import { logout } from '@/api/auth'
+import { isMockEnabled } from '@/config/mock'
 import { isDark, toggleTheme } from '@/utils/theme'
 import SidebarMenu from '@/components/common/SidebarMenu.vue'
 import type { MenuItem } from '@/types'
@@ -160,10 +162,24 @@ const handleLogout = () => {
     confirmButtonText: '确定',
     cancelButtonText: '取消',
     type: 'warning'
-  }).then(() => {
-    userStore.logout()
-    router.push('/')
-    ElMessage.success('退出登录成功')
+  }).then(async () => {
+    try {
+      // 调用退出登录API（非mock模式）
+      if (!isMockEnabled()) {
+        await logout()
+      }
+      
+      // 清除本地状态
+      userStore.logout()
+      router.push('/')
+      ElMessage.success('退出登录成功')
+    } catch (error) {
+      console.error('退出登录失败:', error)
+      // 即使API调用失败，也要清除本地状态
+      userStore.logout()
+      router.push('/')
+      ElMessage.success('退出登录成功')
+    }
   })
 }
 

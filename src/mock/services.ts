@@ -313,6 +313,117 @@ export class MockPermissionService {
     
     return buildTree(mockPermissions)
   }
+
+  // 获取所有权限（不分页）
+  static async getAllPermissions(): Promise<Permission[]> {
+    await mockDelay()
+    mockLog('获取所有权限')
+    
+    // 构建树形结构
+    const buildTree = (permissions: Permission[], parentId: string | number | null = null): Permission[] => {
+      return permissions
+        .filter(p => p.parentId === parentId)
+        .map(p => ({
+          ...p,
+          children: buildTree(permissions, p.id)
+        }))
+    }
+    
+    return buildTree(mockPermissions)
+  }
+
+  // 获取权限详情
+  static async getPermissionById(id: string | number): Promise<Permission> {
+    await mockDelay()
+    mockLog('获取权限详情', { id })
+    
+    const findInTree = (permissions: Permission[]): Permission | null => {
+      for (const permission of permissions) {
+        if (permission.id === id) {
+          return permission
+        }
+        if (permission.children) {
+          const found = findInTree(permission.children)
+          if (found) return found
+        }
+      }
+      return null
+    }
+    
+    const allPermissions = await this.getAllPermissions()
+    const permission = findInTree(allPermissions)
+    
+    if (!permission) {
+      throw new Error('权限不存在')
+    }
+    
+    return permission
+  }
+
+  // 创建权限
+  static async createPermission(permissionData: Partial<Permission>): Promise<Permission> {
+    await mockDelay()
+    mockLog('创建权限', permissionData)
+    
+    const newPermission: Permission = {
+      id: Date.now().toString(),
+      name: permissionData.name || '',
+      code: permissionData.code || '',
+      type: permissionData.type || 'menu',
+      parentId: permissionData.parentId || null,
+      path: permissionData.path || '',
+      method: permissionData.method,
+      description: permissionData.description || '',
+      status: permissionData.status || 'active',
+      createTime: new Date().toISOString(),
+      updateTime: new Date().toISOString()
+    }
+    
+    // 添加到mock数据中
+    mockPermissions.push(newPermission)
+    
+    return newPermission
+  }
+
+  // 更新权限
+  static async updatePermission(id: string | number, permissionData: Partial<Permission>): Promise<Permission> {
+    await mockDelay()
+    mockLog('更新权限', { id, permissionData })
+    
+    const index = mockPermissions.findIndex(p => p.id === id)
+    if (index === -1) {
+      throw new Error('权限不存在')
+    }
+    
+    const updatedPermission = {
+      ...mockPermissions[index],
+      ...permissionData,
+      updateTime: new Date().toISOString()
+    }
+    
+    mockPermissions[index] = updatedPermission
+    
+    return updatedPermission
+  }
+
+  // 删除权限
+  static async deletePermission(id: string | number): Promise<void> {
+    await mockDelay()
+    mockLog('删除权限', { id })
+    
+    // 检查是否有子权限
+    const hasChildren = mockPermissions.some(p => p.parentId === id)
+    if (hasChildren) {
+      throw new Error('该权限下还有子权限，无法删除')
+    }
+    
+    const index = mockPermissions.findIndex(p => p.id === id)
+    if (index === -1) {
+      throw new Error('权限不存在')
+    }
+    
+    mockPermissions.splice(index, 1)
+  }
 }
 
 // Mock菜单服务

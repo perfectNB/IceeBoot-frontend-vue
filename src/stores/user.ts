@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { User, LoginForm, LoginResponse } from '@/types'
 import { isMockEnabled } from '@/config/mock'
-import { MockUserService } from '@/mock/services'
+import { MockAuthService, MockUserService } from '@/mock/services'
 // import { login as apiLogin, getUserInfo as apiGetUserInfo } from '@/api/auth'
 
 export const useUserStore = defineStore('user', () => {
@@ -53,7 +53,7 @@ export const useUserStore = defineStore('user', () => {
       
       if (isMockEnabled()) {
         // 使用Mock数据
-        response = await MockUserService.login(loginForm)
+        response = await MockAuthService.login(loginForm)
       } else {
         // 调用真实API
         // response = await apiLogin(loginForm)

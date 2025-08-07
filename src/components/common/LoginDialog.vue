@@ -97,6 +97,8 @@ import { ref, computed, watch } from 'vue'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { User, Lock, Loading, Refresh, Warning } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
+import { getWechatQrCode, checkWechatLogin } from '@/api/auth'
+import { isMockEnabled } from '@/config/mock'
 import type { LoginForm } from '@/types'
 
 interface Props {
@@ -173,17 +175,17 @@ const generateQrCode = async () => {
   try {
     qrCodeLoading.value = true
     
-    // 模拟生成二维码
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // 这里应该调用真实的API
-    // const response = await getWechatQrCode()
-    // qrCode.value = response.data.qrCode
-    // scene.value = response.data.scene
-    
-    // 模拟数据
-    qrCode.value = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+5b6u5L+h5LqM57u05LiB</text></svg>'
-    scene.value = 'mock-scene-' + Date.now()
+    if (isMockEnabled()) {
+      // Mock模式：模拟生成二维码
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      qrCode.value = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+5b6u5L+h5LqM57u05LiB</text></svg>'
+      scene.value = 'mock-scene-' + Date.now()
+    } else {
+      // 真实API模式
+      const response = await getWechatQrCode()
+      qrCode.value = response.data.qrCode
+      scene.value = response.data.scene
+    }
     
     // 开始轮询检查登录状态
     startPolling()
@@ -211,15 +213,18 @@ const startPolling = () => {
   
   pollingTimer = setInterval(async () => {
     try {
-      // 这里应该调用真实的API检查登录状态
-      // const response = await checkWechatLogin(scene.value)
-      // if (response.data.accessToken) {
-      //   userStore.setToken(response.data.accessToken)
-      //   userStore.setUser(response.data.user)
-      //   ElMessage.success('登录成功')
-      //   emit('success')
-      //   stopPolling()
-      // }
+      if (!isMockEnabled()) {
+        // 真实API模式：检查微信登录状态
+        const response = await checkWechatLogin(scene.value)
+        if (response.data.accessToken) {
+          userStore.setToken(response.data.accessToken)
+          userStore.setUser(response.data.user)
+          ElMessage.success('登录成功')
+          emit('success')
+          stopPolling()
+        }
+      }
+      // Mock模式下不进行轮询检查
     } catch {
       // 忽略轮询错误
     }

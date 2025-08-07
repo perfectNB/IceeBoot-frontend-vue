@@ -106,6 +106,7 @@ export interface Permission {
   path?: string
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
   description?: string
+  status?: 'active' | 'inactive'
   createTime?: string
   updateTime?: string
   children?: Permission[]

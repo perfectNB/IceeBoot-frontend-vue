@@ -124,7 +124,7 @@ import {
   Lock
 } from '@element-plus/icons-vue'
 import { isDark, toggleTheme } from '@/utils/theme'
-import LoginDialog from '@/components/common/LoginDialog.vue'
+import LoginDialog from '../../components/common/LoginDialog.vue'
 import { useUserStore } from '@/stores/user'
 
 const router = useRouter()

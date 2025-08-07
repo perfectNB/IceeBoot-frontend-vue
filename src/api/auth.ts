@@ -1,29 +1,16 @@
 import { request } from '@/utils/request'
+import { isMockEnabled } from '@/config/mock'
+import { MockAuthService } from '@/mock/services'
 import type { LoginForm, LoginResponse, User } from '@/types'
 
 // 登录接口
-export const login = (data: LoginForm): Promise<LoginResponse> => {
-  // 模拟登录逻辑
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      if (data.username === 'admin' && data.password === '111111') {
-        resolve({
-          accessToken: 'mock-token-' + Date.now(),
-          user: {
-            id: 1,
-            username: 'admin',
-            nickname: '管理员',
-            avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
-            email: 'admin@zboot.com',
-            roles: ['admin'],
-            permissions: ['*:*:*']
-          }
-        })
-      } else {
-        reject(new Error('用户名或密码错误'))
-      }
-    }, 1000)
-  })
+export const login = async (data: LoginForm): Promise<LoginResponse> => {
+  if (isMockEnabled()) {
+    return await MockAuthService.login(data)
+  } else {
+    const response = await request.post<LoginResponse>('/auth/login', data as unknown as Record<string, unknown>)
+    return response.data
+  }
 }
 
 // 登出接口

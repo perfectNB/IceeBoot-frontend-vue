@@ -1,8 +1,8 @@
 <template>
   <div class="admin-layout">
     <!-- 侧边栏 -->
-    <aside 
-      class="sidebar" 
+    <aside
+      class="sidebar"
       :class="{ 'sidebar-collapsed': isCollapsed }"
     >
       <div class="sidebar-header">
@@ -11,27 +11,27 @@
           <span v-show="!isCollapsed" class="logo-text">ZBoot</span>
         </div>
       </div>
-      
+
       <div class="sidebar-content">
         <SidebarMenu :menus="menus" :collapsed="isCollapsed" />
       </div>
     </aside>
-    
+
     <!-- 主内容区 -->
     <div class="main-container">
       <!-- 顶部导航 -->
       <header class="header">
         <div class="header-left">
-          <el-button 
-            :icon="isCollapsed ? Expand : Fold" 
+          <el-button
+            :icon="isCollapsed ? Expand : Fold"
             @click="toggleSidebar"
             text
             class="collapse-btn"
           />
-          
+
           <el-breadcrumb separator="/" class="breadcrumb">
-            <el-breadcrumb-item 
-              v-for="item in breadcrumbs" 
+            <el-breadcrumb-item
+              v-for="item in breadcrumbs"
               :key="item.path"
               :to="item.path"
             >
@@ -39,21 +39,21 @@
             </el-breadcrumb-item>
           </el-breadcrumb>
         </div>
-        
+
         <div class="header-right">
           <!-- 主题切换 -->
-          <el-button 
-            :icon="isDark ? Sunny : Moon" 
+          <el-button
+            :icon="isDark ? Sunny : Moon"
             @click="toggleTheme"
             text
             class="theme-btn"
           />
-          
+
           <!-- 用户信息 -->
           <el-dropdown @command="handleUserCommand">
             <div class="user-info">
-              <el-avatar 
-                :src="userStore.user?.avatar" 
+              <el-avatar
+                :src="userStore.user?.avatar"
                 :size="32"
                 class="user-avatar"
               >
@@ -62,7 +62,7 @@
               <span class="user-name">{{ userStore.user?.nickname }}</span>
               <el-icon class="arrow-down"><ArrowDown /></el-icon>
             </div>
-            
+
             <template #dropdown>
               <el-dropdown-menu>
                 <el-dropdown-item command="profile">
@@ -82,7 +82,7 @@
           </el-dropdown>
         </div>
       </header>
-      
+
       <!-- 内容区域 -->
       <main class="content">
         <router-view v-slot="{ Component }">
@@ -99,15 +99,15 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { 
-  Fold, 
-  Expand, 
-  Moon, 
-  Sunny, 
-  User, 
-  Setting, 
-  SwitchButton, 
-  ArrowDown 
+import {
+  Fold,
+  Expand,
+  Moon,
+  Sunny,
+  User,
+  Setting,
+  SwitchButton,
+  ArrowDown
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { getUserMenus } from '@/api/menu'
@@ -195,7 +195,7 @@ onMounted(() => {
   border-right: 1px solid var(--border-lighter);
   transition: width var(--transition-duration) var(--transition-function);
   overflow: hidden;
-  
+
   &.sidebar-collapsed {
     width: var(--sidebar-collapsed-width);
   }
@@ -213,13 +213,13 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 12px;
-  
+
   .logo-img {
     width: 32px;
     height: 32px;
     flex-shrink: 0;
   }
-  
+
   .logo-text {
     font-size: 20px;
     font-weight: 600;
@@ -259,7 +259,7 @@ onMounted(() => {
 
 .collapse-btn {
   font-size: 18px;
-  
+
   &:hover {
     background: var(--primary-extra-light);
   }
@@ -269,12 +269,12 @@ onMounted(() => {
   :deep(.el-breadcrumb__item) {
     .el-breadcrumb__inner {
       color: var(--text-regular);
-      
+
       &:hover {
         color: var(--primary-color);
       }
     }
-    
+
     &:last-child .el-breadcrumb__inner {
       color: var(--text-primary);
       font-weight: 500;
@@ -290,7 +290,7 @@ onMounted(() => {
 
 .theme-btn {
   font-size: 18px;
-  
+
   &:hover {
     background: var(--primary-extra-light);
   }
@@ -304,7 +304,7 @@ onMounted(() => {
   border-radius: 6px;
   cursor: pointer;
   transition: background var(--transition-duration);
-  
+
   &:hover {
     background: var(--bg-color-page);
   }
@@ -344,24 +344,24 @@ onMounted(() => {
     left: 0;
     z-index: 1000;
     height: 100vh;
-    
+
     &.sidebar-collapsed {
       transform: translateX(-100%);
     }
   }
-  
+
   .main-container {
     margin-left: 0;
   }
-  
+
   .header-left {
     gap: 10px;
   }
-  
+
   .breadcrumb {
     display: none;
   }
-  
+
   .user-name {
     display: none;
   }

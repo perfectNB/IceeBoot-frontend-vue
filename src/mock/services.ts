@@ -3,35 +3,51 @@
  * 提供统一的Mock数据接口，模拟后端API响应
  */
 
-import type { User, LoginForm, LoginResponse, MenuItem, ApiResponse, PageParams, PageResult } from '@/types'
-import { mockUsers, mockRoles, mockPermissions, mockMenus, type Role, type Permission } from './data'
+import type { User, LoginForm, LoginResponse, MenuItem, ApiResponse, PageParams, PageResult, Role, Permission } from '@/types'
+import { mockUsers, mockRoles, mockPermissions, mockMenus } from './data'
+import { mockLoginUsers } from './data/user'
 import { mockLog, mockDelay } from '@/config/mock'
 
-// Mock用户服务
-export class MockUserService {
+// Mock认证服务
+export class MockAuthService {
   // 用户登录
   static async login(loginForm: LoginForm): Promise<LoginResponse> {
     await mockDelay()
     mockLog('用户登录', loginForm)
     
-    const user = mockUsers.find(u => u.username === loginForm.username)
-    if (!user) {
-      throw new Error('用户不存在')
-    }
-    
-    // 简单密码验证（实际项目中应该使用加密验证）
-    if (loginForm.password !== '111111') {
-      throw new Error('密码错误')
+    const loginUser = mockLoginUsers.find(u => u.username === loginForm.username && u.password === loginForm.password)
+    if (!loginUser) {
+      throw new Error('用户名或密码错误')
     }
     
     const response: LoginResponse = {
-      accessToken: `mock-token-${user.id}-${Date.now()}`,
-      user,
+      accessToken: `mock-token-${loginUser.user.id}-${Date.now()}`,
+      user: loginUser.user,
       expires: Date.now() + 24 * 60 * 60 * 1000 // 24小时
     }
     
     return response
   }
+  
+  // 登出
+  static async logout(): Promise<boolean> {
+    await mockDelay()
+    mockLog('用户登出')
+    return true
+  }
+  
+  // 刷新token
+  static async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
+    await mockDelay()
+    mockLog('刷新token', { refreshToken })
+    return {
+      accessToken: `mock-token-refresh-${Date.now()}`
+    }
+  }
+}
+
+// Mock用户服务
+export class MockUserService {
   
   // 获取用户信息
   static async getUserInfo(userId: number): Promise<User> {
@@ -151,7 +167,7 @@ export class MockRoleService {
       filteredRoles = filteredRoles.filter(role => 
         role.name.toLowerCase().includes(keyword) ||
         role.code.toLowerCase().includes(keyword) ||
-        role.description.toLowerCase().includes(keyword)
+        role.description?.toLowerCase().includes(keyword)
       )
     }
     
@@ -196,7 +212,7 @@ export class MockRoleService {
     mockLog('创建角色', roleData)
     
     const newRole: Role = {
-      id: Math.max(...mockRoles.map(r => r.id)) + 1,
+      id: Math.max(...mockRoles.map(r => Number(r.id))) + 1,
       name: roleData.name || '',
       code: roleData.code || '',
       description: roleData.description || '',
@@ -261,7 +277,7 @@ export class MockPermissionService {
       filteredPermissions = filteredPermissions.filter(permission => 
         permission.name.toLowerCase().includes(keyword) ||
         permission.code.toLowerCase().includes(keyword) ||
-        permission.description.toLowerCase().includes(keyword)
+        permission.description?.toLowerCase().includes(keyword)
       )
     }
     
@@ -291,7 +307,7 @@ export class MockPermissionService {
         .filter(p => p.parentId === parentId)
         .map(p => ({
           ...p,
-          children: buildTree(permissions, p.id)
+          children: buildTree(permissions, Number(p.id))
         }))
     }
     

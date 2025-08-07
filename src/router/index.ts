@@ -46,9 +46,13 @@ const routes: RouteRecordRaw[] = [
       },
       {
         path: 'system',
+        name: 'SystemManagement',
+        // 一级菜单重定向到第一个子菜单，避免404
+        redirect: '/admin/system/user',
         meta: {
           title: '系统管理',
-          icon: 'Setting'
+          icon: 'Setting',
+          requiresAuth: true
         },
         children: [
           {
@@ -102,6 +106,13 @@ router.beforeEach(async (to, from, next) => {
   // 设置页面标题
   if (to.meta.title) {
     document.title = `${to.meta.title} - ZBoot Admin`
+  }
+  
+  // 登录后访问首页强制跳转到管理后台
+  // 注释：如需修改登录后的默认跳转页面，请修改下面的 '/admin' 路径
+  if (userStore.token && to.path === '/') {
+    next('/admin')
+    return
   }
   
   // 检查是否需要认证

@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { User, LoginForm, LoginResponse } from '@/types'
+import { isMockEnabled } from '@/config/mock'
+import { MockUserService } from '@/mock/services'
+// import { login as apiLogin, getUserInfo as apiGetUserInfo } from '@/api/auth'
 
 export const useUserStore = defineStore('user', () => {
   // 状态
@@ -46,28 +49,21 @@ export const useUserStore = defineStore('user', () => {
   // 登录
   const login = async (loginForm: LoginForm): Promise<LoginResponse> => {
     try {
-      // 模拟登录API调用
-      if (loginForm.username === 'admin' && loginForm.password === '111111') {
-        const mockResponse: LoginResponse = {
-          accessToken: 'mock-token-' + Date.now(),
-          user: {
-            id: 1,
-            username: 'admin',
-            nickname: '管理员',
-            avatar: '',
-            email: 'admin@example.com',
-            roles: ['admin'],
-            permissions: ['*:*:*']
-          }
-        }
-        
-        setToken(mockResponse.accessToken)
-        setUser(mockResponse.user)
-        
-        return mockResponse
+      let response: LoginResponse
+      
+      if (isMockEnabled()) {
+        // 使用Mock数据
+        response = await MockUserService.login(loginForm)
       } else {
-        throw new Error('用户名或密码错误')
+        // 调用真实API
+        // response = await apiLogin(loginForm)
+        throw new Error('真实API未实现，请启用Mock模式')
       }
+      
+      setToken(response.accessToken)
+      setUser(response.user)
+      
+      return response
     } catch (error) {
       throw error
     }
@@ -82,23 +78,20 @@ export const useUserStore = defineStore('user', () => {
   // 获取用户信息
   const getUserInfo = async (): Promise<User> => {
     try {
-      // 这里应该调用真实的API
-      // const response = await request.get<User>('/user/info')
-      // return response.data
+      let userInfo: User
       
-      // 模拟数据
-      const mockUser: User = {
-        id: 1,
-        username: 'admin',
-        nickname: '管理员',
-        avatar: '',
-        email: 'admin@example.com',
-        roles: ['admin'],
-        permissions: ['*:*:*']
+      if (isMockEnabled()) {
+        // 使用Mock数据 - 获取当前登录用户信息
+        const currentUserId = user.value?.id || 1
+        userInfo = await MockUserService.getUserInfo(Number(currentUserId))
+      } else {
+        // 调用真实API
+        // userInfo = await apiGetUserInfo()
+        throw new Error('真实API未实现，请启用Mock模式')
       }
       
-      setUser(mockUser)
-      return mockUser
+      setUser(userInfo)
+      return userInfo
     } catch (error) {
       throw error
     }

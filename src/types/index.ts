@@ -84,6 +84,33 @@ export interface EnvConfig {
   VITE_APP_ENV: 'development' | 'test' | 'production'
 }
 
+// 角色相关类型
+export interface Role {
+  id: string | number
+  name: string
+  code: string
+  description?: string
+  permissions?: string[]
+  createTime?: string
+  updateTime?: string
+  status?: 'active' | 'inactive'
+}
+
+// 权限相关类型
+export interface Permission {
+  id: string | number
+  name: string
+  code: string
+  type: 'menu' | 'button' | 'api'
+  parentId?: string | number | null
+  path?: string
+  method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
+  description?: string
+  createTime?: string
+  updateTime?: string
+  children?: Permission[]
+}
+
 // 主题类型
 export type ThemeMode = 'light' | 'dark'
 

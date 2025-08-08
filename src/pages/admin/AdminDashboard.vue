@@ -43,13 +43,7 @@
             </el-button-group>
           </div>
           <div class="chart-content">
-            <div class="mock-chart">
-              <div class="chart-placeholder">
-                <el-icon><TrendCharts /></el-icon>
-                <p>访问趋势图表</p>
-                <small>这里将显示真实的图表数据</small>
-              </div>
-            </div>
+            <VChart :option="visitTrendOption" :loading="loading" autoresize />
           </div>
         </div>
         
@@ -58,13 +52,7 @@
             <h3>用户分布</h3>
           </div>
           <div class="chart-content">
-            <div class="mock-chart">
-              <div class="chart-placeholder">
-                <el-icon><PieChart /></el-icon>
-                <p>用户分布饼图</p>
-                <small>这里将显示真实的图表数据</small>
-              </div>
-            </div>
+            <VChart :option="userDistributionOption" :loading="loading" autoresize />
           </div>
         </div>
       </div>
@@ -129,16 +117,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
-  TrendCharts,
-  PieChart,
   ArrowRight
 } from '@element-plus/icons-vue'
 import { getDashboardStats, getVisitTrend, getUserDistribution } from '@/api'
 import type { DashboardStats, VisitTrend, UserDistribution } from '@/types'
+import VChart from 'vue-echarts'
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { LineChart, PieChart as EChartsPieChart } from 'echarts/charts'
+import {
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent
+} from 'echarts/components'
+
+use([
+  CanvasRenderer,
+  LineChart,
+  EChartsPieChart,
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent
+])
 
 const router = useRouter()
 
@@ -351,6 +357,110 @@ const initData = async () => {
     loadUserDistribution()
   ])
 }
+
+// 访问趋势图表配置
+const visitTrendOption = computed(() => ({
+  title: {
+    show: false
+  },
+  tooltip: {
+    trigger: 'axis',
+    axisPointer: {
+      type: 'cross'
+    }
+  },
+  grid: {
+    left: '3%',
+    right: '4%',
+    bottom: '3%',
+    containLabel: true
+  },
+  xAxis: {
+    type: 'category',
+    boundaryGap: false,
+    data: visitTrendData.value.map(item => item.date)
+  },
+  yAxis: {
+    type: 'value'
+  },
+  series: [
+    {
+      name: '访问量',
+      type: 'line',
+      stack: 'Total',
+      smooth: true,
+      lineStyle: {
+        color: '#409EFF'
+      },
+      areaStyle: {
+        color: {
+          type: 'linear',
+          x: 0,
+          y: 0,
+          x2: 0,
+          y2: 1,
+          colorStops: [
+            {
+              offset: 0,
+              color: 'rgba(64, 158, 255, 0.3)'
+            },
+            {
+              offset: 1,
+              color: 'rgba(64, 158, 255, 0.05)'
+            }
+          ]
+        }
+      },
+      data: visitTrendData.value.map(item => item.visits)
+    }
+  ]
+}))
+
+// 用户分布饼图配置
+const userDistributionOption = computed(() => ({
+  title: {
+    show: false
+  },
+  tooltip: {
+    trigger: 'item',
+    formatter: '{a} <br/>{b}: {c} ({d}%)'
+  },
+  legend: {
+    orient: 'vertical',
+    left: 'left'
+  },
+  series: [
+    {
+      name: '用户分布',
+      type: 'pie',
+      radius: ['40%', '70%'],
+      avoidLabelOverlap: false,
+      itemStyle: {
+        borderRadius: 10,
+        borderColor: '#fff',
+        borderWidth: 2
+      },
+      label: {
+        show: false,
+        position: 'center'
+      },
+      emphasis: {
+        label: {
+          show: true,
+          fontSize: 20,
+          fontWeight: 'bold'
+        }
+      },
+      labelLine: {
+        show: false
+      },
+      data: userDistributionData.value.map(item => ({
+         value: item.value,
+         name: item.name
+       }))
+    }
+  ]
+}))
 
 // 组件挂载时加载数据
 onMounted(() => {

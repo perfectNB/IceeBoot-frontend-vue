@@ -69,7 +69,14 @@ export const mockUsers: User[] = [
       'ai:chat:view',
       'ai:chat:create',
       'ai:chat:send',
-      'ai:chat:delete'
+      'ai:chat:delete',
+      'codegen',
+      'codegen:frontend',
+      'codegen:frontend:view',
+      'codegen:frontend:generate',
+      'codegen:backend',
+      'codegen:backend:view',
+      'codegen:backend:generate'
     ],
     status: 'active',
     createTime: '2024-01-01 00:00:00',
@@ -94,9 +101,16 @@ export const mockUsers: User[] = [
       'system:role:view',
       'system:permission',
       'system:permission:view',
-      'system:menu',
-      'system:menu:view'
-    ],
+        'system:menu',
+        'system:menu:view',
+        'codegen',
+        'codegen:frontend',
+        'codegen:frontend:view',
+        'codegen:frontend:generate',
+        'codegen:backend',
+        'codegen:backend:view',
+        'codegen:backend:generate'
+      ],
     status: 'active',
     createTime: '2024-01-02 00:00:00',
     updateTime: '2024-01-02 00:00:00'
@@ -203,7 +217,14 @@ export const mockLoginUsers = [
         'ai:chat:view',
         'ai:chat:create',
         'ai:chat:send',
-        'ai:chat:delete'
+        'ai:chat:delete',
+        'codegen',
+        'codegen:frontend',
+        'codegen:frontend:view',
+        'codegen:frontend:generate',
+        'codegen:backend',
+        'codegen:backend:view',
+        'codegen:backend:generate'
       ]
     }
   },
@@ -229,7 +250,14 @@ export const mockLoginUsers = [
         'system:permission',
         'system:permission:view',
         'system:menu',
-        'system:menu:view'
+        'system:menu:view',
+        'codegen',
+        'codegen:frontend',
+        'codegen:frontend:view',
+        'codegen:frontend:generate',
+        'codegen:backend',
+        'codegen:backend:view',
+        'codegen:backend:generate'
       ]
     }
   },

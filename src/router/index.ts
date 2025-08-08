@@ -20,6 +20,8 @@ const ApiDocumentation = () => import('@/pages/admin/monitor/ApiDocumentation.vu
 const LLMManagement = () => import('@/pages/admin/ai/LLMManagement.vue')
 const AgentManagement = () => import('@/pages/admin/ai/AgentManagement.vue')
 const ChatInterface = () => import('@/pages/admin/ai/ChatInterface.vue')
+const FrontendCodegen = () => import('@/pages/admin/codegen/FrontendCodegen.vue')
+const BackendCodegen = () => import('@/pages/admin/codegen/BackendCodegen.vue')
 
 // 定义路由
 const routes: RouteRecordRaw[] = [
@@ -212,6 +214,41 @@ const routes: RouteRecordRaw[] = [
               icon: 'ChatDotRound',
               requiresAuth: true,
               permissions: ['ai:chat']
+            }
+          }
+        ]
+      },
+      {
+        path: 'codegen',
+        name: 'CodeGeneration',
+        redirect: '/admin/codegen/frontend',
+        meta: {
+          title: '代码生成',
+          icon: 'DocumentCopy',
+          requiresAuth: true,
+          permissions: ['codegen']
+        },
+        children: [
+          {
+            path: 'frontend',
+            name: 'FrontendCodegen',
+            component: FrontendCodegen,
+            meta: {
+              title: '前端增删改查',
+              icon: 'Monitor',
+              requiresAuth: true,
+              permissions: ['codegen:frontend']
+            }
+          },
+          {
+            path: 'backend',
+            name: 'BackendCodegen',
+            component: BackendCodegen,
+            meta: {
+              title: '后端增删改查',
+              icon: 'Server',
+              requiresAuth: true,
+              permissions: ['codegen:backend']
             }
           }
         ]

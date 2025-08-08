@@ -200,5 +200,44 @@ export const mockMenus: MenuItem[] = [
         permissions: ['ai:chat']
       }
     ]
+  },
+  {
+    id: 5,
+    title: '代码生成',
+    name: 'CodeGeneration',
+    path: '/admin/codegen',
+    icon: 'Document',
+    type: 'menu',
+    sort: 5,
+    requiresAuth: true,
+    permissions: ['codegen'],
+    children: [
+      {
+        id: 51,
+        title: '前端增删改查',
+        name: 'FrontendCrud',
+        path: '/admin/codegen/frontend',
+        component: 'FrontendCrud',
+        icon: 'Monitor',
+        parentId: 5,
+        type: 'menu',
+        sort: 1,
+        requiresAuth: true,
+        permissions: ['codegen:frontend']
+      },
+      {
+        id: 52,
+        title: '后端增删改查',
+        name: 'BackendCrud',
+        path: '/admin/codegen/backend',
+        component: 'BackendCrud',
+        icon: 'Setting',
+        parentId: 5,
+        type: 'menu',
+        sort: 2,
+        requiresAuth: true,
+        permissions: ['codegen:backend']
+      }
+    ]
   }
 ]

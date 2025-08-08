@@ -1013,5 +1013,88 @@ export const mockPermissions: Permission[] = [
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
+  },
+  // 代码生成模块权限
+  {
+    id: '85',
+    name: '代码生成',
+    code: 'codegen',
+    type: 'menu',
+    parentId: null,
+    path: '/admin/codegen',
+    description: '代码生成模块',
+    status: 'active',
+    createTime: '2024-01-01 00:00:00',
+    updateTime: '2024-01-01 00:00:00'
+  },
+  // 前端增删改查权限
+  {
+    id: '86',
+    name: '前端增删改查',
+    code: 'codegen:frontend',
+    type: 'menu',
+    parentId: '85',
+    path: '/admin/codegen/frontend',
+    description: '前端增删改查页面',
+    status: 'active',
+    createTime: '2024-01-01 00:00:00',
+    updateTime: '2024-01-01 00:00:00'
+  },
+  {
+    id: '87',
+    name: '查看前端代码生成',
+    code: 'codegen:frontend:view',
+    type: 'button',
+    parentId: '86',
+    description: '查看前端代码生成权限',
+    status: 'active',
+    createTime: '2024-01-01 00:00:00',
+    updateTime: '2024-01-01 00:00:00'
+  },
+  {
+    id: '88',
+    name: '生成前端代码',
+    code: 'codegen:frontend:generate',
+    type: 'button',
+    parentId: '86',
+    description: '生成前端代码权限',
+    status: 'active',
+    createTime: '2024-01-01 00:00:00',
+    updateTime: '2024-01-01 00:00:00'
+  },
+  // 后端增删改查权限
+  {
+    id: '89',
+    name: '后端增删改查',
+    code: 'codegen:backend',
+    type: 'menu',
+    parentId: '85',
+    path: '/admin/codegen/backend',
+    description: '后端增删改查页面',
+    status: 'active',
+    createTime: '2024-01-01 00:00:00',
+    updateTime: '2024-01-01 00:00:00'
+  },
+  {
+    id: '90',
+    name: '查看后端代码生成',
+    code: 'codegen:backend:view',
+    type: 'button',
+    parentId: '89',
+    description: '查看后端代码生成权限',
+    status: 'active',
+    createTime: '2024-01-01 00:00:00',
+    updateTime: '2024-01-01 00:00:00'
+  },
+  {
+    id: '91',
+    name: '生成后端代码',
+    code: 'codegen:backend:generate',
+    type: 'button',
+    parentId: '89',
+    description: '生成后端代码权限',
+    status: 'active',
+    createTime: '2024-01-01 00:00:00',
+    updateTime: '2024-01-01 00:00:00'
   }
 ]

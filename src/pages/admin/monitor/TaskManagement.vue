@@ -189,7 +189,7 @@ interface Task {
   status: string
   description: string
   lastExecuteTime?: string
-  nextExecuteTime?: string
+  nextExecuteTime?: string | null
   createTime?: string
   updateTime?: string
 }
@@ -262,8 +262,8 @@ const loadTasks = async () => {
       status: searchForm.status
     }
     const response = await getTasks(params)
-    taskData.value = response.data.list
-    pagination.total = response.data.total
+    taskData.value = response.list
+    pagination.total = response.total
   } catch (error: unknown) {
     console.error('获取任务列表失败:', error)
     ElMessage.error('获取任务列表失败')

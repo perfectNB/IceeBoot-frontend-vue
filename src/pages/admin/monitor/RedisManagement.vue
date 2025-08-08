@@ -117,28 +117,30 @@
       :before-close="handleCloseViewDialog"
     >
       <div class="redis-detail">
-        <el-descriptions :column="2" border>
-          <el-descriptions-item label="键名">{{ currentRedisItem?.key }}</el-descriptions-item>
-          <el-descriptions-item label="数据类型">
-            <el-tag :type="getTypeTagType(currentRedisItem?.type || '')">{{ getTypeLabel(currentRedisItem?.type || '') }}</el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="过期时间">
-            <span v-if="currentRedisItem?.ttl === -1">永不过期</span>
-            <span v-else-if="currentRedisItem?.ttl === -2">已过期</span>
-            <span v-else>{{ currentRedisItem?.ttl }}秒</span>
-          </el-descriptions-item>
-          <el-descriptions-item label="大小">{{ currentRedisItem?.size }}</el-descriptions-item>
-        </el-descriptions>
-        
-        <div class="value-section" style="margin-top: 20px;">
-          <h4>数据内容：</h4>
-          <el-input
-            v-model="currentRedisItem.value"
-            type="textarea"
-            :rows="10"
-            readonly
-            style="margin-top: 10px;"
-          />
+        <div v-if="currentRedisItem">
+          <el-descriptions :column="2" border>
+            <el-descriptions-item label="键名">{{ currentRedisItem.key }}</el-descriptions-item>
+            <el-descriptions-item label="数据类型">
+              <el-tag :type="getTypeTagType(currentRedisItem.type)">{{ getTypeLabel(currentRedisItem.type) }}</el-tag>
+            </el-descriptions-item>
+            <el-descriptions-item label="过期时间">
+              <span v-if="currentRedisItem.ttl === -1">永不过期</span>
+              <span v-else-if="currentRedisItem.ttl === -2">已过期</span>
+              <span v-else>{{ currentRedisItem.ttl }}秒</span>
+            </el-descriptions-item>
+            <el-descriptions-item label="大小">{{ currentRedisItem.size }}</el-descriptions-item>
+          </el-descriptions>
+          
+          <div class="value-section" style="margin-top: 20px;">
+            <h4>数据内容：</h4>
+            <el-input
+              v-model="currentRedisItem.value"
+              type="textarea"
+              :rows="10"
+              readonly
+              style="margin-top: 10px;"
+            />
+          </div>
         </div>
       </div>
       
@@ -205,8 +207,8 @@ const loadRedisData = async () => {
       type: searchForm.type
     }
     const response = await getRedisKeys(params)
-    redisData.value = response.data.list
-    pagination.total = response.data.total
+    redisData.value = response.list
+    pagination.total = response.total
   } catch (error: unknown) {
     console.error('获取Redis数据失败:', error)
     ElMessage.error('获取Redis数据失败')

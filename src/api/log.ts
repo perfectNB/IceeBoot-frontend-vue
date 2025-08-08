@@ -1,4 +1,6 @@
-import request from '@/utils/request'
+import { request } from '@/utils/request'
+import { isMockEnabled } from '@/config/mock'
+import { MockLogService } from '@/mock/services/log'
 
 export interface LogItem {
   id: string
@@ -27,36 +29,46 @@ export interface LogResponse {
 }
 
 // 获取日志列表
-export const getLogs = (params: LogQueryParams) => {
-  return request<LogResponse>({
-    url: '/api/v1/logs',
-    method: 'GET',
-    params
-  })
+export const getLogs = async (params: LogQueryParams): Promise<LogResponse> => {
+  if (isMockEnabled()) {
+    // 使用Mock数据
+    return await MockLogService.getLogs(params)
+  } else {
+    // 调用真实API
+    const response = await request.get<LogResponse>('/api/v1/logs', { params })
+    return response.data
+  }
 }
 
 // 删除日志
-export const deleteLog = (id: string) => {
-  return request({
-    url: `/api/v1/logs/${id}`,
-    method: 'DELETE'
-  })
+export const deleteLog = async (id: string): Promise<void> => {
+  if (isMockEnabled()) {
+    // 使用Mock数据
+    await MockLogService.deleteLog(id)
+  } else {
+    // 调用真实API
+    await request.delete(`/api/v1/logs/${id}`)
+  }
 }
 
 // 批量删除日志
-export const batchDeleteLogs = (ids: string[]) => {
-  return request({
-    url: '/api/v1/logs/batch',
-    method: 'DELETE',
-    data: { ids }
-  })
+export const batchDeleteLogs = async (ids: string[]): Promise<void> => {
+  if (isMockEnabled()) {
+    // 使用Mock数据
+    await MockLogService.batchDeleteLogs(ids)
+  } else {
+    // 调用真实API
+    await request.delete('/api/v1/logs/batch', { data: { ids } })
+  }
 }
 
 // 清空日志
-export const clearLogs = (params?: { level?: string; beforeDate?: string }) => {
-  return request({
-    url: '/api/v1/logs/clear',
-    method: 'DELETE',
-    params
-  })
+export const clearLogs = async (params?: { level?: string; beforeDate?: string }): Promise<void> => {
+  if (isMockEnabled()) {
+    // 使用Mock数据
+    await MockLogService.clearLogs(params)
+  } else {
+    // 调用真实API
+    await request.delete('/api/v1/logs/clear', { params })
+  }
 }

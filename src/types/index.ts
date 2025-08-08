@@ -173,6 +173,9 @@ export interface UploadFile {
 export interface LLMKey {
   id: string | number
   key: string
+  remark?: string
+  secretKey?: string
+  apiKey?: string
   status: 'active' | 'inactive'
   createTime: string
   updateTime: string
@@ -194,10 +197,16 @@ export interface Agent {
   id: string | number
   name: string
   workflowName: string
+  type: 'workflow' | 'agent'
   remark: string
-  key: string
   platform: 'coze' | 'dify'
   status: 'active' | 'inactive'
+  // 平台特定字段
+  token?: string
+  botId?: string
+  workFlowId?: string
+  // API密钥
+  key?: string
   createTime: string
   updateTime: string
 }

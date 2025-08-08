@@ -58,11 +58,7 @@
         <el-table-column prop="remark" label="备注" min-width="200" show-overflow-tooltip />
         <el-table-column label="API密钥数量" width="120">
           <template #default="{ row }">
-            <el-badge :value="row.keys?.length || 0" class="key-badge">
-              <el-button size="small" text @click="handleManageKeys(row)">
-                管理密钥
-              </el-button>
-            </el-badge>
+            <span class="key-count">{{ row.keys?.length || 0 }}</span>
           </template>
         </el-table-column>
         <el-table-column label="状态" width="80">
@@ -76,33 +72,30 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="160" />
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button
               type="primary"
               size="small"
-              text
+              :icon="Edit"
               @click="handleEdit(row)"
             >
-              <el-icon><Edit /></el-icon>
               编辑
             </el-button>
             <el-button
               type="warning"
               size="small"
-              text
+              :icon="Key"
               @click="handleManageKeys(row)"
             >
-              <el-icon><Key /></el-icon>
-              密钥
+              密钥管理
             </el-button>
             <el-button
               type="danger"
               size="small"
-              text
+              :icon="Delete"
               @click="handleDelete(row)"
             >
-              <el-icon><Delete /></el-icon>
               删除
             </el-button>
           </template>
@@ -183,13 +176,28 @@
         
         <el-table :data="currentModel?.keys || []" stripe border>
           <el-table-column prop="id" label="ID" width="80" />
-          <el-table-column label="密钥" min-width="300">
+          <el-table-column label="密钥" min-width="200">
             <template #default="{ row }">
               <span class="key-display">
                 {{ maskKey(row.key) }}
               </span>
             </template>
           </el-table-column>
+          <el-table-column label="SecretKey" min-width="200">
+            <template #default="{ row }">
+              <span class="key-display">
+                {{ maskKey(row.secretKey) }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column label="ApiKey" min-width="200">
+            <template #default="{ row }">
+              <span class="key-display">
+                {{ maskKey(row.apiKey) }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column prop="remark" label="备注" min-width="150" />
           <el-table-column label="状态" width="100">
             <template #default="{ row }">
               <el-switch
@@ -235,15 +243,36 @@
         ref="keyFormRef"
         :model="keyForm"
         :rules="keyFormRules"
-        label-width="80px"
+        label-width="100px"
       >
-
+        <el-form-item label="密钥备注" prop="remark">
+          <el-input
+            v-model="keyForm.remark"
+            placeholder="请输入密钥备注"
+          />
+        </el-form-item>
         <el-form-item label="API密钥" prop="key">
           <el-input
             v-model="keyForm.key"
             type="textarea"
             :rows="3"
             placeholder="请输入API密钥"
+          />
+        </el-form-item>
+        <el-form-item label="SecretKey" prop="secretKey">
+          <el-input
+            v-model="keyForm.secretKey"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入SecretKey"
+          />
+        </el-form-item>
+        <el-form-item label="ApiKey" prop="apiKey">
+          <el-input
+            v-model="keyForm.apiKey"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入ApiKey"
           />
         </el-form-item>
       </el-form>
@@ -316,7 +345,10 @@ const modelForm = reactive({
 
 // 密钥表单
 const keyForm = reactive({
-  key: ''
+  remark: '',
+  key: '',
+  secretKey: '',
+  apiKey: ''
 })
 
 // 表单验证规则
@@ -552,7 +584,10 @@ const resetForm = () => {
 // 重置密钥表单
 const resetKeyForm = () => {
   Object.assign(keyForm, {
-    key: ''
+    remark: '',
+    key: '',
+    secretKey: '',
+    apiKey: ''
   })
   keyFormRef.value?.clearValidate()
 }
@@ -639,10 +674,10 @@ onMounted(() => {
     }
   }
   
-  .key-badge {
-    :deep(.el-badge__content) {
-      right: 8px;
-    }
+  .key-count {
+    font-weight: 600;
+    color: #409eff;
+    font-size: 14px;
   }
   
   .key-management {

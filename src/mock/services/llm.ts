@@ -98,6 +98,9 @@ export class MockLLMService {
     const newKey: LLMKey = {
       id: Date.now(),
       key: keyData.key || '',
+      remark: keyData.remark || '',
+      secretKey: keyData.secretKey || '',
+      apiKey: keyData.apiKey || '',
       status: keyData.status || 'active',
       createTime: new Date().toISOString(),
       updateTime: new Date().toISOString()

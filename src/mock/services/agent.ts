@@ -48,10 +48,16 @@ export class MockAgentService {
       id: Date.now(),
       name: agentData.name || '',
       workflowName: agentData.workflowName || '',
+      type: agentData.type || 'workflow',
       platform: agentData.platform || 'coze',
       remark: agentData.remark || '',
-      key: agentData.key || '',
       status: agentData.status || 'active',
+      // 平台特定字段
+      token: agentData.token || '',
+      botId: agentData.botId || '',
+      workFlowId: agentData.workFlowId || '',
+      // API密钥
+      key: agentData.key || '',
       createTime: new Date().toISOString(),
       updateTime: new Date().toISOString()
     }

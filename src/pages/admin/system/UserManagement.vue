@@ -106,28 +106,26 @@
             <el-button
               type="primary"
               size="small"
-              text
+              :icon="Edit"
               @click="handleEdit(row)"
             >
-              <el-icon><Edit /></el-icon>
               编辑
             </el-button>
             <el-button
               type="warning"
               size="small"
-              text
+              :icon="Key"
               @click="handleResetPassword(row)"
             >
-              <el-icon><Key /></el-icon>
               重置密码
             </el-button>
             <el-button
               type="danger"
               size="small"
-              text
+              :icon="Delete"
               @click="handleDelete(row)"
+              :disabled="row.username === 'admin'"
             >
-              <el-icon><Delete /></el-icon>
               删除
             </el-button>
           </template>

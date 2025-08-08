@@ -81,11 +81,16 @@
           </template>
         </el-table-column>
         <el-table-column prop="remark" label="备注" min-width="200" show-overflow-tooltip />
-        <el-table-column label="API密钥" min-width="200">
+        <el-table-column label="配置信息" min-width="300">
           <template #default="{ row }">
-            <span class="key-display">
-              {{ maskKey(row.key) }}
-            </span>
+            <div v-if="row.platform === 'coze'">
+              <div><strong>Token:</strong> <span class="key-display">{{ maskKey(row.token) }}</span></div>
+              <div><strong>BotId:</strong> {{ row.botId }}</div>
+              <div><strong>WorkFlowId:</strong> {{ row.workFlowId }}</div>
+            </div>
+            <div v-else-if="row.platform === 'dify'">
+              <div><strong>Key:</strong> <span class="key-display">{{ maskKey(row.key) }}</span></div>
+            </div>
           </template>
         </el-table-column>
         <el-table-column label="状态" width="80">
@@ -99,24 +104,22 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="160" />
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button
               type="primary"
               size="small"
-              text
+              :icon="Edit"
               @click="handleEdit(row)"
             >
-              <el-icon><Edit /></el-icon>
               编辑
             </el-button>
             <el-button
               type="danger"
               size="small"
-              text
+              :icon="Delete"
               @click="handleDelete(row)"
             >
-              <el-icon><Delete /></el-icon>
               删除
             </el-button>
           </template>
@@ -156,20 +159,54 @@
         <el-form-item label="工作流名称" prop="workflowName">
           <el-input v-model="agentForm.workflowName" placeholder="请输入工作流名称" />
         </el-form-item>
+        <el-form-item label="类型" prop="type">
+          <el-select v-model="agentForm.type" placeholder="请选择类型" style="width: 100%">
+            <el-option label="工作流" value="workflow" />
+            <el-option label="智能体" value="agent" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="平台类型" prop="platform">
           <el-select v-model="agentForm.platform" placeholder="请选择平台" style="width: 100%">
             <el-option label="Coze" value="coze" />
             <el-option label="Dify" value="dify" />
           </el-select>
         </el-form-item>
-        <el-form-item label="API密钥" prop="key">
-          <el-input
-            v-model="agentForm.key"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入API密钥"
-          />
-        </el-form-item>
+        
+        <!-- Coze平台字段 -->
+        <template v-if="agentForm.platform === 'coze'">
+          <el-form-item label="Token" prop="token">
+            <el-input
+              v-model="agentForm.token"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入Token"
+            />
+          </el-form-item>
+          <el-form-item label="BotId" prop="botId" v-if="agentForm.type === 'agent'">
+            <el-input
+              v-model="agentForm.botId"
+              placeholder="请输入BotId（智能体必填）"
+            />
+          </el-form-item>
+          <el-form-item label="WorkFlowId" prop="workFlowId">
+            <el-input
+              v-model="agentForm.workFlowId"
+              placeholder="请输入WorkFlowId"
+            />
+          </el-form-item>
+        </template>
+        
+        <!-- Dify平台字段 -->
+        <template v-else-if="agentForm.platform === 'dify'">
+          <el-form-item label="API密钥" prop="key">
+            <el-input
+              v-model="agentForm.key"
+              type="textarea"
+              :rows="3"
+              placeholder="请输入API密钥"
+            />
+          </el-form-item>
+        </template>
         <el-form-item label="备注" prop="remark">
           <el-input
             v-model="agentForm.remark"
@@ -244,17 +281,36 @@ const agentForm = reactive({
   id: '',
   name: '',
   workflowName: '',
+  type: 'workflow' as 'workflow' | 'agent',
   platform: 'coze' as 'coze' | 'dify',
-  key: '',
   remark: '',
-  status: 'active' as 'active' | 'inactive'
+  status: 'active' as 'active' | 'inactive',
+  // 平台特定字段
+  token: '',
+  botId: '',
+  workFlowId: '',
+  // API密钥
+  key: ''
 })
 
 // 表单验证规则
 const formRules = {
   name: [{ required: true, message: '请输入Agent名称', trigger: 'blur' }],
   workflowName: [{ required: true, message: '请输入工作流名称', trigger: 'blur' }],
+  type: [{ required: true, message: '请选择类型', trigger: 'change' }],
   platform: [{ required: true, message: '请选择平台', trigger: 'change' }],
+  token: [{ required: true, message: '请输入Token', trigger: 'blur' }],
+  botId: [{ 
+    validator: (rule: unknown, value: string, callback: (error?: Error) => void) => {
+      if (agentForm.type === 'agent' && !value) {
+        callback(new Error('智能体必须填写BotId'))
+      } else {
+        callback()
+      }
+    }, 
+    trigger: 'blur' 
+  }],
+  workFlowId: [{ required: true, message: '请输入WorkFlowId', trigger: 'blur' }],
   key: [{ required: true, message: '请输入API密钥', trigger: 'blur' }]
 }
 
@@ -340,9 +396,14 @@ const handleEdit = (row: Agent) => {
     name: row.name,
     workflowName: row.workflowName,
     platform: row.platform,
-    key: row.key,
     remark: row.remark,
-    status: row.status
+    status: row.status,
+    // coze平台字段
+    token: row.token || '',
+    botId: row.botId || '',
+    workFlowId: row.workFlowId || '',
+    // dify平台字段
+    key: row.key || ''
   })
   dialogVisible.value = true
 }
@@ -416,10 +477,16 @@ const resetForm = () => {
     id: '',
     name: '',
     workflowName: '',
+    type: 'workflow',
     platform: 'coze',
-    key: '',
     remark: '',
-    status: 'active'
+    status: 'active',
+    // 平台特定字段
+    token: '',
+    botId: '',
+    workFlowId: '',
+    // API密钥
+    key: ''
   })
   formRef.value?.clearValidate()
 }

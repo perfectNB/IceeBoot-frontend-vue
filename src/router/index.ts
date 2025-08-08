@@ -8,7 +8,7 @@ const AdminLayout = () => import('@/layouts/AdminLayout.vue')
 
 // 导入页面组件
 const HomePage = () => import('@/pages/home/HomePage.vue')
-const Dashboard = () => import('@/pages/admin/Dashboard.vue')
+const Dashboard = () => import('@/pages/admin/AdminDashboard.vue')
 const UserManagement = () => import('@/pages/admin/system/UserManagement.vue')
 const RoleManagement = () => import('@/pages/admin/system/RoleManagement.vue')
 const PermissionManagement = () => import('@/pages/admin/system/PermissionManagement.vue')
@@ -126,22 +126,22 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
-  
+
   // 设置页面标题
   if (to.meta.title) {
     document.title = `${to.meta.title} - ZBoot Admin`
   }
-  
+
   // 获取token（会从localStorage恢复）
   const token = userStore.getToken()
-  
+
   // 登录后访问首页强制跳转到管理后台
   // 注释：如需修改登录后的默认跳转页面，请修改下面的 '/admin' 路径
   if (token && to.path === '/') {
     next('/admin')
     return
   }
-  
+
   // 检查是否需要认证
   if (to.meta.requiresAuth) {
     if (!token) {
@@ -149,7 +149,7 @@ router.beforeEach(async (to, from, next) => {
       next('/')
       return
     }
-    
+
     // 如果有token但没有用户信息，尝试获取用户信息
     if (token && !userStore.user) {
       try {
@@ -164,13 +164,13 @@ router.beforeEach(async (to, from, next) => {
         return
       }
     }
-    
+
     // 检查权限
     if (to.meta.permissions && Array.isArray(to.meta.permissions)) {
-      const hasPermission = to.meta.permissions.some(permission => 
+      const hasPermission = to.meta.permissions.some(permission =>
         userStore.hasPermission(permission)
       )
-      
+
       if (!hasPermission) {
         ElMessage.error('您没有访问该页面的权限')
         next('/')
@@ -178,7 +178,7 @@ router.beforeEach(async (to, from, next) => {
       }
     }
   }
-  
+
   next()
 })
 

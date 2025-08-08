@@ -1,11 +1,12 @@
 import { request } from '@/utils/request'
 import type { User, PageParams, PageResult } from '@/types'
 import { isMockEnabled } from '@/config/mock'
-import { MockUserService } from '@/mock/services'
+import { MockUserService } from '@/mock/services/user'
 
 // 创建用户数据接口
 export interface CreateUserData extends Partial<User> {
   password?: string
+  [key: string]: unknown
 }
 
 // 获取用户列表

@@ -1,21 +1,20 @@
 import { request } from '@/utils/request'
 import type { Role } from '@/types'
 import { isMockEnabled } from '@/config/mock'
-import { MockRoleService } from '@/mock/services'
-import type { Role as MockRole } from '@/mock/data'
+import { MockRoleService } from '@/mock/services/role'
 
 // 获取角色列表
 export const getRoles = async (): Promise<Role[]> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    const mockRoles = await MockRoleService.getRoleList({ page: 1, size: 1000 })
-    return mockRoles.list.map(role => ({
+    const mockRoles = await MockRoleService.getRoles({ page: 1, size: 1000 })
+    return mockRoles.list.map((role: Role) => ({
       ...role,
       id: role.id.toString() // 确保id类型兼容
     }))
   } else {
     // 调用真实API
-    const response = await request.get<Role[]>('/role')
+    const response = await request.get<Role[]>('/api/v1/roles')
     return response.data
   }
 }
@@ -23,8 +22,8 @@ export const getRoles = async (): Promise<Role[]> => {
 // 创建角色
 export const createRole = async (data: Partial<Role>): Promise<Role> => {
   if (isMockEnabled()) {
-    // 使用Mock数据 - 转换类型
-    const mockData: Partial<MockRole> = {
+    // 使用Mock数据
+    const mockData = {
       ...data,
       id: data.id ? Number(data.id) : undefined
     }
@@ -35,7 +34,7 @@ export const createRole = async (data: Partial<Role>): Promise<Role> => {
     }
   } else {
     // 调用真实API
-    const response = await request.post<Role>('/role', data)
+    const response = await request.post<Role>('/api/v1/roles', data)
     return response.data
   }
 }
@@ -43,11 +42,19 @@ export const createRole = async (data: Partial<Role>): Promise<Role> => {
 // 更新角色
 export const updateRole = async (id: string | number, data: Partial<Role>): Promise<Role> => {
   if (isMockEnabled()) {
-    // Mock暂不实现更新功能
-    throw new Error('Mock模式下暂不支持更新角色')
+    // 使用Mock数据
+    const mockData = {
+      ...data,
+      id: Number(id)
+    }
+    const result = await MockRoleService.updateRole(Number(id), mockData)
+    return {
+      ...result,
+      id: result.id.toString()
+    }
   } else {
     // 调用真实API
-    const response = await request.put<Role>(`/role/${id}`, data)
+    const response = await request.put<Role>(`/api/v1/roles/${id}`, data)
     return response.data
   }
 }
@@ -55,11 +62,12 @@ export const updateRole = async (id: string | number, data: Partial<Role>): Prom
 // 删除角色
 export const deleteRole = async (id: string | number): Promise<boolean> => {
   if (isMockEnabled()) {
-    // Mock暂不实现删除功能
-    throw new Error('Mock模式下暂不支持删除角色')
+    // 使用Mock数据
+    await MockRoleService.deleteRole(Number(id))
+    return true
   } else {
     // 调用真实API
-    await request.delete(`/role/${id}`)
+    await request.delete(`/api/v1/roles/${id}`)
     return true
   }
 }
@@ -71,7 +79,18 @@ export const getRoleById = async (id: string | number): Promise<Role> => {
     return await MockRoleService.getRoleById(Number(id))
   } else {
     // 调用真实API
-    const response = await request.get<Role>(`/role/${id}`)
+    const response = await request.get<Role>(`/api/v1/roles/${id}`)
     return response.data
+  }
+}
+
+// 保存角色权限
+export const saveRolePermissions = async (roleId: string | number, permissionIds: string[]): Promise<void> => {
+  if (isMockEnabled()) {
+    // 使用Mock数据
+    await MockRoleService.saveRolePermissions(Number(roleId), permissionIds)
+  } else {
+    // 调用真实API
+    await request.post(`/api/v1/roles/${roleId}/permissions`, { permissionIds })
   }
 }

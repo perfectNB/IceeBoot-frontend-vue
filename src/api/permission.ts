@@ -1,13 +1,13 @@
 import { request } from '@/utils/request'
 import type { Permission, PageParams, PageResult } from '@/types'
 import { isMockEnabled } from '@/config/mock'
-import { MockPermissionService } from '@/mock/services'
+import { MockPermissionService } from '@/mock/services/permission'
 
 // 获取权限列表
 export const getPermissions = async (params: PageParams): Promise<PageResult<Permission>> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    return await MockPermissionService.getPermissionList(params)
+    return await MockPermissionService.getPermissions(params)
   } else {
     // 调用真实API
     const response = await request.get<PageResult<Permission>>('/api/v1/permissions', { params })
@@ -43,7 +43,7 @@ export const createPermission = async (data: Partial<Permission>): Promise<Permi
 export const updatePermission = async (id: string | number, data: Partial<Permission>): Promise<Permission> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    return await MockPermissionService.updatePermission(id, data)
+    return await MockPermissionService.updatePermission(Number(id), data)
   } else {
     // 调用真实API
     const response = await request.put<Permission>(`/api/v1/permissions/${id}`, data)
@@ -55,7 +55,7 @@ export const updatePermission = async (id: string | number, data: Partial<Permis
 export const deletePermission = async (id: string | number): Promise<void> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    await MockPermissionService.deletePermission(id)
+    await MockPermissionService.deletePermission(Number(id))
   } else {
     // 调用真实API
     await request.delete(`/api/v1/permissions/${id}`)
@@ -66,7 +66,7 @@ export const deletePermission = async (id: string | number): Promise<void> => {
 export const getPermissionById = async (id: string | number): Promise<Permission> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    return await MockPermissionService.getPermissionById(id)
+    return await MockPermissionService.getPermissionById(Number(id))
   } else {
     // 调用真实API
     const response = await request.get<Permission>(`/api/v1/permissions/${id}`)

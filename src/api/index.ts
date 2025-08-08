@@ -54,6 +54,38 @@ export {
   type CreateUserData
 } from './user'
 
+// AI管理相关接口
+export {
+  getLLMModels,
+  getLLMModel,
+  createLLMModel,
+  updateLLMModel,
+  deleteLLMModel,
+  addLLMModelKey,
+  deleteLLMModelKey,
+  updateLLMModelKeyStatus
+} from './llm'
+
+export {
+  getAgents,
+  getAgent,
+  createAgent,
+  updateAgent,
+  deleteAgent,
+  updateAgentStatus
+} from './agent'
+
+export {
+  getChatSessions,
+  getChatSession,
+  createChatSession,
+  deleteChatSession,
+  sendMessage,
+  getAvailableModels,
+  getModelApiConfig,
+  streamChat
+} from './chat'
+
 // 其他业务接口
 // export * from './business'
 

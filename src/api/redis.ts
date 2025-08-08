@@ -1,7 +1,7 @@
 import { request } from '@/utils/request'
 import { isMockEnabled } from '@/config/mock'
-import { MockRedisService } from '@/mock/services/redis'
 import type { ApiResponse } from '@/types'
+import { MockRedisService } from '@/mock/services/redis'
 
 export interface RedisKey {
   key: string

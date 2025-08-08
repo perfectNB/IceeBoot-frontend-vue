@@ -1,0 +1,674 @@
+<template>
+  <div class="llm-management">
+    <div class="page-header">
+      <h1 class="page-title">大模型管理</h1>
+      <p class="page-description">管理AI大模型配置和API密钥</p>
+    </div>
+    
+    <!-- 搜索和操作栏 -->
+    <div class="toolbar">
+      <div class="search-section">
+        <el-input
+          v-model="searchForm.keyword"
+          placeholder="搜索模型名称或备注"
+          style="width: 300px"
+          clearable
+          @keyup.enter="handleSearch"
+        >
+          <template #prefix>
+            <el-icon><Search /></el-icon>
+          </template>
+        </el-input>
+
+        <el-button type="primary" @click="handleSearch">
+          <el-icon><Search /></el-icon>
+          搜索
+        </el-button>
+        <el-button @click="handleReset">
+          <el-icon><Refresh /></el-icon>
+          重置
+        </el-button>
+      </div>
+      
+      <div class="action-section">
+        <el-button type="primary" @click="handleCreate">
+          <el-icon><Plus /></el-icon>
+          新建模型
+        </el-button>
+        <el-button @click="handleExport">
+          <el-icon><Download /></el-icon>
+          导出
+        </el-button>
+      </div>
+    </div>
+    
+    <!-- 模型表格 -->
+    <div class="table-container">
+      <el-table
+        :data="tableData"
+        v-loading="loading"
+        stripe
+        border
+        style="width: 100%"
+        @selection-change="handleSelectionChange"
+      >
+        <el-table-column type="selection" width="55" />
+        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="name" label="模型名称" min-width="150" />
+        <el-table-column prop="remark" label="备注" min-width="200" show-overflow-tooltip />
+        <el-table-column label="API密钥数量" width="120">
+          <template #default="{ row }">
+            <el-badge :value="row.keys?.length || 0" class="key-badge">
+              <el-button size="small" text @click="handleManageKeys(row)">
+                管理密钥
+              </el-button>
+            </el-badge>
+          </template>
+        </el-table-column>
+        <el-table-column label="状态" width="80">
+          <template #default="{ row }">
+            <el-switch
+              v-model="row.status"
+              :active-value="'active'"
+              :inactive-value="'inactive'"
+              @change="handleStatusChange(row)"
+            />
+          </template>
+        </el-table-column>
+        <el-table-column prop="createTime" label="创建时间" width="160" />
+        <el-table-column label="操作" width="180" fixed="right">
+          <template #default="{ row }">
+            <el-button
+              type="primary"
+              size="small"
+              text
+              @click="handleEdit(row)"
+            >
+              <el-icon><Edit /></el-icon>
+              编辑
+            </el-button>
+            <el-button
+              type="warning"
+              size="small"
+              text
+              @click="handleManageKeys(row)"
+            >
+              <el-icon><Key /></el-icon>
+              密钥
+            </el-button>
+            <el-button
+              type="danger"
+              size="small"
+              text
+              @click="handleDelete(row)"
+            >
+              <el-icon><Delete /></el-icon>
+              删除
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      
+      <!-- 分页 -->
+      <div class="pagination-container">
+        <el-pagination
+          v-model:current-page="pagination.page"
+          v-model:page-size="pagination.size"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="pagination.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
+    </div>
+    
+    <!-- 新建/编辑模型对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogTitle"
+      width="600px"
+      :close-on-click-modal="false"
+    >
+      <el-form
+        ref="formRef"
+        :model="modelForm"
+        :rules="formRules"
+        label-width="100px"
+      >
+        <el-form-item label="模型名称" prop="name">
+          <el-input v-model="modelForm.name" placeholder="请输入模型名称" />
+        </el-form-item>
+        <el-form-item label="备注" prop="remark">
+          <el-input
+            v-model="modelForm.remark"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入备注信息"
+          />
+        </el-form-item>
+        <el-form-item label="状态" prop="status">
+          <el-radio-group v-model="modelForm.status">
+            <el-radio value="active">启用</el-radio>
+            <el-radio value="inactive">禁用</el-radio>
+          </el-radio-group>
+        </el-form-item>
+      </el-form>
+      
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSubmit" :loading="submitting">
+            {{ isEdit ? '更新' : '创建' }}
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+    
+    <!-- 密钥管理对话框 -->
+    <el-dialog
+      v-model="keyDialogVisible"
+      title="API密钥管理"
+      width="800px"
+      :close-on-click-modal="false"
+    >
+      <div class="key-management">
+        <div class="key-header">
+          <h3>{{ currentModel?.name }} - API密钥</h3>
+          <el-button type="primary" size="small" @click="handleAddKey">
+            <el-icon><Plus /></el-icon>
+            添加密钥
+          </el-button>
+        </div>
+        
+        <el-table :data="currentModel?.keys || []" stripe border>
+          <el-table-column prop="id" label="ID" width="80" />
+          <el-table-column label="密钥" min-width="300">
+            <template #default="{ row }">
+              <span class="key-display">
+                {{ maskKey(row.key) }}
+              </span>
+            </template>
+          </el-table-column>
+          <el-table-column label="状态" width="100">
+            <template #default="{ row }">
+              <el-switch
+                v-model="row.status"
+                :active-value="'active'"
+                :inactive-value="'inactive'"
+                @change="handleKeyStatusChange(row)"
+              />
+            </template>
+          </el-table-column>
+          <el-table-column prop="createTime" label="创建时间" width="160" />
+          <el-table-column label="操作" width="120">
+            <template #default="{ row }">
+              <el-button
+                type="danger"
+                size="small"
+                text
+                @click="handleDeleteKey(row)"
+              >
+                <el-icon><Delete /></el-icon>
+                删除
+              </el-button>
+            </template>
+          </el-table-column>
+        </el-table>
+      </div>
+      
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="keyDialogVisible = false">关闭</el-button>
+        </div>
+      </template>
+    </el-dialog>
+    
+    <!-- 添加密钥对话框 -->
+    <el-dialog
+      v-model="addKeyDialogVisible"
+      title="添加API密钥"
+      width="500px"
+      :close-on-click-modal="false"
+    >
+      <el-form
+        ref="keyFormRef"
+        :model="keyForm"
+        :rules="keyFormRules"
+        label-width="80px"
+      >
+
+        <el-form-item label="API密钥" prop="key">
+          <el-input
+            v-model="keyForm.key"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入API密钥"
+          />
+        </el-form-item>
+      </el-form>
+      
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="addKeyDialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSubmitKey" :loading="submitting">
+            添加
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup lang="ts">
+import { ref, reactive, computed, onMounted } from 'vue'
+import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
+import {
+  Search,
+  Refresh,
+  Plus,
+  Download,
+  Edit,
+  Delete,
+  Key
+} from '@element-plus/icons-vue'
+import {
+  getLLMModels,
+  createLLMModel,
+  updateLLMModel,
+  deleteLLMModel,
+  addLLMModelKey,
+  deleteLLMModelKey,
+  updateLLMModelKeyStatus
+} from '@/api'
+import type { LLMModel, LLMKey } from '@/types'
+
+// 响应式数据
+const loading = ref(false)
+const submitting = ref(false)
+const dialogVisible = ref(false)
+const keyDialogVisible = ref(false)
+const addKeyDialogVisible = ref(false)
+const isEdit = ref(false)
+const formRef = ref<FormInstance>()
+const keyFormRef = ref<FormInstance>()
+const currentModel = ref<LLMModel | null>(null)
+
+// 搜索表单
+const searchForm = reactive({
+  keyword: ''
+})
+
+// 分页
+const pagination = reactive({
+  page: 1,
+  size: 10,
+  total: 0
+})
+
+// 模型表单
+const modelForm = reactive({
+  id: '',
+  name: '',
+  remark: '',
+  status: 'active' as 'active' | 'inactive'
+})
+
+// 密钥表单
+const keyForm = reactive({
+  key: ''
+})
+
+// 表单验证规则
+const formRules = {
+  name: [{ required: true, message: '请输入模型名称', trigger: 'blur' }],
+  remark: [{ required: true, message: '请输入备注', trigger: 'blur' }]
+}
+
+const keyFormRules = {
+  key: [{ required: true, message: '请输入API密钥', trigger: 'blur' }]
+}
+
+const tableData = ref<LLMModel[]>([])
+const selectedRows = ref<LLMModel[]>([])
+
+// 计算属性
+const dialogTitle = computed(() => isEdit.value ? '编辑模型' : '新建模型')
+
+
+
+// 掩码显示密钥
+const maskKey = (key: string) => {
+  if (!key || key.length < 8) return key
+  return key.substring(0, 4) + '****' + key.substring(key.length - 4)
+}
+
+// 加载模型数据
+const loadModels = async () => {
+  loading.value = true
+  try {
+    const result = await getLLMModels({
+      page: pagination.page,
+      size: pagination.size,
+      keyword: searchForm.keyword
+    })
+    tableData.value = result.list
+    pagination.total = result.total
+  } catch (error) {
+    console.error('加载模型数据失败:', error)
+    ElMessage.error('加载模型数据失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 搜索
+const handleSearch = () => {
+  pagination.page = 1
+  loadModels()
+}
+
+// 重置搜索
+const handleReset = () => {
+  Object.assign(searchForm, {
+    keyword: ''
+  })
+  handleSearch()
+}
+
+// 新建模型
+const handleCreate = () => {
+  isEdit.value = false
+  resetForm()
+  dialogVisible.value = true
+}
+
+// 编辑模型
+const handleEdit = (row: LLMModel) => {
+  isEdit.value = true
+  Object.assign(modelForm, {
+    id: row.id,
+    name: row.name,
+    remark: row.remark,
+    status: row.status
+  })
+  dialogVisible.value = true
+}
+
+// 删除模型
+const handleDelete = async (row: LLMModel) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除模型 "${row.name}" 吗？`,
+      '删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    await deleteLLMModel(row.id)
+    ElMessage.success('模型删除成功')
+    await loadModels()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除模型失败:', error)
+      ElMessage.error('删除模型失败')
+    }
+  }
+}
+
+// 状态变更
+const handleStatusChange = async (row: LLMModel) => {
+  try {
+    await updateLLMModel(row.id, { status: row.status })
+    ElMessage.success('状态更新成功')
+  } catch (error) {
+    console.error('状态更新失败:', error)
+    ElMessage.error('状态更新失败')
+    // 恢复原状态
+    row.status = row.status === 'active' ? 'inactive' : 'active'
+  }
+}
+
+// 管理密钥
+const handleManageKeys = (row: LLMModel) => {
+  currentModel.value = row
+  keyDialogVisible.value = true
+}
+
+// 添加密钥
+const handleAddKey = () => {
+  resetKeyForm()
+  addKeyDialogVisible.value = true
+}
+
+// 删除密钥
+const handleDeleteKey = async (key: LLMKey) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除这个密钥吗？`,
+      '删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    await deleteLLMModelKey(currentModel.value!.id, key.id)
+    ElMessage.success('密钥删除成功')
+    await loadModels()
+    // 更新当前模型数据
+    const updatedModel = tableData.value.find(m => m.id === currentModel.value!.id)
+    if (updatedModel) {
+      currentModel.value = updatedModel
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除密钥失败:', error)
+      ElMessage.error('删除密钥失败')
+    }
+  }
+}
+
+// 密钥状态变更
+const handleKeyStatusChange = async (key: LLMKey) => {
+  try {
+    await updateLLMModelKeyStatus(currentModel.value!.id, key.id, key.status)
+    ElMessage.success('密钥状态更新成功')
+  } catch (error) {
+    console.error('密钥状态更新失败:', error)
+    ElMessage.error('密钥状态更新失败')
+    // 恢复原状态
+    key.status = key.status === 'active' ? 'inactive' : 'active'
+  }
+}
+
+// 提交表单
+const handleSubmit = async () => {
+  if (!formRef.value) return
+  
+  try {
+    await formRef.value.validate()
+    submitting.value = true
+    
+    if (isEdit.value) {
+      await updateLLMModel(modelForm.id, modelForm)
+      ElMessage.success('模型更新成功')
+    } else {
+      await createLLMModel(modelForm)
+      ElMessage.success('模型创建成功')
+    }
+    
+    dialogVisible.value = false
+    await loadModels()
+  } catch (error) {
+    console.error('提交失败:', error)
+    ElMessage.error('操作失败')
+  } finally {
+    submitting.value = false
+  }
+}
+
+// 提交密钥
+const handleSubmitKey = async () => {
+  if (!keyFormRef.value) return
+  
+  try {
+    await keyFormRef.value.validate()
+    submitting.value = true
+    
+    await addLLMModelKey(currentModel.value!.id, keyForm)
+    ElMessage.success('密钥添加成功')
+    
+    addKeyDialogVisible.value = false
+    await loadModels()
+    // 更新当前模型数据
+    const updatedModel = tableData.value.find(m => m.id === currentModel.value!.id)
+    if (updatedModel) {
+      currentModel.value = updatedModel
+    }
+  } catch (error) {
+    console.error('添加密钥失败:', error)
+    ElMessage.error('添加密钥失败')
+  } finally {
+    submitting.value = false
+  }
+}
+
+// 重置表单
+const resetForm = () => {
+  Object.assign(modelForm, {
+    id: '',
+    name: '',
+    remark: '',
+    status: 'active'
+  })
+  formRef.value?.clearValidate()
+}
+
+// 重置密钥表单
+const resetKeyForm = () => {
+  Object.assign(keyForm, {
+    key: ''
+  })
+  keyFormRef.value?.clearValidate()
+}
+
+// 选择变更
+const handleSelectionChange = (selection: LLMModel[]) => {
+  selectedRows.value = selection
+}
+
+// 分页变更
+const handleSizeChange = (size: number) => {
+  pagination.size = size
+  pagination.page = 1
+  loadModels()
+}
+
+const handleCurrentChange = (page: number) => {
+  pagination.page = page
+  loadModels()
+}
+
+// 导出
+const handleExport = () => {
+  ElMessage.info('导出功能开发中')
+}
+
+// 初始化
+onMounted(() => {
+  loadModels()
+})
+</script>
+
+<style scoped lang="scss">
+.llm-management {
+  padding: 20px;
+  
+  .page-header {
+    margin-bottom: 20px;
+    
+    .page-title {
+      font-size: 24px;
+      font-weight: 600;
+      color: #303133;
+      margin: 0 0 8px 0;
+    }
+    
+    .page-description {
+      color: #606266;
+      margin: 0;
+    }
+  }
+  
+  .toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 16px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    
+    .search-section {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    
+    .action-section {
+      display: flex;
+      gap: 12px;
+    }
+  }
+  
+  .table-container {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    
+    .pagination-container {
+      padding: 20px;
+      display: flex;
+      justify-content: flex-end;
+    }
+  }
+  
+  .key-badge {
+    :deep(.el-badge__content) {
+      right: 8px;
+    }
+  }
+  
+  .key-management {
+    .key-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+      
+      h3 {
+        margin: 0;
+        color: #303133;
+      }
+    }
+    
+    .key-display {
+      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+      font-size: 12px;
+      color: #606266;
+    }
+  }
+  
+  .dialog-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+  }
+}
+</style>

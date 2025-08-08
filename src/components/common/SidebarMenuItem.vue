@@ -18,7 +18,7 @@
   </el-sub-menu>
   
   <!-- 没有子菜单的情况 -->
-  <el-menu-item v-else :index="menu.path">
+  <el-menu-item v-else :index="menu.path" @click="handleMenuClick">
     <el-icon v-if="menu.icon">
       <component :is="menu.icon" />
     </el-icon>
@@ -36,7 +36,15 @@ interface Props {
   collapsed: boolean
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
+
+// 处理菜单点击事件
+const handleMenuClick = () => {
+  // 如果是链接类型，直接跳转到外部链接
+  if (props.menu.type === 'link' && props.menu.link) {
+    window.open(props.menu.link, '_blank')
+  }
+}
 </script>
 
 <style lang="scss">

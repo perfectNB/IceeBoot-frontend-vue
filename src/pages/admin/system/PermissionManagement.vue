@@ -431,6 +431,22 @@ const collapseAll = () => {
   }
 }
 
+const expandParentNode = (parentId: string | number) => {
+  if (tableRef.value) {
+    const findAndExpandNode = (data: Permission[]) => {
+      data.forEach(item => {
+        if (item.id === parentId) {
+          tableRef.value.toggleRowExpansion(item, true)
+        }
+        if (item.children && item.children.length > 0) {
+          findAndExpandNode(item.children)
+        }
+      })
+    }
+    findAndExpandNode(permissions.value)
+  }
+}
+
 const handleCreate = () => {
   isEdit.value = false
   isCreateChild.value = false
@@ -496,6 +512,8 @@ const handleSubmit = async () => {
     await formRef.value.validate()
     submitting.value = true
     
+    const parentIdToExpand = formData.value.parentId
+    
     if (isEdit.value) {
       await updatePermission(formData.value.id!, formData.value)
       ElMessage.success('更新权限成功')
@@ -506,6 +524,13 @@ const handleSubmit = async () => {
     
     dialogVisible.value = false
     await loadPermissions()
+    
+    // 如果是新增子权限，展开父节点
+    if (parentIdToExpand && !isEdit.value) {
+      nextTick(() => {
+        expandParentNode(parentIdToExpand)
+      })
+    }
   } catch (error) {
     console.error('保存权限失败:', error)
     ElMessage.error('保存权限失败')

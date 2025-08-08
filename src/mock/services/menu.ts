@@ -81,6 +81,7 @@ export class MockMenuService {
       keepAlive: menuData.keepAlive || false,
       requiresAuth: menuData.requiresAuth !== false,
       permissions: menuData.permissions || [],
+      link: menuData.link,
       meta: {
         title: menuData.title || '',
         icon: menuData.icon,

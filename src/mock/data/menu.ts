@@ -111,7 +111,7 @@ export const mockMenus: MenuItem[] = [
         id: 32,
         title: '接口文档',
         name: 'ApiDoc',
-        path: '/admin/monitor/api-doc',
+        path: '',
         component: 'ApiDoc',
         icon: 'Document',
         parentId: 3,
@@ -146,6 +146,58 @@ export const mockMenus: MenuItem[] = [
         sort: 4,
         requiresAuth: true,
         permissions: ['monitor:log']
+      }
+    ]
+  },
+  {
+    id: 4,
+    title: 'AI管理',
+    name: 'AIManagement',
+    path: '/admin/ai',
+    icon: 'Cpu',
+    type: 'menu',
+    sort: 4,
+    requiresAuth: true,
+    permissions: ['ai'],
+    children: [
+      {
+        id: 41,
+        title: '大模型管理',
+        name: 'LLMManagement',
+        path: '/admin/ai/llm',
+        component: 'LLMManagement',
+        icon: 'BrainFilled',
+        parentId: 4,
+        type: 'menu',
+        sort: 1,
+        requiresAuth: true,
+        permissions: ['ai:llm']
+      },
+      {
+        id: 42,
+        title: 'Agent管理',
+        name: 'AgentManagement',
+        path: '/admin/ai/agent',
+        component: 'AgentManagement',
+        icon: 'Robot',
+        parentId: 4,
+        type: 'menu',
+        sort: 2,
+        requiresAuth: true,
+        permissions: ['ai:agent']
+      },
+      {
+        id: 43,
+        title: 'AI对话',
+        name: 'AIChat',
+        path: '/admin/ai/chat',
+        component: 'AIChat',
+        icon: 'ChatDotRound',
+        parentId: 4,
+        type: 'menu',
+        sort: 3,
+        requiresAuth: true,
+        permissions: ['ai:chat']
       }
     ]
   }

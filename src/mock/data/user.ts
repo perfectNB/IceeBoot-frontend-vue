@@ -51,7 +51,25 @@ export const mockUsers: User[] = [
       'monitor:log:view',
       'monitor:log:export',
       'monitor:api-doc',
-      'monitor:api-doc:view'
+      'monitor:api-doc:view',
+      // AI管理权限
+      'ai',
+      'ai:llm',
+      'ai:llm:view',
+      'ai:llm:create',
+      'ai:llm:edit',
+      'ai:llm:delete',
+      'ai:llm:key',
+      'ai:agent',
+      'ai:agent:view',
+      'ai:agent:create',
+      'ai:agent:edit',
+      'ai:agent:delete',
+      'ai:chat',
+      'ai:chat:view',
+      'ai:chat:create',
+      'ai:chat:send',
+      'ai:chat:delete'
     ],
     status: 'active',
     createTime: '2024-01-01 00:00:00',
@@ -167,7 +185,25 @@ export const mockLoginUsers = [
         'monitor:log:view',
         'monitor:log:export',
         'monitor:api-doc',
-        'monitor:api-doc:view'
+        'monitor:api-doc:view',
+        // AI管理权限
+        'ai',
+        'ai:llm',
+        'ai:llm:view',
+        'ai:llm:create',
+        'ai:llm:edit',
+        'ai:llm:delete',
+        'ai:llm:key',
+        'ai:agent',
+        'ai:agent:view',
+        'ai:agent:create',
+        'ai:agent:edit',
+        'ai:agent:delete',
+        'ai:chat',
+        'ai:chat:view',
+        'ai:chat:create',
+        'ai:chat:send',
+        'ai:chat:delete'
       ]
     }
   },
@@ -207,7 +243,9 @@ export const mockLoginUsers = [
       avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
       email: 'user@zboot.com',
       roles: ['user'],
-      permissions: ['dashboard:view']
+      permissions: [
+        'dashboard:view',
+      ]
     }
   },
   {

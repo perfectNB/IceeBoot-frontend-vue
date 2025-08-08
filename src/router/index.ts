@@ -17,6 +17,9 @@ const RedisManagement = () => import('@/pages/admin/monitor/RedisManagement.vue'
 const TaskManagement = () => import('@/pages/admin/monitor/TaskManagement.vue')
 const LogManagement = () => import('@/pages/admin/monitor/LogManagement.vue')
 const ApiDocumentation = () => import('@/pages/admin/monitor/ApiDocumentation.vue')
+const LLMManagement = () => import('@/pages/admin/ai/LLMManagement.vue')
+const AgentManagement = () => import('@/pages/admin/ai/AgentManagement.vue')
+const ChatInterface = () => import('@/pages/admin/ai/ChatInterface.vue')
 
 // 定义路由
 const routes: RouteRecordRaw[] = [
@@ -163,6 +166,52 @@ const routes: RouteRecordRaw[] = [
               icon: 'Link',
               requiresAuth: true,
               permissions: ['monitor:api-doc']
+            }
+          }
+        ]
+      },
+      {
+        path: 'ai',
+        name: 'AIManagement',
+        redirect: '/admin/ai/llm',
+        meta: {
+          title: 'AI管理',
+          icon: 'Cpu',
+          requiresAuth: true,
+          permissions: ['ai']
+        },
+        children: [
+          {
+            path: 'llm',
+            name: 'LLMManagement',
+            component: LLMManagement,
+            meta: {
+              title: '大模型管理',
+              icon: 'MagicStick',
+              requiresAuth: true,
+              permissions: ['ai:llm']
+            }
+          },
+          {
+            path: 'agent',
+            name: 'AgentManagement',
+            component: AgentManagement,
+            meta: {
+              title: 'Agent管理',
+              icon: 'Avatar',
+              requiresAuth: true,
+              permissions: ['ai:agent']
+            }
+          },
+          {
+            path: 'chat',
+            name: 'ChatInterface',
+            component: ChatInterface,
+            meta: {
+              title: 'AI对话',
+              icon: 'ChatDotRound',
+              requiresAuth: true,
+              permissions: ['ai:chat']
             }
           }
         ]

@@ -19,7 +19,7 @@ export const mockConfig: MockConfig = {
   // true: 使用Mock数据进行开发
   // false: 调用真实后端API
   enabled: true,
-  delay: 300,
+  delay: 30,
   log: true
 }
 

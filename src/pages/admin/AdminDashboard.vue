@@ -129,7 +129,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
@@ -137,28 +137,45 @@ import {
   PieChart,
   ArrowRight
 } from '@element-plus/icons-vue'
+import { getDashboardStats, getVisitTrend, getUserDistribution } from '@/api/dashboard'
+import type { DashboardStats, VisitTrend, UserDistribution } from '@/types'
 
 const router = useRouter()
 
-// 统计数据
-const stats = [
+// 响应式数据
+const dashboardStats = ref<DashboardStats>({
+  totalUsers: 0,
+  todayVisits: 0,
+  totalArticles: 0,
+  systemStatus: '正常',
+  userGrowth: 0,
+  visitGrowth: 0,
+  articleGrowth: 0
+})
+
+const visitTrendData = ref<VisitTrend[]>([])
+const userDistributionData = ref<UserDistribution[]>([])
+const loading = ref(false)
+
+// 统计数据（基于API数据）
+const stats = ref([
   {
     title: '总用户数',
-    value: '1,234',
+    value: '0',
     icon: 'User',
-    trend: 12.5
+    trend: 0
   },
   {
     title: '今日访问',
-    value: '856',
+    value: '0',
     icon: 'DataAnalysis',
-    trend: 8.2
+    trend: 0
   },
   {
     title: '文章数量',
-    value: '342',
+    value: '0',
     icon: 'Document',
-    trend: -2.1
+    trend: 0
   },
   {
     title: '系统状态',
@@ -166,7 +183,7 @@ const stats = [
     icon: 'Setting',
     trend: 0
   }
-]
+])
 
 // 时间周期
 const periods = [
@@ -277,6 +294,68 @@ const getActivityType = (type: string) => {
   }
   return typeMap[type] || 'info'
 }
+
+// 加载统计数据
+const loadDashboardStats = async () => {
+  try {
+    loading.value = true
+    const response = await getDashboardStats()
+    dashboardStats.value = response.data
+    
+    // 更新统计卡片数据
+    stats.value[0].value = dashboardStats.value.totalUsers.toLocaleString()
+    stats.value[0].trend = dashboardStats.value.userGrowth
+    
+    stats.value[1].value = dashboardStats.value.todayVisits.toLocaleString()
+    stats.value[1].trend = dashboardStats.value.visitGrowth
+    
+    stats.value[2].value = dashboardStats.value.totalArticles.toLocaleString()
+    stats.value[2].trend = dashboardStats.value.articleGrowth
+    
+    stats.value[3].value = dashboardStats.value.systemStatus
+  } catch (error) {
+    console.error('加载统计数据失败:', error)
+    ElMessage.error('加载统计数据失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 加载访问趋势数据
+const loadVisitTrend = async () => {
+  try {
+    const response = await getVisitTrend(activePeriod.value)
+    visitTrendData.value = response.data
+  } catch (error) {
+    console.error('加载访问趋势数据失败:', error)
+    ElMessage.error('加载访问趋势数据失败')
+  }
+}
+
+// 加载用户分布数据
+const loadUserDistribution = async () => {
+  try {
+    const response = await getUserDistribution()
+    userDistributionData.value = response.data
+  } catch (error) {
+    console.error('加载用户分布数据失败:', error)
+    ElMessage.error('加载用户分布数据失败')
+  }
+}
+
+// 初始化数据
+const initData = async () => {
+  await Promise.all([
+    loadDashboardStats(),
+    loadVisitTrend(),
+    loadUserDistribution()
+  ])
+}
+
+// 组件挂载时加载数据
+onMounted(() => {
+  initData()
+})
 </script>
 
 <style scoped lang="scss">

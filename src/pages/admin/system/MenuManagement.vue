@@ -44,8 +44,8 @@
         <el-table-column prop="component" label="组件" min-width="150" />
         <el-table-column prop="type" label="类型" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.type === 'menu' ? 'primary' : 'info'">
-              {{ row.type === 'menu' ? '菜单' : '按钮' }}
+            <el-tag :type="getTypeTagType(row.type)">
+              {{ getTypeText(row.type) }}
             </el-tag>
           </template>
         </el-table-column>
@@ -104,17 +104,21 @@
         <el-form-item label="路径" prop="path">
           <el-input v-model="formData.path" placeholder="请输入路径" />
         </el-form-item>
-        <el-form-item label="组件" prop="component">
+        <el-form-item label="组件" prop="component" v-if="formData.type !== 'link'">
           <el-input v-model="formData.component" placeholder="请输入组件名称" />
         </el-form-item>
         <el-form-item label="图标" prop="icon">
           <el-input v-model="formData.icon" placeholder="请输入图标名称" />
         </el-form-item>
         <el-form-item label="类型" prop="type">
-          <el-select v-model="formData.type" placeholder="请选择类型">
+          <el-select v-model="formData.type" placeholder="请选择类型" @change="handleTypeChange">
             <el-option label="菜单" value="menu" />
             <el-option label="按钮" value="button" />
+            <el-option label="链接" value="link" />
           </el-select>
+        </el-form-item>
+        <el-form-item label="链接地址" prop="link" v-if="formData.type === 'link'">
+          <el-input v-model="formData.link" placeholder="请输入链接地址" />
         </el-form-item>
         <el-form-item label="排序" prop="sort">
           <el-input-number v-model="formData.sort" :min="0" />
@@ -149,8 +153,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ref, reactive, onMounted, computed } from 'vue'
+import { ElMessage, ElMessageBox, type FormRules } from 'element-plus'
 import { Plus, Refresh, Edit, Delete } from '@element-plus/icons-vue'
 import type { MenuItem, Permission } from '@/types'
 import { getAllMenus, createMenu, updateMenu, deleteMenu } from '@/api/menu'
@@ -168,7 +172,7 @@ const permissionOptions = ref<Permission[]>([])
 
 // 表单相关
 const formRef = ref()
-const formData = reactive<Partial<MenuItem>>({
+const formData = reactive<Partial<MenuItem & { link?: string }>>({
   title: '',
   name: '',
   path: '',
@@ -177,15 +181,26 @@ const formData = reactive<Partial<MenuItem>>({
   type: 'menu',
   sort: 0,
   requiresAuth: true,
-  permissions: []
+  permissions: [],
+  link: ''
 })
 
-const formRules = {
-  title: [{ required: true, message: '请输入菜单名称', trigger: 'blur' }],
-  name: [{ required: true, message: '请输入路由名称', trigger: 'blur' }],
-  path: [{ required: true, message: '请输入路径', trigger: 'blur' }],
-  type: [{ required: true, message: '请选择类型', trigger: 'change' }]
-}
+const formRules = computed((): FormRules => {
+  const rules: FormRules = {
+    title: [{ required: true, message: '请输入菜单名称', trigger: 'blur' }],
+    name: [{ required: true, message: '请输入路由名称', trigger: 'blur' }],
+    type: [{ required: true, message: '请选择类型', trigger: 'change' }]
+  }
+  
+  // 根据类型动态添加验证规则
+  if (formData.type === 'link') {
+    rules.link = [{ required: true, message: '请输入链接地址', trigger: 'blur' }]
+  } else {
+    rules.path = [{ required: true, message: '请输入路径', trigger: 'blur' }]
+  }
+  
+  return rules
+})
 
 // 计算属性
 const dialogTitle = ref('新增菜单')
@@ -279,6 +294,44 @@ const handleSubmit = async () => {
   }
 }
 
+// 处理类型变化
+const handleTypeChange = () => {
+  // 当类型为链接时，清空组件字段
+  if (formData.type === 'link') {
+    formData.component = ''
+  } else {
+    formData.link = ''
+  }
+}
+
+// 获取类型标签类型
+const getTypeTagType = (type: string) => {
+  switch (type) {
+    case 'menu':
+      return 'primary'
+    case 'button':
+      return 'info'
+    case 'link':
+      return 'warning'
+    default:
+      return 'info'
+  }
+}
+
+// 获取类型文本
+const getTypeText = (type: string) => {
+  switch (type) {
+    case 'menu':
+      return '菜单'
+    case 'button':
+      return '按钮'
+    case 'link':
+      return '链接'
+    default:
+      return '未知'
+  }
+}
+
 // 重置表单
 const resetForm = () => {
   Object.assign(formData, {
@@ -290,7 +343,8 @@ const resetForm = () => {
     type: 'menu',
     sort: 0,
     requiresAuth: true,
-    permissions: []
+    permissions: [],
+    link: ''
   })
   formRef.value?.clearValidate()
 }

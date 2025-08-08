@@ -166,3 +166,82 @@ export interface UploadFile {
   type: string
   uid: string
 }
+
+// AI管理相关类型
+
+// 大模型Key类型
+export interface LLMKey {
+  id: string | number
+  key: string
+  status: 'active' | 'inactive'
+  createTime: string
+  updateTime: string
+}
+
+// 大模型类型
+export interface LLMModel {
+  id: string | number
+  name: string
+  remark: string
+  keys: LLMKey[]
+  status: 'active' | 'inactive'
+  createTime: string
+  updateTime: string
+}
+
+// Agent类型
+export interface Agent {
+  id: string | number
+  name: string
+  workflowName: string
+  remark: string
+  key: string
+  platform: 'coze' | 'dify'
+  status: 'active' | 'inactive'
+  createTime: string
+  updateTime: string
+}
+
+// AI对话消息类型
+export interface ChatMessage {
+  id: string | number
+  role: 'user' | 'assistant' | 'system'
+  content: string
+  timestamp: string
+}
+
+// AI对话会话类型
+export interface ChatSession {
+  id: string | number
+  title: string
+  modelId: string | number
+  modelName: string
+  messages: ChatMessage[]
+  createTime: string
+  updateTime: string
+}
+
+// 工作台统计数据类型
+export interface DashboardStats {
+  totalUsers: number
+  todayVisits: number
+  totalArticles: number
+  systemStatus: string
+  userGrowth: number
+  visitGrowth: number
+  articleGrowth: number
+}
+
+// 访问趋势数据类型
+export interface VisitTrend {
+  date: string
+  visits: number
+  users: number
+}
+
+// 用户分布数据类型
+export interface UserDistribution {
+  name: string
+  value: number
+  percentage: number
+}

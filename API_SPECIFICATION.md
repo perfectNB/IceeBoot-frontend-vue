@@ -83,6 +83,45 @@
 | DELETE | `/api/v1/redis/keys/{key}` | 删除Redis键 |
 | POST | `/api/v1/redis/keys/batch-delete` | 批量删除Redis键 |
 
+### AI管理 - 大模型管理 (LLM Models)
+
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| GET | `/api/v1/llm/models` | 获取大模型列表 |
+| GET | `/api/v1/llm/models/{id}` | 获取大模型详情 |
+| POST | `/api/v1/llm/models` | 创建大模型 |
+| PUT | `/api/v1/llm/models/{id}` | 更新大模型信息 |
+| DELETE | `/api/v1/llm/models/{id}` | 删除大模型 |
+| PATCH | `/api/v1/llm/models/{id}/status` | 更新大模型状态 |
+| POST | `/api/v1/llm/models/{id}/keys` | 添加模型密钥 |
+| DELETE | `/api/v1/llm/models/{modelId}/keys/{keyId}` | 删除模型密钥 |
+
+### AI管理 - Agent管理 (Agents)
+
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| GET | `/api/v1/agents` | 获取Agent列表 |
+| GET | `/api/v1/agents/{id}` | 获取Agent详情 |
+| POST | `/api/v1/agents` | 创建Agent |
+| PUT | `/api/v1/agents/{id}` | 更新Agent信息 |
+| DELETE | `/api/v1/agents/{id}` | 删除Agent |
+| PATCH | `/api/v1/agents/{id}/status` | 更新Agent状态 |
+
+### AI管理 - 对话管理 (Chat)
+
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| GET | `/api/v1/chat/sessions` | 获取对话会话列表 |
+| GET | `/api/v1/chat/sessions/{id}` | 获取对话会话详情 |
+| POST | `/api/v1/chat/sessions` | 创建对话会话 |
+| DELETE | `/api/v1/chat/sessions/{id}` | 删除对话会话 |
+| POST | `/api/v1/chat/sessions/{id}/messages` | 发送消息 |
+| GET | `/api/v1/chat/sessions/{id}/messages` | 获取会话消息列表 |
+| POST | `/api/v1/chat/stream` | 流式对话接口 |
+| GET | `/api/v1/chat/models` | 获取可用模型列表 |
+
+## 环境配置
+
 ### 定时任务管理 (Tasks)
 
 | 方法 | 路径 | 描述 |
@@ -106,6 +145,43 @@
 | POST | `/api/v1/logs/batch-delete` | 批量删除日志 |
 | DELETE | `/api/v1/logs/clear` | 清空所有日志 |
 | GET | `/api/v1/logs/export` | 导出日志文件 |
+
+### AI管理 - 大模型管理 (LLM)
+
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| GET | `/api/v1/ai/llm` | 获取大模型列表 |
+| GET | `/api/v1/ai/llm/{id}` | 获取大模型详情 |
+| POST | `/api/v1/ai/llm` | 创建大模型 |
+| PUT | `/api/v1/ai/llm/{id}` | 更新大模型信息 |
+| DELETE | `/api/v1/ai/llm/{id}` | 删除大模型 |
+| POST | `/api/v1/ai/llm/{id}/keys` | 添加模型Key |
+| DELETE | `/api/v1/ai/llm/{id}/keys/{keyId}` | 删除模型Key |
+| PUT | `/api/v1/ai/llm/{id}/keys/{keyId}/status` | 更新模型Key状态 |
+
+### AI管理 - Agent管理 (Agent)
+
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| GET | `/api/v1/ai/agent` | 获取Agent列表 |
+| GET | `/api/v1/ai/agent/{id}` | 获取Agent详情 |
+| POST | `/api/v1/ai/agent` | 创建Agent |
+| PUT | `/api/v1/ai/agent/{id}` | 更新Agent信息 |
+| DELETE | `/api/v1/ai/agent/{id}` | 删除Agent |
+| PUT | `/api/v1/ai/agent/{id}/status` | 更新Agent状态 |
+
+### AI管理 - AI对话 (Chat)
+
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| GET | `/api/v1/ai/chat/sessions` | 获取对话会话列表 |
+| GET | `/api/v1/ai/chat/sessions/{id}` | 获取对话会话详情 |
+| POST | `/api/v1/ai/chat/sessions` | 创建对话会话 |
+| DELETE | `/api/v1/ai/chat/sessions/{id}` | 删除对话会话 |
+| POST | `/api/v1/ai/chat/sessions/{id}/messages` | 发送消息 |
+| GET | `/api/v1/ai/chat/models` | 获取可用大模型列表 |
+| GET | `/api/v1/ai/chat/models/{name}/config` | 获取模型API配置 |
+| POST | `/api/v1/ai/chat/stream` | 流式对话 |
 
 ## 环境配置
 

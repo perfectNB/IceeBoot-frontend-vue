@@ -7,14 +7,11 @@ import type { ChatSession, ChatMessage, LLMModel, PageParams, PageResult } from 
 import { isMockEnabled } from '@/config/mock'
 import { MockChatService } from '@/mock/services/chat'
 
-/**
- * 获取对话会话列表
- */
+// 获取对话会话列表
 export const getChatSessions = async (params: PageParams): Promise<PageResult<ChatSession>> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    const response = await MockChatService.getSessions(params)
-    return response.data
+    return await MockChatService.getChatSessions(params)
   } else {
     // 调用真实API
     const response = await request.get<PageResult<ChatSession>>('/api/v1/ai/chat/sessions', params)
@@ -22,14 +19,11 @@ export const getChatSessions = async (params: PageParams): Promise<PageResult<Ch
   }
 }
 
-/**
- * 获取对话会话详情
- */
+// 获取对话会话详情
 export const getChatSession = async (id: string | number): Promise<ChatSession> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    const response = await MockChatService.getSession(id)
-    return response.data
+    return await MockChatService.getChatSession(id)
   } else {
     // 调用真实API
     const response = await request.get<ChatSession>(`/api/v1/ai/chat/sessions/${id}`)
@@ -37,14 +31,11 @@ export const getChatSession = async (id: string | number): Promise<ChatSession> 
   }
 }
 
-/**
- * 创建对话会话
- */
+// 创建对话会话
 export const createChatSession = async (data: Partial<ChatSession>): Promise<ChatSession> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    const response = await MockChatService.createSession(data)
-    return response.data
+    return await MockChatService.createChatSession(data)
   } else {
     // 调用真实API
     const response = await request.post<ChatSession>('/api/v1/ai/chat/sessions', data)
@@ -52,27 +43,22 @@ export const createChatSession = async (data: Partial<ChatSession>): Promise<Cha
   }
 }
 
-/**
- * 删除对话会话
- */
+// 删除对话会话
 export const deleteChatSession = async (id: string | number): Promise<void> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    await MockChatService.deleteSession(id)
+    await MockChatService.deleteChatSession(id)
   } else {
     // 调用真实API
     await request.delete(`/api/v1/ai/chat/sessions/${id}`)
   }
 }
 
-/**
- * 发送消息
- */
+// 发送消息
 export const sendMessage = async (sessionId: string | number, content: string): Promise<ChatMessage> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    const response = await MockChatService.sendMessage(sessionId, content)
-    return response.data
+    return await MockChatService.sendMessage(sessionId, content)
   } else {
     // 调用真实API
     const response = await request.post<ChatMessage>(`/api/v1/ai/chat/sessions/${sessionId}/messages`, { content })
@@ -80,14 +66,11 @@ export const sendMessage = async (sessionId: string | number, content: string): 
   }
 }
 
-/**
- * 获取可用的大模型列表
- */
+// 获取可用的大模型列表
 export const getAvailableModels = async (): Promise<LLMModel[]> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    const response = await MockChatService.getAvailableModels()
-    return response.data
+    return await MockChatService.getAvailableModels()
   } else {
     // 调用真实API
     const response = await request.get<LLMModel[]>('/api/v1/ai/chat/models')
@@ -95,14 +78,11 @@ export const getAvailableModels = async (): Promise<LLMModel[]> => {
   }
 }
 
-/**
- * 获取模型API配置
- */
+// 获取模型API配置
 export const getModelApiConfig = async (modelName: string): Promise<{ baseUrl: string; endpoint: string; model: string } | null> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    const response = await MockChatService.getModelApiConfig(modelName)
-    return response.data
+    return await MockChatService.getModelApiConfig(modelName)
   } else {
     // 调用真实API
     const response = await request.get<{ baseUrl: string; endpoint: string; model: string } | null>(`/api/v1/ai/chat/models/${modelName}/config`)
@@ -110,9 +90,7 @@ export const getModelApiConfig = async (modelName: string): Promise<{ baseUrl: s
   }
 }
 
-/**
- * 流式对话（前端实现）
- */
+// 流式对话（前端实现）
 export const streamChat = async (
   sessionId: string | number, 
   content: string, 

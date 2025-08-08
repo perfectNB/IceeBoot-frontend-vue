@@ -7,14 +7,11 @@ import type { LLMModel, LLMKey, PageParams, PageResult } from '@/types'
 import { isMockEnabled } from '@/config/mock'
 import { MockLLMService } from '@/mock/services/llm'
 
-/**
- * 获取大模型列表
- */
+// 获取大模型列表
 export const getLLMModels = async (params: PageParams): Promise<PageResult<LLMModel>> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    const response = await MockLLMService.getModels(params)
-    return response.data
+    return await MockLLMService.getLLMModels(params)
   } else {
     // 调用真实API
     const response = await request.get<PageResult<LLMModel>>('/api/v1/ai/llm', params)
@@ -22,14 +19,11 @@ export const getLLMModels = async (params: PageParams): Promise<PageResult<LLMMo
   }
 }
 
-/**
- * 获取大模型详情
- */
+// 获取大模型详情
 export const getLLMModel = async (id: string | number): Promise<LLMModel> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    const response = await MockLLMService.getModel(id)
-    return response.data
+    return await MockLLMService.getLLMModel(id)
   } else {
     // 调用真实API
     const response = await request.get<LLMModel>(`/api/v1/ai/llm/${id}`)
@@ -37,14 +31,11 @@ export const getLLMModel = async (id: string | number): Promise<LLMModel> => {
   }
 }
 
-/**
- * 创建大模型
- */
+// 创建大模型
 export const createLLMModel = async (data: Partial<LLMModel>): Promise<LLMModel> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    const response = await MockLLMService.createModel(data)
-    return response.data
+    return await MockLLMService.createLLMModel(data)
   } else {
     // 调用真实API
     const response = await request.post<LLMModel>('/api/v1/ai/llm', data)
@@ -52,14 +43,11 @@ export const createLLMModel = async (data: Partial<LLMModel>): Promise<LLMModel>
   }
 }
 
-/**
- * 更新大模型
- */
+// 更新大模型
 export const updateLLMModel = async (id: string | number, data: Partial<LLMModel>): Promise<LLMModel> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    const response = await MockLLMService.updateModel(id, data)
-    return response.data
+    return await MockLLMService.updateLLMModel(id, data)
   } else {
     // 调用真实API
     const response = await request.put<LLMModel>(`/api/v1/ai/llm/${id}`, data)
@@ -67,27 +55,22 @@ export const updateLLMModel = async (id: string | number, data: Partial<LLMModel
   }
 }
 
-/**
- * 删除大模型
- */
+// 删除大模型
 export const deleteLLMModel = async (id: string | number): Promise<void> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    await MockLLMService.deleteModel(id)
+    await MockLLMService.deleteLLMModel(id)
   } else {
     // 调用真实API
     await request.delete(`/api/v1/ai/llm/${id}`)
   }
 }
 
-/**
- * 添加模型Key
- */
+// 添加模型Key
 export const addLLMModelKey = async (modelId: string | number, data: Partial<LLMKey>): Promise<LLMKey> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    const response = await MockLLMService.addModelKey(modelId, data)
-    return response.data
+    return await MockLLMService.addLLMKey(modelId, data)
   } else {
     // 调用真实API
     const response = await request.post<LLMKey>(`/api/v1/ai/llm/${modelId}/keys`, data)
@@ -95,34 +78,29 @@ export const addLLMModelKey = async (modelId: string | number, data: Partial<LLM
   }
 }
 
-/**
- * 删除模型Key
- */
+// 删除模型Key
 export const deleteLLMModelKey = async (modelId: string | number, keyId: string | number): Promise<void> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    await MockLLMService.deleteModelKey(modelId, keyId)
+    await MockLLMService.deleteLLMKey(modelId, keyId)
   } else {
     // 调用真实API
     await request.delete(`/api/v1/ai/llm/${modelId}/keys/${keyId}`)
   }
 }
 
-/**
- * 更新模型Key状态
- */
+// 更新模型状态
 export const updateLLMModelKeyStatus = async (
-  modelId: string | number, 
-  keyId: string | number, 
+  modelId: string | number,
+  keyId: string | number,
   status: 'active' | 'inactive'
-): Promise<LLMKey> => {
+): Promise<LLMModel> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    const response = await MockLLMService.updateModelKeyStatus(modelId, keyId, status)
-    return response.data
+    return await MockLLMService.updateLLMModelStatus(modelId, status)
   } else {
     // 调用真实API
-    const response = await request.put<LLMKey>(`/api/v1/ai/llm/${modelId}/keys/${keyId}/status`, { status })
+    const response = await request.put<LLMModel>(`/api/v1/ai/llm/${modelId}/keys/${keyId}/status`, { status })
     return response.data
   }
 }

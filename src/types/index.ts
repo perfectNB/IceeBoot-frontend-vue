@@ -196,16 +196,15 @@ export interface LLMModel {
 export interface Agent {
   id: string | number
   name: string
-  workflowName: string
   type: 'workflow' | 'agent'
   remark: string
   platform: 'coze' | 'dify'
   status: 'active' | 'inactive'
-  // 平台特定字段
+  // coze平台字段
   token?: string
   botId?: string
   workFlowId?: string
-  // API密钥
+  // dify平台字段
   key?: string
   createTime: string
   updateTime: string

@@ -9,9 +9,9 @@
     <div class="toolbar">
       <div class="search-section">
         <el-input
-          v-model="searchForm.keyword"
-          placeholder="搜索Agent名称或工作流名称"
-          style="width: 300px"
+          v-model="searchForm.name"
+          placeholder="搜索名称"
+          style="width: 200px"
           clearable
           @keyup.enter="handleSearch"
         >
@@ -20,22 +20,22 @@
           </template>
         </el-input>
         <el-select
+          v-model="searchForm.type"
+          placeholder="类型"
+          style="width: 120px"
+          clearable
+        >
+          <el-option label="工作流" value="workflow" />
+          <el-option label="智能体" value="agent" />
+        </el-select>
+        <el-select
           v-model="searchForm.platform"
-          placeholder="平台类型"
+          placeholder="平台"
           style="width: 120px"
           clearable
         >
           <el-option label="Coze" value="coze" />
           <el-option label="Dify" value="dify" />
-        </el-select>
-        <el-select
-          v-model="searchForm.status"
-          placeholder="状态"
-          style="width: 100px"
-          clearable
-        >
-          <el-option label="启用" value="active" />
-          <el-option label="禁用" value="inactive" />
         </el-select>
         <el-button type="primary" @click="handleSearch">
           <el-icon><Search /></el-icon>
@@ -71,8 +71,7 @@
       >
         <el-table-column type="selection" width="55" />
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="name" label="Agent名称" min-width="150" />
-        <el-table-column prop="workflowName" label="工作流名称" min-width="150" />
+        <el-table-column prop="name" label="名称" min-width="150" />
         <el-table-column label="平台" width="100">
           <template #default="{ row }">
             <el-tag :type="getPlatformType(row.platform)" size="small">
@@ -93,6 +92,13 @@
             </div>
           </template>
         </el-table-column>
+        <el-table-column label="类型" width="100">
+          <template #default="{ row }">
+            <el-tag :type="getTypeColor(row.type)" size="small">
+              {{ getTypeLabel(row.type) }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="状态" width="80">
           <template #default="{ row }">
             <el-switch
@@ -104,6 +110,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="160" />
+        <el-table-column prop="updateTime" label="更新时间" width="160" />
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button
@@ -153,11 +160,8 @@
         :rules="formRules"
         label-width="100px"
       >
-        <el-form-item label="Agent名称" prop="name">
-          <el-input v-model="agentForm.name" placeholder="请输入Agent名称" />
-        </el-form-item>
-        <el-form-item label="工作流名称" prop="workflowName">
-          <el-input v-model="agentForm.workflowName" placeholder="请输入工作流名称" />
+        <el-form-item label="名称" prop="name">
+          <el-input v-model="agentForm.name" placeholder="请输入名称" />
         </el-form-item>
         <el-form-item label="类型" prop="type">
           <el-select v-model="agentForm.type" placeholder="请选择类型" style="width: 100%">
@@ -264,9 +268,9 @@ const formRef = ref<FormInstance>()
 
 // 搜索表单
 const searchForm = reactive({
-  keyword: '',
-  platform: '',
-  status: ''
+  name: '',
+  type: '',
+  platform: ''
 })
 
 // 分页
@@ -280,7 +284,6 @@ const pagination = reactive({
 const agentForm = reactive({
   id: '',
   name: '',
-  workflowName: '',
   type: 'workflow' as 'workflow' | 'agent',
   platform: 'coze' as 'coze' | 'dify',
   remark: '',
@@ -295,8 +298,7 @@ const agentForm = reactive({
 
 // 表单验证规则
 const formRules = {
-  name: [{ required: true, message: '请输入Agent名称', trigger: 'blur' }],
-  workflowName: [{ required: true, message: '请输入工作流名称', trigger: 'blur' }],
+  name: [{ required: true, message: '请输入名称', trigger: 'blur' }],
   type: [{ required: true, message: '请选择类型', trigger: 'change' }],
   platform: [{ required: true, message: '请选择平台', trigger: 'change' }],
   token: [{ required: true, message: '请输入Token', trigger: 'blur' }],
@@ -338,6 +340,24 @@ const getPlatformLabel = (platform: string) => {
   return labelMap[platform] || '未知'
 }
 
+// 获取类型颜色
+const getTypeColor = (type: string) => {
+  const colorMap: Record<string, string> = {
+    workflow: 'primary',
+    agent: 'success'
+  }
+  return colorMap[type] || 'info'
+}
+
+// 获取类型标签
+const getTypeLabel = (type: string) => {
+  const labelMap: Record<string, string> = {
+    workflow: '工作流',
+    agent: '智能体'
+  }
+  return labelMap[type] || '未知'
+}
+
 // 掩码显示密钥
 const maskKey = (key: string) => {
   if (!key || key.length < 8) return key
@@ -351,9 +371,9 @@ const loadAgents = async () => {
     const result = await getAgents({
       page: pagination.page,
       size: pagination.size,
-      keyword: searchForm.keyword,
-      platform: searchForm.platform,
-      status: searchForm.status
+      name: searchForm.name,
+      type: searchForm.type,
+      platform: searchForm.platform
     })
     tableData.value = result.list
     pagination.total = result.total
@@ -374,9 +394,9 @@ const handleSearch = () => {
 // 重置搜索
 const handleReset = () => {
   Object.assign(searchForm, {
-    keyword: '',
-    platform: '',
-    status: ''
+    name: '',
+    type: '',
+    platform: ''
   })
   handleSearch()
 }
@@ -394,7 +414,7 @@ const handleEdit = (row: Agent) => {
   Object.assign(agentForm, {
     id: row.id,
     name: row.name,
-    workflowName: row.workflowName,
+    type: row.type || 'workflow',
     platform: row.platform,
     remark: row.remark,
     status: row.status,
@@ -476,7 +496,6 @@ const resetForm = () => {
   Object.assign(agentForm, {
     id: '',
     name: '',
-    workflowName: '',
     type: 'workflow',
     platform: 'coze',
     remark: '',

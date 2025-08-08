@@ -4,17 +4,25 @@ import type { Agent, PageParams, PageResult } from '@/types'
 export class MockAgentService {
   // 获取Agent列表
   static async getAgents(params: PageParams): Promise<PageResult<Agent>> {
-    const { page = 1, size = 20, keyword = '' } = params
+    const { page = 1, size = 20, name = '', type = '', platform = '' } = params
     
     let filteredAgents = [...mockAgents]
     
-    // 关键词搜索
-    if (keyword) {
+    // 名称搜索
+    if (name && typeof name === 'string') {
       filteredAgents = filteredAgents.filter(agent => 
-        agent.name.toLowerCase().includes(keyword.toLowerCase()) ||
-        agent.workflowName.toLowerCase().includes(keyword.toLowerCase()) ||
-        agent.remark.toLowerCase().includes(keyword.toLowerCase())
+        agent.name.toLowerCase().includes(name.toLowerCase())
       )
+    }
+    
+    // 类型筛选
+    if (type) {
+      filteredAgents = filteredAgents.filter(agent => agent.type === type)
+    }
+    
+    // 平台筛选
+    if (platform) {
+      filteredAgents = filteredAgents.filter(agent => agent.platform === platform)
     }
     
     const total = filteredAgents.length
@@ -47,7 +55,6 @@ export class MockAgentService {
     const newAgent: Agent = {
       id: Date.now(),
       name: agentData.name || '',
-      workflowName: agentData.workflowName || '',
       type: agentData.type || 'workflow',
       platform: agentData.platform || 'coze',
       remark: agentData.remark || '',

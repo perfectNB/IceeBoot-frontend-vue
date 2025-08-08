@@ -137,7 +137,7 @@ import {
   PieChart,
   ArrowRight
 } from '@element-plus/icons-vue'
-import { getDashboardStats, getVisitTrend, getUserDistribution } from '@/api/dashboard'
+import { getDashboardStats, getVisitTrend, getUserDistribution } from '@/api'
 import type { DashboardStats, VisitTrend, UserDistribution } from '@/types'
 
 const router = useRouter()

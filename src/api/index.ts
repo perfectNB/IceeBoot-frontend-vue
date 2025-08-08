@@ -74,7 +74,7 @@ export {
   deleteAgent,
   updateAgentStatus
 } from './agent'
-
+// 聊天相关接口
 export {
   getChatSessions,
   getChatSession,
@@ -85,6 +85,13 @@ export {
   getModelApiConfig,
   streamChat
 } from './chat'
+
+// 工作台相关接口
+export {
+  getDashboardStats,
+  getVisitTrend,
+  getUserDistribution
+} from './dashboard'
 
 // 其他业务接口
 // export * from './business'

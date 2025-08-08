@@ -43,13 +43,7 @@
             </el-button-group>
           </div>
           <div class="chart-content">
-            <div class="mock-chart">
-              <div class="chart-placeholder">
-                <el-icon><TrendCharts /></el-icon>
-                <p>访问趋势图表</p>
-                <small>这里将显示真实的图表数据</small>
-              </div>
-            </div>
+            <VChart :option="visitTrendOption" :loading="loading" autoresize />
           </div>
         </div>
         
@@ -58,13 +52,7 @@
             <h3>用户分布</h3>
           </div>
           <div class="chart-content">
-            <div class="mock-chart">
-              <div class="chart-placeholder">
-                <el-icon><PieChart /></el-icon>
-                <p>用户分布饼图</p>
-                <small>这里将显示真实的图表数据</small>
-              </div>
-            </div>
+            <VChart :option="userDistributionOption" :loading="loading" autoresize />
           </div>
         </div>
       </div>
@@ -129,36 +117,71 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import {
-  TrendCharts,
-  PieChart,
   ArrowRight
 } from '@element-plus/icons-vue'
+import { getDashboardStats, getVisitTrend, getUserDistribution } from '@/api'
+import type { DashboardStats, VisitTrend, UserDistribution } from '@/types'
+import VChart from 'vue-echarts'
+import { use } from 'echarts/core'
+import { CanvasRenderer } from 'echarts/renderers'
+import { LineChart, PieChart as EChartsPieChart } from 'echarts/charts'
+import {
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent
+} from 'echarts/components'
+
+use([
+  CanvasRenderer,
+  LineChart,
+  EChartsPieChart,
+  TitleComponent,
+  TooltipComponent,
+  LegendComponent,
+  GridComponent
+])
 
 const router = useRouter()
 
-// 统计数据
-const stats = [
+// 响应式数据
+const dashboardStats = ref<DashboardStats>({
+  totalUsers: 0,
+  todayVisits: 0,
+  totalArticles: 0,
+  systemStatus: '正常',
+  userGrowth: 0,
+  visitGrowth: 0,
+  articleGrowth: 0
+})
+
+const visitTrendData = ref<VisitTrend[]>([])
+const userDistributionData = ref<UserDistribution[]>([])
+const loading = ref(false)
+
+// 统计数据（基于API数据）
+const stats = ref([
   {
     title: '总用户数',
-    value: '1,234',
+    value: '0',
     icon: 'User',
-    trend: 12.5
+    trend: 0
   },
   {
     title: '今日访问',
-    value: '856',
+    value: '0',
     icon: 'DataAnalysis',
-    trend: 8.2
+    trend: 0
   },
   {
     title: '文章数量',
-    value: '342',
+    value: '0',
     icon: 'Document',
-    trend: -2.1
+    trend: 0
   },
   {
     title: '系统状态',
@@ -166,7 +189,7 @@ const stats = [
     icon: 'Setting',
     trend: 0
   }
-]
+])
 
 // 时间周期
 const periods = [
@@ -277,6 +300,172 @@ const getActivityType = (type: string) => {
   }
   return typeMap[type] || 'info'
 }
+
+// 加载统计数据
+const loadDashboardStats = async () => {
+  try {
+    loading.value = true
+    const response = await getDashboardStats()
+    dashboardStats.value = response.data
+    
+    // 更新统计卡片数据
+    stats.value[0].value = dashboardStats.value.totalUsers.toLocaleString()
+    stats.value[0].trend = dashboardStats.value.userGrowth
+    
+    stats.value[1].value = dashboardStats.value.todayVisits.toLocaleString()
+    stats.value[1].trend = dashboardStats.value.visitGrowth
+    
+    stats.value[2].value = dashboardStats.value.totalArticles.toLocaleString()
+    stats.value[2].trend = dashboardStats.value.articleGrowth
+    
+    stats.value[3].value = dashboardStats.value.systemStatus
+  } catch (error) {
+    console.error('加载统计数据失败:', error)
+    ElMessage.error('加载统计数据失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 加载访问趋势数据
+const loadVisitTrend = async () => {
+  try {
+    const response = await getVisitTrend(activePeriod.value)
+    visitTrendData.value = response.data
+  } catch (error) {
+    console.error('加载访问趋势数据失败:', error)
+    ElMessage.error('加载访问趋势数据失败')
+  }
+}
+
+// 加载用户分布数据
+const loadUserDistribution = async () => {
+  try {
+    const response = await getUserDistribution()
+    userDistributionData.value = response.data
+  } catch (error) {
+    console.error('加载用户分布数据失败:', error)
+    ElMessage.error('加载用户分布数据失败')
+  }
+}
+
+// 初始化数据
+const initData = async () => {
+  await Promise.all([
+    loadDashboardStats(),
+    loadVisitTrend(),
+    loadUserDistribution()
+  ])
+}
+
+// 访问趋势图表配置
+const visitTrendOption = computed(() => ({
+  title: {
+    show: false
+  },
+  tooltip: {
+    trigger: 'axis',
+    axisPointer: {
+      type: 'cross'
+    }
+  },
+  grid: {
+    left: '3%',
+    right: '4%',
+    bottom: '3%',
+    containLabel: true
+  },
+  xAxis: {
+    type: 'category',
+    boundaryGap: false,
+    data: visitTrendData.value.map(item => item.date)
+  },
+  yAxis: {
+    type: 'value'
+  },
+  series: [
+    {
+      name: '访问量',
+      type: 'line',
+      stack: 'Total',
+      smooth: true,
+      lineStyle: {
+        color: '#409EFF'
+      },
+      areaStyle: {
+        color: {
+          type: 'linear',
+          x: 0,
+          y: 0,
+          x2: 0,
+          y2: 1,
+          colorStops: [
+            {
+              offset: 0,
+              color: 'rgba(64, 158, 255, 0.3)'
+            },
+            {
+              offset: 1,
+              color: 'rgba(64, 158, 255, 0.05)'
+            }
+          ]
+        }
+      },
+      data: visitTrendData.value.map(item => item.visits)
+    }
+  ]
+}))
+
+// 用户分布饼图配置
+const userDistributionOption = computed(() => ({
+  title: {
+    show: false
+  },
+  tooltip: {
+    trigger: 'item',
+    formatter: '{a} <br/>{b}: {c} ({d}%)'
+  },
+  legend: {
+    orient: 'vertical',
+    left: 'left'
+  },
+  series: [
+    {
+      name: '用户分布',
+      type: 'pie',
+      radius: ['40%', '70%'],
+      avoidLabelOverlap: false,
+      itemStyle: {
+        borderRadius: 10,
+        borderColor: '#fff',
+        borderWidth: 2
+      },
+      label: {
+        show: false,
+        position: 'center'
+      },
+      emphasis: {
+        label: {
+          show: true,
+          fontSize: 20,
+          fontWeight: 'bold'
+        }
+      },
+      labelLine: {
+        show: false
+      },
+      data: userDistributionData.value.map(item => ({
+         value: item.value,
+         name: item.name
+       }))
+    }
+  ]
+}))
+
+// 组件挂载时加载数据
+onMounted(() => {
+  initData()
+})
 </script>
 
 <style scoped lang="scss">

@@ -8,10 +8,20 @@ const AdminLayout = () => import('@/layouts/AdminLayout.vue')
 
 // 导入页面组件
 const HomePage = () => import('@/pages/home/HomePage.vue')
-const Dashboard = () => import('@/pages/admin/Dashboard.vue')
+const Dashboard = () => import('@/pages/admin/AdminDashboard.vue')
 const UserManagement = () => import('@/pages/admin/system/UserManagement.vue')
 const RoleManagement = () => import('@/pages/admin/system/RoleManagement.vue')
 const PermissionManagement = () => import('@/pages/admin/system/PermissionManagement.vue')
+const MenuManagement = () => import('@/pages/admin/system/MenuManagement.vue')
+const RedisManagement = () => import('@/pages/admin/monitor/RedisManagement.vue')
+const TaskManagement = () => import('@/pages/admin/monitor/TaskManagement.vue')
+const LogManagement = () => import('@/pages/admin/monitor/LogManagement.vue')
+const ApiDocumentation = () => import('@/pages/admin/monitor/ApiDocumentation.vue')
+const LLMManagement = () => import('@/pages/admin/ai/LLMManagement.vue')
+const AgentManagement = () => import('@/pages/admin/ai/AgentManagement.vue')
+const ChatInterface = () => import('@/pages/admin/ai/ChatInterface.vue')
+const FrontendCodegen = () => import('@/pages/admin/codegen/FrontendCodegen.vue')
+const BackendCodegen = () => import('@/pages/admin/codegen/BackendCodegen.vue')
 
 // 定义路由
 const routes: RouteRecordRaw[] = [
@@ -43,7 +53,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '工作台',
           icon: 'DataAnalysis',
-          requiresAuth: true
+          requiresAuth: true,
+          permissions: ['dashboard:view']
         }
       },
       {
@@ -54,7 +65,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '系统管理',
           icon: 'Setting',
-          requiresAuth: true
+          requiresAuth: true,
+          permissions: ['system']
         },
         children: [
           {
@@ -65,7 +77,7 @@ const routes: RouteRecordRaw[] = [
               title: '用户管理',
               icon: 'User',
               requiresAuth: true,
-              permissions: ['system:user:view']
+              permissions: ['system:user']
             }
           },
           {
@@ -76,7 +88,7 @@ const routes: RouteRecordRaw[] = [
               title: '角色管理',
               icon: 'UserFilled',
               requiresAuth: true,
-              permissions: ['system:role:view']
+              permissions: ['system:role']
             }
           },
           {
@@ -87,7 +99,156 @@ const routes: RouteRecordRaw[] = [
               title: '权限管理',
               icon: 'Lock',
               requiresAuth: true,
-              permissions: ['system:permission:view']
+              permissions: ['system:permission']
+            }
+          },
+          {
+            path: 'menu',
+            name: 'MenuManagement',
+            component: MenuManagement,
+            meta: {
+              title: '菜单管理',
+              icon: 'Menu',
+              requiresAuth: true,
+              permissions: ['system:menu']
+            }
+          }
+        ]
+      },
+      {
+        path: 'monitor',
+        name: 'MonitorManagement',
+        redirect: '/admin/monitor/redis',
+        meta: {
+          title: '系统监控',
+          icon: 'Monitor',
+          requiresAuth: true,
+          permissions: ['monitor']
+        },
+        children: [
+          {
+            path: 'redis',
+            name: 'RedisManagement',
+            component: RedisManagement,
+            meta: {
+              title: 'Redis管理',
+              icon: 'Database',
+              requiresAuth: true,
+              permissions: ['monitor:redis']
+            }
+          },
+          {
+            path: 'task',
+            name: 'TaskManagement',
+            component: TaskManagement,
+            meta: {
+              title: '定时任务',
+              icon: 'Timer',
+              requiresAuth: true,
+              permissions: ['monitor:task']
+            }
+          },
+          {
+            path: 'log',
+            name: 'LogManagement',
+            component: LogManagement,
+            meta: {
+              title: '日志管理',
+              icon: 'Document',
+              requiresAuth: true,
+              permissions: ['monitor:log']
+            }
+          },
+          {
+            path: 'api-doc',
+            name: 'ApiDocumentation',
+            component: ApiDocumentation,
+            meta: {
+              title: '接口文档',
+              icon: 'Link',
+              requiresAuth: true,
+              permissions: ['monitor:api-doc']
+            }
+          }
+        ]
+      },
+      {
+        path: 'ai',
+        name: 'AIManagement',
+        redirect: '/admin/ai/llm',
+        meta: {
+          title: 'AI管理',
+          icon: 'Cpu',
+          requiresAuth: true,
+          permissions: ['ai']
+        },
+        children: [
+          {
+            path: 'llm',
+            name: 'LLMManagement',
+            component: LLMManagement,
+            meta: {
+              title: '大模型管理',
+              icon: 'MagicStick',
+              requiresAuth: true,
+              permissions: ['ai:llm']
+            }
+          },
+          {
+            path: 'agent',
+            name: 'AgentManagement',
+            component: AgentManagement,
+            meta: {
+              title: 'Agent管理',
+              icon: 'Avatar',
+              requiresAuth: true,
+              permissions: ['ai:agent']
+            }
+          },
+          {
+            path: 'chat',
+            name: 'ChatInterface',
+            component: ChatInterface,
+            meta: {
+              title: 'AI对话',
+              icon: 'ChatDotRound',
+              requiresAuth: true,
+              permissions: ['ai:chat']
+            }
+          }
+        ]
+      },
+      {
+        path: 'codegen',
+        name: 'CodeGeneration',
+        redirect: '/admin/codegen/frontend',
+        meta: {
+          title: '代码生成',
+          icon: 'DocumentCopy',
+          requiresAuth: true,
+          permissions: ['codegen']
+        },
+        children: [
+          {
+            path: 'frontend',
+            name: 'FrontendCodegen',
+            component: FrontendCodegen,
+            meta: {
+              title: '前端增删改查',
+              icon: 'Monitor',
+              requiresAuth: true,
+              permissions: ['codegen:frontend']
+            }
+          },
+          {
+            path: 'backend',
+            name: 'BackendCodegen',
+            component: BackendCodegen,
+            meta: {
+              title: '后端增删改查',
+              icon: 'Server',
+              requiresAuth: true,
+              permissions: ['codegen:backend']
             }
           }
         ]
@@ -126,22 +287,22 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
-  
+
   // 设置页面标题
   if (to.meta.title) {
     document.title = `${to.meta.title} - ZBoot Admin`
   }
-  
+
   // 获取token（会从localStorage恢复）
   const token = userStore.getToken()
-  
+
   // 登录后访问首页强制跳转到管理后台
   // 注释：如需修改登录后的默认跳转页面，请修改下面的 '/admin' 路径
   if (token && to.path === '/') {
     next('/admin')
     return
   }
-  
+
   // 检查是否需要认证
   if (to.meta.requiresAuth) {
     if (!token) {
@@ -149,7 +310,7 @@ router.beforeEach(async (to, from, next) => {
       next('/')
       return
     }
-    
+
     // 如果有token但没有用户信息，尝试获取用户信息
     if (token && !userStore.user) {
       try {
@@ -164,13 +325,13 @@ router.beforeEach(async (to, from, next) => {
         return
       }
     }
-    
+
     // 检查权限
     if (to.meta.permissions && Array.isArray(to.meta.permissions)) {
-      const hasPermission = to.meta.permissions.some(permission => 
+      const hasPermission = to.meta.permissions.some(permission =>
         userStore.hasPermission(permission)
       )
-      
+
       if (!hasPermission) {
         ElMessage.error('您没有访问该页面的权限')
         next('/')
@@ -178,7 +339,7 @@ router.beforeEach(async (to, from, next) => {
       }
     }
   }
-  
+
   next()
 })
 

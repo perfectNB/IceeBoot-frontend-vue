@@ -1,0 +1,74 @@
+import { request } from '@/utils/request'
+import { isMockEnabled } from '@/config/mock'
+import { MockLogService } from '@/mock/services/log'
+
+export interface LogItem {
+  id: string
+  level: string
+  timestamp: string
+  module: string
+  message: string
+  thread: string
+  className: string
+  stackTrace?: string
+}
+
+export interface LogQueryParams {
+  page: number
+  size: number
+  level?: string
+  module?: string
+  keyword?: string
+  startTime?: string
+  endTime?: string
+}
+
+export interface LogResponse {
+  list: LogItem[]
+  total: number
+}
+
+// 获取日志列表
+export const getLogs = async (params: LogQueryParams): Promise<LogResponse> => {
+  if (isMockEnabled()) {
+    // 使用Mock数据
+    return await MockLogService.getLogs(params)
+  } else {
+    // 调用真实API
+    const response = await request.get<LogResponse>('/api/v1/logs', { params })
+    return response.data
+  }
+}
+
+// 删除日志
+export const deleteLog = async (id: string): Promise<void> => {
+  if (isMockEnabled()) {
+    // 使用Mock数据
+    await MockLogService.deleteLog(id)
+  } else {
+    // 调用真实API
+    await request.delete(`/api/v1/logs/${id}`)
+  }
+}
+
+// 批量删除日志
+export const batchDeleteLogs = async (ids: string[]): Promise<void> => {
+  if (isMockEnabled()) {
+    // 使用Mock数据
+    await MockLogService.batchDeleteLogs(ids)
+  } else {
+    // 调用真实API
+    await request.delete('/api/v1/logs/batch', { data: { ids } })
+  }
+}
+
+// 清空日志
+export const clearLogs = async (params?: { level?: string; beforeDate?: string }): Promise<void> => {
+  if (isMockEnabled()) {
+    // 使用Mock数据
+    await MockLogService.clearLogs(params)
+  } else {
+    // 调用真实API
+    await request.delete('/api/v1/logs/clear', { params })
+  }
+}

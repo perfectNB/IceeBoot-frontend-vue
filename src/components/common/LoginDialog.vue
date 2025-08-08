@@ -64,21 +64,27 @@
           <div class="wechat-login">
             <div class="qrcode-container">
               <div v-if="qrCodeLoading" class="qrcode-loading">
-                <el-icon class="is-loading"><Loading /></el-icon>
+                <el-icon class="is-loading">
+                  <Loading/>
+                </el-icon>
                 <p>二维码生成中...</p>
               </div>
 
               <div v-else-if="qrCode" class="qrcode">
-                <img :src="qrCode" alt="微信登录二维码" />
+                <img :src="qrCode" alt="微信登录二维码"/>
                 <p class="qrcode-tip">请使用微信扫描二维码登录</p>
                 <el-button @click="refreshQrCode" text>
-                  <el-icon><Refresh /></el-icon>
+                  <el-icon>
+                    <Refresh/>
+                  </el-icon>
                   刷新二维码
                 </el-button>
               </div>
 
               <div v-else class="qrcode-error">
-                <el-icon><Warning /></el-icon>
+                <el-icon>
+                  <Warning/>
+                </el-icon>
                 <p>二维码生成失败</p>
                 <el-button @click="generateQrCode" type="primary">
                   重新生成
@@ -93,13 +99,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
-import { User, Lock, Loading, Refresh, Warning } from '@element-plus/icons-vue'
-import { useUserStore } from '@/stores/user'
-import { getWechatQrCode, checkWechatLogin } from '@/api'
-import { isMockEnabled } from '@/config/mock'
-import type { LoginForm } from '@/types'
+import {ref, computed, watch} from 'vue'
+import {ElMessage, type FormInstance, type FormRules} from 'element-plus'
+import {User, Lock, Loading, Refresh, Warning} from '@element-plus/icons-vue'
+import {useUserStore} from '@/stores/user'
+import {getWechatQrCode, checkWechatLogin} from '@/api'
+import {isMockEnabled} from '@/config/mock'
+import type {LoginForm} from '@/types'
 
 interface Props {
   modelValue: boolean
@@ -107,6 +113,7 @@ interface Props {
 
 interface Emits {
   (e: 'update:modelValue', value: boolean): void
+
   (e: 'success'): void
 }
 
@@ -134,11 +141,11 @@ const loginForm = ref<LoginForm>({
 // 表单验证规则
 const loginRules: FormRules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
+    {required: true, message: '请输入用户名', trigger: 'blur'}
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+    {required: true, message: '请输入密码', trigger: 'blur'},
+    {min: 6, message: '密码长度不能少于6位', trigger: 'blur'}
   ]
 }
 
@@ -160,7 +167,6 @@ const handleLogin = async () => {
 
     await userStore.login(loginForm.value)
 
-    // 移除重复的登录成功提示，由父组件统一处理
     emit('success')
   } catch (error) {
     console.error('登录失败:', error)

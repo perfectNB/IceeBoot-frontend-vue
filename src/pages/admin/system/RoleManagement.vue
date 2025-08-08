@@ -191,7 +191,7 @@ import {
   Delete,
   Key
 } from '@element-plus/icons-vue'
-import { getRoles, createRole, updateRole, deleteRole } from '@/api/role'
+import { getRoles, createRole, updateRole, deleteRole, saveRolePermissions } from '@/api/role'
 import { getAllPermissions } from '@/api/permission'
 import type { Role, Permission } from '@/types'
 
@@ -403,17 +403,24 @@ const handlePermissions = (role: Role) => {
   permissionDialogVisible.value = true
 }
 
-const handleSavePermissions = () => {
+const handleSavePermissions = async () => {
   if (!permissionTreeRef.value || !currentRole.value) return
 
   const checkedKeys = permissionTreeRef.value.getCheckedKeys()
   const halfCheckedKeys = permissionTreeRef.value.getHalfCheckedKeys()
   const allCheckedKeys = [...checkedKeys, ...halfCheckedKeys]
 
-  // 这里应该调用API保存角色权限
-  console.log('保存权限:', allCheckedKeys)
-  ElMessage.success('权限保存成功')
-  permissionDialogVisible.value = false
+  try {
+    // 调用API保存角色权限
+    await saveRolePermissions(currentRole.value.id, allCheckedKeys.map(String))
+    ElMessage.success('权限保存成功')
+    permissionDialogVisible.value = false
+    // 重新加载角色列表以更新权限信息
+    await loadRoles()
+  } catch (error) {
+    console.error('保存权限失败:', error)
+    ElMessage.error('保存权限失败')
+  }
 }
 
 const handleSizeChange = (size: number) => {

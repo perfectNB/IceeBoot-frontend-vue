@@ -1,6 +1,7 @@
 import { request } from '@/utils/request'
 import { isMockEnabled } from '@/config/mock'
-import { MockAuthService, MockUserService } from '@/mock/services'
+import { MockAuthService } from '@/mock/services/auth'
+import { MockUserService } from '@/mock/services/user'
 import type { LoginForm, LoginResponse, User } from '@/types'
 
 // 登录接口
@@ -8,14 +9,14 @@ export const login = async (data: LoginForm): Promise<LoginResponse> => {
   if (isMockEnabled()) {
     return await MockAuthService.login(data)
   } else {
-    const response = await request.post<LoginResponse>('/auth/login', data as unknown as Record<string, unknown>)
+    const response = await request.post<LoginResponse>('/api/v1/auth/login', data as unknown as Record<string, unknown>)
     return response.data
   }
 }
 
 // 登出接口
 export const logout = () => {
-  return request.post('/auth/logout')
+  return request.post('/api/v1/auth/logout')
 }
 
 // 获取用户信息
@@ -31,22 +32,22 @@ export const getUserInfo = async () => {
     const userInfo = await MockUserService.getUserInfo(userId)
     return { data: userInfo }
   } else {
-    const response = await request.get<User>('/auth/user')
+    const response = await request.get<User>('/api/v1/auth/user')
     return response
   }
 }
 
 // 刷新token
 export const refreshToken = (refreshToken: string) => {
-  return request.post<{ accessToken: string }>('/auth/refresh', { refreshToken })
+  return request.post<{ accessToken: string }>('/api/v1/auth/refresh', { refreshToken })
 }
 
 // 微信登录二维码
 export const getWechatQrCode = () => {
-  return request.get<{ qrCode: string; scene: string }>('/auth/wechat/qrcode')
+  return request.get<{ qrCode: string; scene: string }>('/api/v1/auth/wechat/qrcode')
 }
 
 // 检查微信登录状态
 export const checkWechatLogin = (scene: string) => {
-  return request.get<LoginResponse>(`/auth/wechat/check/${scene}`)
+  return request.get<LoginResponse>(`/api/v1/auth/wechat/check/${scene}`)
 }

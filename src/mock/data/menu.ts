@@ -16,11 +16,7 @@ export const mockMenus: MenuItem[] = [
     type: 'menu',
     sort: 1,
     requiresAuth: true,
-    meta: {
-      title: '工作台',
-      icon: 'DataAnalysis',
-      requiresAuth: true
-    }
+    permissions: ['dashboard:view']
   },
   {
     id: 2,
@@ -31,11 +27,7 @@ export const mockMenus: MenuItem[] = [
     type: 'menu',
     sort: 2,
     requiresAuth: true,
-    meta: {
-      title: '系统管理',
-      icon: 'Setting',
-      requiresAuth: true
-    },
+    permissions: ['system'],
     children: [
       {
         id: 21,
@@ -48,12 +40,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 1,
         requiresAuth: true,
-        meta: {
-          title: '用户管理',
-          icon: 'User',
-          requiresAuth: true,
-          permissions: ['system:user:view']
-        }
+        permissions: ['system:user']
       },
       {
         id: 22,
@@ -66,12 +53,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 2,
         requiresAuth: true,
-        meta: {
-          title: '角色管理',
-          icon: 'UserFilled',
-          requiresAuth: true,
-          permissions: ['system:role:view']
-        }
+        permissions: ['system:role']
       },
       {
         id: 23,
@@ -84,12 +66,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 3,
         requiresAuth: true,
-        meta: {
-          title: '权限管理',
-          icon: 'Key',
-          requiresAuth: true,
-          permissions: ['system:permission:view']
-        }
+        permissions: ['system:permission']
       },
       {
         id: 24,
@@ -102,12 +79,164 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 4,
         requiresAuth: true,
-        meta: {
-          title: '菜单管理',
-          icon: 'Menu',
-          requiresAuth: true,
-          permissions: ['system:menu:view']
-        }
+        permissions: ['system:menu']
+      }
+    ]
+  },
+  {
+    id: 3,
+    title: '系统监控',
+    name: 'SystemMonitor',
+    path: '/admin/monitor',
+    icon: 'Monitor',
+    type: 'menu',
+    sort: 3,
+    requiresAuth: true,
+    permissions: ['monitor'],
+    children: [
+      {
+        id: 31,
+        title: 'Redis管理',
+        name: 'RedisManagement',
+        path: '/admin/monitor/redis',
+        component: 'RedisManagement',
+        icon: 'Coin',
+        parentId: 3,
+        type: 'menu',
+        sort: 1,
+        requiresAuth: true,
+        permissions: ['monitor:redis']
+      },
+      {
+        id: 32,
+        title: '接口文档',
+        name: 'ApiDoc',
+        path: '',
+        component: 'ApiDoc',
+        icon: 'Document',
+        parentId: 3,
+        type: 'link',
+        sort: 2,
+        requiresAuth: true,
+        permissions: ['monitor:api-doc'],
+        link: 'https://www.baidu.com'
+      },
+      {
+        id: 33,
+        title: '定时任务',
+        name: 'ScheduledTask',
+        path: '/admin/monitor/task',
+        component: 'ScheduledTask',
+        icon: 'Timer',
+        parentId: 3,
+        type: 'menu',
+        sort: 3,
+        requiresAuth: true,
+        permissions: ['monitor:task']
+      },
+      {
+        id: 34,
+        title: '日志管理',
+        name: 'LogManagement',
+        path: '/admin/monitor/log',
+        component: 'LogManagement',
+        icon: 'Document',
+        parentId: 3,
+        type: 'menu',
+        sort: 4,
+        requiresAuth: true,
+        permissions: ['monitor:log']
+      }
+    ]
+  },
+  {
+    id: 4,
+    title: 'AI管理',
+    name: 'AIManagement',
+    path: '/admin/ai',
+    icon: 'Cpu',
+    type: 'menu',
+    sort: 4,
+    requiresAuth: true,
+    permissions: ['ai'],
+    children: [
+      {
+        id: 41,
+        title: '大模型管理',
+        name: 'LLMManagement',
+        path: '/admin/ai/llm',
+        component: 'LLMManagement',
+        icon: 'Cpu',
+        parentId: 4,
+        type: 'menu',
+        sort: 1,
+        requiresAuth: true,
+        permissions: ['ai:llm']
+      },
+      {
+        id: 42,
+        title: 'Agent管理',
+        name: 'AgentManagement',
+        path: '/admin/ai/agent',
+        component: 'AgentManagement',
+        icon: 'Avatar',
+        parentId: 4,
+        type: 'menu',
+        sort: 2,
+        requiresAuth: true,
+        permissions: ['ai:agent']
+      },
+      {
+        id: 43,
+        title: 'AI对话',
+        name: 'AIChat',
+        path: '/admin/ai/chat',
+        component: 'AIChat',
+        icon: 'ChatDotRound',
+        parentId: 4,
+        type: 'menu',
+        sort: 3,
+        requiresAuth: true,
+        permissions: ['ai:chat']
+      }
+    ]
+  },
+  {
+    id: 5,
+    title: '代码生成',
+    name: 'CodeGeneration',
+    path: '/admin/codegen',
+    icon: 'Document',
+    type: 'menu',
+    sort: 5,
+    requiresAuth: true,
+    permissions: ['codegen'],
+    children: [
+      {
+        id: 51,
+        title: '前端增删改查',
+        name: 'FrontendCrud',
+        path: '/admin/codegen/frontend',
+        component: 'FrontendCrud',
+        icon: 'Monitor',
+        parentId: 5,
+        type: 'menu',
+        sort: 1,
+        requiresAuth: true,
+        permissions: ['codegen:frontend']
+      },
+      {
+        id: 52,
+        title: '后端增删改查',
+        name: 'BackendCrud',
+        path: '/admin/codegen/backend',
+        component: 'BackendCrud',
+        icon: 'Setting',
+        parentId: 5,
+        type: 'menu',
+        sort: 2,
+        requiresAuth: true,
+        permissions: ['codegen:backend']
       }
     ]
   }

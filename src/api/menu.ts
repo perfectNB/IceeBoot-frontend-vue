@@ -1,7 +1,7 @@
 import { request } from '@/utils/request'
 import type { MenuItem } from '@/types'
 import { isMockEnabled } from '@/config/mock'
-import { MockMenuService } from '@/mock/services'
+import { MockMenuService } from '@/mock/services/menu'
 
 // 获取用户菜单
 export const getUserMenus = async (userId?: number): Promise<MenuItem[]> => {
@@ -10,7 +10,7 @@ export const getUserMenus = async (userId?: number): Promise<MenuItem[]> => {
     return await MockMenuService.getUserMenus(userId || 1)
   } else {
     // 调用真实API
-    const response = await request.get<MenuItem[]>('/menu/user')
+    const response = await request.get<MenuItem[]>('/api/v1/menus/user')
     return response.data
   }
 }
@@ -22,7 +22,7 @@ export const getAllMenus = async (): Promise<MenuItem[]> => {
     return await MockMenuService.getAllMenus()
   } else {
     // 调用真实API
-    const response = await request.get<MenuItem[]>('/menu/all')
+    const response = await request.get<MenuItem[]>('/api/v1/menus')
     return response.data
   }
 }
@@ -34,7 +34,7 @@ export const createMenu = async (data: Partial<MenuItem>): Promise<MenuItem> => 
     return await MockMenuService.createMenu(data)
   } else {
     // 调用真实API
-    const response = await request.post<MenuItem>('/menu', data)
+    const response = await request.post<MenuItem>('/api/v1/menus', data)
     return response.data
   }
 }
@@ -46,7 +46,7 @@ export const updateMenu = async (id: string | number, data: Partial<MenuItem>): 
     throw new Error('Mock模式下暂不支持更新菜单')
   } else {
     // 调用真实API
-    const response = await request.put<MenuItem>(`/menu/${id}`, data)
+    const response = await request.put<MenuItem>(`/api/v1/menus/${id}`, data)
     return response.data
   }
 }
@@ -58,7 +58,7 @@ export const deleteMenu = async (id: string | number): Promise<boolean> => {
     throw new Error('Mock模式下暂不支持删除菜单')
   } else {
     // 调用真实API
-    await request.delete(`/menu/${id}`)
+    await request.delete(`/api/v1/menus/${id}`)
     return true
   }
 }

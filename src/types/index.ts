@@ -37,11 +37,12 @@ export interface MenuItem {
   icon?: string
   parentId?: string | number | null
   sort?: number
-  type: 'menu' | 'button' | 'api'
+  type: 'menu' | 'button' | 'api' | 'link'
   hidden?: boolean
   keepAlive?: boolean
   requiresAuth?: boolean
   permissions?: string[]
+  link?: string
   children?: MenuItem[]
   meta?: {
     title: string

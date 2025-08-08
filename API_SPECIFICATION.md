@@ -74,6 +74,39 @@
 | PUT | `/api/v1/menus/{id}` | 更新菜单信息 |
 | DELETE | `/api/v1/menus/{id}` | 删除菜单 |
 
+### Redis管理 (Redis)
+
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| GET | `/api/v1/redis/keys` | 获取Redis键列表 |
+| GET | `/api/v1/redis/keys/{key}` | 获取Redis键详情 |
+| DELETE | `/api/v1/redis/keys/{key}` | 删除Redis键 |
+| POST | `/api/v1/redis/keys/batch-delete` | 批量删除Redis键 |
+
+### 定时任务管理 (Tasks)
+
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| GET | `/api/v1/tasks` | 获取定时任务列表 |
+| GET | `/api/v1/tasks/{id}` | 获取定时任务详情 |
+| POST | `/api/v1/tasks` | 创建定时任务 |
+| PUT | `/api/v1/tasks/{id}` | 更新定时任务 |
+| DELETE | `/api/v1/tasks/{id}` | 删除定时任务 |
+| POST | `/api/v1/tasks/{id}/start` | 启动定时任务 |
+| POST | `/api/v1/tasks/{id}/stop` | 停止定时任务 |
+| POST | `/api/v1/tasks/{id}/execute` | 立即执行定时任务 |
+
+### 日志管理 (Logs)
+
+| 方法 | 路径 | 描述 |
+|------|------|------|
+| GET | `/api/v1/logs` | 获取系统日志列表 |
+| GET | `/api/v1/logs/{id}` | 获取日志详情 |
+| DELETE | `/api/v1/logs/{id}` | 删除单条日志 |
+| POST | `/api/v1/logs/batch-delete` | 批量删除日志 |
+| DELETE | `/api/v1/logs/clear` | 清空所有日志 |
+| GET | `/api/v1/logs/export` | 导出日志文件 |
+
 ## 环境配置
 
 ### 环境切换

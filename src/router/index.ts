@@ -13,6 +13,10 @@ const UserManagement = () => import('@/pages/admin/system/UserManagement.vue')
 const RoleManagement = () => import('@/pages/admin/system/RoleManagement.vue')
 const PermissionManagement = () => import('@/pages/admin/system/PermissionManagement.vue')
 const MenuManagement = () => import('@/pages/admin/system/MenuManagement.vue')
+const RedisManagement = () => import('@/pages/admin/monitor/RedisManagement.vue')
+const TaskManagement = () => import('@/pages/admin/monitor/TaskManagement.vue')
+const LogManagement = () => import('@/pages/admin/monitor/LogManagement.vue')
+const ApiDocumentation = () => import('@/pages/admin/monitor/ApiDocumentation.vue')
 
 // 定义路由
 const routes: RouteRecordRaw[] = [
@@ -102,6 +106,63 @@ const routes: RouteRecordRaw[] = [
               icon: 'Menu',
               requiresAuth: true,
               permissions: ['system:menu']
+            }
+          }
+        ]
+      },
+      {
+        path: 'monitor',
+        name: 'MonitorManagement',
+        redirect: '/admin/monitor/redis',
+        meta: {
+          title: '系统监控',
+          icon: 'Monitor',
+          requiresAuth: true,
+          permissions: ['monitor']
+        },
+        children: [
+          {
+            path: 'redis',
+            name: 'RedisManagement',
+            component: RedisManagement,
+            meta: {
+              title: 'Redis管理',
+              icon: 'Database',
+              requiresAuth: true,
+              permissions: ['monitor:redis']
+            }
+          },
+          {
+            path: 'task',
+            name: 'TaskManagement',
+            component: TaskManagement,
+            meta: {
+              title: '定时任务',
+              icon: 'Timer',
+              requiresAuth: true,
+              permissions: ['monitor:task']
+            }
+          },
+          {
+            path: 'log',
+            name: 'LogManagement',
+            component: LogManagement,
+            meta: {
+              title: '日志管理',
+              icon: 'Document',
+              requiresAuth: true,
+              permissions: ['monitor:log']
+            }
+          },
+          {
+            path: 'api-doc',
+            name: 'ApiDocumentation',
+            component: ApiDocumentation,
+            meta: {
+              title: '接口文档',
+              icon: 'Link',
+              requiresAuth: true,
+              permissions: ['monitor:api-doc']
             }
           }
         ]

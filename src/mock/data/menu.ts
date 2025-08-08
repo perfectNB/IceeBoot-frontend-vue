@@ -82,5 +82,71 @@ export const mockMenus: MenuItem[] = [
         permissions: ['system:menu']
       }
     ]
+  },
+  {
+    id: 3,
+    title: '系统监控',
+    name: 'SystemMonitor',
+    path: '/admin/monitor',
+    icon: 'Monitor',
+    type: 'menu',
+    sort: 3,
+    requiresAuth: true,
+    permissions: ['monitor'],
+    children: [
+      {
+        id: 31,
+        title: 'Redis管理',
+        name: 'RedisManagement',
+        path: '/admin/monitor/redis',
+        component: 'RedisManagement',
+        icon: 'Coin',
+        parentId: 3,
+        type: 'menu',
+        sort: 1,
+        requiresAuth: true,
+        permissions: ['monitor:redis']
+      },
+      {
+        id: 32,
+        title: '接口文档',
+        name: 'ApiDoc',
+        path: '/admin/monitor/api-doc',
+        component: 'ApiDoc',
+        icon: 'Document',
+        parentId: 3,
+        type: 'link',
+        sort: 2,
+        requiresAuth: true,
+        permissions: ['monitor:api-doc'],
+        link: 'https://www.baidu.com'
+      },
+      {
+        id: 33,
+        title: '定时任务',
+        name: 'ScheduledTask',
+        path: '/admin/monitor/task',
+        component: 'ScheduledTask',
+        icon: 'Timer',
+        parentId: 3,
+        type: 'menu',
+        sort: 3,
+        requiresAuth: true,
+        permissions: ['monitor:task']
+      },
+      {
+        id: 34,
+        title: '日志管理',
+        name: 'LogManagement',
+        path: '/admin/monitor/log',
+        component: 'LogManagement',
+        icon: 'Document',
+        parentId: 3,
+        type: 'menu',
+        sort: 4,
+        requiresAuth: true,
+        permissions: ['monitor:log']
+      }
+    ]
   }
 ]

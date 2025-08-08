@@ -16,11 +16,7 @@ export const mockMenus: MenuItem[] = [
     type: 'menu',
     sort: 1,
     requiresAuth: true,
-    meta: {
-      title: '工作台',
-      icon: 'DataAnalysis',
-      requiresAuth: true
-    }
+    permissions: ['dashboard:view']
   },
   {
     id: 2,
@@ -31,11 +27,7 @@ export const mockMenus: MenuItem[] = [
     type: 'menu',
     sort: 2,
     requiresAuth: true,
-    meta: {
-      title: '系统管理',
-      icon: 'Setting',
-      requiresAuth: true
-    },
+    permissions: ['system'],
     children: [
       {
         id: 21,
@@ -48,12 +40,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 1,
         requiresAuth: true,
-        meta: {
-          title: '用户管理',
-          icon: 'User',
-          requiresAuth: true,
-          permissions: ['system:user:view']
-        }
+        permissions: ['system:user']
       },
       {
         id: 22,
@@ -66,12 +53,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 2,
         requiresAuth: true,
-        meta: {
-          title: '角色管理',
-          icon: 'UserFilled',
-          requiresAuth: true,
-          permissions: ['system:role:view']
-        }
+        permissions: ['system:role']
       },
       {
         id: 23,
@@ -84,12 +66,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 3,
         requiresAuth: true,
-        meta: {
-          title: '权限管理',
-          icon: 'Key',
-          requiresAuth: true,
-          permissions: ['system:permission:view']
-        }
+        permissions: ['system:permission']
       },
       {
         id: 24,
@@ -102,12 +79,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 4,
         requiresAuth: true,
-        meta: {
-          title: '菜单管理',
-          icon: 'Menu',
-          requiresAuth: true,
-          permissions: ['system:menu:view']
-        }
+        permissions: ['system:menu']
       }
     ]
   }

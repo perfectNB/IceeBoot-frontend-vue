@@ -12,6 +12,7 @@ const Dashboard = () => import('@/pages/admin/AdminDashboard.vue')
 const UserManagement = () => import('@/pages/admin/system/UserManagement.vue')
 const RoleManagement = () => import('@/pages/admin/system/RoleManagement.vue')
 const PermissionManagement = () => import('@/pages/admin/system/PermissionManagement.vue')
+const MenuManagement = () => import('@/pages/admin/system/MenuManagement.vue')
 
 // 定义路由
 const routes: RouteRecordRaw[] = [
@@ -43,7 +44,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '工作台',
           icon: 'DataAnalysis',
-          requiresAuth: true
+          requiresAuth: true,
+          permissions: ['dashboard:view']
         }
       },
       {
@@ -54,7 +56,8 @@ const routes: RouteRecordRaw[] = [
         meta: {
           title: '系统管理',
           icon: 'Setting',
-          requiresAuth: true
+          requiresAuth: true,
+          permissions: ['system']
         },
         children: [
           {
@@ -65,7 +68,7 @@ const routes: RouteRecordRaw[] = [
               title: '用户管理',
               icon: 'User',
               requiresAuth: true,
-              permissions: ['system:user:view']
+              permissions: ['system:user']
             }
           },
           {
@@ -76,7 +79,7 @@ const routes: RouteRecordRaw[] = [
               title: '角色管理',
               icon: 'UserFilled',
               requiresAuth: true,
-              permissions: ['system:role:view']
+              permissions: ['system:role']
             }
           },
           {
@@ -87,7 +90,18 @@ const routes: RouteRecordRaw[] = [
               title: '权限管理',
               icon: 'Lock',
               requiresAuth: true,
-              permissions: ['system:permission:view']
+              permissions: ['system:permission']
+            }
+          },
+          {
+            path: 'menu',
+            name: 'MenuManagement',
+            component: MenuManagement,
+            meta: {
+              title: '菜单管理',
+              icon: 'Menu',
+              requiresAuth: true,
+              permissions: ['system:menu']
             }
           }
         ]

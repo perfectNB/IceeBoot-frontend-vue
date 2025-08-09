@@ -22,6 +22,7 @@ const AgentManagement = () => import('@/pages/admin/ai/AgentManagement.vue')
 const ChatInterface = () => import('@/pages/admin/ai/ChatInterface.vue')
 const FrontendCodegen = () => import('@/pages/admin/codegen/FrontendCodegen.vue')
 const BackendCodegen = () => import('@/pages/admin/codegen/BackendCodegen.vue')
+const Student = () => import('@/pages/admin/codegen/Student.vue')
 
 // 定义路由
 const routes: RouteRecordRaw[] = [
@@ -250,9 +251,20 @@ const routes: RouteRecordRaw[] = [
               requiresAuth: true,
               permissions: ['codegen:backend']
             }
+          },
+          {
+            path: 'student',
+            name: 'Student',
+            component: Student,
+            meta: {
+              title: '前端生成测试代码',
+              icon: 'User',
+              requiresAuth: true,
+              permissions: ['codegen:student']
+            }
           }
         ]
-      }
+      },
     ]
   },
   {

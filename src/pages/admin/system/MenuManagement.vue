@@ -5,26 +5,62 @@
       <p>管理系统菜单结构和权限配置</p>
     </div>
 
-    <div class="content-card">
-      <div class="toolbar">
-        <el-button 
-          type="primary" 
-          :icon="Plus" 
-          @click="handleAdd"
-          v-if="hasPermission('system:menu:create')"
-        >
-          新增菜单
-        </el-button>
-        <el-button 
-          :icon="Refresh" 
-          @click="loadMenus"
-        >
-          刷新
-        </el-button>
-      </div>
+    <!-- 操作区域 -->
+    <div class="action-section">
+      <el-button 
+        type="primary" 
+        :icon="Plus" 
+        @click="handleAdd"
+        v-if="hasPermission('system:menu:create')"
+      >
+        新增菜单
+      </el-button>
+      <el-button 
+        :icon="Refresh" 
+        @click="loadMenus"
+      >
+        刷新
+      </el-button>
+    </div>
 
+    <!-- 搜索区域 -->
+    <div class="search-section">
+      <el-form :model="searchForm" :inline="true">
+        <el-form-item label="菜单名称">
+          <el-input
+            v-model="searchForm.title"
+            placeholder="请输入菜单名称"
+            clearable
+            style="width: 200px"
+          />
+        </el-form-item>
+        <el-form-item label="类型">
+          <el-select
+            v-model="searchForm.type"
+            placeholder="请选择类型"
+            clearable
+            style="width: 150px"
+          >
+            <el-option label="菜单" value="menu" />
+            <el-option label="按钮" value="button" />
+            <el-option label="链接" value="link" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :icon="Search" @click="handleSearch">
+            搜索
+          </el-button>
+          <el-button :icon="Refresh" @click="handleReset">
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+
+    <!-- 表格区域 -->
+    <div class="table-section">
       <el-table 
-        :data="menuList" 
+        :data="filteredMenuList" 
         v-loading="loading"
         row-key="id"
         default-expand-all
@@ -155,7 +191,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox, type FormRules } from 'element-plus'
-import { Plus, Refresh, Edit, Delete } from '@element-plus/icons-vue'
+import { Plus, Refresh, Edit, Delete, Search } from '@element-plus/icons-vue'
 import type { MenuItem, Permission } from '@/types'
 import { getAllMenus, createMenu, updateMenu, deleteMenu } from '@/api/menu'
 import { getAllPermissions } from '@/api/permission'
@@ -169,6 +205,12 @@ const submitting = ref(false)
 const dialogVisible = ref(false)
 const menuList = ref<MenuItem[]>([])
 const permissionOptions = ref<Permission[]>([])
+
+// 搜索表单
+const searchForm = reactive({
+  title: '',
+  type: ''
+})
 
 // 表单相关
 const formRef = ref()
@@ -205,6 +247,23 @@ const formRules = computed((): FormRules => {
 // 计算属性
 const dialogTitle = ref('新增菜单')
 const isEdit = ref(false)
+
+// 过滤菜单列表
+const filteredMenuList = computed(() => {
+  let filtered = menuList.value
+  
+  if (searchForm.title) {
+    filtered = filtered.filter(menu => 
+      menu.title.toLowerCase().includes(searchForm.title.toLowerCase())
+    )
+  }
+  
+  if (searchForm.type) {
+    filtered = filtered.filter(menu => menu.type === searchForm.type)
+  }
+  
+  return filtered
+})
 
 // 权限检查
 const hasPermission = (permission: string) => {
@@ -332,6 +391,17 @@ const getTypeText = (type: string) => {
   }
 }
 
+// 搜索处理
+const handleSearch = () => {
+  // 搜索逻辑已在计算属性中处理
+}
+
+// 重置搜索
+const handleReset = () => {
+  searchForm.title = ''
+  searchForm.type = ''
+}
+
 // 重置表单
 const resetForm = () => {
   Object.assign(formData, {
@@ -376,21 +446,35 @@ onMounted(() => {
   font-size: 14px;
 }
 
-.content-card {
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+.action-section {
+  margin-bottom: 20px;
 }
 
-.toolbar {
+.search-section {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin-bottom: 20px;
-  display: flex;
-  gap: 12px;
+}
+
+.table-section {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .menu-icon {
   margin-right: 8px;
   color: #409eff;
+}
+
+:deep(.el-table .el-table__cell) {
+  padding: 12px 0;
+}
+
+:deep(.el-button + .el-button) {
+  margin-left: 8px;
 }
 </style>

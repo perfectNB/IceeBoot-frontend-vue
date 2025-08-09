@@ -1096,5 +1096,17 @@ export const mockPermissions: Permission[] = [
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
-  }
+  },
+  {
+    id: '92',
+    name: '前端生成测试代码',
+    code: 'codegen:student',
+    type: 'menu',
+    parentId: '85',
+    path: '/admin/codegen/student',
+    description: '前端生成测试代码',
+    status: 'active',
+    createTime: '2024-01-01 00:00:00',
+    updateTime: '2024-01-01 00:00:00'
+  },
 ]

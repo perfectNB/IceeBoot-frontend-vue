@@ -5,45 +5,43 @@
       <p class="page-description">管理AI大模型配置和API密钥</p>
     </div>
     
-    <!-- 搜索和操作栏 -->
-    <div class="toolbar">
-      <div class="search-section">
-        <el-input
-          v-model="searchForm.keyword"
-          placeholder="搜索模型名称或备注"
-          style="width: 300px"
-          clearable
-          @keyup.enter="handleSearch"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-
-        <el-button type="primary" @click="handleSearch">
-          <el-icon><Search /></el-icon>
-          搜索
-        </el-button>
-        <el-button @click="handleReset">
-          <el-icon><Refresh /></el-icon>
-          重置
-        </el-button>
-      </div>
-      
-      <div class="action-section">
-        <el-button type="primary" @click="handleCreate">
-          <el-icon><Plus /></el-icon>
-          新建模型
-        </el-button>
-        <el-button @click="handleExport">
-          <el-icon><Download /></el-icon>
-          导出
-        </el-button>
-      </div>
+    <!-- 操作区域 -->
+    <div class="action-section">
+      <el-button type="primary" @click="handleCreate">
+        <el-icon><Plus /></el-icon>
+        新建模型
+      </el-button>
+      <el-button @click="handleExport">
+        <el-icon><Download /></el-icon>
+        导出
+      </el-button>
     </div>
     
-    <!-- 模型表格 -->
-    <div class="table-container">
+    <!-- 搜索区域 -->
+    <div class="search-section">
+      <el-form :model="searchForm" :inline="true">
+        <el-form-item label="关键词">
+          <el-input
+            v-model="searchForm.keyword"
+            placeholder="请输入模型名称或备注"
+            clearable
+            style="width: 300px"
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :icon="Search" @click="handleSearch">
+            搜索
+          </el-button>
+          <el-button :icon="Refresh" @click="handleReset">
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+    
+    <!-- 表格区域 -->
+    <div class="table-section">
       <el-table
         :data="tableData"
         v-loading="loading"
@@ -104,7 +102,7 @@
       </el-table>
       
       <!-- 分页 -->
-      <div class="pagination-container">
+      <div class="pagination-section">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.size"
@@ -621,90 +619,86 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .llm-management {
   padding: 20px;
-  
-  .page-header {
-    margin-bottom: 20px;
-    
-    .page-title {
-      font-size: 24px;
-      font-weight: 600;
-      color: #303133;
-      margin: 0 0 8px 0;
-    }
-    
-    .page-description {
-      color: #606266;
-      margin: 0;
-    }
-  }
-  
-  .toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding: 16px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    
-    .search-section {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-    
-    .action-section {
-      display: flex;
-      gap: 12px;
-    }
-  }
-  
-  .table-container {
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    
-    .pagination-container {
-      padding: 20px;
-      display: flex;
-      justify-content: flex-end;
-    }
-  }
-  
-  .key-count {
-    font-weight: 600;
-    color: #409eff;
-    font-size: 14px;
-  }
-  
-  .key-management {
-    .key-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 16px;
-      
-      h3 {
-        margin: 0;
-        color: #303133;
-      }
-    }
-    
-    .key-display {
-      font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-      font-size: 12px;
-      color: #606266;
-    }
-  }
-  
-  .dialog-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-  }
+}
+
+.page-header {
+  margin-bottom: 20px;
+}
+
+.page-header h1 {
+  margin: 0 0 8px 0;
+  color: #303133;
+}
+
+.page-header p {
+  margin: 0;
+  color: #909399;
+  font-size: 14px;
+}
+
+.action-section {
+  margin-bottom: 20px;
+}
+
+.search-section {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.table-section {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pagination-section {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.key-count {
+  font-weight: 600;
+  color: #409eff;
+  font-size: 14px;
+}
+
+.key-management .key-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.key-management .key-header h3 {
+  margin: 0;
+  color: #303133;
+}
+
+.key-management .key-display {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  color: #606266;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+:deep(.el-table .el-table__cell) {
+  padding: 12px 0;
+}
+
+:deep(.el-button + .el-button) {
+  margin-left: 8px;
 }
 </style>

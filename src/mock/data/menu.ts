@@ -237,7 +237,21 @@ export const mockMenus: MenuItem[] = [
         sort: 2,
         requiresAuth: true,
         permissions: ['codegen:backend']
+      },
+      {
+        id: 52,
+        title: '前端生成测试代码',
+        name: 'Student',
+        path: '/admin/codegen/student',
+        component: 'Student',
+        icon: 'Setting',
+        parentId: 5,
+        type: 'menu',
+        sort: 3,
+        requiresAuth: true,
+        permissions: ['codegen:student']
       }
     ]
-  }
+  },
+
 ]

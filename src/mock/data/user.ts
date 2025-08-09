@@ -76,7 +76,8 @@ export const mockUsers: User[] = [
       'codegen:frontend:generate',
       'codegen:backend',
       'codegen:backend:view',
-      'codegen:backend:generate'
+      'codegen:backend:generate',
+      'codegen:student'
     ],
     status: 'active',
     createTime: '2024-01-01 00:00:00',

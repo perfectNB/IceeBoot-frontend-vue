@@ -43,54 +43,52 @@
       </template>
 
       <div class="fields-container">
-        <div class="field-header">
-          <el-row :gutter="10">
-            <el-col :span="2"><span class="header-label">中文名</span></el-col>
-            <el-col :span="2"><span class="header-label">英文名</span></el-col>
-            <el-col :span="2"><span class="header-label">可搜索</span></el-col>
-            <el-col :span="2"><span class="header-label">必填</span></el-col>
-            <el-col :span="2"><span class="header-label">可编辑</span></el-col>
-            <el-col :span="2"><span class="header-label">表格显示</span></el-col>
-            <el-col :span="3"><span class="header-label">表单类型</span></el-col>
-            <el-col :span="3"><span class="header-label">例值</span></el-col>
-            <el-col :span="2"><span class="header-label">排序</span></el-col>
-            <el-col :span="2"><span class="header-label">操作</span></el-col>
-          </el-row>
-        </div>
-        <div v-for="(field, index) in fields" :key="index" class="field-item">
-          <el-row :gutter="10">
-            <el-col :span="2">
-              <el-input v-model="field.chineseName" placeholder="中文名" size="small" />
-            </el-col>
-            <el-col :span="2">
-              <el-input v-model="field.englishName" placeholder="英文名" size="small" />
-            </el-col>
-            <el-col :span="2">
-              <el-select v-model="field.searchable" placeholder="可搜索" size="small">
+        <el-table :data="fields" border stripe class="fields-table">
+          <el-table-column label="中文名" width="130">
+            <template #default="{ row }">
+              <el-input v-model="row.chineseName" placeholder="中文名" size="small" />
+            </template>
+          </el-table-column>
+          <el-table-column label="英文名" width="130">
+            <template #default="{ row }">
+              <el-input v-model="row.englishName" placeholder="英文名" size="small" />
+            </template>
+          </el-table-column>
+          <el-table-column label="可搜索" width="100">
+            <template #default="{ row }">
+              <el-select v-model="row.searchable" placeholder="可搜索" size="small">
                 <el-option label="是" :value="true" />
                 <el-option label="否" :value="false" />
               </el-select>
-            </el-col>
-            <el-col :span="2">
-              <el-select v-model="field.required" placeholder="必填" size="small">
+            </template>
+          </el-table-column>
+          <el-table-column label="必填" width="80">
+            <template #default="{ row }">
+              <el-select v-model="row.required" placeholder="必填" size="small">
                 <el-option label="是" :value="true" />
                 <el-option label="否" :value="false" />
               </el-select>
-            </el-col>
-            <el-col :span="2">
-              <el-select v-model="field.canAddEdit" placeholder="可编辑" size="small">
+            </template>
+          </el-table-column>
+          <el-table-column label="可编辑" width="80">
+            <template #default="{ row }">
+              <el-select v-model="row.canAddEdit" placeholder="可编辑" size="small">
                 <el-option label="是" :value="true" />
                 <el-option label="否" :value="false" />
               </el-select>
-            </el-col>
-            <el-col :span="2">
-              <el-select v-model="field.showInTable" placeholder="表格显示" size="small">
+            </template>
+          </el-table-column>
+          <el-table-column label="表格显示" width="90">
+            <template #default="{ row }">
+              <el-select v-model="row.showInTable" placeholder="表格显示" size="small">
                 <el-option label="是" :value="true" />
                 <el-option label="否" :value="false" />
               </el-select>
-            </el-col>
-            <el-col :span="3">
-              <el-select v-model="field.formType" placeholder="表单类型" size="small">
+            </template>
+          </el-table-column>
+          <el-table-column label="表单类型" width="120">
+            <template #default="{ row }">
+              <el-select v-model="row.formType" placeholder="表单类型" size="small">
                 <el-option label="输入框" value="input" />
                 <el-option label="数字" value="number" />
                 <el-option label="文本域" value="textarea" />
@@ -99,18 +97,24 @@
                 <el-option label="日期" value="date" />
                 <el-option label="日期时间" value="datetime" />
               </el-select>
-            </el-col>
-            <el-col :span="3">
-              <el-input v-model="field.exampleValue" placeholder="例值" size="small" />
-            </el-col>
-            <el-col :span="2">
-              <el-input-number v-model="field.sortValue" :min="0" placeholder="排序" size="small" />
-            </el-col>
-            <el-col :span="2">
-              <el-button type="danger" size="small" @click="removeField(index)">删除</el-button>
-            </el-col>
-          </el-row>
-        </div>
+            </template>
+          </el-table-column>
+          <el-table-column label="例值" width="120">
+            <template #default="{ row }">
+              <el-input v-model="row.exampleValue" placeholder="例值" size="small" />
+            </template>
+          </el-table-column>
+          <el-table-column label="排序" width="150">
+            <template #default="{ row }">
+              <el-input-number v-model="row.sortValue" :min="0" placeholder="排序" size="small" />
+            </template>
+          </el-table-column>
+          <el-table-column label="操作" width="80" fixed="right">
+            <template #default="{ $index }">
+              <el-button type="danger" size="small" @click="removeField($index)">删除</el-button>
+            </template>
+          </el-table-column>
+        </el-table>
       </div>
     </el-card>
 
@@ -236,7 +240,7 @@ const generatedCode = reactive<GeneratedCode>({
   types: ''
 })
 
-const activeCodeType = ref('vue')
+const activeCodeType = ref('types')
 const jsonDialogVisible = ref(false)
 const jsonInput = ref('')
 
@@ -246,11 +250,11 @@ const apiPrefix = computed(() => {
 })
 
 const codeTypes = [
-  { key: 'vue', label: 'Vue组件' },
+  { key: 'types', label: '类型定义' },
   { key: 'mockData', label: 'Mock数据' },
   { key: 'mockService', label: 'Mock服务' },
   { key: 'api', label: 'API接口' },
-  { key: 'types', label: '类型定义' }
+  { key: 'vue', label: 'Vue组件' }
 ]
 
 // 方法
@@ -347,7 +351,35 @@ const copyCode = () => {
   const code = getCurrentCode()
   if (code) {
     navigator.clipboard.writeText(code)
-    ElMessage.success('代码已复制到剪贴板')
+
+    // 根据不同类型显示不同提示
+    if (activeCodeType.value === 'api') {
+      ElMessage({
+        message: '代码已复制到剪贴板，新建文件在/api下后，要在 /api/index.ts 暴露接口',
+        type: 'success',
+        duration: 3000
+      })
+    } else if (activeCodeType.value === 'mockService') {
+      ElMessage({
+        message: '代码已复制到剪贴板，新建文件在/services，要在 /services/index.ts 暴露接口',
+        type: 'success',
+        duration: 3000
+      })
+    } else if (activeCodeType.value === 'mockData') {
+      ElMessage({
+        message: '代码已复制到剪贴板，新建文件在/data，要在 /data/index.ts 暴露接口',
+        type: 'success',
+        duration: 3000
+      })
+    }else if (activeCodeType.value === 'types') {
+      ElMessage({
+        message: '代码已复制到剪贴板，要在 /types/index.ts 填写实体类',
+        type: 'success',
+        duration: 3000
+      })
+    } else {
+      ElMessage.success('代码已复制到剪贴板')
+    }
   } else {
     ElMessage.error('没有可复制的代码')
   }
@@ -361,32 +393,41 @@ const generateVueCode = (): string => {
   const entityNameLower = entityName.toLowerCase()
   const searchableFields = fields.value.filter(f => f.searchable)
   const tableFields = fields.value.filter(f => f.showInTable)
+  const editableFields = fields.value.filter(f => f.canAddEdit)
 
-  const searchSection = searchableFields.map(field => {
+  // 生成搜索字段，超过3个时换行
+  const searchFieldsHtml = searchableFields.map(field => {
     if (field.formType === 'input') {
-      return `        <el-input
-          v-model="searchForm.${field.englishName}"
-          placeholder="搜索${field.chineseName}"
-          style="width: 200px"
-          clearable
-        />`
+      return `        <el-form-item>
+          <el-input
+            v-model="searchForm.${field.englishName}"
+            placeholder="搜索${field.chineseName}"
+            style="width: 200px"
+            clearable
+          />
+        </el-form-item>`
     } else if (field.formType === 'select') {
-      return `        <el-select
-          v-model="searchForm.${field.englishName}"
-          placeholder="请选择${field.chineseName}"
-          style="width: 200px"
-          clearable
-        >
-          <el-option label="选项1" value="option1" />
-          <el-option label="选项2" value="option2" />
-        </el-select>`
+      return `        <el-form-item>
+          <el-select
+            v-model="searchForm.${field.englishName}"
+            placeholder="请选择${field.chineseName}"
+            style="width: 200px"
+            clearable
+          >
+            <el-option label="选项1" value="option1" />
+            <el-option label="选项2" value="option2" />
+          </el-select>
+        </el-form-item>`
     }
     return ''
-  }).join('\n')
+  }).filter(Boolean)
+
+  // 生成搜索字段HTML
+  const searchSection = searchFieldsHtml.length > 0 ? searchFieldsHtml.join('\n') : ''
 
   const tableColumns = tableFields.map(field => {
     if (field.formType === 'switch') {
-      return `        <el-table-column label="${field.chineseName}" width="80">
+      return `        <el-table-column label="${field.chineseName}" width="100">
           <template #default="{ row }">
             <el-switch
               v-model="row.${field.englishName}"
@@ -401,15 +442,15 @@ const generateVueCode = (): string => {
     }
   }).join('\n')
 
-  const createButton = selectedApis.value.includes('create') ? `        <el-button type="primary" @click="handleCreate">
-          <el-icon><Plus /></el-icon>
-          新建${configForm.pageTitle.replace('管理', '')}
+  const createButton = selectedApis.value.includes('create') ? `        <el-button type="primary" :icon="Plus" @click="handleCreate">
+          新增${configForm.pageTitle.replace('管理', '')}
         </el-button>` : ''
 
   const actionButtons = [
     selectedApis.value.includes('update') ? `            <el-button
-              type="primary"
+              type="warning"
               size="small"
+              :icon="Edit"
               @click="handleEdit(row)"
             >
               编辑
@@ -417,6 +458,7 @@ const generateVueCode = (): string => {
     selectedApis.value.includes('delete') ? `            <el-button
               type="danger"
               size="small"
+              :icon="Delete"
               @click="handleDelete(row)"
             >
               删除
@@ -432,42 +474,138 @@ const generateVueCode = (): string => {
     return ''
   }).filter(Boolean).join(',\n  ')
 
+  // 生成表单字段
+  const formFields = editableFields.map(field => {
+    const isRequired = field.required ? ' prop="' + field.englishName + '"' : ''
+
+    if (field.formType === 'input') {
+      return `        <el-form-item label="${field.chineseName}"${isRequired}>
+          <el-input
+            v-model="formData.${field.englishName}"
+            placeholder="请输入${field.chineseName}"
+          />
+        </el-form-item>`
+    } else if (field.formType === 'number') {
+      return `        <el-form-item label="${field.chineseName}"${isRequired}>
+          <el-input-number
+            v-model="formData.${field.englishName}"
+            placeholder="请输入${field.chineseName}"
+            style="width: 100%"
+          />
+        </el-form-item>`
+    } else if (field.formType === 'textarea') {
+      return `        <el-form-item label="${field.chineseName}"${isRequired}>
+          <el-input
+            v-model="formData.${field.englishName}"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入${field.chineseName}"
+          />
+        </el-form-item>`
+    } else if (field.formType === 'select') {
+      return `        <el-form-item label="${field.chineseName}"${isRequired}>
+          <el-select
+            v-model="formData.${field.englishName}"
+            placeholder="请选择${field.chineseName}"
+            style="width: 100%"
+          >
+            <el-option label="选项1" value="option1" />
+            <el-option label="选项2" value="option2" />
+          </el-select>
+        </el-form-item>`
+    } else if (field.formType === 'switch') {
+      return `        <el-form-item label="${field.chineseName}"${isRequired}>
+          <el-switch
+            v-model="formData.${field.englishName}"
+            :active-value="true"
+            :inactive-value="false"
+          />
+        </el-form-item>`
+    } else if (field.formType === 'date') {
+      return `        <el-form-item label="${field.chineseName}"${isRequired}>
+          <el-date-picker
+            v-model="formData.${field.englishName}"
+            type="date"
+            placeholder="请选择${field.chineseName}"
+            style="width: 100%"
+          />
+        </el-form-item>`
+    } else if (field.formType === 'datetime') {
+      return `        <el-form-item label="${field.chineseName}"${isRequired}>
+          <el-date-picker
+            v-model="formData.${field.englishName}"
+            type="datetime"
+            placeholder="请选择${field.chineseName}"
+            style="width: 100%"
+          />
+        </el-form-item>`
+    }
+    return ''
+  }).join('\n')
+
+  // 生成表单验证规则
+  const formRules = editableFields.filter(f => f.required).map(field => {
+    return `  ${field.englishName}: [
+    { required: true, message: '请输入${field.chineseName}', trigger: 'blur' }
+  ]`
+  }).join(',\n')
+
+  // 生成表单数据初始化
+  const formDataInit = editableFields.map(field => {
+    let defaultValue = "''"
+    if (field.formType === 'number') defaultValue = '0'
+    if (field.formType === 'switch') defaultValue = 'false'
+    return `  ${field.englishName}: ${defaultValue}`
+  }).join(',\n')
+
   const searchFormFields = searchableFields.map(field => `  ${field.englishName}: ''`).join(',\n')
 
   return `<template>
   <div class="${entityNameLower}-management">
     <div class="page-header">
-      <h1 class="page-title">${configForm.pageTitle}</h1>
-      <p class="page-description">${configForm.pageDescription}</p>
+      <h1>${configForm.pageTitle}</h1>
+      <p>${configForm.pageDescription}</p>
     </div>
 
-    <!-- 搜索和操作栏 -->
-    <div class="toolbar">
-      <div class="search-section">
-${searchSection}
-        <el-button type="primary" @click="handleSearch">
-          <el-icon><Search /></el-icon>
-          搜索
-        </el-button>
-        <el-button @click="handleReset">
-          <el-icon><Refresh /></el-icon>
-          重置
-        </el-button>
-      </div>
-
-      <div class="action-section">
+    <!-- 操作按钮区域 -->
+    <div class="action-section">
 ${createButton}
-        <el-button @click="handleExport">
-          <el-icon><Download /></el-icon>
-          导出
-        </el-button>
-      </div>
+      <el-button
+        type="danger"
+        :disabled="selectedRows.length === 0"
+        @click="handleBatchDelete"
+      >
+        <el-icon><Delete /></el-icon>
+        批量删除
+      </el-button>
+      <el-button @click="handleExport">
+        <el-icon><Download /></el-icon>
+        导出
+      </el-button>
+    </div>
+
+    <!-- 搜索区域 -->
+    <div class="search-section">
+      <el-form :model="searchForm" inline>
+${searchSection}
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><Refresh /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
     </div>
 
     <!-- 数据表格 -->
-    <div class="table-container">
+    <div class="table-section">
       <el-table
-        :data="tableData"
+        ref="tableRef"
+        :data="${entityNameLower}List"
         v-loading="loading"
         stripe
         border
@@ -483,24 +621,54 @@ ${actionButtons}
         </el-table-column>
       </el-table>
 
-      <!-- 分页 -->
-      <div class="pagination-container">
-        <el-pagination
-          v-model:current-page="pagination.page"
-          v-model:page-size="pagination.size"
-          :page-sizes="[10, 20, 50, 100]"
-          :total="pagination.total"
-          layout="total, sizes, prev, pager, next, jumper"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
-      </div>
     </div>
+
+    <!-- 分页 -->
+    <div class="pagination-section">
+      <el-pagination
+        v-model:current-page="currentPage"
+        v-model:page-size="pageSize"
+        :page-sizes="[10, 20, 50, 100]"
+        :total="total"
+        layout="total, sizes, prev, pager, next, jumper"
+        @size-change="handleSizeChange"
+        @current-change="handleCurrentChange"
+      />
+    </div>
+
+    <!-- 新增/编辑对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogTitle"
+      width="600px"
+      :close-on-click-modal="false"
+    >
+      <el-form
+        ref="formRef"
+        :model="formData"
+        :rules="formRules"
+        label-width="120px"
+      >
+${formFields}
+      </el-form>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button
+            type="primary"
+            :loading="submitting"
+            @click="handleSubmit"
+          >
+            确定
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Search,
@@ -517,32 +685,49 @@ import {
 
 // 响应式数据
 const loading = ref(false)
-const tableData = ref<${entityName}[]>([])
-const selectedItems = ref<${entityName}[]>([])
+const submitting = ref(false)
+const ${entityNameLower}List = ref<${entityName}[]>([])
+const selectedRows = ref<${entityName}[]>([])
+const tableRef = ref()
+const formRef = ref()
+
+// 对话框状态
+const dialogVisible = ref(false)
+const dialogTitle = ref('')
+const isEdit = ref(false)
+const currentId = ref<number | null>(null)
 
 // 搜索表单
 const searchForm = reactive({
 ${searchFormFields}
 })
 
-// 分页
-const pagination = reactive({
-  page: 1,
-  size: 20,
-  total: 0
+// 表单数据
+const formData = reactive({
+${formDataInit}
 })
+
+// 表单验证规则
+const formRules = {
+${formRules}
+}
+
+// 分页
+const currentPage = ref(1)
+const pageSize = ref(20)
+const total = ref(0)
 
 // 加载数据
 const loadData = async () => {
   loading.value = true
   try {
     const result = await get${entityName}List({
-      page: pagination.page,
-      size: pagination.size,
+      page: currentPage.value,
+      size: pageSize.value,
 ${searchableFields.map(field => `      ${field.englishName}: searchForm.${field.englishName}`).join(',\n')}
     })
-    tableData.value = result.list
-    pagination.total = result.total
+    ${entityNameLower}List.value = result.list
+    total.value = result.total
   } catch (error) {
     console.error('加载数据失败:', error)
     ElMessage.error('加载数据失败')
@@ -553,7 +738,7 @@ ${searchableFields.map(field => `      ${field.englishName}: searchForm.${field.
 
 // 搜索
 const handleSearch = () => {
-  pagination.page = 1
+  currentPage.value = 1
   loadData()
 }
 
@@ -567,12 +752,88 @@ ${searchableFields.map(field => `    ${field.englishName}: ''`).join(',\n')}
 
 // 新建
 const handleCreate = () => {
-  ElMessage.info('新建功能开发中...')
+  isEdit.value = false
+  dialogTitle.value = '新增${configForm.pageTitle.replace('管理', '')}'
+  currentId.value = null
+  resetForm()
+  dialogVisible.value = true
 }
 
 // 编辑
 const handleEdit = (row: ${entityName}) => {
-  ElMessage.info('编辑功能开发中...')
+  isEdit.value = true
+  dialogTitle.value = '编辑${configForm.pageTitle.replace('管理', '')}'
+  currentId.value = row.id
+  Object.assign(formData, row)
+  dialogVisible.value = true
+}
+
+// 重置表单
+const resetForm = () => {
+  Object.assign(formData, {
+${formDataInit}
+  })
+  formRef.value?.clearValidate()
+}
+
+// 提交表单
+const handleSubmit = async () => {
+  try {
+    await formRef.value?.validate()
+    submitting.value = true
+
+    if (isEdit.value && currentId.value) {
+      await update${entityName}(currentId.value, formData)
+      ElMessage.success('更新成功')
+    } else {
+      await create${entityName}(formData)
+      ElMessage.success('创建成功')
+    }
+
+    dialogVisible.value = false
+    await loadData()
+  } catch (error) {
+    if (error !== false) { // 表单验证失败时不显示错误
+      console.error('提交失败:', error)
+      ElMessage.error('操作失败')
+    }
+  } finally {
+    submitting.value = false
+  }
+}
+
+// 批量删除
+const handleBatchDelete = async () => {
+  if (selectedRows.value.length === 0) {
+    ElMessage.warning('请选择要删除的数据')
+    return
+  }
+
+  try {
+    await ElMessageBox.confirm(
+      \`确定要删除选中的 \${selectedRows.value.length} 条数据吗？\`,
+      '批量删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+
+    // 批量删除
+    for (const item of selectedRows.value) {
+      await delete${entityName}(item.id)
+    }
+
+    ElMessage.success('批量删除成功')
+    await loadData()
+    tableRef.value?.clearSelection()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('批量删除失败:', error)
+      ElMessage.error('批量删除失败')
+    }
+  }
 }
 
 // 删除
@@ -606,18 +867,18 @@ const handleExport = () => {
 
 // 选择变更
 const handleSelectionChange = (selection: ${entityName}[]) => {
-  selectedItems.value = selection
+  selectedRows.value = selection
 }
 
 // 分页大小变更
 const handleSizeChange = (size: number) => {
-  pagination.size = size
+  pageSize.value = size
   loadData()
 }
 
 // 当前页变更
 const handleCurrentChange = (page: number) => {
-  pagination.page = page
+  currentPage.value = page
   loadData()
 }
 
@@ -647,69 +908,76 @@ onMounted(() => {
 .page-header {
   margin-bottom: 24px;
 
-  .page-title {
+  h1 {
     font-size: 24px;
     font-weight: 600;
     color: var(--text-primary);
     margin: 0 0 8px 0;
   }
 
-  .page-description {
+  p {
     color: var(--text-secondary);
     margin: 0;
   }
 }
 
-.toolbar {
+.action-section {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+
+  .el-button + .el-button {
+    margin-left: 0;
+  }
+}
+
+.search-section {
   margin-bottom: 20px;
   padding: 20px;
   background: var(--bg-color);
   border: 1px solid var(--border-lighter);
   border-radius: 8px;
+
+  .el-form {
+    margin: 0;
+  }
+
+  .el-form-item {
+    margin-bottom: 0;
+  }
 }
 
-.search-section {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.action-section {
-  display: flex;
-  gap: 12px;
-}
-
-.table-container {
+.table-section {
   background: var(--bg-color);
   border: 1px solid var(--border-lighter);
   border-radius: 8px;
   overflow: hidden;
+  margin-bottom: 20px;
+
+  .el-table {
+    .el-table__cell {
+      padding: 12px 0;
+    }
+  }
 }
 
-.pagination-container {
-  padding: 20px;
+.pagination-section {
   display: flex;
   justify-content: flex-end;
-  border-top: 1px solid var(--border-lighter);
 }
 
 // 响应式设计
 @media (max-width: 768px) {
-  .toolbar {
+  .action-section {
     flex-direction: column;
-    gap: 16px;
-    align-items: stretch;
+    gap: 12px;
   }
 
   .search-section {
-    flex-wrap: wrap;
-  }
-
-  .action-section {
-    justify-content: center;
+    .el-form {
+      flex-direction: column;
+      align-items: stretch;
+    }
   }
 }
 <\/style>`
@@ -737,10 +1005,10 @@ const generateMockDataCode = (): string => {
         mockValue = 'true'
         break
       case 'date':
-        mockValue = `'2024-01-01'`
+        mockValue = `'2025-08-09'`
         break
       case 'datetime':
-        mockValue = `'2024-01-01 12:00:00'`
+        mockValue = `'2025-08-09 12:00:00'`
         break
       default:
         mockValue = `'${exampleValue || 'Mock数据'}'`
@@ -760,86 +1028,13 @@ export const mock${entityName}s: ${entityName}[] = [
 ${Array.from({ length: 10 }, (_, index) => `  {
     id: ${index + 1},
 ${mockFields},
-    createTime: '2024-01-${String(index % 30 + 1).padStart(2, '0')} 10:00:00',
-    updateTime: '2024-01-${String(index % 30 + 1).padStart(2, '0')} 10:00:00'
+    createTime: '2025-08-${String(index % 30 + 1).padStart(2, '0')} 10:00:00',
+    updateTime: '2028-08-${String(index % 30 + 1).padStart(2, '0')} 10:00:00'
   }`).join(',\n')}
 ]
 
-// Mock服务类
-export class Mock${entityName}Service {
-  // 获取列表
-  static async get${entityName}List(params: any = {}) {
-    let filteredList = [...mock${entityName}s]
 
-    // 搜索过滤
-${fields.value.filter(field => field.searchable).map(field =>
-    `    if (params.${field.englishName}) {
-      filteredList = filteredList.filter(item =>
-        item.${field.englishName}.toString().toLowerCase().includes(params.${field.englishName}.toLowerCase())
-      )
-    }`
-  ).join('\n')}
-
-    const { page = 1, size = 20 } = params
-    const start = (page - 1) * size
-    const end = start + size
-
-    return {
-      list: filteredList.slice(start, end),
-      total: filteredList.length,
-      page,
-      size
-    }
-  }
-
-  // 根据ID获取单个数据
-  static async get${entityName}ById(id: number): Promise<${entityName}> {
-    const item = mock${entityName}s.find(item => item.id === id)
-    if (!item) {
-      throw new Error('数据不存在')
-    }
-    return item
-  }
-
-  // 创建数据
-  static async create${entityName}(data: Partial<${entityName}>): Promise<${entityName}> {
-    const newId = Math.max(...mock${entityName}s.map(item => item.id)) + 1
-    const newItem: ${entityName} = {
-      id: newId,
-${mockFields},
-      createTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
-      updateTime: new Date().toISOString().slice(0, 19).replace('T', ' '),
-      ...data
-    }
-    mock${entityName}s.push(newItem)
-    return newItem
-  }
-
-  // 更新数据
-  static async update${entityName}(id: number, data: Partial<${entityName}>): Promise<${entityName}> {
-    const index = mock${entityName}s.findIndex(item => item.id === id)
-    if (index === -1) {
-      throw new Error('数据不存在')
-    }
-
-    mock${entityName}s[index] = {
-      ...mock${entityName}s[index],
-      ...data,
-      updateTime: new Date().toISOString().slice(0, 19).replace('T', ' ')
-    }
-    return mock${entityName}s[index]
-  }
-
-  // 删除数据
-  static async delete${entityName}(id: number): Promise<void> {
-    const index = mock${entityName}s.findIndex(item => item.id === id)
-    if (index === -1) {
-      throw new Error('数据不存在')
-    }
-
-    mock${entityName}s.splice(index, 1)
-  }
-}`
+`
 }
 
 const generateMockServiceCode = (): string => {
@@ -857,7 +1052,7 @@ import { mockLog, mockDelay } from '@/config/mock'
 export class Mock${entityName}Service {
 
   // 获取${configForm.pageTitle.replace('管理', '')}列表
-  static async get${entityName}s(params: PageParams): Promise<PageResult<${entityName}>> {
+  static async get${entityName}List(params: PageParams): Promise<PageResult<${entityName}>> {
     await mockDelay()
     mockLog('获取${configForm.pageTitle.replace('管理', '')}列表', params)
 

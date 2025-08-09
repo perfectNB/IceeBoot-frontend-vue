@@ -1,35 +1,58 @@
 <template>
   <div class="role-management">
-    <!-- 页面标题 -->
     <div class="page-header">
-      <h2 class="page-title">角色管理</h2>
-      <p class="page-description">管理系统角色，配置角色权限</p>
+      <h2>角色管理</h2>
+      <p>管理系统角色，配置角色权限</p>
     </div>
 
     <!-- 操作栏 -->
-    <div class="toolbar">
-      <div class="toolbar-left">
-        <el-button type="primary" :icon="Plus" @click="handleCreate">
-          新增角色
-        </el-button>
-        <el-button :icon="Refresh" @click="loadRoles">
-          刷新
-        </el-button>
-      </div>
-      <div class="toolbar-right">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索角色名称或描述"
-          :prefix-icon="Search"
-          clearable
-          style="width: 300px"
-          @input="handleSearch"
-        />
-      </div>
+    <div class="action-section">
+      <el-button
+        type="primary"
+        @click="handleCreate"
+      >
+        <el-icon><Plus /></el-icon>
+        新增角色
+      </el-button>
     </div>
 
-    <!-- 角色列表 -->
-    <el-card class="table-card">
+    <!-- 搜索区域 -->
+    <div class="search-section">
+      <el-form :model="searchForm" inline>
+        <el-form-item label="角色名称">
+          <el-input
+            v-model="searchForm.name"
+            placeholder="请输入角色名称"
+            clearable
+            style="width: 200px"
+          />
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select
+            v-model="searchForm.status"
+            placeholder="请选择状态"
+            clearable
+            style="width: 150px"
+          >
+            <el-option label="启用" value="active" />
+            <el-option label="禁用" value="inactive" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch" :loading="loading">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><Refresh /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="table-section">
       <el-table
         v-loading="loading"
         :data="filteredRoles"
@@ -94,7 +117,7 @@
       </el-table>
 
       <!-- 分页 -->
-      <div class="pagination-wrapper">
+      <div class="pagination-section">
         <el-pagination
           v-model:current-page="currentPage"
           v-model:page-size="pageSize"
@@ -105,7 +128,7 @@
           @current-change="handleCurrentChange"
         />
       </div>
-    </el-card>
+    </div>
 
     <!-- 新增/编辑角色对话框 -->
     <el-dialog
@@ -199,8 +222,13 @@ import type { Role, Permission } from '@/types'
 const loading = ref(false)
 const roles = ref<Role[]>([])
 const permissions = ref<Permission[]>([])
-const searchKeyword = ref('')
 const selectedRoles = ref<Role[]>([])
+
+// 搜索表单
+const searchForm = ref({
+  name: '',
+  status: ''
+})
 
 // 分页
 const currentPage = ref(1)
@@ -230,11 +258,20 @@ const checkedPermissions = ref<string[]>([])
 const dialogTitle = computed(() => isEdit.value ? '编辑角色' : '新增角色')
 
 const filteredRoles = computed(() => {
-  if (!searchKeyword.value) return roles.value
-  return roles.value.filter(role =>
-    role.name.toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
-    (role.description && role.description.toLowerCase().includes(searchKeyword.value.toLowerCase()))
-  )
+  let filtered = roles.value
+  
+  if (searchForm.value.name) {
+    filtered = filtered.filter(role =>
+      role.name.toLowerCase().includes(searchForm.value.name.toLowerCase()) ||
+      (role.description && role.description.toLowerCase().includes(searchForm.value.name.toLowerCase()))
+    )
+  }
+  
+  if (searchForm.value.status) {
+    filtered = filtered.filter(role => role.status === searchForm.value.status)
+  }
+  
+  return filtered
 })
 
 const permissionTree = computed(() => {
@@ -309,6 +346,12 @@ const loadPermissions = async () => {
 }
 
 const handleSearch = () => {
+  currentPage.value = 1
+}
+
+const handleReset = () => {
+  searchForm.value.name = ''
+  searchForm.value.status = ''
   currentPage.value = 1
 }
 
@@ -457,45 +500,49 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .role-management {
-  padding: var(--content-padding);
+  padding: 20px;
 }
 
 .page-header {
-  margin-bottom: 24px;
-
-  .page-title {
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 8px 0;
-  }
-
-  .page-description {
-    color: var(--text-secondary);
-    margin: 0;
-  }
+  margin-bottom: 20px;
 }
 
-.toolbar {
+.page-header h2 {
+  margin: 0 0 8px 0;
+  color: #303133;
+}
+
+.page-header p {
+  margin: 0;
+  color: #909399;
+  font-size: 14px;
+}
+
+.action-section {
+  margin-bottom: 20px;
+}
+
+.search-section {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.table-section {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pagination-section {
+  margin-top: 20px;
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 16px;
-
-  .toolbar-left {
-    display: flex;
-    gap: 12px;
-  }
-}
-
-.table-card {
-  .pagination-wrapper {
-    display: flex;
-    justify-content: center;
-    margin-top: 20px;
-  }
+  justify-content: flex-end;
 }
 
 .dialog-footer {
@@ -504,50 +551,33 @@ onMounted(() => {
   gap: 12px;
 }
 
-.permission-content {
-  .permission-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid var(--border-lighter);
-
-    .role-name {
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-  }
-
-  .permission-tree {
-    max-height: 400px;
-    overflow-y: auto;
-    border: 1px solid var(--border-lighter);
-    border-radius: 6px;
-    padding: 12px;
-  }
+.permission-content .permission-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #ebeef5;
 }
 
-// 响应式设计
-@media (max-width: 768px) {
-  .toolbar {
-    flex-direction: column;
-    gap: 12px;
-    align-items: stretch;
+.permission-content .permission-header .role-name {
+  font-weight: 600;
+  color: #303133;
+}
 
-    .toolbar-right {
-      .el-input {
-        width: 100% !important;
-      }
-    }
-  }
+.permission-content .permission-tree {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #ebeef5;
+  border-radius: 6px;
+  padding: 12px;
+}
 
-  .table-card {
-    :deep(.el-table) {
-      .el-table__body-wrapper {
-        overflow-x: auto;
-      }
-    }
-  }
+:deep(.el-table .el-table__cell) {
+  padding: 12px 0;
+}
+
+:deep(.el-button + .el-button) {
+  margin-left: 8px;
 }
 </style>

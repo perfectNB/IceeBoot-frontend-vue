@@ -5,63 +5,66 @@
       <p class="page-description">管理系统用户信息和权限</p>
     </div>
     
-    <!-- 搜索和操作栏 -->
-    <div class="toolbar">
-      <div class="search-section">
-        <el-input
-          v-model="searchForm.keyword"
-          placeholder="搜索用户名、邮箱或手机号"
-          style="width: 300px"
-          clearable
-          @keyup.enter="handleSearch"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-        <el-select
-          v-model="searchForm.status"
-          placeholder="用户状态"
-          style="width: 120px"
-          clearable
-        >
-          <el-option label="启用" value="active" />
-          <el-option label="禁用" value="inactive" />
-        </el-select>
-        <el-select
-          v-model="searchForm.role"
-          placeholder="用户角色"
-          style="width: 120px"
-          clearable
-        >
-          <el-option label="管理员" value="admin" />
-          <el-option label="编辑" value="editor" />
-          <el-option label="用户" value="user" />
-        </el-select>
-        <el-button type="primary" @click="handleSearch">
-          <el-icon><Search /></el-icon>
-          搜索
-        </el-button>
-        <el-button @click="handleReset">
-          <el-icon><Refresh /></el-icon>
-          重置
-        </el-button>
-      </div>
-      
-      <div class="action-section">
-        <el-button type="primary" @click="handleCreate">
-          <el-icon><Plus /></el-icon>
-          新建用户
-        </el-button>
-        <el-button @click="handleExport">
-          <el-icon><Download /></el-icon>
-          导出
-        </el-button>
-      </div>
+    <!-- 操作区域 -->
+    <div class="action-section">
+      <el-button type="primary" @click="handleCreate">
+        <el-icon><Plus /></el-icon>
+        新建用户
+      </el-button>
+      <el-button @click="handleExport">
+        <el-icon><Download /></el-icon>
+        导出
+      </el-button>
     </div>
     
-    <!-- 用户表格 -->
-    <div class="table-container">
+    <!-- 搜索区域 -->
+    <div class="search-section">
+      <el-form :model="searchForm" :inline="true">
+        <el-form-item label="关键词">
+          <el-input
+            v-model="searchForm.keyword"
+            placeholder="请输入用户名、邮箱或手机号"
+            clearable
+            style="width: 300px"
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select
+            v-model="searchForm.status"
+            placeholder="请选择状态"
+            clearable
+            style="width: 120px"
+          >
+            <el-option label="启用" value="active" />
+            <el-option label="禁用" value="inactive" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="角色">
+          <el-select
+            v-model="searchForm.role"
+            placeholder="请选择角色"
+            clearable
+            style="width: 120px"
+          >
+            <el-option label="管理员" value="admin" />
+            <el-option label="编辑" value="editor" />
+            <el-option label="用户" value="user" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :icon="Search" @click="handleSearch">
+            搜索
+          </el-button>
+          <el-button :icon="Refresh" @click="handleReset">
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+    
+    <!-- 表格区域 -->
+    <div class="table-section">
       <el-table
         :data="tableData"
         v-loading="loading"
@@ -133,7 +136,7 @@
       </el-table>
       
       <!-- 分页 -->
-      <div class="pagination-container">
+      <div class="pagination-section">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.size"
@@ -539,49 +542,49 @@ onMounted(() => {
 .page-header {
   margin-bottom: 24px;
   
-  .page-title {
+  h1 {
     font-size: 24px;
     font-weight: 600;
     color: var(--text-primary);
     margin: 0 0 8px 0;
   }
   
-  .page-description {
+  p {
     color: var(--text-secondary);
     margin: 0;
   }
 }
 
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
+.action-section {
+  margin-bottom: 16px;
+  
+  .el-button + .el-button {
+    margin-left: 12px;
+  }
+}
+
+.search-section {
+  margin-bottom: 16px;
   padding: 20px;
   background: var(--bg-color);
   border: 1px solid var(--border-lighter);
   border-radius: 8px;
 }
 
-.search-section {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.action-section {
-  display: flex;
-  gap: 12px;
-}
-
-.table-container {
+.table-section {
   background: var(--bg-color);
   border: 1px solid var(--border-lighter);
   border-radius: 8px;
   overflow: hidden;
+  
+  :deep(.el-table) {
+    .el-table__cell {
+      padding: 12px 0;
+    }
+  }
 }
 
-.pagination-container {
+.pagination-section {
   padding: 20px;
   display: flex;
   justify-content: flex-end;

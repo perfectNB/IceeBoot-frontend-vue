@@ -1,41 +1,78 @@
 <template>
   <div class="permission-management">
-    <!-- 页面标题 -->
     <div class="page-header">
-      <h2 class="page-title">权限管理</h2>
-      <p class="page-description">管理系统权限，配置权限层级结构</p>
+      <h2>权限管理</h2>
+      <p>管理系统权限，配置权限层级结构</p>
     </div>
 
     <!-- 操作栏 -->
-    <div class="toolbar">
-      <div class="toolbar-left">
-        <el-button type="primary" :icon="Plus" @click="handleCreate">
-          新增权限
-        </el-button>
-        <el-button :icon="Refresh" @click="loadPermissions">
-          刷新
-        </el-button>
-        <el-button :icon="Sort" @click="expandAll">
-          展开全部
-        </el-button>
-        <el-button :icon="Sort" @click="collapseAll">
-          收起全部
-        </el-button>
-      </div>
-      <div class="toolbar-right">
-        <el-input
-          v-model="searchKeyword"
-          placeholder="搜索权限名称或编码"
-          :prefix-icon="Search"
-          clearable
-          style="width: 300px"
-          @input="handleSearch"
-        />
-      </div>
+    <div class="action-section">
+      <el-button
+        type="primary"
+        @click="handleCreate"
+      >
+        <el-icon><Plus /></el-icon>
+        新增权限
+      </el-button>
+      <el-button @click="expandAll">
+        <el-icon><Sort /></el-icon>
+        展开全部
+      </el-button>
+      <el-button @click="collapseAll">
+        <el-icon><Sort /></el-icon>
+        收起全部
+      </el-button>
     </div>
 
-    <!-- 权限树表格 -->
-    <el-card class="table-card">
+    <!-- 搜索区域 -->
+    <div class="search-section">
+      <el-form :model="searchForm" inline>
+        <el-form-item label="权限名称">
+          <el-input
+            v-model="searchForm.name"
+            placeholder="请输入权限名称"
+            clearable
+            style="width: 200px"
+          />
+        </el-form-item>
+        <el-form-item label="权限类型">
+          <el-select
+            v-model="searchForm.type"
+            placeholder="请选择权限类型"
+            clearable
+            style="width: 150px"
+          >
+            <el-option label="菜单权限" value="menu" />
+            <el-option label="按钮权限" value="button" />
+            <el-option label="接口权限" value="api" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-select
+            v-model="searchForm.status"
+            placeholder="请选择状态"
+            clearable
+            style="width: 150px"
+          >
+            <el-option label="启用" value="active" />
+            <el-option label="禁用" value="inactive" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="handleSearch" :loading="loading">
+            <el-icon><Search /></el-icon>
+            搜索
+          </el-button>
+          <el-button @click="handleReset">
+            <el-icon><Refresh /></el-icon>
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+
+    <!-- 数据表格 -->
+    <div class="table-section">
       <el-table
         ref="tableRef"
         v-loading="loading"
@@ -128,7 +165,7 @@
           </template>
         </el-table-column>
       </el-table>
-    </el-card>
+    </div>
 
     <!-- 新增/编辑权限对话框 -->
     <el-dialog
@@ -266,9 +303,15 @@ import type { Permission } from '@/types'
 // 响应式数据
 const loading = ref(false)
 const permissions = ref<Permission[]>([])
-const searchKeyword = ref('')
 const selectedPermissions = ref<Permission[]>([])
 const tableRef = ref()
+
+// 搜索表单
+const searchForm = ref({
+  name: '',
+  type: '',
+  status: ''
+})
 
 // 对话框
 const dialogVisible = ref(false)
@@ -299,14 +342,29 @@ const dialogTitle = computed(() => {
 })
 
 const filteredPermissions = computed(() => {
-  if (!searchKeyword.value) return permissions.value
-  
   const filterTree = (nodes: Permission[]): Permission[] => {
     return nodes.filter(node => {
-      const matchesKeyword = 
-        node.name.toLowerCase().includes(searchKeyword.value.toLowerCase()) ||
-        node.code.toLowerCase().includes(searchKeyword.value.toLowerCase())
+      let matches = true
       
+      // 按名称搜索
+      if (searchForm.value.name) {
+        matches = matches && (
+          node.name.toLowerCase().includes(searchForm.value.name.toLowerCase()) ||
+          node.code.toLowerCase().includes(searchForm.value.name.toLowerCase())
+        )
+      }
+      
+      // 按类型搜索
+      if (searchForm.value.type) {
+        matches = matches && node.type === searchForm.value.type
+      }
+      
+      // 按状态搜索
+      if (searchForm.value.status) {
+        matches = matches && node.status === searchForm.value.status
+      }
+      
+      // 如果有子节点，递归过滤
       if (node.children && node.children.length > 0) {
         const filteredChildren = filterTree(node.children)
         if (filteredChildren.length > 0) {
@@ -314,7 +372,7 @@ const filteredPermissions = computed(() => {
         }
       }
       
-      return matchesKeyword
+      return matches
     }).map(node => {
       if (node.children && node.children.length > 0) {
         return {
@@ -394,9 +452,15 @@ const loadPermissions = async () => {
 
 const handleSearch = () => {
   // 搜索时展开所有节点以便查看结果
-  if (searchKeyword.value) {
+  if (searchForm.value.name || searchForm.value.type || searchForm.value.status) {
     expandAll()
   }
+}
+
+const handleReset = () => {
+  searchForm.value.name = ''
+  searchForm.value.type = ''
+  searchForm.value.status = ''
 }
 
 const handleSelectionChange = (selection: Permission[]) => {
@@ -639,58 +703,65 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .permission-management {
-  padding: var(--content-padding);
+  padding: 20px;
 }
 
 .page-header {
-  margin-bottom: 24px;
-  
-  .page-title {
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 8px 0;
-  }
-  
-  .page-description {
-    color: var(--text-secondary);
-    margin: 0;
-  }
+  margin-bottom: 20px;
 }
 
-.toolbar {
+.page-header h2 {
+  margin: 0 0 8px 0;
+  color: #303133;
+}
+
+.page-header p {
+  margin: 0;
+  color: #909399;
+  font-size: 14px;
+}
+
+.action-section {
+  margin-bottom: 20px;
+}
+
+.search-section {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.table-section {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.table-section {
+}
+
+.permission-name {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 16px;
-  
-  .toolbar-left {
-    display: flex;
-    gap: 12px;
-  }
+  gap: 8px;
 }
 
-.table-card {
-  .permission-name {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    
-    .permission-icon {
-      color: var(--primary-color);
-    }
-    
-    .type-tag {
-      margin-left: auto;
-    }
-  }
-  
-  .text-placeholder {
-    color: var(--text-placeholder);
-    font-style: italic;
-  }
+.permission-name .permission-icon {
+  color: #409eff;
+}
+
+.permission-name .type-tag {
+  margin-left: auto;
+}
+
+.text-placeholder {
+  color: #c0c4cc;
+  font-style: italic;
 }
 
 .dialog-footer {
@@ -699,30 +770,11 @@ onMounted(() => {
   gap: 12px;
 }
 
-// 响应式设计
-@media (max-width: 768px) {
-  .toolbar {
-    flex-direction: column;
-    gap: 12px;
-    align-items: stretch;
-    
-    .toolbar-left {
-      flex-wrap: wrap;
-    }
-    
-    .toolbar-right {
-      .el-input {
-        width: 100% !important;
-      }
-    }
-  }
-  
-  .table-card {
-    :deep(.el-table) {
-      .el-table__body-wrapper {
-        overflow-x: auto;
-      }
-    }
-  }
+:deep(.el-table .el-table__cell) {
+  padding: 12px 0;
+}
+
+:deep(.el-button + .el-button) {
+  margin-left: 8px;
 }
 </style>

@@ -5,62 +5,65 @@
       <p class="page-description">管理Coze和Dify平台的AI工作流</p>
     </div>
     
-    <!-- 搜索和操作栏 -->
-    <div class="toolbar">
-      <div class="search-section">
-        <el-input
-          v-model="searchForm.name"
-          placeholder="搜索名称"
-          style="width: 200px"
-          clearable
-          @keyup.enter="handleSearch"
-        >
-          <template #prefix>
-            <el-icon><Search /></el-icon>
-          </template>
-        </el-input>
-        <el-select
-          v-model="searchForm.type"
-          placeholder="类型"
-          style="width: 120px"
-          clearable
-        >
-          <el-option label="工作流" value="workflow" />
-          <el-option label="智能体" value="agent" />
-        </el-select>
-        <el-select
-          v-model="searchForm.platform"
-          placeholder="平台"
-          style="width: 120px"
-          clearable
-        >
-          <el-option label="Coze" value="coze" />
-          <el-option label="Dify" value="dify" />
-        </el-select>
-        <el-button type="primary" @click="handleSearch">
-          <el-icon><Search /></el-icon>
-          搜索
-        </el-button>
-        <el-button @click="handleReset">
-          <el-icon><Refresh /></el-icon>
-          重置
-        </el-button>
-      </div>
-      
-      <div class="action-section">
-        <el-button type="primary" @click="handleCreate">
-          <el-icon><Plus /></el-icon>
-          新建Agent
-        </el-button>
-        <el-button @click="handleExport">
-          <el-icon><Download /></el-icon>
-          导出
-        </el-button>
-      </div>
+    <!-- 操作区域 -->
+    <div class="action-section">
+      <el-button type="primary" @click="handleCreate">
+        <el-icon><Plus /></el-icon>
+        新建Agent
+      </el-button>
+      <el-button @click="handleExport">
+        <el-icon><Download /></el-icon>
+        导出
+      </el-button>
     </div>
     
-    <!-- Agent表格 -->
-    <div class="table-container">
+    <!-- 搜索区域 -->
+    <div class="search-section">
+      <el-form :model="searchForm" :inline="true">
+        <el-form-item label="名称">
+          <el-input
+            v-model="searchForm.name"
+            placeholder="请输入名称"
+            clearable
+            style="width: 200px"
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item label="类型">
+          <el-select
+            v-model="searchForm.type"
+            placeholder="请选择类型"
+            clearable
+            style="width: 120px"
+          >
+            <el-option label="工作流" value="workflow" />
+            <el-option label="智能体" value="agent" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="平台">
+          <el-select
+            v-model="searchForm.platform"
+            placeholder="请选择平台"
+            clearable
+            style="width: 120px"
+          >
+            <el-option label="Coze" value="coze" />
+            <el-option label="Dify" value="dify" />
+          </el-select>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" :icon="Search" @click="handleSearch">
+            搜索
+          </el-button>
+          <el-button :icon="Refresh" @click="handleReset">
+            重置
+          </el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+    
+    <!-- 表格区域 -->
+    <div class="table-section">
       <el-table
         :data="tableData"
         v-loading="loading"
@@ -134,7 +137,7 @@
       </el-table>
       
       <!-- 分页 -->
-      <div class="pagination-container">
+      <div class="pagination-section">
         <el-pagination
           v-model:current-page="pagination.page"
           v-model:page-size="pagination.size"
@@ -538,70 +541,68 @@ onMounted(() => {
 })
 </script>
 
-<style scoped lang="scss">
+<style scoped>
 .agent-management {
   padding: 20px;
-  
-  .page-header {
-    margin-bottom: 20px;
-    
-    .page-title {
-      font-size: 24px;
-      font-weight: 600;
-      color: #303133;
-      margin: 0 0 8px 0;
-    }
-    
-    .page-description {
-      color: #606266;
-      margin: 0;
-    }
-  }
-  
-  .toolbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding: 16px;
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    
-    .search-section {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-    }
-    
-    .action-section {
-      display: flex;
-      gap: 12px;
-    }
-  }
-  
-  .table-container {
-    background: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    
-    .pagination-container {
-      padding: 20px;
-      display: flex;
-      justify-content: flex-end;
-    }
-  }
-  
-  .key-display {
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 12px;
-    color: #606266;
-  }
-  
-  .dialog-footer {
-    display: flex;
-    justify-content: flex-end;
-    gap: 12px;
-  }
+}
+
+.page-header {
+  margin-bottom: 20px;
+}
+
+.page-header h1 {
+  margin: 0 0 8px 0;
+  color: #303133;
+}
+
+.page-header p {
+  margin: 0;
+  color: #909399;
+  font-size: 14px;
+}
+
+.action-section {
+  margin-bottom: 20px;
+}
+
+.search-section {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 20px;
+}
+
+.table-section {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pagination-section {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.key-display {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 12px;
+  color: #606266;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+:deep(.el-table .el-table__cell) {
+  padding: 12px 0;
+}
+
+:deep(.el-button + .el-button) {
+  margin-left: 8px;
 }
 </style>

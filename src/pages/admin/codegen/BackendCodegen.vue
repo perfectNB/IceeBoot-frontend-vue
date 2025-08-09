@@ -11,7 +11,7 @@
         <template #header>
           <span>基础配置</span>
         </template>
-        
+
         <el-form :model="config" label-width="120px">
           <el-row :gutter="20">
             <el-col :span="12">
@@ -25,7 +25,7 @@
               </el-form-item>
             </el-col>
           </el-row>
-          
+
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="作者">
@@ -38,7 +38,7 @@
               </el-form-item>
             </el-col>
           </el-row>
-          
+
           <el-form-item label="框架选择">
             <el-radio-group v-model="config.framework">
               <el-radio label="spring-boot">Spring Boot</el-radio>
@@ -62,7 +62,7 @@
             </el-button>
           </div>
         </template>
-        
+
         <el-table :data="fieldList" border>
           <el-table-column prop="fieldName" label="字段名" width="150">
             <template #default="{ row }">
@@ -114,7 +114,7 @@
         <template #header>
           <span>生成选项</span>
         </template>
-        
+
         <el-checkbox-group v-model="generateOptions">
           <el-checkbox label="entity">实体类 (Entity)</el-checkbox>
           <el-checkbox label="mapper">数据访问层 (Mapper)</el-checkbox>
@@ -232,11 +232,11 @@ const generateEntityCode = () => {
       annotations.push('    @NotNull')
     }
     annotations.push(`    @Column(name = "${field.fieldName}")`)
-    
+
     return `${annotations.join('\n')}
     private ${field.fieldType} ${field.fieldName}; // ${field.comment}`
   }).join('\n\n')
-  
+
   return `package ${config.packageName}.entity;
 
 import javax.persistence.*;
@@ -245,7 +245,7 @@ import java.util.Date;
 
 /**
  * ${config.moduleName} 实体类
- * 
+ *
  * @author ${config.author}
  * @date ${new Date().toISOString().split('T')[0]}
  */
@@ -276,7 +276,7 @@ const generateMapperCode = () => {
   const className = config.moduleName.charAt(0).toUpperCase() + config.moduleName.slice(1)
   const primaryKeyField = fieldList.value.find(field => field.primaryKey)
   const primaryKeyType = primaryKeyField ? primaryKeyField.fieldType : 'Long'
-  
+
   return `package ${config.packageName}.mapper;
 
 import ${config.packageName}.entity.${className};
@@ -285,7 +285,7 @@ import java.util.List;
 
 /**
  * ${config.moduleName} Mapper接口
- * 
+ *
  * @author ${config.author}
  * @date ${new Date().toISOString().split('T')[0]}
  */
@@ -315,7 +315,7 @@ const generateServiceCode = () => {
   const className = config.moduleName.charAt(0).toUpperCase() + config.moduleName.slice(1)
   const primaryKeyField = fieldList.value.find(field => field.primaryKey)
   const primaryKeyType = primaryKeyField ? primaryKeyField.fieldType : 'Long'
-  
+
   return `package ${config.packageName}.service;
 
 import ${config.packageName}.entity.${className};
@@ -326,7 +326,7 @@ import java.util.List;
 
 /**
  * ${config.moduleName} 服务类
- * 
+ *
  * @author ${config.author}
  * @date ${new Date().toISOString().split('T')[0]}
  */
@@ -364,7 +364,7 @@ const generateControllerCode = () => {
   const className = config.moduleName.charAt(0).toUpperCase() + config.moduleName.slice(1)
   const primaryKeyField = fieldList.value.find(field => field.primaryKey)
   const primaryKeyType = primaryKeyField ? primaryKeyField.fieldType : 'Long'
-  
+
   return `package ${config.packageName}.controller;
 
 import ${config.packageName}.entity.${className};
@@ -375,7 +375,7 @@ import java.util.List;
 
 /**
  * ${config.moduleName} 控制器
- * 
+ *
  * @author ${config.author}
  * @date ${new Date().toISOString().split('T')[0]}
  */
@@ -420,7 +420,7 @@ const handlePreview = () => {
     ElMessage.warning('请完善配置信息和字段信息')
     return
   }
-  
+
   if (generateOptions.value.includes('entity')) {
     previewCode.entity = generateEntityCode()
   }
@@ -433,7 +433,7 @@ const handlePreview = () => {
   if (generateOptions.value.includes('controller')) {
     previewCode.controller = generateControllerCode()
   }
-  
+
   previewVisible.value = true
 }
 
@@ -443,13 +443,13 @@ const handleGenerate = async () => {
     ElMessage.warning('请完善配置信息和字段信息')
     return
   }
-  
+
   try {
     generating.value = true
-    
+
     // 模拟生成过程
     await new Promise(resolve => setTimeout(resolve, 2000))
-    
+
     ElMessage.success('后端代码生成成功！')
   } catch {
     ElMessage.error('生成失败')
@@ -462,51 +462,51 @@ const handleGenerate = async () => {
 <style scoped lang="scss">
 .backend-codegen {
   padding: 20px;
-  
+
   .page-header {
     margin-bottom: 20px;
-    
+
     .page-title {
       font-size: 24px;
       font-weight: 600;
       margin: 0 0 8px 0;
       color: var(--el-text-color-primary);
     }
-    
+
     .page-description {
       margin: 0;
       color: var(--el-text-color-regular);
     }
   }
-  
+
   .config-section,
   .field-section,
   .generate-options {
     margin-bottom: 20px;
-    
+
     .card-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
   }
-  
+
   .action-section {
     text-align: center;
     margin-top: 30px;
-    
+
     .el-button {
       margin: 0 10px;
     }
   }
-  
+
   pre {
     background: #f5f5f5;
     padding: 15px;
     border-radius: 4px;
     overflow-x: auto;
     max-height: 500px;
-    
+
     code {
       font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
       font-size: 12px;
@@ -522,15 +522,15 @@ const handleGenerate = async () => {
       background: var(--el-bg-color-page);
       border-color: var(--el-border-color);
     }
-    
+
     .el-table {
       background: var(--el-bg-color-page);
-      
+
       .el-table__header {
         background: var(--el-bg-color);
       }
     }
-    
+
     pre {
       background: #2d2d2d;
       color: #f8f8f2;

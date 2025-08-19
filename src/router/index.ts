@@ -203,7 +203,7 @@ router.beforeEach(async (to, from, next) => {
   }
 
   // 如果是访问admin路径且有token，优先加载动态路由
-  if (to.path.startsWith('/admin') && token) {
+  if (to.path.startsWith('/') && token) {
     try {
       const wasLoaded = dynamicRoutesLoaded
       await loadDynamicRoutes()
@@ -221,13 +221,18 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
-  // 如果访问admin路径但没有token，跳转到首页
-  if (to.path.startsWith('/admin') && !token) {
-    ElMessage.warning('请先登录')
-    next('/')
-    return
+  // // 如果访问admin路径但没有token，跳转到首页
+  // if (to.path.startsWith('/admin') && !token) {
+  //   ElMessage.warning('请先登录')
+  //   next('/')
+  //   return
+  // }
+  if (Object.keys(to.meta).length === 0){
+    next('/404')
   }
-
+  if(to.fullPath=='/admin'){
+    next('/admin/dashboard')
+  }
   // 检查是否需要认证
   if (to.meta.requiresAuth) {
     if (!token) {
@@ -243,9 +248,9 @@ router.beforeEach(async (to, from, next) => {
       } catch (error) {
         console.error('获取用户信息失败:', error)
         // 如果获取用户信息失败，清除token并跳转到首页
-        userStore.clearToken()
-        userStore.clearUser()
-        ElMessage.error('登录状态已过期，请重新登录')
+        // userStore.clearToken()
+        // userStore.clearUser()
+        // ElMessage.error('登录状态已过期，请重新登录')
         next('/')
         return
       }

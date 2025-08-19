@@ -153,10 +153,6 @@ const baseRoutes: RouteRecordRaw[] = [
       requiresAuth: false,
       hideInMenu: true
     }
-  },
-  {
-    path: '/:pathMatch(.*)*',
-    redirect: '/404'
   }
 ]
 
@@ -191,7 +187,7 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
-  console.log(to)
+  
   // 设置页面标题
   if (to.meta.title) {
     document.title = `${to.meta.title} - ZBoot Admin`
@@ -201,9 +197,34 @@ router.beforeEach(async (to, from, next) => {
   const token = userStore.getToken()
 
   // 登录后访问首页强制跳转到管理后台
-  // 注释：如需修改登录后的默认跳转页面，请修改下面的 '/admin' 路径
   if (token && to.path === '/') {
     next('/admin')
+    return
+  }
+
+  // 如果是访问admin路径且有token，优先加载动态路由
+  if (to.path.startsWith('/admin') && token) {
+    try {
+      const wasLoaded = dynamicRoutesLoaded
+      await loadDynamicRoutes()
+      
+      // 如果动态路由刚刚加载完成，需要重新导航到目标路由
+      if (!wasLoaded) {
+        next({ ...to, replace: true })
+        return
+      }
+    } catch (error) {
+      console.error('加载动态路由失败:', error)
+      ElMessage.error('加载页面失败')
+      next('/')
+      return
+    }
+  }
+
+  // 如果访问admin路径但没有token，跳转到首页
+  if (to.path.startsWith('/admin') && !token) {
+    ElMessage.warning('请先登录')
+    next('/')
     return
   }
 
@@ -227,22 +248,6 @@ router.beforeEach(async (to, from, next) => {
         ElMessage.error('登录状态已过期，请重新登录')
         next('/')
         return
-      }
-    }
-
-    // 加载动态路由（仅在用户已登录且访问admin路径时）
-    if (token && to.path.startsWith('/admin')) {
-      try {
-        await loadDynamicRoutes()
-        // 如果当前路由不存在且不是404页面，可能是动态路由刚加载，需要重新导航
-        const routeExists = router.getRoutes().some(route => route.path === to.path)
-        if (!routeExists && to.path.startsWith('/admin') && to.path !== '/admin') {
-          // 尝试重新解析路由
-          next({ ...to, replace: true })
-          return
-        }
-      } catch (error) {
-        console.error('加载动态路由失败:', error)
       }
     }
 

@@ -23,11 +23,17 @@ export class MockRedisService {
     const total = filteredData.length
     const start = (page - 1) * size
     const end = start + size
-    const list = filteredData.slice(start, end)
+    const records = filteredData.slice(start, end)
+    const pages = Math.ceil(total / size)
     
     return {
-      list,
-      total
+      records,
+      total,
+      current: page,
+      size,
+      pages,
+      hasPrevious: page > 1,
+      hasNext: page < pages
     }
   }
   

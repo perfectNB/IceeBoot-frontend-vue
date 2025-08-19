@@ -207,7 +207,7 @@ const loadRedisData = async () => {
       type: searchForm.type
     }
     const response = await getRedisKeys(params)
-    redisData.value = response.list
+    redisData.value = response.records
     pagination.total = response.total
   } catch (error: unknown) {
     console.error('获取Redis数据失败:', error)

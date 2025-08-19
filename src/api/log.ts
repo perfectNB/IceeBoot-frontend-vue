@@ -21,11 +21,17 @@ export interface LogQueryParams {
   keyword?: string
   startTime?: string
   endTime?: string
+  [key: string]: unknown
 }
 
 export interface LogResponse {
-  list: LogItem[]
+  records: LogItem[]
   total: number
+  current: number
+  size: number
+  pages: number
+  hasPrevious: boolean
+  hasNext: boolean
 }
 
 // 获取日志列表
@@ -35,7 +41,7 @@ export const getLogs = async (params: LogQueryParams): Promise<LogResponse> => {
     return await MockLogService.getLogs(params)
   } else {
     // 调用真实API
-    const response = await request.get<LogResponse>('/api/v1/logs', { params })
+    const response = await request.get<LogResponse>('/api/v1/logs', params)
     return response.data
   }
 }
@@ -69,6 +75,6 @@ export const clearLogs = async (params?: { level?: string; beforeDate?: string }
     await MockLogService.clearLogs(params)
   } else {
     // 调用真实API
-    await request.delete('/api/v1/logs/clear', { params })
+    await request.delete('/api/v1/logs/clear', params)
   }
 }

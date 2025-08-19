@@ -19,14 +19,17 @@ export class MockLLMService {
     const total = filteredModels.length
     const start = (page - 1) * size
     const end = start + size
-    const list = filteredModels.slice(start, end)
+    const records = filteredModels.slice(start, end)
+    const pages = Math.ceil(total / size)
     
     return {
-      list,
+      records,
       total,
-      page,
+      current: page,
       size,
-      pages: Math.ceil(total / size)
+      pages,
+      hasPrevious: page > 1,
+      hasNext: page < pages
     }
   }
 

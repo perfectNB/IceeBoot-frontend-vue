@@ -23,14 +23,17 @@ export class MockChatService {
     const total = filteredSessions.length
     const start = (page - 1) * size
     const end = start + size
-    const list = filteredSessions.slice(start, end)
+    const records = filteredSessions.slice(start, end)
+    const pages = Math.ceil(total / size)
     
     return {
-      list,
+      records,
       total,
-      page,
+      current: page,
       size,
-      pages: Math.ceil(total / size)
+      pages,
+      hasPrevious: page > 1,
+      hasNext: page < pages
     }
   }
 

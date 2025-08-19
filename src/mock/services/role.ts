@@ -28,14 +28,17 @@ export class MockRoleService {
     const total = filteredRoles.length
     const start = (params.page - 1) * params.size
     const end = start + params.size
-    const list = filteredRoles.slice(start, end)
+    const records = filteredRoles.slice(start, end)
+    const pages = Math.ceil(total / params.size)
     
     return {
-      list,
+      records,
       total,
-      page: params.page,
+      current: params.page,
       size: params.size,
-      pages: Math.ceil(total / params.size)
+      pages,
+      hasPrevious: params.page > 1,
+      hasNext: params.page < pages
     }
   }
   

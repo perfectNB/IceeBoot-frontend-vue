@@ -28,14 +28,17 @@ export class MockAgentService {
     const total = filteredAgents.length
     const start = (page - 1) * size
     const end = start + size
-    const list = filteredAgents.slice(start, end)
+    const records = filteredAgents.slice(start, end)
+    const pages = Math.ceil(total / size)
     
     return {
-      list,
+      records,
       total,
-      page,
+      current: page,
       size,
-      pages: Math.ceil(total / size)
+      pages,
+      hasPrevious: page > 1,
+      hasNext: page < pages
     }
   }
 

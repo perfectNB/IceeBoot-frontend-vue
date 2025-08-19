@@ -8,7 +8,7 @@ export const getRoles = async (): Promise<Role[]> => {
   if (isMockEnabled()) {
     // 使用Mock数据
     const mockRoles = await MockRoleService.getRoles({ page: 1, size: 1000 })
-    return mockRoles.list.map((role: Role) => ({
+    return mockRoles.records.map((role: Role) => ({
       ...role,
       id: role.id.toString() // 确保id类型兼容
     }))

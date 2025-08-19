@@ -73,11 +73,13 @@ export interface PageParams {
 }
 
 export interface PageResult<T = Record<string, unknown>> {
-  list: T[]
+  records: T[]
   total: number
-  page: number
+  current: number
   size: number
   pages: number
+  hasPrevious: boolean
+  hasNext: boolean
 }
 
 // 环境配置类型

@@ -11,12 +11,12 @@ export interface CreateUserData extends Partial<User> {
 
 // 获取用户列表
 export const getUserList = async (params: PageParams): Promise<PageResult<User>> => {
-  if (isMockEnabled()) {
+  if (!isMockEnabled()) {
     // 使用Mock数据
     return await MockUserService.getUserList(params)
   } else {
     // 调用真实API
-    const response = await request.get<{result: PageResult<User>}>('/api/v1/users', { params })
+    const response = await request.get<{result: PageResult<User>}>('/api/v1/users', params)
     const apiResponse = response as unknown as {code: number, message: string, result: PageResult<User>, success: boolean}
     if (!apiResponse || !apiResponse.result) {
       throw new Error('获取用户列表响应数据格式错误')

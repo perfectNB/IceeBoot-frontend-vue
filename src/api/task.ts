@@ -20,11 +20,17 @@ export interface TaskQueryParams {
   size: number
   name?: string
   status?: string
+  [key: string]: unknown
 }
 
 export interface TaskResponse {
-  list: Task[]
+  records: Task[]
   total: number
+  current: number
+  size: number
+  pages: number
+  hasPrevious: boolean
+  hasNext: boolean
 }
 
 // 获取任务列表
@@ -34,7 +40,7 @@ export const getTasks = async (params: TaskQueryParams): Promise<TaskResponse> =
     return await MockTaskService.getTasks(params)
   } else {
     // 调用真实API
-    const response = await request.get<TaskResponse>('/api/v1/tasks', { params })
+    const response = await request.get<TaskResponse>('/api/v1/tasks', params)
     return response.data
   }
 }

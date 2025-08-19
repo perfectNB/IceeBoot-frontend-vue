@@ -283,7 +283,7 @@ const loadData = async () => {
       number: searchForm.number,
       major: searchForm.major
     })
-    studentList.value = result.list
+    studentList.value = result.records
     total.value = result.total
   } catch (error) {
     console.error('加载数据失败:', error)

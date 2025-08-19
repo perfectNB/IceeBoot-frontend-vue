@@ -378,7 +378,7 @@ const loadAgents = async () => {
       type: searchForm.type,
       platform: searchForm.platform
     })
-    tableData.value = result.list
+    tableData.value = result.records
     pagination.total = result.total
   } catch (error) {
     console.error('加载Agent数据失败:', error)

@@ -297,7 +297,7 @@ const handleJsonImport = () => {
     } else {
       ElMessage.error('JSON格式不正确，应为数组格式')
     }
-  } catch (error) {
+  } catch {
     ElMessage.error('JSON格式错误')
   }
 }
@@ -726,7 +726,7 @@ const loadData = async () => {
       size: pageSize.value,
 ${searchableFields.map(field => `      ${field.englishName}: searchForm.${field.englishName}`).join(',\n')}
     })
-    ${entityNameLower}List.value = result.list
+    ${entityNameLower}List.value = result.records
     total.value = result.total
   } catch (error) {
     console.error('加载数据失败:', error)
@@ -985,7 +985,6 @@ onMounted(() => {
 
 const generateMockDataCode = (): string => {
   const entityName = configForm.fileName
-  const entityNameLower = entityName.toLowerCase()
 
   const mockFields = fields.value.map(field => {
     const { englishName, formType, exampleValue } = field
@@ -1039,7 +1038,6 @@ ${mockFields},
 
 const generateMockServiceCode = (): string => {
   const entityName = configForm.fileName
-  const entityNameLower = entityName.toLowerCase()
 
   return `/**
  * Mock${configForm.pageTitle.replace('管理', '')}服务
@@ -1194,7 +1192,7 @@ export const get${entityName}List = async (params?: PageParams): Promise<PageRes
     return mock${entityName}s
   } else {
     // 调用真实API
-    const response = await request.get<PageResult<${entityName}>>('/api/v1/${entityNameLower}', { params })
+    const response = await request.get<PageResult<${entityName}>>('/api/v1/${entityNameLower}', params || { page: 1, size: 20 })
     return response.data
   }
 }`

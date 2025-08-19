@@ -383,7 +383,7 @@ const loadModels = async () => {
       size: pagination.size,
       keyword: searchForm.keyword
     })
-    tableData.value = result.list
+    tableData.value = result.records
     pagination.total = result.total
   } catch (error) {
     console.error('加载模型数据失败:', error)

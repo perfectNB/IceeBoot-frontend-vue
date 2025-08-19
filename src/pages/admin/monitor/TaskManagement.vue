@@ -262,7 +262,7 @@ const loadTasks = async () => {
       status: searchForm.status
     }
     const response = await getTasks(params)
-    taskData.value = response.list
+    taskData.value = response.records
     pagination.total = response.total
   } catch (error: unknown) {
     console.error('获取任务列表失败:', error)

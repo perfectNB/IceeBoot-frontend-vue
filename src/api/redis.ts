@@ -16,11 +16,17 @@ export interface RedisQueryParams {
   size: number
   key?: string
   type?: string
+  [key: string]: unknown
 }
 
 export interface RedisResponse {
-  list: RedisKey[]
+  records: RedisKey[]
   total: number
+  current: number
+  size: number
+  pages: number
+  hasPrevious: boolean
+  hasNext: boolean
 }
 
 // 获取Redis键列表
@@ -30,7 +36,7 @@ export const getRedisKeys = async (params: RedisQueryParams): Promise<RedisRespo
     return await MockRedisService.getRedisKeys(params)
   } else {
     // 调用真实API
-    const response = await request.get<ApiResponse<RedisResponse>>('/api/v1/redis/keys', { params })
+    const response = await request.get<ApiResponse<RedisResponse>>('/api/v1/redis/keys', params)
     return response.data.data
   }
 }

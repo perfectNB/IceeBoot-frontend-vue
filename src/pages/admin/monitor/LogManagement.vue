@@ -238,7 +238,7 @@ const loadLogs = async () => {
       endTime: searchForm.dateRange?.[1]
     }
     const response = await getLogs(params)
-    logData.value = response.list
+    logData.value = response.records
     pagination.total = response.total
   } catch (error: unknown) {
     console.error('获取日志数据失败:', error)

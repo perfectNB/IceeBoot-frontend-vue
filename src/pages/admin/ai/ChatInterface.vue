@@ -321,7 +321,7 @@ const scrollToBottom = () => {
 const loadSessions = async () => {
   try {
     const result = await getChatSessions({ page: 1, size: 100 })
-    sessions.value = result.list
+    sessions.value = result.records
   } catch (error) {
     console.error('加载会话列表失败:', error)
     ElMessage.error('加载会话列表失败')
@@ -332,7 +332,7 @@ const loadSessions = async () => {
 const loadAvailableModels = async () => {
   try {
     const result = await getLLMModels({ page: 1, size: 100 })
-    availableModels.value = result.list
+    availableModels.value = result.records
   } catch (error) {
     console.error('加载模型列表失败:', error)
     ElMessage.error('加载模型列表失败')

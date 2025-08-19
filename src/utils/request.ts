@@ -18,13 +18,13 @@ const service: AxiosInstance = axios.create({
 service.interceptors.request.use(
   (config) => {
     const userStore = useUserStore()
-    const token = userStore.token
-    
+    const token = userStore.getToken()
+
     // 添加token到请求头
     if (token) {
-      config.headers.accessToken = token
+      config.headers.Authorization = `Bearer ${token}`
     }
-    
+
     return config
   },
   (error) => {
@@ -38,12 +38,12 @@ service.interceptors.response.use(
   (response: AxiosResponse<ApiResponse>) => {
     const { data } = response
     const { code, message, success } = data
-    
+
     // 请求成功
     if (success || code === 200) {
       return response
     }
-    
+
     // 登录过期
     if (code === 401) {
       const userStore = useUserStore()
@@ -52,26 +52,26 @@ service.interceptors.response.use(
         confirmButtonText: '确定',
         type: 'warning'
       }).then(() => {
-        router.push('/login')
+        router.push('/')
       })
       return Promise.reject(new Error(message || '登录已过期'))
     }
-    
+
     // 权限不足
     if (code === 403) {
       ElMessage.error(message || '权限不足')
       return Promise.reject(new Error(message || '权限不足'))
     }
-    
+
     // 其他错误
     ElMessage.error(message || '请求失败')
     return Promise.reject(new Error(message || '请求失败'))
   },
   (error) => {
     console.error('响应错误:', error)
-    
+
     let message = '网络错误'
-    
+
     if (error.response) {
       const { status } = error.response
       switch (status) {
@@ -82,7 +82,7 @@ service.interceptors.response.use(
           message = '未授权，请重新登录'
           const userStore = useUserStore()
           userStore.logout()
-          router.push('/login')
+          router.push('/')
           break
         case 403:
           message = '权限不足'
@@ -110,7 +110,7 @@ service.interceptors.response.use(
     } else {
       message = error.message || '请求失败'
     }
-    
+
     ElMessage.error(message)
     return Promise.reject(error)
   }
@@ -126,7 +126,7 @@ export const request = {
     const response = await service.get(url, { params, ...config })
     return response.data
   },
-  
+
   async post<T = Record<string, unknown>>(
     url: string,
     data?: Record<string, unknown>,
@@ -135,7 +135,7 @@ export const request = {
     const response = await service.post(url, data, config)
     return response.data
   },
-  
+
   async put<T = Record<string, unknown>>(
     url: string,
     data?: Record<string, unknown>,
@@ -144,7 +144,7 @@ export const request = {
     const response = await service.put(url, data, config)
     return response.data
   },
-  
+
   async delete<T = Record<string, unknown>>(
     url: string,
     params?: Record<string, unknown>,
@@ -153,7 +153,7 @@ export const request = {
     const response = await service.delete(url, { params, ...config })
     return response.data
   },
-  
+
   async patch<T = Record<string, unknown>>(
     url: string,
     data?: Record<string, unknown>,

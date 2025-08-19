@@ -25,6 +25,7 @@ export interface LoginResponse {
   refreshToken?: string
   user: User
   expires?: number
+  tokenType: string
 }
 
 // 菜单相关类型

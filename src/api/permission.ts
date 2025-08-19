@@ -10,8 +10,12 @@ export const getPermissions = async (params: PageParams): Promise<PageResult<Per
     return await MockPermissionService.getPermissions(params)
   } else {
     // 调用真实API
-    const response = await request.get<PageResult<Permission>>('/api/v1/permissions', { params })
-    return response.data
+    const response = await request.get<{result: PageResult<Permission>}>('/api/v1/permissions', { params })
+    const apiResponse = response as unknown as {code: number, message: string, result: PageResult<Permission>, success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('获取权限列表响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }
 
@@ -22,8 +26,12 @@ export const getAllPermissions = async (): Promise<Permission[]> => {
     return await MockPermissionService.getAllPermissions()
   } else {
     // 调用真实API
-    const response = await request.get<Permission[]>('/api/v1/permissions')
-    return response.data
+    const response = await request.get<{result: Permission[]}>('/api/v1/permissions')
+    const apiResponse = response as unknown as {code: number, message: string, result: Permission[], success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('获取所有权限响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }
 
@@ -34,8 +42,12 @@ export const createPermission = async (data: Partial<Permission>): Promise<Permi
     return await MockPermissionService.createPermission(data)
   } else {
     // 调用真实API
-    const response = await request.post<Permission>('/api/v1/permissions', data)
-    return response.data
+    const response = await request.post<{result: Permission}>('/api/v1/permissions', data)
+    const apiResponse = response as unknown as {code: number, message: string, result: Permission, success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('创建权限响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }
 
@@ -46,8 +58,12 @@ export const updatePermission = async (id: string | number, data: Partial<Permis
     return await MockPermissionService.updatePermission(Number(id), data)
   } else {
     // 调用真实API
-    const response = await request.put<Permission>(`/api/v1/permissions/${id}`, data)
-    return response.data
+    const response = await request.put<{result: Permission}>(`/api/v1/permissions/${id}`, data)
+    const apiResponse = response as unknown as {code: number, message: string, result: Permission, success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('更新权限响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }
 
@@ -58,7 +74,11 @@ export const deletePermission = async (id: string | number): Promise<void> => {
     await MockPermissionService.deletePermission(Number(id))
   } else {
     // 调用真实API
-    await request.delete(`/api/v1/permissions/${id}`)
+    const response = await request.delete<{result: boolean}>(`/api/v1/permissions/${id}`)
+    const apiResponse = response as unknown as {code: number, message: string, result: boolean, success: boolean}
+    if (!apiResponse || !apiResponse.success) {
+      throw new Error('删除权限响应数据格式错误')
+    }
   }
 }
 
@@ -69,7 +89,11 @@ export const getPermissionById = async (id: string | number): Promise<Permission
     return await MockPermissionService.getPermissionById(Number(id))
   } else {
     // 调用真实API
-    const response = await request.get<Permission>(`/api/v1/permissions/${id}`)
-    return response.data
+    const response = await request.get<{result: Permission}>(`/api/v1/permissions/${id}`)
+    const apiResponse = response as unknown as {code: number, message: string, result: Permission, success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('获取权限详情响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }

@@ -187,7 +187,7 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
-  
+
   // 设置页面标题
   if (to.meta.title) {
     document.title = `${to.meta.title} - ZBoot Admin`
@@ -207,7 +207,7 @@ router.beforeEach(async (to, from, next) => {
     try {
       const wasLoaded = dynamicRoutesLoaded
       await loadDynamicRoutes()
-      
+
       // 如果动态路由刚刚加载完成，需要重新导航到目标路由
       if (!wasLoaded) {
         next({ ...to, replace: true })

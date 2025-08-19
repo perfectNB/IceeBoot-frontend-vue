@@ -14,8 +14,12 @@ export const getRoles = async (): Promise<Role[]> => {
     }))
   } else {
     // 调用真实API
-    const response = await request.get<Role[]>('/api/v1/roles')
-    return response.data
+    const response = await request.get<{result: Role[]}>('/api/v1/roles')
+    const apiResponse = response as unknown as {code: number, message: string, result: Role[], success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('获取角色列表响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }
 
@@ -34,8 +38,12 @@ export const createRole = async (data: Partial<Role>): Promise<Role> => {
     }
   } else {
     // 调用真实API
-    const response = await request.post<Role>('/api/v1/roles', data)
-    return response.data
+    const response = await request.post<{result: Role}>('/api/v1/roles', data)
+    const apiResponse = response as unknown as {code: number, message: string, result: Role, success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('创建角色响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }
 
@@ -54,8 +62,12 @@ export const updateRole = async (id: string | number, data: Partial<Role>): Prom
     }
   } else {
     // 调用真实API
-    const response = await request.put<Role>(`/api/v1/roles/${id}`, data)
-    return response.data
+    const response = await request.put<{result: Role}>(`/api/v1/roles/${id}`, data)
+    const apiResponse = response as unknown as {code: number, message: string, result: Role, success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('更新角色响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }
 
@@ -67,7 +79,11 @@ export const deleteRole = async (id: string | number): Promise<boolean> => {
     return true
   } else {
     // 调用真实API
-    await request.delete(`/api/v1/roles/${id}`)
+    const response = await request.delete<{result: boolean}>(`/api/v1/roles/${id}`)
+    const apiResponse = response as unknown as {code: number, message: string, result: boolean, success: boolean}
+    if (!apiResponse || !apiResponse.success) {
+      throw new Error('删除角色响应数据格式错误')
+    }
     return true
   }
 }
@@ -79,8 +95,12 @@ export const getRoleById = async (id: string | number): Promise<Role> => {
     return await MockRoleService.getRoleById(Number(id))
   } else {
     // 调用真实API
-    const response = await request.get<Role>(`/api/v1/roles/${id}`)
-    return response.data
+    const response = await request.get<{result: Role}>(`/api/v1/roles/${id}`)
+    const apiResponse = response as unknown as {code: number, message: string, result: Role, success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('获取角色详情响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }
 
@@ -91,6 +111,10 @@ export const saveRolePermissions = async (roleId: string | number, permissionIds
     await MockRoleService.saveRolePermissions(Number(roleId), permissionIds)
   } else {
     // 调用真实API
-    await request.post(`/api/v1/roles/${roleId}/permissions`, { permissionIds })
+    const response = await request.post<{result: boolean}>(`/api/v1/roles/${roleId}/permissions`, { permissionIds })
+    const apiResponse = response as unknown as {code: number, message: string, result: boolean, success: boolean}
+    if (!apiResponse || !apiResponse.success) {
+      throw new Error('保存角色权限响应数据格式错误')
+    }
   }
 }

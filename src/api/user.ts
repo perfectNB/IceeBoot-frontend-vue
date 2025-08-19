@@ -16,8 +16,12 @@ export const getUserList = async (params: PageParams): Promise<PageResult<User>>
     return await MockUserService.getUserList(params)
   } else {
     // 调用真实API
-    const response = await request.get<PageResult<User>>('/api/v1/users', { params })
-    return response.data
+    const response = await request.get<{result: PageResult<User>}>('/api/v1/users', { params })
+    const apiResponse = response as unknown as {code: number, message: string, result: PageResult<User>, success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('获取用户列表响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }
 
@@ -28,8 +32,12 @@ export const getUserById = async (id: string | number): Promise<User> => {
     return await MockUserService.getUserInfo(Number(id))
   } else {
     // 调用真实API
-    const response = await request.get<User>(`/api/v1/users/${id}`)
-    return response.data
+    const response = await request.get<{result: User}>(`/api/v1/users/${id}`)
+    const apiResponse = response as unknown as {code: number, message: string, result: User, success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('获取用户详情响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }
 
@@ -40,8 +48,12 @@ export const createUser = async (data: CreateUserData): Promise<User> => {
     return await MockUserService.createUser(data)
   } else {
     // 调用真实API
-    const response = await request.post<User>('/api/v1/users', data)
-    return response.data
+    const response = await request.post<{result: User}>('/api/v1/users', data)
+    const apiResponse = response as unknown as {code: number, message: string, result: User, success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('创建用户响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }
 
@@ -52,8 +64,12 @@ export const updateUser = async (id: string | number, data: Partial<User>): Prom
     return await MockUserService.updateUser(Number(id), data)
   } else {
     // 调用真实API
-    const response = await request.put<User>(`/api/v1/users/${id}`, data)
-    return response.data
+    const response = await request.put<{result: User}>(`/api/v1/users/${id}`, data)
+    const apiResponse = response as unknown as {code: number, message: string, result: User, success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('更新用户响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }
 
@@ -64,7 +80,11 @@ export const deleteUser = async (id: string | number): Promise<void> => {
     await MockUserService.deleteUser(Number(id))
   } else {
     // 调用真实API
-    await request.delete(`/api/v1/users/${id}`)
+    const response = await request.delete<{result: boolean}>(`/api/v1/users/${id}`)
+    const apiResponse = response as unknown as {code: number, message: string, result: boolean, success: boolean}
+    if (!apiResponse || !apiResponse.success) {
+      throw new Error('删除用户响应数据格式错误')
+    }
   }
 }
 
@@ -75,8 +95,12 @@ export const resetUserPassword = async (id: string | number): Promise<{ newPassw
     return await MockUserService.resetPassword(Number(id))
   } else {
     // 调用真实API
-    const response = await request.post<{ newPassword: string }>(`/api/v1/users/${id}/reset-password`)
-    return response.data
+    const response = await request.post<{result: { newPassword: string }}>(`/api/v1/users/${id}/reset-password`)
+    const apiResponse = response as unknown as {code: number, message: string, result: { newPassword: string }, success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('重置用户密码响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }
 
@@ -87,6 +111,10 @@ export const updateUserStatus = async (id: string | number, status: 'active' | '
     await MockUserService.updateUserStatus(Number(id), status)
   } else {
     // 调用真实API
-    await request.patch(`/api/v1/users/${id}/status`, { status })
+    const response = await request.patch<{result: boolean}>(`/api/v1/users/${id}/status`, { status })
+    const apiResponse = response as unknown as {code: number, message: string, result: boolean, success: boolean}
+    if (!apiResponse || !apiResponse.success) {
+      throw new Error('更新用户状态响应数据格式错误')
+    }
   }
 }

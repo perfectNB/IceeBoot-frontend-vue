@@ -183,7 +183,7 @@ const handleLogout = () => {
   })
 }
 
-// 获取菜单数据
+// 获取菜单数据，显示在前端
 const loadMenus = async () => {
   try {
     menus.value = await getUserMenus()

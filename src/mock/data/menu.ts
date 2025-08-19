@@ -31,18 +31,6 @@ export const mockMenus: MenuItem[] = [
     children: [
       {
         id: 21,
-        title: '用户管理',
-        name: 'UserManagement',
-        path: '/admin/system/user',
-        component: 'UserManagement',
-        icon: 'User',
-        parentId: 2,
-        type: 'menu',
-        sort: 1,
-        requiresAuth: true,
-      },
-      {
-        id: 22,
         title: '角色管理',
         name: 'RoleManagement',
         path: '/admin/system/role',
@@ -53,6 +41,19 @@ export const mockMenus: MenuItem[] = [
         sort: 2,
         requiresAuth: true,
       },
+      {
+        id: 22,
+        title: '用户管理',
+        name: 'UserManagement',
+        path: '/admin/system/user',
+        component: 'UserManagement',
+        icon: 'User',
+        parentId: 2,
+        type: 'menu',
+        sort: 1,
+        requiresAuth: true,
+      },
+
       {
         id: 23,
         title: '权限管理',

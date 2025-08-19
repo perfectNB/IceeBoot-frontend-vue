@@ -2,6 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { User, LoginForm, LoginResponse } from '@/types'
 import { login as apiLogin, getUserInfo as apiGetUserInfo } from '@/api'
+import { resetDynamicRoutes } from '@/router'
 
 export const useUserStore = defineStore('user', () => {
   // 状态
@@ -63,11 +64,14 @@ export const useUserStore = defineStore('user', () => {
   const logout = (): void => {
     clearToken()
     clearUser()
+    // 重置动态路由状态
+    resetDynamicRoutes()
   }
 
   // 获取用户信息
   const getUserInfo = async (): Promise<User> => {
     try {
+
       // 统一使用 auth.ts 中的获取用户信息接口
       const response = await apiGetUserInfo()
       const userInfo = response.data

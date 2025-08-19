@@ -40,7 +40,6 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 1,
         requiresAuth: true,
-        permissions: ['system:user']
       },
       {
         id: 22,
@@ -53,7 +52,6 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 2,
         requiresAuth: true,
-        permissions: ['system:role']
       },
       {
         id: 23,
@@ -66,7 +64,6 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 3,
         requiresAuth: true,
-        permissions: ['system:permission']
       },
       {
         id: 24,
@@ -79,7 +76,6 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 4,
         requiresAuth: true,
-        permissions: ['system:menu']
       }
     ]
   },
@@ -105,7 +101,6 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 1,
         requiresAuth: true,
-        permissions: ['monitor:redis']
       },
       {
         id: 32,
@@ -118,7 +113,6 @@ export const mockMenus: MenuItem[] = [
         type: 'link',
         sort: 2,
         requiresAuth: true,
-        permissions: ['monitor:api-doc'],
         link: 'https://www.baidu.com'
       },
       {
@@ -132,7 +126,6 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 3,
         requiresAuth: true,
-        permissions: ['monitor:task']
       },
       {
         id: 34,
@@ -144,8 +137,7 @@ export const mockMenus: MenuItem[] = [
         parentId: 3,
         type: 'menu',
         sort: 4,
-        requiresAuth: true,
-        permissions: ['monitor:log']
+        requiresAuth: true
       }
     ]
   },
@@ -239,7 +231,7 @@ export const mockMenus: MenuItem[] = [
         permissions: ['codegen:backend']
       },
       {
-        id: 52,
+        id: 53,
         title: '前端生成测试代码',
         name: 'Student',
         path: '/admin/codegen/student',

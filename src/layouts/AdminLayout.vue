@@ -168,7 +168,7 @@ const handleLogout = () => {
       if (!isMockEnabled()) {
         await logout()
       }
-      
+
       // 清除本地状态
       userStore.logout()
       router.push('/')
@@ -194,6 +194,7 @@ const loadMenus = async () => {
 
 // 组件挂载时获取菜单
 onMounted(() => {
+
   loadMenus()
 })
 </script>

@@ -2,30 +2,139 @@ import { createRouter, createWebHistory } from 'vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
+import type { MenuItem } from '@/types'
+import { getUserMenus } from '@/api/menu'
 
 // 导入布局组件
 const AdminLayout = () => import('@/layouts/AdminLayout.vue')
 
 // 导入页面组件
 const HomePage = () => import('@/pages/home/HomePage.vue')
-const Dashboard = () => import('@/pages/admin/AdminDashboard.vue')
-const UserManagement = () => import('@/pages/admin/system/UserManagement.vue')
-const RoleManagement = () => import('@/pages/admin/system/RoleManagement.vue')
-const PermissionManagement = () => import('@/pages/admin/system/PermissionManagement.vue')
-const MenuManagement = () => import('@/pages/admin/system/MenuManagement.vue')
-const RedisManagement = () => import('@/pages/admin/monitor/RedisManagement.vue')
-const TaskManagement = () => import('@/pages/admin/monitor/TaskManagement.vue')
-const LogManagement = () => import('@/pages/admin/monitor/LogManagement.vue')
-const ApiDocumentation = () => import('@/pages/admin/monitor/ApiDocumentation.vue')
-const LLMManagement = () => import('@/pages/admin/ai/LLMManagement.vue')
-const AgentManagement = () => import('@/pages/admin/ai/AgentManagement.vue')
-const ChatInterface = () => import('@/pages/admin/ai/ChatInterface.vue')
-const FrontendCodegen = () => import('@/pages/admin/codegen/FrontendCodegen.vue')
-const BackendCodegen = () => import('@/pages/admin/codegen/BackendCodegen.vue')
-const Student = () => import('@/pages/admin/codegen/Student.vue')
 
-// 定义路由
-const routes: RouteRecordRaw[] = [
+// 组件映射表 - 根据组件名称动态导入组件
+const componentMap: Record<string, () => Promise<{ default: unknown }>> = {
+  Dashboard: () => import('@/pages/admin/AdminDashboard.vue'),
+  UserManagement: () => import('@/pages/admin/system/UserManagement.vue'),
+  RoleManagement: () => import('@/pages/admin/system/RoleManagement.vue'),
+  PermissionManagement: () => import('@/pages/admin/system/PermissionManagement.vue'),
+  MenuManagement: () => import('@/pages/admin/system/MenuManagement.vue'),
+  RedisManagement: () => import('@/pages/admin/monitor/RedisManagement.vue'),
+  TaskManagement: () => import('@/pages/admin/monitor/TaskManagement.vue'),
+  LogManagement: () => import('@/pages/admin/monitor/LogManagement.vue'),
+  ApiDocumentation: () => import('@/pages/admin/monitor/ApiDocumentation.vue'),
+  LLMManagement: () => import('@/pages/admin/ai/LLMManagement.vue'),
+  AgentManagement: () => import('@/pages/admin/ai/AgentManagement.vue'),
+  ChatInterface: () => import('@/pages/admin/ai/ChatInterface.vue'),
+  FrontendCodegen: () => import('@/pages/admin/codegen/FrontendCodegen.vue'),
+  BackendCodegen: () => import('@/pages/admin/codegen/BackendCodegen.vue'),
+  Student: () => import('@/pages/admin/codegen/Student.vue'),
+  // Mock数据中的组件名映射
+  FrontendCrud: () => import('@/pages/admin/codegen/FrontendCodegen.vue'),
+  BackendCrud: () => import('@/pages/admin/codegen/BackendCodegen.vue'),
+  AIChat: () => import('@/pages/admin/ai/ChatInterface.vue'),
+  ApiDoc: () => import('@/pages/admin/monitor/ApiDocumentation.vue'),
+  ScheduledTask: () => import('@/pages/admin/monitor/TaskManagement.vue')
+}
+
+// 将菜单数据转换为路由配置
+function menuToRoute(menu: MenuItem, isChild = false): RouteRecordRaw {
+  // 处理路径：如果是子菜单，需要提取相对路径
+  let routePath = menu.path
+  if (isChild && menu.path.startsWith('/admin/')) {
+    // 对于子菜单，提取最后一段作为相对路径
+    const pathParts = menu.path.split('/')
+    routePath = pathParts[pathParts.length - 1]
+  } else if (!isChild) {
+    // 对于顶级菜单，移除 /admin/ 前缀
+    routePath = menu.path.replace('/admin/', '')
+  }
+
+  const route: Partial<RouteRecordRaw> = {
+    path: routePath,
+    name: menu.name,
+    meta: {
+      title: menu.title,
+      icon: menu.icon,
+      requiresAuth: menu.requiresAuth ?? true,
+      permissions: menu.permissions,
+      hidden: menu.hidden
+    }
+  }
+
+  // 如果是外部链接，不设置组件
+  if (menu.type === 'link') {
+    route.meta!.link = menu.link
+  } else if (menu.component && componentMap[menu.component]) {
+    // 设置组件
+    route.component = componentMap[menu.component]
+  }
+
+  // 处理子菜单
+  if (menu.children && menu.children.length > 0) {
+    route.children = menu.children.map(child => menuToRoute(child, true))
+
+    // 如果有子菜单但没有组件，设置重定向到第一个子菜单
+    if (!route.component && route.children.length > 0) {
+      const firstChild = route.children[0]
+      if (firstChild.path) {
+        route.redirect = firstChild.path
+      }
+    }
+  }
+
+  return route as RouteRecordRaw
+}
+
+// 动态路由是否已加载
+let dynamicRoutesLoaded = false
+
+// 重置动态路由状态（用于登出时清理）
+export function resetDynamicRoutes(): void {
+  dynamicRoutesLoaded = false
+}
+
+// 生成动态路由并添加到路由器
+async function loadDynamicRoutes(): Promise<void> {
+
+  if (dynamicRoutesLoaded) return
+
+  try {
+    const menus = await getUserMenus()
+    const dynamicRoutes = menus.map(menu => menuToRoute(menu))
+
+    // 找到admin路由并添加子路由
+    const adminRoute = router.getRoutes().find(route => route.path === '/admin')
+    if (adminRoute) {
+      // 清空现有子路由
+      adminRoute.children?.forEach(child => {
+        if (child.name) {
+          router.removeRoute(child.name)
+        }
+      })
+
+      // 添加动态路由
+      dynamicRoutes.forEach(route => {
+        router.addRoute('admin', route)
+      })
+
+      // 设置默认重定向到第一个菜单
+      if (dynamicRoutes.length > 0) {
+        const firstRoute = dynamicRoutes[0]
+        router.addRoute('admin', {
+          path: '',
+          redirect: firstRoute.path.startsWith('/') ? `/admin${firstRoute.path}` : `/admin/${firstRoute.path}`
+        })
+      }
+    }
+
+    dynamicRoutesLoaded = true
+  } catch (error) {
+    console.error('加载动态路由失败:', error)
+  }
+}
+
+// 基础路由（不需要动态生成的路由）
+const baseRoutes: RouteRecordRaw[] = [
   {
     path: '/',
     name: 'Home',
@@ -34,238 +143,6 @@ const routes: RouteRecordRaw[] = [
       title: '首页',
       requiresAuth: false
     }
-  },
-  {
-    path: '/admin',
-    component: AdminLayout,
-    meta: {
-      title: '管理后台',
-      requiresAuth: true
-    },
-    children: [
-      {
-        path: '',
-        redirect: '/admin/dashboard'
-      },
-      {
-        path: 'dashboard',
-        name: 'Dashboard',
-        component: Dashboard,
-        meta: {
-          title: '工作台',
-          icon: 'DataAnalysis',
-          requiresAuth: true,
-          permissions: ['dashboard:view']
-        }
-      },
-      {
-        path: 'system',
-        name: 'SystemManagement',
-        // 一级菜单重定向到第一个子菜单，避免404
-        redirect: '/admin/system/user',
-        meta: {
-          title: '系统管理',
-          icon: 'Setting',
-          requiresAuth: true,
-          permissions: ['system']
-        },
-        children: [
-          {
-            path: 'user',
-            name: 'UserManagement',
-            component: UserManagement,
-            meta: {
-              title: '用户管理',
-              icon: 'User',
-              requiresAuth: true,
-              permissions: ['system:user']
-            }
-          },
-          {
-            path: 'role',
-            name: 'RoleManagement',
-            component: RoleManagement,
-            meta: {
-              title: '角色管理',
-              icon: 'UserFilled',
-              requiresAuth: true,
-              permissions: ['system:role']
-            }
-          },
-          {
-            path: 'permission',
-            name: 'PermissionManagement',
-            component: PermissionManagement,
-            meta: {
-              title: '权限管理',
-              icon: 'Lock',
-              requiresAuth: true,
-              permissions: ['system:permission']
-            }
-          },
-          {
-            path: 'menu',
-            name: 'MenuManagement',
-            component: MenuManagement,
-            meta: {
-              title: '菜单管理',
-              icon: 'Menu',
-              requiresAuth: true,
-              permissions: ['system:menu']
-            }
-          }
-        ]
-      },
-      {
-        path: 'monitor',
-        name: 'MonitorManagement',
-        redirect: '/admin/monitor/redis',
-        meta: {
-          title: '系统监控',
-          icon: 'Monitor',
-          requiresAuth: true,
-          permissions: ['monitor']
-        },
-        children: [
-          {
-            path: 'redis',
-            name: 'RedisManagement',
-            component: RedisManagement,
-            meta: {
-              title: 'Redis管理',
-              icon: 'Database',
-              requiresAuth: true,
-              permissions: ['monitor:redis']
-            }
-          },
-          {
-            path: 'task',
-            name: 'TaskManagement',
-            component: TaskManagement,
-            meta: {
-              title: '定时任务',
-              icon: 'Timer',
-              requiresAuth: true,
-              permissions: ['monitor:task']
-            }
-          },
-          {
-            path: 'log',
-            name: 'LogManagement',
-            component: LogManagement,
-            meta: {
-              title: '日志管理',
-              icon: 'Document',
-              requiresAuth: true,
-              permissions: ['monitor:log']
-            }
-          },
-          {
-            path: 'api-doc',
-            name: 'ApiDocumentation',
-            component: ApiDocumentation,
-            meta: {
-              title: '接口文档',
-              icon: 'Link',
-              requiresAuth: true,
-              permissions: ['monitor:api-doc']
-            }
-          }
-        ]
-      },
-      {
-        path: 'ai',
-        name: 'AIManagement',
-        redirect: '/admin/ai/llm',
-        meta: {
-          title: 'AI管理',
-          icon: 'Cpu',
-          requiresAuth: true,
-          permissions: ['ai']
-        },
-        children: [
-          {
-            path: 'llm',
-            name: 'LLMManagement',
-            component: LLMManagement,
-            meta: {
-              title: '大模型管理',
-              icon: 'MagicStick',
-              requiresAuth: true,
-              permissions: ['ai:llm']
-            }
-          },
-          {
-            path: 'agent',
-            name: 'AgentManagement',
-            component: AgentManagement,
-            meta: {
-              title: 'Agent管理',
-              icon: 'Avatar',
-              requiresAuth: true,
-              permissions: ['ai:agent']
-            }
-          },
-          {
-            path: 'chat',
-            name: 'ChatInterface',
-            component: ChatInterface,
-            meta: {
-              title: 'AI对话',
-              icon: 'ChatDotRound',
-              requiresAuth: true,
-              permissions: ['ai:chat']
-            }
-          }
-        ]
-      },
-      {
-        path: 'codegen',
-        name: 'CodeGeneration',
-        redirect: '/admin/codegen/frontend',
-        meta: {
-          title: '代码生成',
-          icon: 'DocumentCopy',
-          requiresAuth: true,
-          permissions: ['codegen']
-        },
-        children: [
-          {
-            path: 'frontend',
-            name: 'FrontendCodegen',
-            component: FrontendCodegen,
-            meta: {
-              title: '前端增删改查',
-              icon: 'Monitor',
-              requiresAuth: true,
-              permissions: ['codegen:frontend']
-            }
-          },
-          {
-            path: 'backend',
-            name: 'BackendCodegen',
-            component: BackendCodegen,
-            meta: {
-              title: '后端增删改查',
-              icon: 'Server',
-              requiresAuth: true,
-              permissions: ['codegen:backend']
-            }
-          },
-          {
-            path: 'student',
-            name: 'Student',
-            component: Student,
-            meta: {
-              title: '前端生成测试代码',
-              icon: 'User',
-              requiresAuth: true,
-              permissions: ['codegen:student']
-            }
-          }
-        ]
-      },
-    ]
   },
   {
     path: '/404',
@@ -280,6 +157,21 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/:pathMatch(.*)*',
     redirect: '/404'
+  }
+]
+
+// 初始路由（包含基础路由和空的admin路由）
+const routes: RouteRecordRaw[] = [
+  ...baseRoutes,
+  {
+    path: '/admin',
+    name: 'admin',
+    component: AdminLayout,
+    meta: {
+      title: '管理后台',
+      requiresAuth: true
+    },
+    children: []
   }
 ]
 
@@ -299,7 +191,7 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
-
+  console.log(to)
   // 设置页面标题
   if (to.meta.title) {
     document.title = `${to.meta.title} - ZBoot Admin`
@@ -338,6 +230,22 @@ router.beforeEach(async (to, from, next) => {
       }
     }
 
+    // 加载动态路由（仅在用户已登录且访问admin路径时）
+    if (token && to.path.startsWith('/admin')) {
+      try {
+        await loadDynamicRoutes()
+        // 如果当前路由不存在且不是404页面，可能是动态路由刚加载，需要重新导航
+        const routeExists = router.getRoutes().some(route => route.path === to.path)
+        if (!routeExists && to.path.startsWith('/admin') && to.path !== '/admin') {
+          // 尝试重新解析路由
+          next({ ...to, replace: true })
+          return
+        }
+      } catch (error) {
+        console.error('加载动态路由失败:', error)
+      }
+    }
+
     // 检查权限
     if (to.meta.permissions && Array.isArray(to.meta.permissions)) {
       const hasPermission = to.meta.permissions.some(permission =>
@@ -363,5 +271,6 @@ router.onError((error) => {
 
 export default router
 
-// 导出路由类型
+// 导出路由类型和工具函数
 export type { RouteRecordRaw }
+export { loadDynamicRoutes }

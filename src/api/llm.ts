@@ -14,8 +14,12 @@ export const getLLMModels = async (params: PageParams): Promise<PageResult<LLMMo
     return await MockLLMService.getLLMModels(params)
   } else {
     // 调用真实API
-    const response = await request.get<PageResult<LLMModel>>('/api/v1/ai/llm', params)
-    return response.data
+    const response = await request.get<{result: PageResult<LLMModel>}>('/api/v1/ai/llm',  params )
+    const apiResponse = response as unknown as {code: number, message: string, result: PageResult<LLMModel>, success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('获取LLM模型列表响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }
 

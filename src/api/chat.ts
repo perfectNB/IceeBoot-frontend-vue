@@ -14,8 +14,12 @@ export const getChatSessions = async (params: PageParams): Promise<PageResult<Ch
     return await MockChatService.getChatSessions(params)
   } else {
     // 调用真实API
-    const response = await request.get<PageResult<ChatSession>>('/api/v1/ai/chat/sessions', params)
-    return response.data
+    const response = await request.get<{result: PageResult<ChatSession>}>('/api/v1/ai/chat/sessions',  params )
+    const apiResponse = response as unknown as {code: number, message: string, result: PageResult<ChatSession>, success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('获取聊天会话列表响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }
 
@@ -92,8 +96,8 @@ export const getModelApiConfig = async (modelName: string): Promise<{ baseUrl: s
 
 // 流式对话（前端实现）
 export const streamChat = async (
-  sessionId: string | number, 
-  content: string, 
+  sessionId: string | number,
+  content: string,
   onMessage: (chunk: string) => void
 ): Promise<void> => {
   if (isMockEnabled()) {
@@ -109,19 +113,19 @@ export const streamChat = async (
       },
       body: JSON.stringify({ sessionId, content })
     })
-    
+
     if (!response.body) {
       throw new Error('Stream not supported')
     }
-    
+
     const reader = response.body.getReader()
     const decoder = new TextDecoder()
-    
+
     try {
       while (true) {
         const { done, value } = await reader.read()
         if (done) break
-        
+
         const chunk = decoder.decode(value)
         onMessage(chunk)
       }

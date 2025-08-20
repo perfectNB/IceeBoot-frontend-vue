@@ -325,9 +325,15 @@ const formRules: FormRules = {
 
 // 方法
 const loadRoles = async () => {
+  loading.value = true
   try {
-    loading.value = true
-    roles.value = await getRoles()
+    const result = await getRoles({
+      page: currentPage.value,
+      size: pageSize.value,
+      keyword: searchForm.value.name
+    })
+    roles.value = result.records
+    // 注意：这里不需要更新total，因为使用的是filteredRoles的计算属性
   } catch (error) {
     console.error('获取角色列表失败:', error)
     ElMessage.error('获取角色列表失败')

@@ -10,7 +10,7 @@ export const getPermissions = async (params: PageParams): Promise<PageResult<Per
     return await MockPermissionService.getPermissions(params)
   } else {
     // 调用真实API
-    const response = await request.get<{result: PageResult<Permission>}>('/api/v1/permissions', params)
+    const response = await request.get<{result: PageResult<Permission>}>('/api/v1/permissions',  params )
     const apiResponse = response as unknown as {code: number, message: string, result: PageResult<Permission>, success: boolean}
     if (!apiResponse || !apiResponse.result) {
       throw new Error('获取权限列表响应数据格式错误')

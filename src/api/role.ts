@@ -1,21 +1,17 @@
 import { request } from '@/utils/request'
-import type { Role } from '@/types'
+import type { Role, PageParams, PageResult } from '@/types'
 import { isMockEnabled } from '@/config/mock'
 import { MockRoleService } from '@/mock/services/role'
 
 // 获取角色列表
-export const getRoles = async (): Promise<Role[]> => {
-  if (isMockEnabled()) {
+export const getRoles = async (params: PageParams): Promise<PageResult<Role>> => {
+  if (!isMockEnabled()) {
     // 使用Mock数据
-    const mockRoles = await MockRoleService.getRoles({ page: 1, size: 1000 })
-    return mockRoles.records.map((role: Role) => ({
-      ...role,
-      id: role.id.toString() // 确保id类型兼容
-    }))
+    return await MockRoleService.getRoles(params)
   } else {
     // 调用真实API
-    const response = await request.get<{result: Role[]}>('/api/v1/roles')
-    const apiResponse = response as unknown as {code: number, message: string, result: Role[], success: boolean}
+    const response = await request.get<{result: PageResult<Role>}>('/api/v1/roles', params)
+    const apiResponse = response as unknown as {code: number, message: string, result: PageResult<Role>, success: boolean}
     if (!apiResponse || !apiResponse.result) {
       throw new Error('获取角色列表响应数据格式错误')
     }

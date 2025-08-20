@@ -14,8 +14,12 @@ export const getAgents = async (params: PageParams): Promise<PageResult<Agent>> 
     return await MockAgentService.getAgents(params)
   } else {
     // 调用真实API
-    const response = await request.get<PageResult<Agent>>('/api/v1/ai/agent', params)
-    return response.data
+    const response = await request.get<{result: PageResult<Agent>}>('/api/v1/ai/agent',  params )
+    const apiResponse = response as unknown as {code: number, message: string, result: PageResult<Agent>, success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('获取Agent列表响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }
 

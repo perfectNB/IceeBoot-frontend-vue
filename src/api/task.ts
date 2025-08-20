@@ -40,8 +40,12 @@ export const getTasks = async (params: TaskQueryParams): Promise<TaskResponse> =
     return await MockTaskService.getTasks(params)
   } else {
     // 调用真实API
-    const response = await request.get<TaskResponse>('/api/v1/tasks', params)
-    return response.data
+    const response = await request.get<{result: TaskResponse}>('/api/v1/tasks',  params )
+    const apiResponse = response as unknown as {code: number, message: string, result: TaskResponse, success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('获取任务列表响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }
 

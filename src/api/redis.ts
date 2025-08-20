@@ -36,8 +36,12 @@ export const getRedisKeys = async (params: RedisQueryParams): Promise<RedisRespo
     return await MockRedisService.getRedisKeys(params)
   } else {
     // 调用真实API
-    const response = await request.get<ApiResponse<RedisResponse>>('/api/v1/redis/keys', params)
-    return response.data.data
+    const response = await request.get<{result: RedisResponse}>('/api/v1/redis/keys',  params )
+    const apiResponse = response as unknown as {code: number, message: string, result: RedisResponse, success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('获取Redis键列表响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }
 

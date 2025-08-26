@@ -129,7 +129,7 @@ export const request = {
 
   async post<T = Record<string, unknown>>(
     url: string,
-    data?: Record<string, unknown>,
+    data?: Record<string, unknown> | unknown[],
     config?: AxiosRequestConfig
   ): Promise<ApiResponse<T>> {
     const response = await service.post(url, data, config)

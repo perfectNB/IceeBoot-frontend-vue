@@ -66,9 +66,14 @@ export interface ApiResponse<T = Record<string, unknown>> {
 
 // 分页相关类型
 export interface PageParams {
-  page: number
-  size: number
+  page?: number
+  size?: number
+  pageNum?: number
+  pageSize?: number
   keyword?: string
+  name?: string
+  code?: string
+  status?: string
   [key: string]: string | number | boolean | undefined
 }
 
@@ -96,6 +101,7 @@ export interface Role {
   code: string
   description?: string
   permissions?: string[]
+  permissionTree?: Permission[]
   createTime?: string
   updateTime?: string
   status?: 'active' | 'inactive'
@@ -115,6 +121,7 @@ export interface Permission {
   createTime?: string
   updateTime?: string
   children?: Permission[]
+  hasPermission?: boolean
 }
 
 // 主题类型

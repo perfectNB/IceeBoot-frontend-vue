@@ -111,10 +111,4 @@ export type {
   PageResult
 } from '@/types'
 
-export  type {
-  getStudentList,
-  getStudentById,
-  createStudent,
-  updateStudent,
-  deleteStudent
-} from './student'
+

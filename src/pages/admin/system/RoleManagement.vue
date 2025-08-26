@@ -55,7 +55,7 @@
     <div class="table-section">
       <el-table
         v-loading="loading"
-        :data="filteredRoles"
+        :data="roles"
         stripe
         style="width: 100%"
         @selection-change="handleSelectionChange"
@@ -69,6 +69,7 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column prop="code" label="角色编码" min-width="120" />
         <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
         <el-table-column prop="status" label="状态" width="100">
           <template #default="{ row }">
@@ -150,6 +151,13 @@
             :disabled="isEdit && formData.name === 'admin'"
           />
         </el-form-item>
+        <el-form-item label="角色编码" prop="code">
+          <el-input
+            v-model="formData.code"
+            placeholder="请输入角色编码，如：admin、user等"
+            :disabled="isEdit"
+          />
+        </el-form-item>
         <el-form-item label="描述" prop="description">
           <el-input
             v-model="formData.description"
@@ -214,7 +222,7 @@ import {
   Delete,
   Key
 } from '@element-plus/icons-vue'
-import { getRoles, createRole, updateRole, deleteRole, saveRolePermissions } from '@/api/role'
+import { getRoles, createRole, updateRole, deleteRole, saveRolePermissions, getRoleById } from '@/api/role'
 import { getAllPermissions } from '@/api/permission'
 import type { Role, Permission } from '@/types'
 
@@ -233,7 +241,8 @@ const searchForm = ref({
 // 分页
 const currentPage = ref(1)
 const pageSize = ref(20)
-const total = computed(() => filteredRoles.value.length)
+const total = ref(0)
+const pages = ref(0)
 
 // 对话框
 const dialogVisible = ref(false)
@@ -246,6 +255,7 @@ const permissionTreeRef = ref()
 // 表单数据
 const formData = ref<Partial<Role>>({
   name: '',
+  code: '',
   description: '',
   status: 'active'
 })
@@ -257,54 +267,25 @@ const checkedPermissions = ref<string[]>([])
 // 计算属性
 const dialogTitle = computed(() => isEdit.value ? '编辑角色' : '新增角色')
 
-const filteredRoles = computed(() => {
-  let filtered = roles.value
-  
-  if (searchForm.value.name) {
-    filtered = filtered.filter(role =>
-      role.name.toLowerCase().includes(searchForm.value.name.toLowerCase()) ||
-      (role.description && role.description.toLowerCase().includes(searchForm.value.name.toLowerCase()))
-    )
-  }
-  
-  if (searchForm.value.status) {
-    filtered = filtered.filter(role => role.status === searchForm.value.status)
-  }
-  
-  return filtered
-})
+// 注意：搜索和过滤现在由后端处理，通过loadRoles中的keyword参数实现
 
 const permissionTree = computed(() => {
-  // 构建权限树结构
+  // 直接使用后端返回的权限树结构，转换为Element Plus Tree组件需要的格式
   interface TreeNode {
     id: number
     label: string
     children: TreeNode[]
   }
+  
+  const convertToTreeFormat = (nodes: Permission[]): TreeNode[] => {
+    return nodes.map(node => ({
+      id: Number(node.id),
+      label: node.name,
+      children: node.children ? convertToTreeFormat(node.children) : []
+    }))
+  }
 
-  const tree: TreeNode[] = []
-  const map = new Map<number, TreeNode>()
-
-  // 先创建所有节点
-  permissions.value.forEach(permission => {
-    map.set(Number(permission.id), {
-      id: Number(permission.id),
-      label: permission.name,
-      children: []
-    })
-  })
-
-  // 构建树结构
-  permissions.value.forEach(permission => {
-    const node = map.get(Number(permission.id))
-    if (permission.parentId && map.has(Number(permission.parentId)) && node) {
-      map.get(Number(permission.parentId))?.children.push(node)
-    } else if (node) {
-      tree.push(node)
-    }
-  })
-
-  return tree
+  return convertToTreeFormat(permissions.value)
 })
 
 const treeProps = {
@@ -318,6 +299,11 @@ const formRules: FormRules = {
     { required: true, message: '请输入角色名称', trigger: 'blur' },
     { min: 2, max: 20, message: '角色名称长度在 2 到 20 个字符', trigger: 'blur' }
   ],
+  code: [
+    { required: true, message: '请输入角色编码', trigger: 'blur' },
+    { min: 2, max: 50, message: '角色编码长度在 2 到 50 个字符', trigger: 'blur' },
+    { pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/, message: '角色编码必须以字母开头，只能包含字母、数字和下划线', trigger: 'blur' }
+  ],
   description: [
     { max: 200, message: '描述不能超过 200 个字符', trigger: 'blur' }
   ]
@@ -327,13 +313,24 @@ const formRules: FormRules = {
 const loadRoles = async () => {
   loading.value = true
   try {
-    const result = await getRoles({
-      page: currentPage.value,
-      size: pageSize.value,
-      keyword: searchForm.value.name
+    console.log('发送分页参数:', {
+      pageNum: currentPage.value,
+      pageSize: pageSize.value,
+      name: searchForm.value.name,
+      status: searchForm.value.status
     })
+    const result = await getRoles({
+      pageNum: currentPage.value,
+      pageSize: pageSize.value,
+      name: searchForm.value.name,
+      status: searchForm.value.status
+    })
+    console.log('API返回结果:', result)
     roles.value = result.records
-    // 注意：这里不需要更新total，因为使用的是filteredRoles的计算属性
+    total.value = result.total
+    pages.value = result.pages
+    currentPage.value = result.current
+    pageSize.value = result.size
   } catch (error) {
     console.error('获取角色列表失败:', error)
     ElMessage.error('获取角色列表失败')
@@ -353,12 +350,14 @@ const loadPermissions = async () => {
 
 const handleSearch = () => {
   currentPage.value = 1
+  loadRoles()
 }
 
 const handleReset = () => {
   searchForm.value.name = ''
   searchForm.value.status = ''
   currentPage.value = 1
+  loadRoles()
 }
 
 const handleSelectionChange = (selection: Role[]) => {
@@ -369,6 +368,7 @@ const handleCreate = () => {
   isEdit.value = false
   formData.value = {
     name: '',
+    code: '',
     description: '',
     status: 'active'
   }
@@ -445,11 +445,39 @@ const handleStatusChange = async (role: Role) => {
   }
 }
 
-const handlePermissions = (role: Role) => {
-  currentRole.value = role
-  // 这里应该获取角色的权限列表
-  checkedPermissions.value = role.permissions || []
-  permissionDialogVisible.value = true
+const handlePermissions = async (role: Role) => {
+  try {
+    currentRole.value = role
+    // 获取角色的完整权限信息
+    const roleDetail = await getRoleById(role.id)
+    
+    // 更新权限树数据
+    permissions.value = roleDetail.permissionTree || []
+    
+    // 获取已选中的权限ID列表
+     const getCheckedPermissionIds = (permissionTree: Permission[]): string[] => {
+       const checkedIds: string[] = []
+       const traverse = (nodes: Permission[]) => {
+         nodes.forEach(node => {
+           if (node.hasPermission && (!node.children || node.children.length === 0)) {
+             // 只添加叶子节点的权限ID
+             checkedIds.push(String(node.id))
+           }
+           if (node.children && node.children.length > 0) {
+             traverse(node.children)
+           }
+         })
+       }
+       traverse(permissionTree)
+       return checkedIds
+     }
+    
+    checkedPermissions.value = getCheckedPermissionIds(roleDetail.permissionTree || [])
+    permissionDialogVisible.value = true
+  } catch (error) {
+    console.error('获取角色权限失败:', error)
+    ElMessage.error('获取角色权限失败')
+  }
 }
 
 const handleSavePermissions = async () => {
@@ -475,10 +503,12 @@ const handleSavePermissions = async () => {
 const handleSizeChange = (size: number) => {
   pageSize.value = size
   currentPage.value = 1
+  loadRoles()
 }
 
 const handleCurrentChange = (page: number) => {
   currentPage.value = page
+  loadRoles()
 }
 
 const getRoleTagType = (roleName: string) => {

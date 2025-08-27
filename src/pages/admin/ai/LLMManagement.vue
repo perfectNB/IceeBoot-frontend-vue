@@ -11,6 +11,14 @@
         <el-icon><Plus /></el-icon>
         新建模型
       </el-button>
+      <el-button
+        type="danger"
+        @click="handleBatchDelete"
+        :disabled="selectedRows.length === 0"
+      >
+        <el-icon><Delete /></el-icon>
+        批量删除
+      </el-button>
       <el-button @click="handleExport">
         <el-icon><Download /></el-icon>
         导出
@@ -594,6 +602,35 @@ const resetKeyForm = () => {
 // 选择变更
 const handleSelectionChange = (selection: LLMModel[]) => {
   selectedRows.value = selection
+}
+
+// 批量删除模型
+const handleBatchDelete = async () => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${selectedRows.value.length} 个模型吗？`,
+      '批量删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    // 批量删除模型
+    for (const model of selectedRows.value) {
+      await deleteLLMModel(model.id)
+    }
+    
+    ElMessage.success(`成功删除 ${selectedRows.value.length} 个模型`)
+    selectedRows.value = []
+    await loadModels()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('批量删除模型失败:', error)
+      ElMessage.error('批量删除模型失败')
+    }
+  }
 }
 
 // 分页变更

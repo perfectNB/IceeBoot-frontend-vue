@@ -4,28 +4,63 @@
       <h1 class="page-title">用户管理</h1>
       <p class="page-description">管理系统用户信息和权限</p>
     </div>
-    
+
     <!-- 操作区域 -->
     <div class="action-section">
       <el-button type="primary" @click="handleCreate">
         <el-icon><Plus /></el-icon>
         新建用户
       </el-button>
+      <el-button
+        type="danger"
+        @click="handleBatchDelete"
+        :disabled="selectedUsers.length === 0"
+      >
+        <el-icon><Delete /></el-icon>
+        批量删除
+      </el-button>
       <el-button @click="handleExport">
         <el-icon><Download /></el-icon>
         导出
       </el-button>
     </div>
-    
+
     <!-- 搜索区域 -->
     <div class="search-section">
       <el-form :model="searchForm" :inline="true">
-        <el-form-item label="关键词">
+        <el-form-item label="用户名">
           <el-input
-            v-model="searchForm.keyword"
-            placeholder="请输入用户名、邮箱或手机号"
+            v-model="searchForm.username"
+            placeholder="请输入用户名"
             clearable
-            style="width: 300px"
+            style="width: 150px"
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item label="昵称">
+          <el-input
+            v-model="searchForm.nickname"
+            placeholder="请输入昵称"
+            clearable
+            style="width: 150px"
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item label="邮箱">
+          <el-input
+            v-model="searchForm.email"
+            placeholder="请输入邮箱"
+            clearable
+            style="width: 200px"
+            @keyup.enter="handleSearch"
+          />
+        </el-form-item>
+        <el-form-item label="手机号">
+          <el-input
+            v-model="searchForm.phone"
+            placeholder="请输入手机号"
+            clearable
+            style="width: 150px"
             @keyup.enter="handleSearch"
           />
         </el-form-item>
@@ -40,18 +75,7 @@
             <el-option label="禁用" value="inactive" />
           </el-select>
         </el-form-item>
-        <el-form-item label="角色">
-          <el-select
-            v-model="searchForm.role"
-            placeholder="请选择角色"
-            clearable
-            style="width: 120px"
-          >
-            <el-option label="管理员" value="admin" />
-            <el-option label="编辑" value="editor" />
-            <el-option label="用户" value="user" />
-          </el-select>
-        </el-form-item>
+
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleSearch">
             搜索
@@ -62,7 +86,7 @@
         </el-form-item>
       </el-form>
     </div>
-    
+
     <!-- 表格区域 -->
     <div class="table-section">
       <el-table
@@ -83,13 +107,23 @@
           </template>
         </el-table-column>
         <el-table-column prop="username" label="用户名" min-width="120" />
+        <el-table-column prop="nickname" label="昵称" min-width="120" />
         <el-table-column prop="email" label="邮箱" min-width="180" />
         <el-table-column prop="phone" label="手机号" width="130" />
-        <el-table-column label="角色" width="100">
+        <el-table-column label="角色" width="150">
           <template #default="{ row }">
-            <el-tag :type="getRoleType(row.roles?.[0] || '')" size="small">
-              {{ getRoleLabel(row.roles?.[0] || '') }}
-            </el-tag>
+            <div v-if="row.roleList && row.roleList.length > 0">
+              <el-tag
+                v-for="role in row.roleList"
+                :key="role.id"
+                :type="getRoleType(role.code)"
+                size="small"
+                style="margin-right: 4px; margin-bottom: 2px;"
+              >
+                {{ role.name }}
+              </el-tag>
+            </div>
+            <span v-else class="text-gray-400">无角色</span>
           </template>
         </el-table-column>
         <el-table-column label="状态" width="80">
@@ -134,7 +168,7 @@
           </template>
         </el-table-column>
       </el-table>
-      
+
       <!-- 分页 -->
       <div class="pagination-section">
         <el-pagination
@@ -148,7 +182,7 @@
         />
       </div>
     </div>
-    
+
     <!-- 用户表单对话框 -->
     <el-dialog
       v-model="dialogVisible"
@@ -165,6 +199,9 @@
         <el-form-item label="用户名" prop="username">
           <el-input v-model="userForm.username" placeholder="请输入用户名" />
         </el-form-item>
+        <el-form-item label="昵称" prop="nickname">
+          <el-input v-model="userForm.nickname" placeholder="请输入昵称" />
+        </el-form-item>
         <el-form-item label="邮箱" prop="email">
           <el-input v-model="userForm.email" placeholder="请输入邮箱" />
         </el-form-item>
@@ -172,17 +209,31 @@
           <el-input v-model="userForm.phone" placeholder="请输入手机号" />
         </el-form-item>
         <el-form-item label="角色" prop="roles">
-          <el-select v-model="userForm.roles" placeholder="请选择角色" multiple style="width: 100%">
-            <el-option label="管理员" value="admin" />
-            <el-option label="编辑" value="editor" />
-            <el-option label="用户" value="user" />
+          <el-select
+            v-model="userForm.roles"
+            placeholder="请选择角色"
+            multiple
+            filterable
+            style="width: 100%"
+          >
+            <el-option
+              v-for="role in roleOptions"
+              :key="role.value"
+              :label="role.label"
+              :value="role.value"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="userForm.status">
-            <el-radio value="active">启用</el-radio>
-            <el-radio value="inactive">禁用</el-radio>
-          </el-radio-group>
+          <el-select
+            v-model="userForm.status"
+            placeholder="请选择状态"
+            clearable
+            style="width: 150px"
+          >
+            <el-option label="启用" value="active" />
+            <el-option label="禁用" value="inactive" />
+          </el-select>
         </el-form-item>
         <el-form-item v-if="!isEdit" label="密码" prop="password">
           <el-input
@@ -193,7 +244,7 @@
           />
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogVisible = false">取消</el-button>
@@ -224,19 +275,24 @@ import {
   createUser,
   updateUser,
   deleteUser,
+  deleteUsers,
   resetUserPassword,
   updateUserStatus
 } from '@/api'
+import { getAllRoles } from '@/api/role'
 
 interface SearchForm {
-  keyword: string
+  username: string
+  nickname: string
+  email: string
+  phone: string
   status: string
-  role: string
 }
 
 interface UserForm {
   id?: string | number
   username: string
+  nickname: string
   email: string
   phone: string
   roles: string[]
@@ -254,9 +310,11 @@ const formRef = ref<FormInstance>()
 
 // 搜索表单
 const searchForm = reactive<SearchForm>({
-  keyword: '',
-  status: '',
-  role: ''
+  username: '',
+  nickname: '',
+  email: '',
+  phone: '',
+  status: ''
 })
 
 // 分页
@@ -269,6 +327,7 @@ const pagination = reactive({
 // 用户表单
 const userForm = reactive<UserForm>({
   username: '',
+  nickname: '',
   email: '',
   phone: '',
   roles: [],
@@ -281,6 +340,10 @@ const formRules = {
   username: [
     { required: true, message: '请输入用户名', trigger: 'blur' },
     { min: 3, max: 20, message: '用户名长度在 3 到 20 个字符', trigger: 'blur' }
+  ],
+  nickname: [
+    { required: true, message: '请输入昵称', trigger: 'blur' },
+    { min: 2, max: 20, message: '昵称长度在 2 到 20 个字符', trigger: 'blur' }
   ],
   email: [
     { required: true, message: '请输入邮箱', trigger: 'blur' },
@@ -302,6 +365,7 @@ const formRules = {
 
 
 const tableData = ref<User[]>([])
+const roleOptions = ref<{label: string, value: string, id: string | number}[]>([])
 
 // 计算属性
 const dialogTitle = computed(() => isEdit.value ? '编辑用户' : '新建用户')
@@ -316,15 +380,7 @@ const getRoleType = (role: string) => {
   return typeMap[role] || 'info'
 }
 
-// 获取角色标签
-const getRoleLabel = (role: string) => {
-  const labelMap: Record<string, string> = {
-    admin: '管理员',
-    editor: '编辑',
-    user: '用户'
-  }
-  return labelMap[role] || '未知'
-}
+
 
 // 加载用户数据
 const loadUsers = async () => {
@@ -333,7 +389,11 @@ const loadUsers = async () => {
     const result = await getUserList({
       page: pagination.page,
       size: pagination.size,
-      keyword: searchForm.keyword
+      username: searchForm.username,
+      nickname: searchForm.nickname,
+      email: searchForm.email,
+      phone: searchForm.phone,
+      status: searchForm.status
     })
     tableData.value = result.records
     pagination.total = result.total
@@ -345,6 +405,8 @@ const loadUsers = async () => {
   }
 }
 
+
+
 // 搜索
 const handleSearch = () => {
   pagination.page = 1
@@ -354,29 +416,70 @@ const handleSearch = () => {
 // 重置搜索
 const handleReset = () => {
   Object.assign(searchForm, {
-    keyword: '',
-    status: '',
-    role: ''
+    username: '',
+    nickname: '',
+    email: '',
+    phone: '',
+    status: ''
   })
   handleSearch()
 }
 
 // 新建用户
-const handleCreate = () => {
+const handleCreate = async () => {
   isEdit.value = false
   resetForm()
+
+  // 加载所有角色选项
+  await loadRoles()
+
   dialogVisible.value = true
 }
 
+// 加载角色数据
+const loadRoles = async () => {
+  try {
+    const roles = await getAllRoles()
+    roleOptions.value = roles.map(role => ({
+      label: role.name,
+      value: role.code,
+      id: role.id
+    }))
+  } catch (error) {
+    console.error('加载角色数据失败:', error)
+    ElMessage.error('加载角色数据失败')
+  }
+}
+
 // 编辑用户
-const handleEdit = (row: User) => {
+const handleEdit = async (row: User) => {
   isEdit.value = true
+
+  // 先加载所有角色选项
+  await loadRoles()
+
+  // 处理角色回显，支持Role对象数组和字符串数组两种格式
+  let userRoles: string[] = []
+  if (row.roleList) {
+    userRoles = row.roleList.map(role => {
+      if (typeof role === 'string') {
+        // 如果是字符串ID，需要找到对应的角色代码
+        const foundRole = roleOptions.value.find(option => String(option.id) === role)
+        return foundRole ? foundRole.value : ''
+      } else {
+        // 如果是Role对象，直接使用code
+        return role.code
+      }
+    }).filter(code => code !== '')
+  }
+
   Object.assign(userForm, {
     id: row.id,
     username: row.username,
+    nickname: row.nickname || '',
     email: row.email,
     phone: row.phone,
-    roles: row.roles || [],
+    roles: userRoles,
     status: row.status
   })
   dialogVisible.value = true
@@ -394,7 +497,7 @@ const handleDelete = async (row: User) => {
         type: 'warning'
       }
     )
-    
+
     await deleteUser(row.id)
     ElMessage.success('用户删除成功')
     await loadUsers()
@@ -406,21 +509,60 @@ const handleDelete = async (row: User) => {
   }
 }
 
-// 重置密码
-const handleResetPassword = async (row: User) => {
+// 批量删除用户
+const handleBatchDelete = async () => {
   try {
     await ElMessageBox.confirm(
-      `确定要重置用户 "${row.username}" 的密码吗？`,
-      '重置密码确认',
+      `确定要删除选中的 ${selectedUsers.value.length} 个用户吗？`,
+      '批量删除确认',
       {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
         type: 'warning'
       }
     )
-    
-    const result = await resetUserPassword(row.id)
-    ElMessage.success(`密码重置成功，新密码为：${result.newPassword}`)
+
+    const userIds = selectedUsers.value.map(user => user.id)
+    await deleteUsers(userIds)
+    ElMessage.success(`成功删除 ${selectedUsers.value.length} 个用户`)
+    selectedUsers.value = []
+    await loadUsers()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('批量删除用户失败:', error)
+      ElMessage.error('批量删除用户失败')
+    }
+  }
+}
+
+// 重置密码
+const handleResetPassword = async (row: User) => {
+  try {
+    const { value: newPassword } = await ElMessageBox.prompt(
+      `请输入用户 "${row.username}" 的新密码`,
+      '重置密码',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        inputType: 'password',
+        inputPlaceholder: '请输入新密码',
+        inputValidator: (value) => {
+          if (!value) {
+            return '密码不能为空'
+          }
+          if (value.length < 6) {
+            return '密码长度不能少于6位'
+          }
+          if (value.length > 20) {
+            return '密码长度不能超过20位'
+          }
+          return true
+        }
+      }
+    )
+
+    await resetUserPassword(row.id, newPassword)
+    ElMessage.success('密码重置成功')
   } catch (error) {
     if (error !== 'cancel') {
       console.error('重置密码失败:', error)
@@ -467,19 +609,26 @@ const handleCurrentChange = (page: number) => {
 // 提交表单
 const handleSubmit = async () => {
   if (!formRef.value) return
-  
+
   try {
     await formRef.value.validate()
-    
+
     submitting.value = true
-    
+
+    // 将角色代码转换为角色ID
+    const roleIds = userForm.roles.map(roleCode => {
+      const role = roleOptions.value.find(option => option.value === roleCode)
+      return role ? String(role.id) : null
+    }).filter(id => id !== null) as string[]
+
     if (isEdit.value) {
       // 更新用户
       await updateUser(userForm.id!, {
         username: userForm.username,
+        nickname: userForm.nickname,
         email: userForm.email,
         phone: userForm.phone,
-        roles: userForm.roles,
+        roleIds: roleIds,
         status: userForm.status
       })
       ElMessage.success('用户更新成功')
@@ -487,18 +636,20 @@ const handleSubmit = async () => {
       // 创建用户
       await createUser({
         username: userForm.username,
+        nickname: userForm.nickname,
         email: userForm.email,
         phone: userForm.phone,
-        roles: userForm.roles,
+        roleIds: roleIds,
         status: userForm.status,
         password: userForm.password
       })
       ElMessage.success('用户创建成功')
     }
-    
+
     // 重新加载用户列表
     await loadUsers()
-    
+
+    // 自动关闭弹窗
     dialogVisible.value = false
   } catch {
     // 表单验证失败
@@ -519,6 +670,7 @@ const resetForm = () => {
   Object.assign(userForm, {
     id: undefined,
     username: '',
+    nickname: '',
     email: '',
     phone: '',
     roles: [],
@@ -541,14 +693,14 @@ onMounted(() => {
 
 .page-header {
   margin-bottom: 24px;
-  
+
   h1 {
     font-size: 24px;
     font-weight: 600;
     color: var(--text-primary);
     margin: 0 0 8px 0;
   }
-  
+
   p {
     color: var(--text-secondary);
     margin: 0;
@@ -557,7 +709,7 @@ onMounted(() => {
 
 .action-section {
   margin-bottom: 16px;
-  
+
   .el-button + .el-button {
     margin-left: 12px;
   }
@@ -576,7 +728,7 @@ onMounted(() => {
   border: 1px solid var(--border-lighter);
   border-radius: 8px;
   overflow: hidden;
-  
+
   :deep(.el-table) {
     .el-table__cell {
       padding: 12px 0;
@@ -602,11 +754,11 @@ onMounted(() => {
     gap: 16px;
     align-items: stretch;
   }
-  
+
   .search-section {
     flex-wrap: wrap;
   }
-  
+
   .action-section {
     justify-content: center;
   }

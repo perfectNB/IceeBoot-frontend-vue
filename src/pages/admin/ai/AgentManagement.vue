@@ -11,6 +11,14 @@
         <el-icon><Plus /></el-icon>
         新建Agent
       </el-button>
+      <el-button
+        type="danger"
+        @click="handleBatchDelete"
+        :disabled="selectedRows.length === 0"
+      >
+        <el-icon><Delete /></el-icon>
+        批量删除
+      </el-button>
       <el-button @click="handleExport">
         <el-icon><Download /></el-icon>
         导出
@@ -516,6 +524,35 @@ const resetForm = () => {
 // 选择变更
 const handleSelectionChange = (selection: Agent[]) => {
   selectedRows.value = selection
+}
+
+// 批量删除Agent
+const handleBatchDelete = async () => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${selectedRows.value.length} 个Agent吗？`,
+      '批量删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    // 批量删除Agent
+    for (const agent of selectedRows.value) {
+      await deleteAgent(agent.id)
+    }
+    
+    ElMessage.success(`成功删除 ${selectedRows.value.length} 个Agent`)
+    selectedRows.value = []
+    await loadAgents()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('批量删除Agent失败:', error)
+      ElMessage.error('批量删除Agent失败')
+    }
+  }
 }
 
 // 分页变更

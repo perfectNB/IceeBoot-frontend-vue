@@ -7,8 +7,12 @@ export interface User {
   email?: string
   phone?: string
   roles?: string[]
+  roleList?: Role[] | string[]
+  roleIds?: Role[] | string[]
   permissions?: string[]
   status?: 'active' | 'inactive'
+  lastLoginTime?: string
+  lastLoginIp?: string
   createTime?: string
   updateTime?: string
 }

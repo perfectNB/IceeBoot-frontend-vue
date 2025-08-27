@@ -38,21 +38,25 @@ export class MockUserService {
       )
     }
     
+    // 分页参数默认值
+    const page = params.page || 1
+    const size = params.size || 10
+    
     // 分页
     const total = filteredUsers.length
-    const start = (params.page - 1) * params.size
-    const end = start + params.size
+    const start = (page - 1) * size
+    const end = start + size
     const records = filteredUsers.slice(start, end)
-    const pages = Math.ceil(total / params.size)
+    const pages = Math.ceil(total / size)
     
     return {
       records,
       total,
-      current: params.page,
-      size: params.size,
+      current: page,
+      size: size,
       pages,
-      hasPrevious: params.page > 1,
-      hasNext: params.page < pages
+      hasPrevious: page > 1,
+      hasNext: page < pages
     }
   }
   
@@ -99,34 +103,37 @@ export class MockUserService {
     return updatedUser
   }
   
-  // 删除用户
-  static async deleteUser(userId: number): Promise<boolean> {
+  // 批量删除用户
+  static async deleteUsers(userIds: number[]): Promise<boolean> {
     await mockDelay()
-    mockLog('删除用户', { userId })
+    mockLog('批量删除用户', { userIds })
     
-    const userIndex = mockUsers.findIndex(u => u.id === userId)
-    if (userIndex === -1) {
-      throw new Error('用户不存在')
+    for (const userId of userIds) {
+      const userIndex = mockUsers.findIndex(u => u.id === userId)
+      if (userIndex !== -1) {
+        mockUsers.splice(userIndex, 1)
+      }
     }
-    
-    mockUsers.splice(userIndex, 1)
     return true
+  }
+  
+  // 删除单个用户（兼容性保留）
+  static async deleteUser(userId: number): Promise<boolean> {
+    return await this.deleteUsers([userId])
   }
 
   // 重置用户密码
-  static async resetPassword(userId: number): Promise<{ newPassword: string }> {
+  static async resetPassword(userId: number, newPassword: string): Promise<void> {
     await mockDelay()
-    mockLog('重置用户密码', { userId })
+    mockLog('重置用户密码', { userId, newPassword })
     
     const user = mockUsers.find(u => u.id === userId)
     if (!user) {
       throw new Error('用户不存在')
     }
     
-    // 生成新密码（实际应用中应该是随机生成）
-    const newPassword = '123456'
-    
-    return { newPassword }
+    // 在实际应用中，这里会更新用户的密码
+    // 这里只是模拟，不实际存储密码
   }
 
   // 更新用户状态

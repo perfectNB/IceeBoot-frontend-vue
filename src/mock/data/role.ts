@@ -9,112 +9,109 @@ export const mockRoles: Role[] = [
   {
     id: 1,
     name: '超级管理员',
-    code: 'admin',
-    description: '拥有系统所有权限',
-    permissions: [
-      'dashboard:view',
-      'system',
-      'system:user',
-      'system:user:view',
-      'system:user:create',
-      'system:user:edit',
-      'system:user:delete',
-      'system:role',
-      'system:role:view',
-      'system:role:create',
-      'system:role:edit',
-      'system:role:delete',
-      'system:permission',
-      'system:permission:view',
-      'system:permission:create',
-      'system:permission:edit',
-      'system:permission:delete',
-      'system:menu',
-      'system:menu:view',
-      'system:menu:create',
-      'system:menu:edit',
-      'system:menu:delete',
-       // 系统监控权限
-       'monitor',
-       'monitor:redis',
-       'monitor:redis:view',
-       'monitor:redis:delete',
-       'monitor:redis:query:api',
-       'monitor:redis:delete:api',
-       'monitor:api-doc',
-       'monitor:task',
-       'monitor:task:view',
-       'monitor:task:create',
-       'monitor:task:edit',
-       'monitor:task:delete',
-       'monitor:task:start',
-       'monitor:task:stop',
-       'monitor:task:list:api',
-       'monitor:task:create:api',
-       'monitor:task:update:api',
-       'monitor:task:delete:api',
-       'monitor:task:start:api',
-       'monitor:task:stop:api',
-       'monitor:log',
-       'monitor:log:view',
-       'monitor:log:delete',
-       'monitor:log:list:api',
-       'monitor:log:delete:api'
-    ],
+    code: 'superAdmin',
+    description: '拥有一切权限的人，反手间镇压寰宇....',
     status: 'active',
-    createTime: '2024-01-01 00:00:00',
-    updateTime: '2024-01-01 00:00:00'
+    createTime: '2025-08-13 14:57:49',
+    updateTime: undefined
   },
   {
     id: 2,
-    name: '系统管理员',
-    code: 'system_admin',
-    description: '拥有系统管理权限',
-    permissions: [
-      'dashboard:view',
-      'system',
-      'system:user',
-      'system:user:view',
-      'system:user:create',
-      'system:user:edit',
-      'system:role',
-      'system:role:view',
-      'system:permission',
-      'system:permission:view',
-      'system:menu',
-      'system:menu:view'
-    ],
+    name: '普通管理员',
+    code: 'admin',
+    description: '有点权限的人..',
     status: 'active',
-    createTime: '2024-01-02 00:00:00',
-    updateTime: '2024-01-02 00:00:00'
+    createTime: '2025-08-13 14:59:37',
+    updateTime: '2025-08-26 21:55:46'
   },
   {
     id: 3,
     name: '普通用户',
     code: 'user',
-    description: '只有基本查看权限',
-    permissions: [
-      'dashboard:view'
-    ],
+    description: '普通用户',
     status: 'active',
-    createTime: '2024-01-03 00:00:00',
-    updateTime: '2024-01-03 00:00:00'
+    createTime: '2025-08-13 15:00:06',
+    updateTime: undefined
   },
   {
     id: 4,
-    name: '用户管理员',
-    code: 'user_admin',
-    description: '只能管理用户',
-    permissions: [
-      'dashboard:view',
-      'system:user',
-      'system:user:view',
-      'system:user:create',
-      'system:user:edit',
-      'system:user:delete'
-    ],
+    name: '测试',
+    code: 'test',
+    description: 'test',
     status: 'active',
-    createTime: '2024-01-04 00:00:00',
-    updateTime: '2024-01-04 00:00:00'
+    createTime: '2025-08-26 20:26:03',
+    updateTime: '2025-08-26 20:26:03'
+  },
+  {
+    id: 5,
+    name: 'test2',
+    code: 'test2',
+    description: '斗通才己分马王。代然飞况起收集想到。八组出连于着相。',
+    status: 'active',
+    createTime: '2025-08-26 20:29:50',
+    updateTime: '2025-08-26 20:29:50'
+  },
+  {
+    id: 6,
+    name: 'test3',
+    code: 'test3',
+    description: 'test3',
+    status: 'active',
+    createTime: '2025-08-26 20:30:55',
+    updateTime: '2025-08-26 20:30:55'
+  },
+  {
+    id: 8,
+    name: 'test4',
+    code: 'test4',
+    description: 'test4',
+    status: 'active',
+    createTime: '2025-08-26 20:38:08',
+    updateTime: '2025-08-26 20:38:08'
+  },
+  {
+    id: 9,
+    name: 'test5',
+    code: 'test5',
+    description: 'test5',
+    status: 'active',
+    createTime: '2025-08-26 20:38:32',
+    updateTime: '2025-08-26 20:38:32'
+  },
+  {
+    id: 10,
+    name: 'test7',
+    code: 'test7',
+    description: 'test7',
+    status: 'active',
+    createTime: '2025-08-26 20:40:19',
+    updateTime: '2025-08-26 20:40:19'
+  },
+  {
+    id: 11,
+    name: 'test6',
+    code: 'test6',
+    description: 'test6',
+    status: 'active',
+    createTime: '2025-08-26 20:40:27',
+    updateTime: '2025-08-26 20:40:27'
+  },
+  {
+    id: 12,
+    name: 'test8',
+    code: 'test8',
+    description: 'test8',
+    status: 'active',
+    createTime: '2025-08-26 20:40:36',
+    updateTime: '2025-08-26 20:40:36'
+  },
+  {
+    id: 13,
+    name: 'test9',
+    code: 'test9',
+    description: 'test9',
+    status: 'active',
+    createTime: '2025-08-26 20:41:00',
+    updateTime: '2025-08-26 20:41:00'
   }
 ]

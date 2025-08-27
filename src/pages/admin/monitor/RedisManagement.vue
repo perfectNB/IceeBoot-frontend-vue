@@ -43,6 +43,19 @@
       </el-form>
     </div>
 
+    <!-- 操作区域 -->
+    <div class="action-section">
+      <el-button
+        type="danger"
+        @click="handleBatchDelete"
+        :disabled="selectedRedisItems.length === 0"
+        v-if="hasPermission('monitor:redis:delete')"
+      >
+        <el-icon><Delete /></el-icon>
+        批量删除
+      </el-button>
+    </div>
+
     <!-- 数据表格 -->
     <div class="table-section">
       <el-table
@@ -51,7 +64,9 @@
         stripe
         border
         style="width: 100%"
+        @selection-change="handleSelectionChange"
       >
+        <el-table-column type="selection" width="55" />
         <el-table-column prop="key" label="键名" min-width="200" show-overflow-tooltip />
         <el-table-column prop="type" label="数据类型" width="120">
           <template #default="{ row }">
@@ -182,6 +197,7 @@ const loading = ref(false)
 const redisData = ref<RedisItem[]>([])
 const viewDialogVisible = ref(false)
 const currentRedisItem = ref<RedisItem | null>(null)
+const selectedRedisItems = ref<RedisItem[]>([])
 
 // 搜索表单
 const searchForm = reactive<SearchForm>({
@@ -302,6 +318,40 @@ const getTypeLabel = (type: string) => {
     zset: '有序集合'
   }
   return typeMap[type] || type
+}
+
+// 选择变更
+const handleSelectionChange = (selection: RedisItem[]) => {
+  selectedRedisItems.value = selection
+}
+
+// 批量删除Redis键
+const handleBatchDelete = async () => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${selectedRedisItems.value.length} 个Redis键吗？`,
+      '批量删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    // 批量删除Redis键
+    for (const item of selectedRedisItems.value) {
+      await deleteRedisKey(item.key)
+    }
+    
+    ElMessage.success(`成功删除 ${selectedRedisItems.value.length} 个Redis键`)
+    selectedRedisItems.value = []
+    loadRedisData()
+  } catch (error: unknown) {
+    if (error !== 'cancel') {
+      console.error('批量删除Redis键失败:', error)
+      ElMessage.error('批量删除Redis键失败')
+    }
+  }
 }
 
 // 格式化值显示

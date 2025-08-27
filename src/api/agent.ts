@@ -30,32 +30,42 @@ export const getAgent = async (id: string | number): Promise<Agent> => {
     return await MockAgentService.getAgent(id)
   } else {
     // 调用真实API
-    const response = await request.get<Agent>(`/api/v1/ai/agent/${id}`)
-    return response.data
+    const response = await request.get<{result: Agent}>(`/api/v1/ai/agent/${id}`)
+    const apiResponse = response as unknown as {code: number, message: string, result: Agent, success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('获取Agent详情响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }
 
 // 创建Agent
-export const createAgent = async (data: Partial<Agent>): Promise<Agent> => {
+export const createAgent = async (data: Partial<Agent>): Promise<void> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    return await MockAgentService.createAgent(data)
+    await MockAgentService.createAgent(data)
   } else {
     // 调用真实API
-    const response = await request.post<Agent>('/api/v1/ai/agent', data)
-    return response.data
+    const response = await request.post('/api/v1/ai/agent', data)
+    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
+    if (!apiResponse || !apiResponse.success) {
+      throw new Error('创建Agent失败')
+    }
   }
 }
 
 // 更新Agent
-export const updateAgent = async (id: string | number, data: Partial<Agent>): Promise<Agent> => {
+export const updateAgent = async (id: string | number, data: Partial<Agent>): Promise<void> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    return await MockAgentService.updateAgent(id, data)
+    await MockAgentService.updateAgent(id, data)
   } else {
     // 调用真实API
-    const response = await request.put<Agent>(`/api/v1/ai/agent/${id}`, data)
-    return response.data
+    const response = await request.put(`/api/v1/ai/agent/${id}`, data)
+    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
+    if (!apiResponse || !apiResponse.success) {
+      throw new Error('更新Agent失败')
+    }
   }
 }
 
@@ -66,7 +76,11 @@ export const deleteAgent = async (id: string | number): Promise<void> => {
     await MockAgentService.deleteAgent(id)
   } else {
     // 调用真实API
-    await request.delete(`/api/v1/ai/agent/${id}`)
+    const response = await request.delete(`/api/v1/ai/agent/${id}`)
+    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
+    if (!apiResponse || !apiResponse.success) {
+      throw new Error('删除Agent失败')
+    }
   }
 }
 
@@ -74,13 +88,16 @@ export const deleteAgent = async (id: string | number): Promise<void> => {
 export const updateAgentStatus = async (
   id: string | number,
   status: 'active' | 'inactive'
-): Promise<Agent> => {
+): Promise<void> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    return await MockAgentService.updateAgentStatus(id, status)
+    await MockAgentService.updateAgentStatus(id, status)
   } else {
     // 调用真实API
-    const response = await request.put<Agent>(`/api/v1/ai/agent/${id}/status`, { status })
-    return response.data
+    const response = await request.put(`/api/v1/ai/agent/${id}/status`, { status })
+    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
+    if (!apiResponse || !apiResponse.success) {
+      throw new Error('更新Agent状态失败')
+    }
   }
 }

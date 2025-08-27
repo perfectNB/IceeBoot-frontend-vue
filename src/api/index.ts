@@ -49,6 +49,7 @@ export {
   createUser,
   updateUser,
   deleteUser,
+  deleteUsers,
   resetUserPassword,
   updateUserStatus,
   type CreateUserData

@@ -15,6 +15,15 @@
       >
         新增菜单
       </el-button>
+      <el-button
+        type="danger"
+        @click="handleBatchDelete"
+        :disabled="selectedMenus.length === 0"
+        v-if="hasPermission('system:menu:delete')"
+      >
+        <el-icon><Delete /></el-icon>
+        批量删除
+      </el-button>
       <el-button 
         :icon="Refresh" 
         @click="loadMenus"
@@ -67,7 +76,9 @@
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         border
         stripe
+        @selection-change="handleSelectionChange"
       >
+        <el-table-column type="selection" width="55" />
         <el-table-column prop="title" label="菜单名称" min-width="200">
           <template #default="{ row }">
             <el-icon v-if="row.icon" class="menu-icon">
@@ -205,6 +216,7 @@ const submitting = ref(false)
 const dialogVisible = ref(false)
 const menuList = ref<MenuItem[]>([])
 const permissionOptions = ref<Permission[]>([])
+const selectedMenus = ref<MenuItem[]>([])
 
 // 搜索表单
 const searchForm = reactive({
@@ -400,6 +412,40 @@ const handleSearch = () => {
 const handleReset = () => {
   searchForm.title = ''
   searchForm.type = ''
+}
+
+// 选择变更
+const handleSelectionChange = (selection: MenuItem[]) => {
+  selectedMenus.value = selection
+}
+
+// 批量删除菜单
+const handleBatchDelete = async () => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${selectedMenus.value.length} 个菜单吗？`,
+      '批量删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    // 批量删除菜单
+    for (const menu of selectedMenus.value) {
+      await deleteMenu(menu.id)
+    }
+    
+    ElMessage.success(`成功删除 ${selectedMenus.value.length} 个菜单`)
+    selectedMenus.value = []
+    loadMenus()
+  } catch (error: unknown) {
+    if (error !== 'cancel') {
+      console.error('批量删除菜单失败:', error)
+      ElMessage.error('批量删除菜单失败')
+    }
+  }
 }
 
 // 重置表单

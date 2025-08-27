@@ -62,6 +62,19 @@
       </el-form>
     </div>
 
+    <!-- 操作区域 -->
+    <div class="action-section">
+      <el-button
+        type="danger"
+        @click="handleBatchDelete"
+        :disabled="selectedLogs.length === 0"
+        v-if="hasPermission('monitor:log:delete')"
+      >
+        <el-icon><Delete /></el-icon>
+        批量删除
+      </el-button>
+    </div>
+
     <!-- 数据表格 -->
     <div class="table-section">
       <el-table
@@ -71,7 +84,9 @@
         border
         style="width: 100%"
         :row-class-name="getRowClassName"
+        @selection-change="handleSelectionChange"
       >
+        <el-table-column type="selection" width="55" />
         <el-table-column prop="level" label="级别" width="80">
           <template #default="{ row }">
             <el-tag :type="getLevelTagType(row.level)" size="small">{{ row.level }}</el-tag>
@@ -208,6 +223,7 @@ const loading = ref(false)
 const logData = ref<LogItem[]>([])
 const viewDialogVisible = ref(false)
 const currentLogItem = ref<LogItem | null>(null)
+const selectedLogs = ref<LogItem[]>([])
 
 // 搜索表单
 const searchForm = reactive<SearchForm>({
@@ -322,6 +338,40 @@ const getLevelTagType = (level: string) => {
     ERROR: 'danger'
   }
   return levelMap[level] || 'default'
+}
+
+// 选择变更
+const handleSelectionChange = (selection: LogItem[]) => {
+  selectedLogs.value = selection
+}
+
+// 批量删除日志
+const handleBatchDelete = async () => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${selectedLogs.value.length} 条日志吗？`,
+      '批量删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    // 批量删除日志
+    for (const log of selectedLogs.value) {
+      await deleteLog(log.id)
+    }
+    
+    ElMessage.success(`成功删除 ${selectedLogs.value.length} 条日志`)
+    selectedLogs.value = []
+    loadLogs()
+  } catch (error: unknown) {
+    if (error !== 'cancel') {
+      console.error('批量删除日志失败:', error)
+      ElMessage.error('批量删除日志失败')
+    }
+  }
 }
 
 // 获取行类名

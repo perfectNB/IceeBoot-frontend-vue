@@ -15,6 +15,15 @@
         <el-icon><Plus /></el-icon>
         新增任务
       </el-button>
+      <el-button
+        type="danger"
+        @click="handleBatchDelete"
+        :disabled="selectedTasks.length === 0"
+        v-if="hasPermission('monitor:task:delete')"
+      >
+        <el-icon><Delete /></el-icon>
+        批量删除
+      </el-button>
     </div>
 
     <!-- 搜索区域 -->
@@ -61,7 +70,9 @@
         stripe
         border
         style="width: 100%"
+        @selection-change="handleSelectionChange"
       >
+        <el-table-column type="selection" width="55" />
         <el-table-column prop="name" label="任务名称" min-width="150" show-overflow-tooltip />
         <el-table-column prop="className" label="任务类" min-width="200" show-overflow-tooltip />
         <el-table-column prop="cronExpression" label="Cron表达式" min-width="120" show-overflow-tooltip />
@@ -212,6 +223,7 @@ const taskData = ref<Task[]>([])
 const dialogVisible = ref(false)
 const isEdit = ref(false)
 const formRef = ref<FormInstance>()
+const selectedTasks = ref<Task[]>([])
 
 // 搜索表单
 const searchForm = reactive<SearchForm>({
@@ -415,6 +427,40 @@ const getStatusTagType = (status: string) => {
     paused: 'warning'
   }
   return statusMap[status] || 'info'
+}
+
+// 选择变更
+const handleSelectionChange = (selection: Task[]) => {
+  selectedTasks.value = selection
+}
+
+// 批量删除任务
+const handleBatchDelete = async () => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${selectedTasks.value.length} 个任务吗？`,
+      '批量删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    // 批量删除任务
+    for (const task of selectedTasks.value) {
+      await deleteTask(task.id!)
+    }
+    
+    ElMessage.success(`成功删除 ${selectedTasks.value.length} 个任务`)
+    selectedTasks.value = []
+    loadTasks()
+  } catch (error: unknown) {
+    if (error !== 'cancel') {
+      console.error('批量删除任务失败:', error)
+      ElMessage.error('批量删除任务失败')
+    }
+  }
 }
 
 // 获取状态标签文本

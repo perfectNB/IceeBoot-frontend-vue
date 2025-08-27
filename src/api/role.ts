@@ -135,3 +135,34 @@ export const saveRolePermissions = async (roleId: string | number, permissionIds
     }
   }
 }
+
+// 获取所有角色
+export const getAllRoles = async (): Promise<Role[]> => {
+  if (!isMockEnabled()) {
+    // 使用Mock数据
+    return await MockRoleService.getAllRoles()
+  } else {
+    // 调用真实API
+    const response = await request.get<Role[]>('/api/v1/roles/getAll')
+    const apiResponse = response as unknown as {code: number, message: string, result: Role[], success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('获取所有角色失败')
+    }
+    return apiResponse.result
+  }
+}
+
+// 更新角色状态
+export const updateRoleStatus = async (id: string | number, status: 'active' | 'inactive'): Promise<void> => {
+  if (!isMockEnabled()) {
+    // 使用Mock数据 - 通过updateRole函数更新状态
+    await updateRole(id, { status })
+  } else {
+    // 调用真实API - PUT方法，状态作为查询参数
+    const response = await request.put(`/api/v1/roles/${id}/status?status=${status}`)
+    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
+    if (!apiResponse || !apiResponse.success) {
+      throw new Error('更新角色状态失败')
+    }
+  }
+}

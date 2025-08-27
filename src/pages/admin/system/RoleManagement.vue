@@ -14,6 +14,14 @@
         <el-icon><Plus /></el-icon>
         新增角色
       </el-button>
+      <el-button 
+        type="danger" 
+        @click="handleBatchDelete"
+        :disabled="selectedRoles.length === 0"
+      >
+        <el-icon><Delete /></el-icon>
+        批量删除
+      </el-button>
     </div>
 
     <!-- 搜索区域 -->
@@ -57,6 +65,7 @@
         v-loading="loading"
         :data="roles"
         stripe
+        border
         style="width: 100%"
         @selection-change="handleSelectionChange"
       >
@@ -75,15 +84,15 @@
           <template #default="{ row }">
             <el-switch
               v-model="row.status"
-              active-value="active"
-              inactive-value="inactive"
+              :active-value="'active'"
+              :inactive-value="'inactive'"
               @change="handleStatusChange(row)"
             />
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="180">
+        <el-table-column prop="createTime" label="创建时间" width="180">
           <template #default="{ row }">
-            {{ formatDate(row.createdAt) }}
+            {{ formatDate(row.createTime) }}
           </template>
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
@@ -222,7 +231,7 @@ import {
   Delete,
   Key
 } from '@element-plus/icons-vue'
-import { getRoles, createRole, updateRole, deleteRole, saveRolePermissions, getRoleById } from '@/api/role'
+import { getRoles, createRole, updateRole, deleteRole, saveRolePermissions, getRoleById, updateRoleStatus } from '@/api/role'
 import { getAllPermissions } from '@/api/permission'
 import type { Role, Permission } from '@/types'
 
@@ -433,15 +442,44 @@ const handleDelete = (role: Role) => {
   })
 }
 
+// 批量删除角色
+const handleBatchDelete = async () => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${selectedRoles.value.length} 个角色吗？`,
+      '批量删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    // 批量删除角色
+    for (const role of selectedRoles.value) {
+      await deleteRole(role.id)
+    }
+    
+    ElMessage.success(`成功删除 ${selectedRoles.value.length} 个角色`)
+    selectedRoles.value = []
+    await loadRoles()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('批量删除角色失败:', error)
+      ElMessage.error('批量删除角色失败')
+    }
+  }
+}
+
 const handleStatusChange = async (role: Role) => {
   try {
-    await updateRole(role.id, { status: role.status })
-    ElMessage.success('状态更新成功')
+    await updateRoleStatus(role.id, role.status!)
+    ElMessage.success(`角色状态已${role.status === 'active' ? '启用' : '禁用'}`)
   } catch (error) {
-    console.error('状态更新失败:', error)
-    ElMessage.error('状态更新失败')
     // 恢复原状态
     role.status = role.status === 'active' ? 'inactive' : 'active'
+    console.error('状态更新失败:', error)
+    ElMessage.error('状态更新失败')
   }
 }
 

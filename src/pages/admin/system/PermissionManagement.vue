@@ -14,6 +14,14 @@
         <el-icon><Plus /></el-icon>
         新增权限
       </el-button>
+      <el-button
+        type="danger"
+        @click="handleBatchDelete"
+        :disabled="selectedPermissions.length === 0"
+      >
+        <el-icon><Delete /></el-icon>
+        批量删除
+      </el-button>
       <el-button @click="expandAll">
         <el-icon><Sort /></el-icon>
         展开全部
@@ -465,6 +473,35 @@ const handleReset = () => {
 
 const handleSelectionChange = (selection: Permission[]) => {
   selectedPermissions.value = selection
+}
+
+// 批量删除权限
+const handleBatchDelete = async () => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除选中的 ${selectedPermissions.value.length} 个权限吗？`,
+      '批量删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    // 批量删除权限
+    for (const permission of selectedPermissions.value) {
+      await deletePermission(permission.id)
+    }
+    
+    ElMessage.success(`成功删除 ${selectedPermissions.value.length} 个权限`)
+    selectedPermissions.value = []
+    await loadPermissions()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('批量删除权限失败:', error)
+      ElMessage.error('批量删除权限失败')
+    }
+  }
 }
 
 const expandAll = () => {

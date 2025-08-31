@@ -5,6 +5,19 @@
       <p>管理Redis缓存数据</p>
     </div>
 
+    <!-- 操作区域 -->
+    <div class="action-section">
+      <el-button
+        type="danger"
+        @click="handleBatchDelete"
+        :disabled="selectedRedisItems.length === 0"
+        v-if="hasPermission('monitor:redis:delete')"
+      >
+        <el-icon><Delete /></el-icon>
+        批量删除
+      </el-button>
+    </div>
+
     <!-- 搜索区域 -->
     <div class="search-section">
       <el-form :model="searchForm" inline>
@@ -41,19 +54,6 @@
           </el-button>
         </el-form-item>
       </el-form>
-    </div>
-
-    <!-- 操作区域 -->
-    <div class="action-section">
-      <el-button
-        type="danger"
-        @click="handleBatchDelete"
-        :disabled="selectedRedisItems.length === 0"
-        v-if="hasPermission('monitor:redis:delete')"
-      >
-        <el-icon><Delete /></el-icon>
-        批量删除
-      </el-button>
     </div>
 
     <!-- 数据表格 -->
@@ -145,7 +145,7 @@
             </el-descriptions-item>
             <el-descriptions-item label="大小">{{ currentRedisItem.size }}</el-descriptions-item>
           </el-descriptions>
-          
+
           <div class="value-section" style="margin-top: 20px;">
             <h4>数据内容：</h4>
             <el-input
@@ -158,7 +158,7 @@
           </div>
         </div>
       </div>
-      
+
       <template #footer>
         <el-button @click="viewDialogVisible = false">关闭</el-button>
       </template>
@@ -272,7 +272,7 @@ const handleDelete = async (row: RedisItem) => {
         type: 'warning'
       }
     )
-    
+
     await deleteRedisKey(row.key)
     ElMessage.success('删除成功')
     loadRedisData()
@@ -344,12 +344,12 @@ const handleBatchDelete = async () => {
         type: 'warning'
       }
     )
-    
+
     // 批量删除Redis键
     for (const item of selectedRedisItems.value) {
       await deleteRedisKey(item.key)
     }
-    
+
     ElMessage.success(`成功删除 ${selectedRedisItems.value.length} 个Redis键`)
     selectedRedisItems.value = []
     loadRedisData()
@@ -437,4 +437,8 @@ onMounted(() => {
 :deep(.el-button + .el-button) {
   margin-left: 8px;
 }
+.action-section {
+  margin-bottom: 20px;
+}
+
 </style>

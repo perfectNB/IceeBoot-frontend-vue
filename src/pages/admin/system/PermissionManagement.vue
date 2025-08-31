@@ -9,18 +9,26 @@
     <div class="action-section">
       <el-button
         type="primary"
+        :icon="Plus"
         @click="handleCreate"
+        v-if="hasPermission('system:permission:create')"
       >
-        <el-icon><Plus /></el-icon>
         新增权限
       </el-button>
       <el-button
         type="danger"
         @click="handleBatchDelete"
         :disabled="selectedPermissions.length === 0"
+        v-if="hasPermission('system:permission:delete')"
       >
         <el-icon><Delete /></el-icon>
         批量删除
+      </el-button>
+      <el-button 
+        :icon="Refresh" 
+        @click="loadPermissions"
+      >
+        刷新
       </el-button>
       <el-button @click="expandAll">
         <el-icon><Sort /></el-icon>
@@ -86,8 +94,9 @@
         v-loading="loading"
         :data="filteredPermissions"
         row-key="id"
+        default-expand-all
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-        :default-expand-all="false"
+        border
         stripe
         style="width: 100%"
         @selection-change="handleSelectionChange"
@@ -142,14 +151,14 @@
             {{ formatDate(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="250" fixed="right">
           <template #default="{ row }">
             <el-button
               type="primary"
               size="small"
               :icon="Plus"
               @click="handleCreateChild(row)"
-              v-if="row.type === 'menu'"
+              v-if="row.type === 'menu' && hasPermission('system:permission:create')"
             >
               添加子权限
             </el-button>
@@ -158,6 +167,7 @@
               size="small"
               :icon="Edit"
               @click="handleEdit(row)"
+              v-if="hasPermission('system:permission:edit')"
             >
               编辑
             </el-button>
@@ -167,6 +177,7 @@
               :icon="Delete"
               @click="handleDelete(row)"
               :disabled="row.children && row.children.length > 0"
+              v-if="hasPermission('system:permission:delete')"
             >
               删除
             </el-button>
@@ -181,6 +192,7 @@
       :title="dialogTitle"
       width="700px"
       :close-on-click-modal="false"
+      @close="resetFormData"
     >
       <el-form
         ref="formRef"
@@ -305,8 +317,11 @@ import {
   Operation,
   Link
 } from '@element-plus/icons-vue'
-import { getAllPermissions, createPermission, updatePermission, deletePermission } from '@/api/permission'
+import { getAllPermissions, createPermission, updatePermission, deletePermission, deletePermissions } from '@/api/permission'
 import type { Permission } from '@/types'
+import { useUserStore } from '@/stores/user'
+
+const userStore = useUserStore()
 
 // 响应式数据
 const loading = ref(false)
@@ -450,12 +465,16 @@ const loadPermissions = async () => {
   try {
     loading.value = true
     permissions.value = await getAllPermissions()
-  } catch (error) {
-    console.error('获取权限列表失败:', error)
+  } catch {
     ElMessage.error('获取权限列表失败')
   } finally {
     loading.value = false
   }
+}
+
+// 权限检查
+const hasPermission = (permission: string) => {
+  return userStore.hasPermission(permission)
 }
 
 const handleSearch = () => {
@@ -489,19 +508,17 @@ const handleBatchDelete = async () => {
     )
     
     // 批量删除权限
-    for (const permission of selectedPermissions.value) {
-      await deletePermission(permission.id)
-    }
+    const permissionIds = selectedPermissions.value.map(permission => permission.id)
+    await deletePermissions(permissionIds)
     
     ElMessage.success(`成功删除 ${selectedPermissions.value.length} 个权限`)
     selectedPermissions.value = []
     await loadPermissions()
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('批量删除权限失败:', error)
-      ElMessage.error('批量删除权限失败')
+      if (error !== 'cancel') {
+        ElMessage.error('批量删除权限失败')
+      }
     }
-  }
 }
 
 const expandAll = () => {
@@ -594,6 +611,7 @@ const resetFormData = () => {
     description: '',
     status: 'active'
   }
+  formRef.value?.clearValidate()
 }
 
 const handleTypeChange = () => {
@@ -607,10 +625,8 @@ const handleTypeChange = () => {
 }
 
 const handleSubmit = async () => {
-  if (!formRef.value) return
-  
   try {
-    await formRef.value.validate()
+    await formRef.value?.validate()
     submitting.value = true
     
     const parentIdToExpand = formData.value.parentId
@@ -632,41 +648,40 @@ const handleSubmit = async () => {
         expandParentNode(parentIdToExpand)
       })
     }
-  } catch (error) {
-    console.error('保存权限失败:', error)
-    ElMessage.error('保存权限失败')
+  } catch {
+    ElMessage.error(isEdit.value ? '更新权限失败' : '创建权限失败')
   } finally {
     submitting.value = false
   }
 }
 
-const handleDelete = (permission: Permission) => {
-  ElMessageBox.confirm(
-    `确定要删除权限 "${permission.name}" 吗？`,
-    '确认删除',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
-  ).then(async () => {
-    try {
-      await deletePermission(permission.id)
-      ElMessage.success('删除权限成功')
-      await loadPermissions()
-    } catch (error) {
-      console.error('删除权限失败:', error)
+const handleDelete = async (permission: Permission) => {
+  try {
+    await ElMessageBox.confirm(
+      `确定要删除权限 "${permission.name}" 吗？`,
+      '确认删除',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    await deletePermission(permission.id)
+    ElMessage.success('删除权限成功')
+    await loadPermissions()
+  } catch (error: unknown) {
+    if (error !== 'cancel') {
       ElMessage.error('删除权限失败')
     }
-  })
+  }
 }
 
 const handleStatusChange = async (permission: Permission) => {
   try {
     await updatePermission(permission.id, { status: permission.status })
     ElMessage.success('状态更新成功')
-  } catch (error) {
-    console.error('状态更新失败:', error)
+  } catch {
     ElMessage.error('状态更新失败')
     // 恢复原状态
     permission.status = permission.status === 'active' ? 'inactive' : 'active'
@@ -788,7 +803,8 @@ onMounted(() => {
   gap: 8px;
 }
 
-.permission-name .permission-icon {
+.permission-icon {
+  margin-right: 8px;
   color: #409eff;
 }
 
@@ -814,4 +830,6 @@ onMounted(() => {
 :deep(.el-button + .el-button) {
   margin-left: 8px;
 }
+
+
 </style>

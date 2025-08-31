@@ -5,6 +5,19 @@
       <p>查看和管理系统日志</p>
     </div>
 
+    <!-- 操作区域 -->
+    <div class="action-section">
+      <el-button
+        type="danger"
+        @click="handleBatchDelete"
+        :disabled="selectedLogs.length === 0"
+        v-if="hasPermission('monitor:log:delete')"
+      >
+        <el-icon><Delete /></el-icon>
+        批量删除
+      </el-button>
+    </div>
+
     <!-- 搜索区域 -->
     <div class="search-section">
       <el-form :model="searchForm" inline>
@@ -60,19 +73,6 @@
           </el-button>
         </el-form-item>
       </el-form>
-    </div>
-
-    <!-- 操作区域 -->
-    <div class="action-section">
-      <el-button
-        type="danger"
-        @click="handleBatchDelete"
-        :disabled="selectedLogs.length === 0"
-        v-if="hasPermission('monitor:log:delete')"
-      >
-        <el-icon><Delete /></el-icon>
-        批量删除
-      </el-button>
     </div>
 
     <!-- 数据表格 -->
@@ -156,7 +156,7 @@
           <el-descriptions-item label="线程">{{ currentLogItem.thread }}</el-descriptions-item>
           <el-descriptions-item label="类名" :span="2">{{ currentLogItem.className }}</el-descriptions-item>
         </el-descriptions>
-        
+
         <div class="message-section" style="margin-top: 20px;">
           <h4>日志内容：</h4>
           <el-input
@@ -167,7 +167,7 @@
             style="margin-top: 10px;"
           />
         </div>
-        
+
         <div class="stack-section" style="margin-top: 20px;" v-if="currentLogItem.stackTrace">
           <h4>堆栈信息：</h4>
           <el-input
@@ -179,7 +179,7 @@
           />
         </div>
       </div>
-      
+
       <template #footer>
         <el-button @click="viewDialogVisible = false">关闭</el-button>
       </template>
@@ -305,7 +305,7 @@ const handleDelete = async (row: LogItem) => {
         type: 'warning'
       }
     )
-    
+
     await deleteLog(row.id)
     ElMessage.success('删除成功')
     loadLogs()
@@ -364,12 +364,12 @@ const handleBatchDelete = async () => {
         type: 'warning'
       }
     )
-    
+
     // 批量删除日志
     for (const log of selectedLogs.value) {
       await deleteLog(log.id)
     }
-    
+
     ElMessage.success(`成功删除 ${selectedLogs.value.length} 条日志`)
     selectedLogs.value = []
     loadLogs()
@@ -482,4 +482,8 @@ onMounted(() => {
 :deep(.el-button + .el-button) {
   margin-left: 8px;
 }
+.action-section {
+  margin-bottom: 20px;
+}
+
 </style>

@@ -30,6 +30,14 @@
       >
         刷新
       </el-button>
+      <el-button @click="expandAll">
+        <el-icon><Sort /></el-icon>
+        展开全部
+      </el-button>
+      <el-button @click="collapseAll">
+        <el-icon><Sort /></el-icon>
+        收起全部
+      </el-button>
     </div>
 
     <!-- 搜索区域 -->
@@ -69,6 +77,7 @@
     <!-- 表格区域 -->
     <div class="table-section">
       <el-table 
+        ref="tableRef"
         :data="filteredMenuList" 
         v-loading="loading"
         row-key="id"
@@ -104,8 +113,17 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
+            <el-button 
+              type="success" 
+              size="small" 
+              :icon="Plus"
+              @click="handleAddChild(row)"
+              v-if="hasPermission('system:menu:create') && row.type === 'menu'"
+            >
+              添加子菜单
+            </el-button>
             <el-button 
               type="primary" 
               size="small" 
@@ -142,6 +160,19 @@
         :rules="formRules" 
         label-width="100px"
       >
+        <el-form-item label="父级菜单">
+          <el-tree-select
+            v-model="formData.parentId"
+            :data="parentMenuOptions"
+            placeholder="请选择父级菜单（不选择则为顶级菜单）"
+            clearable
+            check-strictly
+            :render-after-expand="false"
+            style="width: 100%"
+            node-key="id"
+            :props="{ label: 'title', value: 'id', children: 'children' }"
+          />
+        </el-form-item>
         <el-form-item label="菜单名称" prop="title">
           <el-input v-model="formData.title" placeholder="请输入菜单名称" />
         </el-form-item>
@@ -174,19 +205,11 @@
           <el-switch v-model="formData.requiresAuth" />
         </el-form-item>
         <el-form-item label="权限标识" prop="permissions">
-          <el-select 
+          <el-input 
             v-model="formData.permissions" 
-            multiple 
-            placeholder="请选择权限"
+            placeholder="请输入权限标识，如：system:menu:list"
             style="width: 100%"
-          >
-            <el-option 
-              v-for="permission in permissionOptions" 
-              :key="permission.code" 
-              :label="permission.name" 
-              :value="permission.code" 
-            />
-          </el-select>
+          />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -202,10 +225,9 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox, type FormRules } from 'element-plus'
-import { Plus, Refresh, Edit, Delete, Search } from '@element-plus/icons-vue'
-import type { MenuItem, Permission } from '@/types'
-import { getAllMenus, createMenu, updateMenu, deleteMenu } from '@/api/menu'
-import { getAllPermissions } from '@/api/permission'
+import { Plus, Refresh, Edit, Delete, Search, Sort } from '@element-plus/icons-vue'
+import type { MenuItem } from '@/types'
+import { getAllMenus, createMenu, updateMenu, deleteMenu, deleteMenus } from '@/api/menu'
 import { useUserStore } from '@/stores/user'
 
 const userStore = useUserStore()
@@ -215,8 +237,9 @@ const loading = ref(false)
 const submitting = ref(false)
 const dialogVisible = ref(false)
 const menuList = ref<MenuItem[]>([])
-const permissionOptions = ref<Permission[]>([])
+const parentMenuOptions = ref<MenuItem[]>([])
 const selectedMenus = ref<MenuItem[]>([])
+const tableRef = ref()
 
 // 搜索表单
 const searchForm = reactive({
@@ -226,7 +249,7 @@ const searchForm = reactive({
 
 // 表单相关
 const formRef = ref()
-const formData = reactive<Partial<MenuItem & { link?: string }>>({
+const formData = reactive<Partial<Omit<MenuItem, 'permissions'> & { link?: string; permissions?: string }>>({
   title: '',
   name: '',
   path: '',
@@ -235,7 +258,8 @@ const formData = reactive<Partial<MenuItem & { link?: string }>>({
   type: 'menu',
   sort: 0,
   requiresAuth: true,
-  permissions: [],
+  permissions: '',
+  parentId: null,
   link: ''
 })
 
@@ -243,7 +267,8 @@ const formRules = computed((): FormRules => {
   const rules: FormRules = {
     title: [{ required: true, message: '请输入菜单名称', trigger: 'blur' }],
     name: [{ required: true, message: '请输入路由名称', trigger: 'blur' }],
-    type: [{ required: true, message: '请选择类型', trigger: 'change' }]
+    type: [{ required: true, message: '请选择类型', trigger: 'change' }],
+    permissions: [{ required: true, message: '请输入权限标识', trigger: 'blur' }]
   }
   
   // 根据类型动态添加验证规则
@@ -287,6 +312,7 @@ const loadMenus = async () => {
   try {
     loading.value = true
     menuList.value = await getAllMenus()
+    buildParentMenuOptions()
   } catch {
     ElMessage.error('加载菜单列表失败')
   } finally {
@@ -294,13 +320,15 @@ const loadMenus = async () => {
   }
 }
 
-// 加载权限选项
-const loadPermissions = async () => {
-  try {
-    permissionOptions.value = await getAllPermissions()
-  } catch {
-    ElMessage.error('加载权限列表失败')
+// 构建父级菜单选项
+const buildParentMenuOptions = () => {
+  const filterMenusForParent = (menus: MenuItem[]): MenuItem[] => {
+    return menus.filter(menu => menu.type === 'menu').map(menu => ({
+      ...menu,
+      children: menu.children ? filterMenusForParent(menu.children) : undefined
+    }))
   }
+  parentMenuOptions.value = filterMenusForParent(menuList.value)
 }
 
 // 新增菜单
@@ -315,7 +343,12 @@ const handleAdd = () => {
 const handleEdit = (row: MenuItem) => {
   isEdit.value = true
   dialogTitle.value = '编辑菜单'
-  Object.assign(formData, row)
+  // 将MenuItem的permissions数组转换为字符串
+  const editData = {
+    ...row,
+    permissions: Array.isArray(row.permissions) ? row.permissions.join(',') : (row.permissions || '')
+  }
+  Object.assign(formData, editData)
   dialogVisible.value = true
 }
 
@@ -348,11 +381,17 @@ const handleSubmit = async () => {
     await formRef.value?.validate()
     submitting.value = true
     
+    // 准备提交数据，将permissions字符串转换为数组
+    const submitData = {
+      ...formData,
+      permissions: formData.permissions ? formData.permissions.split(',').map(p => p.trim()).filter(p => p) : []
+    } as MenuItem
+    
     if (isEdit.value) {
-      await updateMenu(formData.id!, formData)
+      await updateMenu(submitData.id!, submitData)
       ElMessage.success('更新成功')
     } else {
-      await createMenu(formData)
+      await createMenu(submitData)
       ElMessage.success('创建成功')
     }
     
@@ -433,9 +472,8 @@ const handleBatchDelete = async () => {
     )
     
     // 批量删除菜单
-    for (const menu of selectedMenus.value) {
-      await deleteMenu(menu.id)
-    }
+    const menuIds = selectedMenus.value.map(menu => menu.id)
+    await deleteMenus(menuIds)
     
     ElMessage.success(`成功删除 ${selectedMenus.value.length} 个菜单`)
     selectedMenus.value = []
@@ -459,16 +497,55 @@ const resetForm = () => {
     type: 'menu',
     sort: 0,
     requiresAuth: true,
-    permissions: [],
+    permissions: '',
+    parentId: null,
     link: ''
   })
   formRef.value?.clearValidate()
 }
 
+// 添加子菜单
+const handleAddChild = (parentMenu: MenuItem) => {
+  isEdit.value = false
+  dialogTitle.value = `为 "${parentMenu.title}" 添加子菜单`
+  resetForm()
+  formData.parentId = parentMenu.id
+  dialogVisible.value = true
+}
+
+// 展开全部
+const expandAll = () => {
+  if (tableRef.value) {
+    const expandAllNodes = (data: MenuItem[]) => {
+      data.forEach(item => {
+        tableRef.value.toggleRowExpansion(item, true)
+        if (item.children && item.children.length > 0) {
+          expandAllNodes(item.children)
+        }
+      })
+    }
+    expandAllNodes(filteredMenuList.value)
+  }
+}
+
+// 收起全部
+const collapseAll = () => {
+  if (tableRef.value) {
+    const collapseAllNodes = (data: MenuItem[]) => {
+      data.forEach(item => {
+        tableRef.value.toggleRowExpansion(item, false)
+        if (item.children && item.children.length > 0) {
+          collapseAllNodes(item.children)
+        }
+      })
+    }
+    collapseAllNodes(filteredMenuList.value)
+  }
+}
+
 // 初始化
 onMounted(() => {
   loadMenus()
-  loadPermissions()
 })
 </script>
 

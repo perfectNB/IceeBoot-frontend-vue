@@ -5,8 +5,6 @@ import { MockRoleService } from '@/mock/services/role'
 
 // 分页相关类型
 export interface RolePageParams {
-  page?: number
-  size?: number
   pageNum?: number
   pageSize?: number
   keyword?: string
@@ -88,21 +86,30 @@ export const updateRole = async (id: string | number, data: Partial<Role>): Prom
   }
 }
 
-// 删除角色
-export const deleteRole = async (id: string | number): Promise<boolean> => {
+// 删除角色（批量删除）
+export const deleteRoles = async (ids: (string | number)[]): Promise<boolean> => {
   if (!isMockEnabled()) {
     // 使用Mock数据
-    await MockRoleService.deleteRole(Number(id))
+    for (const id of ids) {
+      await MockRoleService.deleteRole(Number(id))
+    }
     return true
   } else {
-    // 调用真实API
-    const response = await request.delete(`/api/v1/roles/${id}`)
+    // 调用真实API - 发送ID数组到请求体
+    const response = await request.delete('/api/v1/roles', {}, {
+      data: ids.map(Number)
+    })
     const apiResponse = response as unknown as {code: number, message: string, success: boolean}
     if (!apiResponse || !apiResponse.success) {
       throw new Error('删除角色失败')
     }
     return true
   }
+}
+
+// 删除单个角色（兼容性保留）
+export const deleteRole = async (id: string | number): Promise<boolean> => {
+  return await deleteRoles([id])
 }
 
 // 获取角色详情

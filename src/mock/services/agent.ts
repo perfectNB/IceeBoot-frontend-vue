@@ -4,7 +4,7 @@ import type { Agent, PageParams, PageResult } from '@/types'
 export class MockAgentService {
   // 获取Agent列表
   static async getAgents(params: PageParams): Promise<PageResult<Agent>> {
-    const { page = 1, size = 20, name = '', type = '', platform = '' } = params
+    const { pageNum = 1, pageSize = 20, name = '', type = '', platform = '' } = params
     
     let filteredAgents = [...mockAgents]
     
@@ -26,19 +26,19 @@ export class MockAgentService {
     }
     
     const total = filteredAgents.length
-    const start = (page - 1) * size
-    const end = start + size
+    const start = (pageNum - 1) * pageSize
+    const end = start + pageSize
     const records = filteredAgents.slice(start, end)
-    const pages = Math.ceil(total / size)
+    const pages = Math.ceil(total / pageSize)
     
     return {
       records,
       total,
-      current: page,
-      size,
+      current: pageNum,
+      size: pageSize,
       pages,
-      hasPrevious: page > 1,
-      hasNext: page < pages
+      hasPrevious: pageNum > 1,
+      hasNext: pageNum < pages
     }
   }
 

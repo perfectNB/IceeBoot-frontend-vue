@@ -128,7 +128,7 @@
       <!-- 分页 -->
       <div class="pagination-section">
         <el-pagination
-          v-model:current-page="pagination.page"
+          v-model:current-page="pagination.current"
           v-model:page-size="pagination.size"
           :page-sizes="[10, 20, 50, 100]"
           :total="pagination.total"
@@ -213,9 +213,10 @@ interface SearchForm {
 }
 
 interface Pagination {
-  page: number
+  current: number
   size: number
   total: number
+  pages: number
 }
 
 // 响应式数据
@@ -235,9 +236,10 @@ const searchForm = reactive<SearchForm>({
 
 // 分页
 const pagination = reactive<Pagination>({
-  page: 1,
+  current: 1,
   size: 20,
-  total: 0
+  total: 0,
+  pages: 0
 })
 
 // 获取日志数据
@@ -245,17 +247,22 @@ const loadLogs = async () => {
   try {
     loading.value = true
     const params = {
-      page: pagination.page,
-      size: pagination.size,
+      pageNum: pagination.current,
+      pageSize: pagination.size,
       level: searchForm.level,
       module: searchForm.module,
       keyword: searchForm.keyword,
       startTime: searchForm.dateRange?.[0],
       endTime: searchForm.dateRange?.[1]
     }
+    console.log('LogManagement loadLogs params:', params)
     const response = await getLogs(params)
     logData.value = response.records
     pagination.total = response.total
+    pagination.current = response.current
+    pagination.size = response.size
+    pagination.pages = response.pages
+    console.log('LogManagement loadLogs response:', response)
   } catch (error: unknown) {
     console.error('获取日志数据失败:', error)
     ElMessage.error('获取日志数据失败')
@@ -266,7 +273,7 @@ const loadLogs = async () => {
 
 // 搜索
 const handleSearch = () => {
-  pagination.page = 1
+  pagination.current = 1
   loadLogs()
 }
 
@@ -276,7 +283,7 @@ const handleReset = () => {
   searchForm.module = ''
   searchForm.keyword = ''
   searchForm.dateRange = null
-  pagination.page = 1
+  pagination.current = 1
   loadLogs()
 }
 
@@ -313,13 +320,13 @@ const handleDelete = async (row: LogItem) => {
 // 分页大小改变
 const handleSizeChange = (size: number) => {
   pagination.size = size
-  pagination.page = 1
+  pagination.current = 1
   loadLogs()
 }
 
 // 当前页改变
 const handleCurrentChange = (page: number) => {
-  pagination.page = page
+  pagination.current = page
   loadLogs()
 }
 

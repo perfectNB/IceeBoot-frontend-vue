@@ -39,24 +39,24 @@ export class MockUserService {
     }
     
     // 分页参数默认值
-    const page = params.page || 1
-    const size = params.size || 10
+    const pageNum = params.pageNum || 1
+    const pageSize = params.pageSize || 10
     
     // 分页
     const total = filteredUsers.length
-    const start = (page - 1) * size
-    const end = start + size
+    const start = (pageNum - 1) * pageSize
+    const end = start + pageSize
     const records = filteredUsers.slice(start, end)
-    const pages = Math.ceil(total / size)
+    const pages = Math.ceil(total / pageSize)
     
     return {
       records,
       total,
-      current: page,
-      size: size,
+      current: pageNum,
+      size: pageSize,
       pages,
-      hasPrevious: page > 1,
-      hasNext: page < pages
+      hasPrevious: pageNum > 1,
+      hasNext: pageNum < pages
     }
   }
   

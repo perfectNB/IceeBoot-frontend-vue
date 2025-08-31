@@ -70,8 +70,6 @@ export interface ApiResponse<T = Record<string, unknown>> {
 
 // 分页相关类型
 export interface PageParams {
-  page?: number
-  size?: number
   pageNum?: number
   pageSize?: number
   keyword?: string
@@ -289,8 +287,8 @@ export interface StudentSearchForm {
   sex?: string // 性别
   number?: string // 学号
   major?: string // 专业
-  page?: number
-  size?: number
+  pageNum?: number
+  pageSize?: number
 }
 
 // Student创建数据

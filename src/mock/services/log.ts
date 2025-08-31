@@ -4,7 +4,7 @@ import type { LogQueryParams, LogResponse } from '@/api/log'
 export class MockLogService {
   // 获取日志列表
   static async getLogs(params: LogQueryParams): Promise<LogResponse> {
-    const { page = 1, size = 20, level, module, keyword, startTime, endTime } = params
+    const { pageNum = 1, pageSize = 20, level, module, keyword, startTime, endTime } = params
     
     // 过滤数据
     let filteredData = [...logData]
@@ -39,19 +39,19 @@ export class MockLogService {
     
     // 分页
     const total = filteredData.length
-    const start = (page - 1) * size
-    const end = start + size
+    const start = (pageNum - 1) * pageSize
+    const end = start + pageSize
     const records = filteredData.slice(start, end)
-    const pages = Math.ceil(total / size)
+    const pages = Math.ceil(total / pageSize)
     
     return {
       records,
       total,
-      current: page,
-      size,
+      current: pageNum,
+      size: pageSize,
       pages,
-      hasPrevious: page > 1,
-      hasNext: page < pages
+      hasPrevious: pageNum > 1,
+      hasNext: pageNum < pages
     }
   }
   

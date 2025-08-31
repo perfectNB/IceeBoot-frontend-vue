@@ -27,16 +27,21 @@ export class MockPermissionService {
     
     // 分页
     const total = filteredPermissions.length
-    const start = (params.page - 1) * params.size
-    const end = start + params.size
-    const list = filteredPermissions.slice(start, end)
+    const pageNum = params.pageNum || 1
+    const pageSize = params.pageSize || 20
+    const start = (pageNum - 1) * pageSize
+    const end = start + pageSize
+    const records = filteredPermissions.slice(start, end)
+    const pages = Math.ceil(total / pageSize)
     
     return {
-      list,
+      records,
       total,
-      page: params.page,
-      size: params.size,
-      pages: Math.ceil(total / params.size)
+      current: pageNum,
+      size: pageSize,
+      pages,
+      hasPrevious: pageNum > 1,
+      hasNext: pageNum < pages
     }
   }
   

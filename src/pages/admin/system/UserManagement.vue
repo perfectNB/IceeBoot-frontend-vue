@@ -77,10 +77,12 @@
         </el-form-item>
 
         <el-form-item>
-          <el-button type="primary" :icon="Search" @click="handleSearch">
+          <el-button type="primary" @click="handleSearch" :loading="loading">
+            <el-icon><Search /></el-icon>
             搜索
           </el-button>
-          <el-button :icon="Refresh" @click="handleReset">
+          <el-button @click="handleReset">
+            <el-icon><Refresh /></el-icon>
             重置
           </el-button>
         </el-form-item>
@@ -172,7 +174,7 @@
       <!-- 分页 -->
       <div class="pagination-section">
         <el-pagination
-          v-model:current-page="pagination.page"
+          v-model:current-page="pagination.current"
           v-model:page-size="pagination.size"
           :page-sizes="[10, 20, 50, 100]"
           :total="pagination.total"
@@ -275,10 +277,10 @@ import {
   createUser,
   updateUser,
   deleteUser,
-  deleteUsers,
   resetUserPassword,
   updateUserStatus
 } from '@/api'
+import { deleteUsers } from '@/api/user'
 import { getAllRoles } from '@/api/role'
 
 interface SearchForm {
@@ -319,9 +321,10 @@ const searchForm = reactive<SearchForm>({
 
 // 分页
 const pagination = reactive({
-  page: 1,
+  current: 1,
   size: 20,
-  total: 0
+  total: 0,
+  pages: 0
 })
 
 // 用户表单
@@ -386,17 +389,30 @@ const getRoleType = (role: string) => {
 const loadUsers = async () => {
   loading.value = true
   try {
-    const result = await getUserList({
-      page: pagination.page,
-      size: pagination.size,
+    console.log('发送分页参数:', {
+      pageNum: pagination.current,
+      pageSize: pagination.size,
       username: searchForm.username,
       nickname: searchForm.nickname,
       email: searchForm.email,
       phone: searchForm.phone,
       status: searchForm.status
     })
+    const result = await getUserList({
+      pageNum: pagination.current,
+      pageSize: pagination.size,
+      username: searchForm.username,
+      nickname: searchForm.nickname,
+      email: searchForm.email,
+      phone: searchForm.phone,
+      status: searchForm.status
+    })
+    console.log('API返回结果:', result)
     tableData.value = result.records
     pagination.total = result.total
+    pagination.pages = result.pages
+    pagination.current = result.current
+    pagination.size = result.size
   } catch (error) {
     console.error('加载用户数据失败:', error)
     ElMessage.error('加载用户数据失败')
@@ -409,7 +425,7 @@ const loadUsers = async () => {
 
 // 搜索
 const handleSearch = () => {
-  pagination.page = 1
+  pagination.current = 1
   loadUsers()
 }
 
@@ -597,12 +613,13 @@ const handleSelectionChange = (selection: User[]) => {
 // 分页大小变更
 const handleSizeChange = (size: number) => {
   pagination.size = size
+  pagination.current = 1
   loadUsers()
 }
 
 // 当前页变更
 const handleCurrentChange = (page: number) => {
-  pagination.page = page
+  pagination.current = page
   loadUsers()
 }
 

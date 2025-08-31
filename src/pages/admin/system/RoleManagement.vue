@@ -231,7 +231,7 @@ import {
   Delete,
   Key
 } from '@element-plus/icons-vue'
-import { getRoles, createRole, updateRole, deleteRole, saveRolePermissions, getRoleById, updateRoleStatus } from '@/api/role'
+import { getRoles, createRole, updateRole, deleteRole, deleteRoles, saveRolePermissions, getRoleById, updateRoleStatus } from '@/api/role'
 import { getAllPermissions } from '@/api/permission'
 import type { Role, Permission } from '@/types'
 
@@ -455,10 +455,9 @@ const handleBatchDelete = async () => {
       }
     )
     
-    // 批量删除角色
-    for (const role of selectedRoles.value) {
-      await deleteRole(role.id)
-    }
+    // 批量删除角色 - 使用新的批量删除API
+    const roleIds = selectedRoles.value.map(role => role.id)
+    await deleteRoles(roleIds)
     
     ElMessage.success(`成功删除 ${selectedRoles.value.length} 个角色`)
     selectedRoles.value = []

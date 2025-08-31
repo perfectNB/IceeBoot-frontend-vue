@@ -147,7 +147,7 @@
       <!-- 分页 -->
       <div class="pagination-section">
         <el-pagination
-          v-model:current-page="pagination.page"
+          v-model:current-page="pagination.current"
           v-model:page-size="pagination.size"
           :page-sizes="[10, 20, 50, 100]"
           :total="pagination.total"
@@ -285,10 +285,18 @@ const searchForm = reactive({
 })
 
 // 分页
-const pagination = reactive({
-  page: 1,
+interface Pagination {
+  current: number
+  size: number
+  total: number
+  pages: number
+}
+
+const pagination = reactive<Pagination>({
+  current: 1,
   size: 10,
-  total: 0
+  total: 0,
+  pages: 0
 })
 
 // Agent表单
@@ -380,14 +388,17 @@ const loadAgents = async () => {
   loading.value = true
   try {
     const result = await getAgents({
-      page: pagination.page,
-      size: pagination.size,
+      pageNum: pagination.current,
+      pageSize: pagination.size,
       name: searchForm.name,
       type: searchForm.type,
       platform: searchForm.platform
     })
     tableData.value = result.records
     pagination.total = result.total
+    pagination.current = result.current
+    pagination.size = result.size
+    pagination.pages = result.pages
   } catch (error) {
     console.error('加载Agent数据失败:', error)
     ElMessage.error('加载Agent数据失败')
@@ -398,7 +409,7 @@ const loadAgents = async () => {
 
 // 搜索
 const handleSearch = () => {
-  pagination.page = 1
+  pagination.current = 1
   loadAgents()
 }
 
@@ -558,12 +569,12 @@ const handleBatchDelete = async () => {
 // 分页变更
 const handleSizeChange = (size: number) => {
   pagination.size = size
-  pagination.page = 1
+  pagination.current = 1
   loadAgents()
 }
 
 const handleCurrentChange = (page: number) => {
-  pagination.page = page
+  pagination.current = page
   loadAgents()
 }
 

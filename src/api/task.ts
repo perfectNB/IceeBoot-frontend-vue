@@ -16,8 +16,8 @@ export interface Task {
 }
 
 export interface TaskQueryParams {
-  page: number
-  size: number
+  pageNum: number
+  pageSize: number
   name?: string
   status?: string
   [key: string]: unknown

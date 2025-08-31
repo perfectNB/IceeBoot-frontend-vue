@@ -14,8 +14,8 @@ export interface LogItem {
 }
 
 export interface LogQueryParams {
-  page: number
-  size: number
+  pageNum: number
+  pageSize: number
   level?: string
   module?: string
   keyword?: string

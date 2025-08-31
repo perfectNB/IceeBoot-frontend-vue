@@ -8,7 +8,7 @@ export class MockChatService {
 
   // 获取对话会话列表
   static getChatSessions(params: PageParams): PageResult<ChatSession> {
-    const { page = 1, size = 20, keyword = '' } = params
+    const { pageNum = 1, pageSize = 20, keyword = '' } = params
     
     let filteredSessions = mockChatSessions
     
@@ -21,19 +21,19 @@ export class MockChatService {
     }
     
     const total = filteredSessions.length
-    const start = (page - 1) * size
-    const end = start + size
+    const start = (pageNum - 1) * pageSize
+    const end = start + pageSize
     const records = filteredSessions.slice(start, end)
-    const pages = Math.ceil(total / size)
+    const pages = Math.ceil(total / pageSize)
     
     return {
       records,
       total,
-      current: page,
-      size,
+      current: pageNum,
+      size: pageSize,
       pages,
-      hasPrevious: page > 1,
-      hasNext: page < pages
+      hasPrevious: pageNum > 1,
+      hasNext: pageNum < pages
     }
   }
 

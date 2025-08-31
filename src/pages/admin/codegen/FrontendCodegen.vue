@@ -722,8 +722,8 @@ const loadData = async () => {
   loading.value = true
   try {
     const result = await get${entityName}List({
-      page: currentPage.value,
-      size: pageSize.value,
+      pageNum: currentPage.value,
+      pageSize: pageSize.value,
 ${searchableFields.map(field => `      ${field.englishName}: searchForm.${field.englishName}`).join(',\n')}
     })
     ${entityNameLower}List.value = result.records
@@ -1075,8 +1075,8 @@ ${fields.value.filter(f => f.searchable).map(field =>
     return {
       list,
       total,
-      page: params.page,
-      size: params.size,
+      current: params.pageNum,
+      size: params.pageSize,
       pages: Math.ceil(total / params.size)
     }
   }
@@ -1188,11 +1188,11 @@ const generateApiCode = (): string => {
 export const get${entityName}List = async (params?: PageParams): Promise<PageResult<${entityName}>> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    const mock${entityName}s = await Mock${entityName}Service.get${entityName}List(params || { page: 1, size: 20 })
+    const mock${entityName}s = await Mock${entityName}Service.get${entityName}List(params || { pageNum: 1, pageSize: 20 })
     return mock${entityName}s
   } else {
     // 调用真实API
-    const response = await request.get<PageResult<${entityName}>>('/api/v1/${entityNameLower}', params || { page: 1, size: 20 })
+    const response = await request.get<PageResult<${entityName}>>('/api/v1/${entityNameLower}', params || { pageNum: 1, pageSize: 20 })
     return response.data
   }
 }`

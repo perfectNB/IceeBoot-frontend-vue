@@ -26,19 +26,21 @@ export class MockRoleService {
     
     // 分页
     const total = filteredRoles.length
-    const start = (params.page - 1) * params.size
-    const end = start + params.size
+    const pageNum = params.pageNum || 1
+    const pageSize = params.pageSize || 20
+    const start = (pageNum - 1) * pageSize
+    const end = start + pageSize
     const records = filteredRoles.slice(start, end)
-    const pages = Math.ceil(total / params.size)
+    const pages = Math.ceil(total / pageSize)
     
     return {
       records,
       total,
-      current: params.page,
-      size: params.size,
+      current: pageNum,
+      size: pageSize,
       pages,
-      hasPrevious: params.page > 1,
-      hasNext: params.page < pages
+      hasPrevious: pageNum > 1,
+      hasNext: pageNum < pages
     }
   }
   

@@ -4,7 +4,7 @@ import type { LLMModel, LLMKey, PageParams, PageResult } from '@/types'
 export class MockLLMService {
   // 获取大模型列表
   static async getLLMModels(params: PageParams): Promise<PageResult<LLMModel>> {
-    const { page = 1, size = 20, keyword = '' } = params
+    const { pageNum = 1, pageSize = 20, keyword = '' } = params
     
     let filteredModels = [...mockLLMModels]
     
@@ -17,19 +17,19 @@ export class MockLLMService {
     }
     
     const total = filteredModels.length
-    const start = (page - 1) * size
-    const end = start + size
+    const start = (pageNum - 1) * pageSize
+    const end = start + pageSize
     const records = filteredModels.slice(start, end)
-    const pages = Math.ceil(total / size)
+    const pages = Math.ceil(total / pageSize)
     
     return {
       records,
       total,
-      current: page,
-      size,
+      current: pageNum,
+      size: pageSize,
       pages,
-      hasPrevious: page > 1,
-      hasNext: page < pages
+      hasPrevious: pageNum > 1,
+      hasNext: pageNum < pages
     }
   }
 

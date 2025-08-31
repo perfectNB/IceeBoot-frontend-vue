@@ -5,7 +5,7 @@ import type { Task, TaskQueryParams, TaskResponse } from '@/api/task'
 export class MockTaskService {
   // 获取任务列表
   static async getTasks(params: TaskQueryParams): Promise<TaskResponse> {
-    const { page = 1, size = 20, name, status } = params
+    const { pageNum = 1, pageSize = 20, name, status } = params
     
     // 过滤数据
     let filteredData = [...taskData]
@@ -36,19 +36,19 @@ export class MockTaskService {
     
     // 分页
     const total = filteredData.length
-    const start = (page - 1) * size
-    const end = start + size
+    const start = (pageNum - 1) * pageSize
+    const end = start + pageSize
     const records = convertedList.slice(start, end)
-    const pages = Math.ceil(total / size)
+    const pages = Math.ceil(total / pageSize)
     
     return {
       records,
       total,
-      current: page,
-      size,
+      current: pageNum,
+      size: pageSize,
       pages,
-      hasPrevious: page > 1,
-      hasNext: page < pages
+      hasPrevious: pageNum > 1,
+      hasNext: pageNum < pages
     }
   }
   

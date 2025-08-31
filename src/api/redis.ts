@@ -12,8 +12,8 @@ export interface RedisKey {
 }
 
 export interface RedisQueryParams {
-  page: number
-  size: number
+  pageNum: number
+  pageSize: number
   key?: string
   type?: string
   [key: string]: unknown

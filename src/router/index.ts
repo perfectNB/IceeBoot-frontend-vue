@@ -27,7 +27,6 @@ const componentMap: Record<string, () => Promise<{ default: unknown }>> = {
   ChatInterface: () => import('@/pages/admin/ai/ChatInterface.vue'),
   FrontendCodegen: () => import('@/pages/admin/codegen/FrontendCodegen.vue'),
   BackendCodegen: () => import('@/pages/admin/codegen/BackendCodegen.vue'),
-  Student: () => import('@/pages/admin/codegen/Student.vue'),
   // Mock数据中的组件名映射
   FrontendCrud: () => import('@/pages/admin/codegen/FrontendCodegen.vue'),
   BackendCrud: () => import('@/pages/admin/codegen/BackendCodegen.vue'),

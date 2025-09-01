@@ -10,6 +10,7 @@ export interface User {
   roleList?: Role[] | string[]
   roleIds?: Role[] | string[]
   permissions?: string[]
+  menus?: MenuItem[]
   status?: 'active' | 'inactive'
   lastLoginTime?: string
   lastLoginIp?: string
@@ -43,20 +44,11 @@ export interface MenuItem {
   parentId?: string | number | null
   sort?: number
   type: 'menu' | 'button' | 'api' | 'link'
-  hidden?: boolean
-  keepAlive?: boolean
+  // hidden?: boolean
   requiresAuth?: boolean
   permissions?: string[]
   link?: string
   children?: MenuItem[]
-  meta?: {
-    title: string
-    icon?: string
-    hidden?: boolean
-    keepAlive?: boolean
-    requiresAuth?: boolean
-    permissions?: string[]
-  }
 }
 
 // API响应类型
@@ -66,6 +58,7 @@ export interface ApiResponse<T = Record<string, unknown>> {
   data: T
   success: boolean
   timestamp?: number
+  fail?: boolean
 }
 
 // 分页相关类型

@@ -77,19 +77,11 @@ export class MockMenuService {
       parentId: menuData.parentId,
       sort: menuData.sort || 0,
       type: menuData.type || 'menu',
-      hidden: menuData.hidden || false,
-      keepAlive: menuData.keepAlive || false,
+      // hidden: menuData.hidden || false,
+      // keepAlive: menuData.keepAlive || false,
       requiresAuth: menuData.requiresAuth !== false,
       permissions: menuData.permissions || [],
-      link: menuData.link,
-      meta: {
-        title: menuData.title || '',
-        icon: menuData.icon,
-        hidden: menuData.hidden || false,
-        keepAlive: menuData.keepAlive || false,
-        requiresAuth: menuData.requiresAuth !== false,
-        permissions: menuData.permissions || []
-      }
+      link: menuData.link
     }
 
     // 如果有父级菜单，添加到父级的children中
@@ -128,11 +120,7 @@ export class MockMenuService {
             ...menus[i],
             ...menuData,
             id: menuId,
-            meta: {
-              ...menus[i].meta,
-              ...menuData.meta,
-              title: menuData.title || menus[i].title
-            }
+
           }
           return true
         }

@@ -9,17 +9,17 @@ export const getMenus = async (params: PageParams): Promise<PageResult<MenuItem>
     // 使用Mock数据 - 模拟分页
     const allMenus = await MockMenuService.getAllMenus()
     let filteredMenus = [...allMenus]
-    
+
     // 关键词搜索
     if (params.keyword) {
       const keyword = params.keyword.toLowerCase()
-      filteredMenus = filteredMenus.filter(menu => 
+      filteredMenus = filteredMenus.filter(menu =>
         menu.title.toLowerCase().includes(keyword) ||
         menu.name.toLowerCase().includes(keyword) ||
         menu.path?.toLowerCase().includes(keyword)
       )
     }
-    
+
     // 分页
     const total = filteredMenus.length
     const pageNum = params.pageNum || 1
@@ -28,7 +28,7 @@ export const getMenus = async (params: PageParams): Promise<PageResult<MenuItem>
     const end = start + pageSize
     const records = filteredMenus.slice(start, end)
     const pages = Math.ceil(total / pageSize)
-    
+
     return {
       records,
       total,
@@ -51,9 +51,10 @@ export const getMenus = async (params: PageParams): Promise<PageResult<MenuItem>
 
 // 获取用户菜单
 export const getUserMenus = async (userId?: number): Promise<MenuItem[]> => {
-  if (isMockEnabled()) {
+  if (!isMockEnabled()) {
     // 使用Mock数据
-    return await MockMenuService.getUserMenus(userId || 1)
+    const response=await MockMenuService.getUserMenus(userId || 1)
+    return response
   } else {
     // 调用真实API
     const response = await request.get<{result: MenuItem[]}>('/api/v1/menus/user')

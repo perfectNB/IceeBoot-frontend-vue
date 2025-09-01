@@ -110,12 +110,10 @@ import {
   ArrowDown
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
-import { getUserMenus } from '@/api/menu'
 import { logout } from '@/api/auth'
 import { isMockEnabled } from '@/config/mock'
 import { isDark, toggleTheme } from '@/utils/theme'
 import SidebarMenu from '@/components/common/SidebarMenu.vue'
-import type { MenuItem } from '@/types'
 
 const route = useRoute()
 const router = useRouter()
@@ -124,8 +122,8 @@ const userStore = useUserStore()
 // 侧边栏状态
 const isCollapsed = ref(false)
 
-// 菜单数据
-const menus = ref<MenuItem[]>([])
+// 菜单数据 - 从user store中获取
+const menus = computed(() => userStore.user?.menus || [])
 
 // 面包屑导航
 const breadcrumbs = computed(() => {
@@ -183,19 +181,9 @@ const handleLogout = () => {
   })
 }
 
-// 获取菜单数据，显示在前端
-const loadMenus = async () => {
-  try {
-    menus.value = await getUserMenus()
-  } catch (error) {
-    console.error('获取菜单失败:', error)
-  }
-}
-
-// 组件挂载时获取菜单
+// 组件挂载时无需额外操作，菜单数据已在user store中
 onMounted(() => {
-
-  loadMenus()
+  // 菜单数据通过computed从user store获取，无需额外加载
 })
 </script>
 

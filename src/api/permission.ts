@@ -26,8 +26,10 @@ export const getAllPermissions = async (): Promise<Permission[]> => {
     return await MockPermissionService.getAllPermissions()
   } else {
     // 调用真实API
+
     const response = await request.get<{result: Permission[]}>('/api/v1/permissions/tree')
     const apiResponse = response as unknown as {code: number, message: string, result: Permission[], success: boolean}
+    console.log(apiResponse)
     if (!apiResponse || !apiResponse.result) {
       throw new Error('获取所有权限响应数据格式错误')
     }

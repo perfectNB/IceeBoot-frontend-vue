@@ -1,10 +1,39 @@
 <!DOCTYPE html>
-<html lang="">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8">
     <link rel="icon" href="/favicon.ico">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vite App</title>
+    <title>ZBoot 管理系统</title>
+    
+    <!-- 预加载关键资源 -->
+    <link rel="preload" href="/src/styles/variables.scss" as="style">
+    <link rel="preload" href="/src/styles/global.scss" as="style">
+    
+    <!-- 预连接外部资源 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
+    <!-- 关键CSS内联 -->
+    <style>
+      /* 关键样式 - 防止FOUC */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      
+      html, body {
+        height: 100%;
+        font-family: 'Helvetica Neue', Helvetica, 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', '微软雅黑', Arial, sans-serif;
+        background-color: #f5f7fa;
+        color: #303133;
+      }
+      
+      #app {
+        height: 100%;
+      }
+    </style>
   </head>
   <body>
     <div id="app"></div>

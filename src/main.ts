@@ -1,11 +1,12 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
-// Element Plus
+// Element Plus - 优化加载
 import ElementPlus from 'element-plus'
-import 'element-plus/dist/index.css'
-import 'element-plus/theme-chalk/dark/css-vars.css'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+// 延迟加载Element Plus样式
+import('element-plus/dist/index.css')
+import('element-plus/theme-chalk/dark/css-vars.css')
 
 // 应用组件和路由
 import App from './App.vue'

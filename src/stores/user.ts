@@ -71,11 +71,9 @@ export const useUserStore = defineStore('user', () => {
   // 获取用户信息
   const getUserInfo = async (): Promise<User> => {
     try {
-
       // 统一使用 auth.ts 中的获取用户信息接口
       const response = await apiGetUserInfo()
       const userInfo = response.data
-
       setUser(userInfo)
       return userInfo
     } catch (error) {

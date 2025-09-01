@@ -37,6 +37,7 @@ export const getUserInfo = async () => {
     const userInfo = await MockUserService.getUserInfo(userId)
     return { data: userInfo }
   } else {
+
     const response = await request.get<{result: User}>('/api/v1/auth/user')
     const apiResponse = response as unknown as {code: number, message: string, result: User, success: boolean}
     if (!apiResponse || !apiResponse.result) {

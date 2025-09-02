@@ -92,7 +92,11 @@
             <el-tag :type="getLevelTagType(row.level)" size="small">{{ row.level }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="timestamp" label="时间" width="160" />
+        <el-table-column prop="timestamp" label="时间" width="180">
+          <template #default="{ row }">
+            {{ formatDate(row.timestamp) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="module" label="模块" width="120" show-overflow-tooltip />
         <el-table-column prop="message" label="日志内容" min-width="400" show-overflow-tooltip>
           <template #default="{ row }">
@@ -101,7 +105,7 @@
         </el-table-column>
         <el-table-column prop="thread" label="线程" width="120" show-overflow-tooltip />
         <el-table-column prop="className" label="类名" width="200" show-overflow-tooltip />
-        <el-table-column label="操作" width="150" fixed="right">
+        <el-table-column label="操作" width="180" fixed="right">
           <template #default="{ row }">
             <el-button
               type="primary"
@@ -191,7 +195,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, View, Delete } from '@element-plus/icons-vue'
-import { getLogs, deleteLog } from '../../../api/log'
+import { getLogs, deleteLog, deleteLogs } from '../../../api/log'
 import { hasPermission } from '../../../utils/permission'
 
 interface LogItem {
@@ -365,11 +369,8 @@ const handleBatchDelete = async () => {
       }
     )
 
-    // 批量删除日志
-    for (const log of selectedLogs.value) {
-      await deleteLog(log.id)
-    }
-
+    const logIds = selectedLogs.value.map(log => log.id)
+    await deleteLogs(logIds)
     ElMessage.success(`成功删除 ${selectedLogs.value.length} 条日志`)
     selectedLogs.value = []
     loadLogs()
@@ -379,6 +380,19 @@ const handleBatchDelete = async () => {
       ElMessage.error('批量删除日志失败')
     }
   }
+}
+
+// 格式化时间显示
+const formatDate = (date: string | Date) => {
+  if (!date) return '-'
+  const d = new Date(date)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  const hours = String(d.getHours()).padStart(2, '0')
+  const minutes = String(d.getMinutes()).padStart(2, '0')
+  const seconds = String(d.getSeconds()).padStart(2, '0')
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`
 }
 
 // 获取行类名

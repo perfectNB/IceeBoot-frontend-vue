@@ -29,6 +29,13 @@ export interface RedisResponse {
   hasNext: boolean
 }
 
+export interface CreateRedisKeyParams {
+  key: string
+  type: string
+  value: string | Record<string, string> | string[] | Array<{score: number, member: string}>
+  ttl: number
+}
+
 // 获取Redis键列表
 export const getRedisKeys = async (params: RedisQueryParams): Promise<RedisResponse> => {
   if (!isMockEnabled()) {
@@ -66,13 +73,26 @@ export const deleteRedisKeys = async (keys: string[]): Promise<void> => {
       await MockRedisService.deleteRedisKey(key)
     }
   } else {
-    // 调用真实API - 使用请求体传递数据
-    const response = await request.delete('/api/v1/redis/keys', {}, {
-      data: keys
-    })
+    // 调用真实API
+    const response = await request.delete('/api/v1/redis/keys', keys as unknown as Record<string, unknown>)
     const apiResponse = response as unknown as {code: number, message: string, success: boolean}
     if (!apiResponse || !apiResponse.success) {
       throw new Error('批量删除Redis键失败')
+    }
+  }
+}
+
+// 创建Redis键
+export const createRedisKey = async (params: CreateRedisKeyParams): Promise<void> => {
+  if (!isMockEnabled()) {
+    // 使用Mock数据
+    await MockRedisService.createRedisKey(params)
+  } else {
+    // 调用真实API
+    const response = await request.post('/api/v1/redis/keys', params as unknown as Record<string, unknown>)
+    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
+    if (!apiResponse || !apiResponse.success) {
+      throw new Error('创建Redis键失败')
     }
   }
 }

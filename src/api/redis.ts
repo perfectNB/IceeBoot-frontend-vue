@@ -31,7 +31,7 @@ export interface RedisResponse {
 
 // 获取Redis键列表
 export const getRedisKeys = async (params: RedisQueryParams): Promise<RedisResponse> => {
-  if (isMockEnabled()) {
+  if (!isMockEnabled()) {
     // 使用Mock数据
     return await MockRedisService.getRedisKeys(params)
   } else {
@@ -45,20 +45,41 @@ export const getRedisKeys = async (params: RedisQueryParams): Promise<RedisRespo
   }
 }
 
+
+
 // 删除Redis键
 export const deleteRedisKey = async (key: string): Promise<void> => {
-  if (isMockEnabled()) {
+  if (!isMockEnabled()) {
     // 使用Mock数据
     await MockRedisService.deleteRedisKey(key)
   } else {
-    // 调用真实API
-    await request.delete(`/api/v1/redis/keys/${encodeURIComponent(key)}`)
+    // 调用真实API - 统一使用批量删除接口
+    await deleteRedisKeys([key])
+  }
+}
+
+// 批量删除Redis键
+export const deleteRedisKeys = async (keys: string[]): Promise<void> => {
+  if (!isMockEnabled()) {
+    // 使用Mock数据 - 逐个删除
+    for (const key of keys) {
+      await MockRedisService.deleteRedisKey(key)
+    }
+  } else {
+    // 调用真实API - 使用请求体传递数据
+    const response = await request.delete('/api/v1/redis/keys', {}, {
+      data: keys
+    })
+    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
+    if (!apiResponse || !apiResponse.success) {
+      throw new Error('批量删除Redis键失败')
+    }
   }
 }
 
 // 获取Redis键详情
 export const getRedisKeyDetail = async (key: string): Promise<RedisKey> => {
-  if (isMockEnabled()) {
+  if (!isMockEnabled()) {
     // 使用Mock数据
     return await MockRedisService.getRedisKeyDetail(key)
   } else {

@@ -21,7 +21,7 @@ export const getBaseURL = (): string => {
 // 获取环境配置
 export const getEnvConfig = (): Partial<EnvConfig> => {
   return {
-    VITE_APP_TITLE: import.meta.env.VITE_APP_TITLE || 'ZBoot前端脚手架',
+    VITE_APP_TITLE: import.meta.env.VITE_APP_TITLE || 'ZBoot超级脚手架',
     VITE_APP_BASE_API: getBaseURL(),
     VITE_APP_ENV: (import.meta.env.MODE as 'development' | 'test' | 'production') || 'development'
   }

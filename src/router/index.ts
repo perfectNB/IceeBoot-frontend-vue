@@ -56,7 +56,7 @@ function menuToRoute(menu: MenuItem, isChild = false): RouteRecordRaw {
       icon: menu.icon,
       requiresAuth: menu.requiresAuth ?? true,
       permissions: menu.permissions,
-      hidden: menu.hidden
+      // hidden: menu.hidden
     }
   }
 

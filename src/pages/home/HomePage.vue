@@ -5,7 +5,7 @@
       <div class="navbar-container">
         <div class="navbar-brand">
           <img src="@/assets/logo.svg" alt="ZBoot" class="logo" />
-          <span class="brand-text">ZBoot前端脚手架</span>
+          <span class="brand-text">ZBoot超级脚手架</span>
         </div>
 
         <div class="navbar-actions">
@@ -41,7 +41,7 @@
             <h1 class="hero-title">
               <span class="gradient-text">ZBoot</span>
               <br>
-              现代化前端脚手架
+              AI化超级脚手架
             </h1>
             <p class="hero-description">
               基于 Vue 3 + TypeScript + Element Plus 构建的企业级前端脚手架，
@@ -139,11 +139,11 @@
 import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { 
-  Moon, 
-  Sunny, 
-  Monitor, 
-  Lightning, 
+import {
+  Moon,
+  Sunny,
+  Monitor,
+  Lightning,
   ChatDotRound, // eslint-disable-line
   User, // eslint-disable-line
   Upload, // eslint-disable-line
@@ -414,14 +414,14 @@ const handleLoginSuccess = () => {
   position: relative;
   height: 500px;
   animation: slideInRight 1s ease-out;
-  
+
   @media (max-width: 768px) {
     height: 300px;
-    
+
     .floating-card {
       padding: 16px;
       font-size: 0.9rem;
-      
+
       .el-icon {
         font-size: 20px;
         padding: 6px;
@@ -489,42 +489,42 @@ const handleLoginSuccess = () => {
     animation-delay: 0s;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
   }
-  
+
   &.card-2 {
     top: 25%;
     right: 8%;
     animation-delay: 0.5s;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
   }
-  
+
   &.card-3 {
     top: 45%;
     left: 8%;
     animation-delay: 1s;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
   }
-  
+
   &.card-4 {
     top: 65%;
     right: 2%;
     animation-delay: 1.5s;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
   }
-  
+
   &.card-5 {
     bottom: 25%;
     left: 25%;
     animation-delay: 2s;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
   }
-  
+
   &.card-6 {
     bottom: 8%;
     right: 25%;
     animation-delay: 2.5s;
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
   }
-  
+
   &.card-7 {
     bottom: 45%;
     left: 45%;

@@ -85,7 +85,11 @@
             <span v-else>{{ row.ttl }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="size" label="大小" width="100" />
+        <el-table-column prop="size" label="大小" width="100">
+          <template #default="{ row }">
+            {{ formatSize(row.size) }}
+          </template>
+        </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button
@@ -143,13 +147,13 @@
               <span v-else-if="currentRedisItem.ttl === -2">已过期</span>
               <span v-else>{{ currentRedisItem.ttl }}秒</span>
             </el-descriptions-item>
-            <el-descriptions-item label="大小">{{ currentRedisItem.size }}</el-descriptions-item>
+            <el-descriptions-item label="大小">{{ formatSize(currentRedisItem.size) }}</el-descriptions-item>
           </el-descriptions>
 
           <div class="value-section" style="margin-top: 20px;">
             <h4>数据内容：</h4>
             <el-input
-              v-model="currentRedisItem.value"
+              :model-value="formatValueForDisplay(currentRedisItem.value)"
               type="textarea"
               :rows="10"
               readonly
@@ -170,7 +174,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, View, Delete } from '@element-plus/icons-vue'
-import { getRedisKeys, deleteRedisKey } from '../../../api/redis'
+import { getRedisKeys, deleteRedisKey, deleteRedisKeys } from '../../../api/redis'
 import { hasPermission } from '../../../utils/permission'
 
 interface RedisItem {
@@ -345,10 +349,11 @@ const handleBatchDelete = async () => {
       }
     )
 
+    // 提取键名数组
+    const keys = selectedRedisItems.value.map(item => item.key)
+    
     // 批量删除Redis键
-    for (const item of selectedRedisItems.value) {
-      await deleteRedisKey(item.key)
-    }
+    await deleteRedisKeys(keys)
 
     ElMessage.success(`成功删除 ${selectedRedisItems.value.length} 个Redis键`)
     selectedRedisItems.value = []
@@ -367,10 +372,32 @@ const formatValue = (value: string | number | object | boolean) => {
     return value.length > 100 ? value.substring(0, 100) + '...' : value
   }
   if (typeof value === 'object') {
-    const str = JSON.stringify(value)
+    const str = JSON.stringify(value, null, 2)
     return str.length > 100 ? str.substring(0, 100) + '...' : str
   }
   return String(value)
+}
+
+// 格式化值用于详情显示
+const formatValueForDisplay = (value: string | number | object | boolean) => {
+  if (typeof value === 'string') {
+    return value
+  }
+  if (typeof value === 'object') {
+    return JSON.stringify(value, null, 2)
+  }
+  return String(value)
+}
+
+// 格式化大小显示
+const formatSize = (size: string | number) => {
+  const sizeNum = typeof size === 'string' ? parseInt(size) : size
+  if (isNaN(sizeNum)) {
+    return size + ' KB'
+  }
+  // 假设后端返回的是字节数，转换为KB
+  const sizeInKB = (sizeNum / 1024).toFixed(2)
+  return sizeInKB + ' KB'
 }
 
 // 组件挂载时加载数据

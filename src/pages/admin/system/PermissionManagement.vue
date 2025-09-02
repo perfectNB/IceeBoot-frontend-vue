@@ -794,22 +794,100 @@ onMounted(() => {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.table-section {
-}
-
 .permission-name {
   display: flex;
   align-items: center;
   gap: 8px;
+  position: relative;
 }
 
 .permission-icon {
   margin-right: 8px;
   color: #409eff;
+  font-size: 16px;
 }
 
 .permission-name .type-tag {
-  margin-left: auto;
+  margin-left: 8px;
+}
+
+/* 父子权限层级样式 */
+:deep(.el-table .el-table__row) {
+  position: relative;
+}
+
+/* 一级权限样式 */
+:deep(.el-table .el-table__row[data-level="0"]) {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+:deep(.el-table .el-table__row[data-level="0"] .el-table__cell) {
+  border-top: 2px solid #409eff;
+}
+
+/* 二级权限样式 */
+:deep(.el-table .el-table__row[data-level="1"]) {
+  background-color: #fafbfc;
+}
+
+:deep(.el-table .el-table__row[data-level="1"] .permission-name) {
+  padding-left: 20px;
+  position: relative;
+}
+
+:deep(.el-table .el-table__row[data-level="1"] .permission-name::before) {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  width: 8px;
+  height: 1px;
+  background-color: #dcdfe6;
+  transform: translateY(-50%);
+}
+
+/* 三级权限样式 */
+:deep(.el-table .el-table__row[data-level="2"]) {
+  background-color: #fcfdfe;
+}
+
+:deep(.el-table .el-table__row[data-level="2"] .permission-name) {
+  padding-left: 40px;
+  position: relative;
+}
+
+:deep(.el-table .el-table__row[data-level="2"] .permission-name::before) {
+  content: '';
+  position: absolute;
+  left: 28px;
+  top: 50%;
+  width: 8px;
+  height: 1px;
+  background-color: #dcdfe6;
+  transform: translateY(-50%);
+}
+
+/* 权限类型标签样式 */
+.permission-name .type-tag {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+/* 菜单权限图标颜色 */
+.permission-name .permission-icon.menu-icon {
+  color: #409eff;
+}
+
+/* 按钮权限图标颜色 */
+.permission-name .permission-icon.button-icon {
+  color: #67c23a;
+}
+
+/* 接口权限图标颜色 */
+.permission-name .permission-icon.api-icon {
+  color: #e6a23c;
 }
 
 .text-placeholder {
@@ -831,5 +909,22 @@ onMounted(() => {
   margin-left: 8px;
 }
 
+/* 树形表格展开图标样式 */
+:deep(.el-table__expand-icon) {
+  color: #409eff;
+}
 
+:deep(.el-table__expand-icon--expanded) {
+  transform: rotate(90deg);
+}
+
+/* 鼠标悬停效果 */
+:deep(.el-table .el-table__row:hover) {
+  background-color: #f5f7fa !important;
+}
+
+/* 选中行样式 */
+:deep(.el-table .el-table__row.current-row) {
+  background-color: #ecf5ff !important;
+}
 </style>

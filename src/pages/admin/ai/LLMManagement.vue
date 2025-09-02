@@ -79,32 +79,34 @@
         </el-table-column>
         <el-table-column prop="createTime" label="创建时间" width="160" />
         <el-table-column prop="updateTime" label="更新时间" width="160" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
-            <el-button
-              type="primary"
-              size="small"
-              :icon="Edit"
-              @click="handleEdit(row)"
-            >
-              编辑
-            </el-button>
-            <el-button
-              type="warning"
-              size="small"
-              :icon="Key"
-              @click="handleManageKeys(row)"
-            >
-              密钥管理
-            </el-button>
-            <el-button
-              type="danger"
-              size="small"
-              :icon="Delete"
-              @click="handleDelete(row)"
-            >
-              删除
-            </el-button>
+            <div class="action-buttons">
+              <el-button
+                type="primary"
+                size="small"
+                :icon="Edit"
+                @click="handleEdit(row)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                type="warning"
+                size="small"
+                :icon="Key"
+                @click="handleManageKeys(row)"
+              >
+                密钥管理
+              </el-button>
+              <el-button
+                type="danger"
+                size="small"
+                :icon="Delete"
+                @click="handleDelete(row)"
+              >
+                删除
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -744,6 +746,13 @@ onMounted(() => {
 
 :deep(.el-table .el-table__cell) {
   padding: 12px 0;
+}
+
+.action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
 }
 
 :deep(.el-button + .el-button) {

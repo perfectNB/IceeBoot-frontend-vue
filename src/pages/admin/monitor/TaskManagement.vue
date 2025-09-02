@@ -18,7 +18,7 @@
       <el-button
         type="danger"
         @click="handleBatchDelete"
-        :disabled="selectedTasks.length === 0"
+        :disabled="selectedTasks.length === 0 || selectedTasks.some(task => task.status === 'active')"
         v-if="hasPermission('monitor:task:delete')"
       >
         <el-icon><Delete /></el-icon>
@@ -44,9 +44,9 @@
             clearable
             style="width: 150px"
           >
-            <el-option label="运行中" value="running" />
-            <el-option label="已停止" value="stopped" />
-            <el-option label="已暂停" value="paused" />
+            <el-option label="运行中" value="active" />
+            <el-option label="已停止" value="inactive" />
+            <!-- <el-option label="已暂停" value="paused" /> -->
           </el-select>
         </el-form-item>
         <el-form-item>
@@ -82,15 +82,14 @@
           </template>
         </el-table-column>
         <el-table-column prop="description" label="备注" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="lastExecuteTime" label="上次执行时间" width="160" />
-        <el-table-column prop="nextExecuteTime" label="下次执行时间" width="160" />
+
         <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
             <el-button
               type="success"
               size="small"
               @click="handleStart(row)"
-              v-if="row.status !== 'running' && hasPermission('monitor:task:start')"
+              v-if="row.status === 'inactive' && hasPermission('monitor:task:start')"
             >
               <el-icon><VideoPlay /></el-icon>
               启动
@@ -99,7 +98,7 @@
               type="warning"
               size="small"
               @click="handleStop(row)"
-              v-if="row.status === 'running' && hasPermission('monitor:task:stop')"
+              v-if="row.status === 'active' && hasPermission('monitor:task:stop')"
             >
               <el-icon><VideoPause /></el-icon>
               停止
@@ -117,6 +116,7 @@
               type="danger"
               size="small"
               @click="handleDelete(row)"
+              :disabled="row.status === 'active'"
               v-if="hasPermission('monitor:task:delete')"
             >
               <el-icon><Delete /></el-icon>
@@ -174,7 +174,7 @@
           />
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleSubmit" :loading="submitLoading">
@@ -245,7 +245,7 @@ const formData = reactive<Task>({
   name: '',
   className: '',
   cronExpression: '',
-  status: 'stopped',
+  status: 'inactive',
   description: ''
 })
 
@@ -355,7 +355,7 @@ const handleDelete = async (row: Task) => {
         type: 'warning'
       }
     )
-    
+
     await deleteTask(row.id!)
     ElMessage.success('删除成功')
     loadTasks()
@@ -370,11 +370,11 @@ const handleDelete = async (row: Task) => {
 // 提交表单
 const handleSubmit = async () => {
   if (!formRef.value) return
-  
+
   try {
     await formRef.value.validate()
     submitLoading.value = true
-    
+
     if (isEdit.value) {
       await updateTask(formData.id!, formData)
       ElMessage.success('更新成功')
@@ -382,7 +382,7 @@ const handleSubmit = async () => {
       await createTask(formData)
       ElMessage.success('创建成功')
     }
-    
+
     dialogVisible.value = false
     loadTasks()
   } catch (error: unknown) {
@@ -420,7 +420,7 @@ const resetForm = () => {
     name: '',
     className: '',
     cronExpression: '',
-    status: 'stopped',
+    status: 'inactive',
     description: ''
   })
   formRef.value?.clearValidate()
@@ -429,9 +429,8 @@ const resetForm = () => {
 // 获取状态标签类型
 const getStatusTagType = (status: string) => {
   const statusMap: Record<string, string> = {
-    running: 'success',
-    stopped: 'danger',
-    paused: 'warning'
+    active: 'success',
+    inactive: 'warning'
   }
   return statusMap[status] || 'info'
 }
@@ -453,12 +452,12 @@ const handleBatchDelete = async () => {
         type: 'warning'
       }
     )
-    
+
     // 批量删除任务
     for (const task of selectedTasks.value) {
       await deleteTask(task.id!)
     }
-    
+
     ElMessage.success(`成功删除 ${selectedTasks.value.length} 个任务`)
     selectedTasks.value = []
     loadTasks()
@@ -473,9 +472,8 @@ const handleBatchDelete = async () => {
 // 获取状态标签文本
 const getStatusLabel = (status: string) => {
   const statusMap: Record<string, string> = {
-    running: '运行中',
-    stopped: '已停止',
-    paused: '已暂停'
+    active: '运行中',
+    inactive: '已停止'
   }
   return statusMap[status] || status
 }

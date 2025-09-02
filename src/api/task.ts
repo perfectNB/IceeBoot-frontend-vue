@@ -35,7 +35,7 @@ export interface TaskResponse {
 
 // 获取任务列表
 export const getTasks = async (params: TaskQueryParams): Promise<TaskResponse> => {
-  if (isMockEnabled()) {
+  if (!isMockEnabled()) {
     // 使用Mock数据
     return await MockTaskService.getTasks(params)
   } else {
@@ -51,7 +51,7 @@ export const getTasks = async (params: TaskQueryParams): Promise<TaskResponse> =
 
 // 创建任务
 export const createTask = async (data: Omit<Task, 'id'>): Promise<Task> => {
-  if (isMockEnabled()) {
+  if (!isMockEnabled()) {
     // 使用Mock数据
     return await MockTaskService.createTask(data)
   } else {
@@ -63,7 +63,7 @@ export const createTask = async (data: Omit<Task, 'id'>): Promise<Task> => {
 
 // 更新任务
 export const updateTask = async (id: string, data: Partial<Task>): Promise<Task> => {
-  if (isMockEnabled()) {
+  if (!isMockEnabled()) {
     // 使用Mock数据
     return await MockTaskService.updateTask(id, data)
   } else {
@@ -75,7 +75,7 @@ export const updateTask = async (id: string, data: Partial<Task>): Promise<Task>
 
 // 删除任务
 export const deleteTask = async (id: string): Promise<void> => {
-  if (isMockEnabled()) {
+  if (!isMockEnabled()) {
     // 使用Mock数据
     await MockTaskService.deleteTask(id)
   } else {
@@ -86,7 +86,7 @@ export const deleteTask = async (id: string): Promise<void> => {
 
 // 启动任务
 export const startTask = async (id: string): Promise<void> => {
-  if (isMockEnabled()) {
+  if (!isMockEnabled()) {
     // 使用Mock数据
     await MockTaskService.startTask(id)
   } else {
@@ -97,7 +97,7 @@ export const startTask = async (id: string): Promise<void> => {
 
 // 停止任务
 export const stopTask = async (id: string): Promise<void> => {
-  if (isMockEnabled()) {
+  if (!isMockEnabled()) {
     // 使用Mock数据
     await MockTaskService.stopTask(id)
   } else {

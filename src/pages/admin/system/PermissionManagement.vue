@@ -2,10 +2,10 @@
   <div class="permission-management">
     <div class="page-header">
       <h2>权限管理</h2>
-      <p>管理系统权限，配置权限层级结构</p>
+      <p>管理系统权限结构和访问控制</p>
     </div>
 
-    <!-- 操作栏 -->
+    <!-- 操作区域 -->
     <div class="action-section">
       <el-button
         type="primary"
@@ -24,8 +24,8 @@
         <el-icon><Delete /></el-icon>
         批量删除
       </el-button>
-      <el-button 
-        :icon="Refresh" 
+      <el-button
+        :icon="Refresh"
         @click="loadPermissions"
       >
         刷新
@@ -42,7 +42,7 @@
 
     <!-- 搜索区域 -->
     <div class="search-section">
-      <el-form :model="searchForm" inline>
+      <el-form :model="searchForm" :inline="true">
         <el-form-item label="权限名称">
           <el-input
             v-model="searchForm.name"
@@ -51,16 +51,16 @@
             style="width: 200px"
           />
         </el-form-item>
-        <el-form-item label="权限类型">
+        <el-form-item label="类型">
           <el-select
             v-model="searchForm.type"
-            placeholder="请选择权限类型"
+            placeholder="请选择类型"
             clearable
             style="width: 150px"
           >
-            <el-option label="菜单权限" value="menu" />
-            <el-option label="按钮权限" value="button" />
-            <el-option label="接口权限" value="api" />
+            <el-option label="菜单" value="menu" />
+            <el-option label="按钮" value="button" />
+            <el-option label="接口" value="api" />
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
@@ -68,58 +68,57 @@
             v-model="searchForm.status"
             placeholder="请选择状态"
             clearable
-            style="width: 150px"
+            style="width: 120px"
           >
             <el-option label="启用" value="active" />
             <el-option label="禁用" value="inactive" />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch" :loading="loading">
-            <el-icon><Search /></el-icon>
+          <el-button type="primary" :icon="Search" @click="handleSearch">
             搜索
           </el-button>
-          <el-button @click="handleReset">
-            <el-icon><Refresh /></el-icon>
+          <el-button :icon="Refresh" @click="handleReset">
             重置
           </el-button>
         </el-form-item>
       </el-form>
     </div>
 
-    <!-- 数据表格 -->
+    <!-- 表格区域 -->
     <div class="table-section">
       <el-table
         ref="tableRef"
-        v-loading="loading"
         :data="filteredPermissions"
+        v-loading="loading"
         row-key="id"
         default-expand-all
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         border
         stripe
-        style="width: 100%"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="name" label="权限名称" min-width="200">
+        <el-table-column prop="name" label="权限名称" min-width="235">
           <template #default="{ row }">
-            <div class="permission-name">
-              <el-icon v-if="getPermissionIcon(row.type)" class="permission-icon">
-                <component :is="getPermissionIcon(row.type)" />
-              </el-icon>
-              <span>{{ row.name }}</span>
-              <el-tag :type="getPermissionTypeTag(row.type)" size="small" class="type-tag">
-                {{ getPermissionTypeText(row.type) }}
-              </el-tag>
-            </div>
+            <el-icon v-if="getPermissionIcon(row.type)" class="permission-icon">
+              <component :is="getPermissionIcon(row.type)" />
+            </el-icon>
+            {{ row.name }}
           </template>
         </el-table-column>
-        <el-table-column prop="code" label="权限编码" min-width="180" show-overflow-tooltip />
-        <el-table-column prop="path" label="路径/接口" min-width="150" show-overflow-tooltip>
+        <el-table-column prop="code" label="权限编码" min-width="200" />
+        <el-table-column prop="type" label="类型" width="100">
+          <template #default="{ row }">
+            <el-tag :type="getPermissionTypeTag(row.type)">
+              {{ getPermissionTypeText(row.type) }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="path" label="接口路径" min-width="150">
           <template #default="{ row }">
             <span v-if="row.path">{{ row.path }}</span>
-            <span v-else class="text-placeholder">-</span>
+            <span v-else class="text-gray-400">-</span>
           </template>
         </el-table-column>
         <el-table-column prop="method" label="请求方法" width="100">
@@ -127,43 +126,38 @@
             <el-tag v-if="row.method" :type="getMethodTagType(row.method)" size="small">
               {{ row.method }}
             </el-tag>
-            <span v-else class="text-placeholder">-</span>
+            <span v-else class="text-gray-400">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip>
-          <template #default="{ row }">
-            <span v-if="row.description">{{ row.description }}</span>
-            <span v-else class="text-placeholder">-</span>
-          </template>
-        </el-table-column>
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column label="状态" width="80">
           <template #default="{ row }">
             <el-switch
               v-model="row.status"
-              active-value="active"
-              inactive-value="inactive"
+              :active-value="'active'"
+              :inactive-value="'inactive'"
               @change="handleStatusChange(row)"
             />
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="180">
+        <el-table-column prop="description" label="描述" min-width="150">
           <template #default="{ row }">
-            {{ formatDate(row.createTime) }}
+            <span v-if="row.description">{{ row.description }}</span>
+            <span v-else class="text-gray-400">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="320" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
             <el-button
-              type="primary"
+              type="success"
               size="small"
               :icon="Plus"
               @click="handleCreateChild(row)"
-              v-if="row.type === 'menu' && hasPermission('system:permission:create')"
+              v-if="hasPermission('system:permission:create') && row.type === 'menu'"
             >
               添加子权限
             </el-button>
             <el-button
-              type="warning"
+              type="primary"
               size="small"
               :icon="Edit"
               @click="handleEdit(row)"
@@ -176,7 +170,6 @@
               size="small"
               :icon="Delete"
               @click="handleDelete(row)"
-              :disabled="row.children && row.children.length > 0"
               v-if="hasPermission('system:permission:delete')"
             >
               删除
@@ -186,12 +179,11 @@
       </el-table>
     </div>
 
-    <!-- 新增/编辑权限对话框 -->
+    <!-- 新增/编辑对话框 -->
     <el-dialog
-      v-model="dialogVisible"
       :title="dialogTitle"
-      width="700px"
-      :close-on-click-modal="false"
+      v-model="dialogVisible"
+      width="600px"
       @close="resetFormData"
     >
       <el-form
@@ -200,104 +192,66 @@
         :rules="formRules"
         label-width="100px"
       >
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="权限名称" prop="name">
-              <el-input
-                v-model="formData.name"
-                placeholder="请输入权限名称"
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="权限编码" prop="code">
-              <el-input
-                v-model="formData.code"
-                placeholder="请输入权限编码"
-              />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="权限类型" prop="type">
-              <el-select
-                v-model="formData.type"
-                placeholder="请选择权限类型"
-                style="width: 100%"
-                @change="handleTypeChange"
-              >
-                <el-option label="菜单权限" value="menu" />
-                <el-option label="按钮权限" value="button" />
-                <el-option label="接口权限" value="api" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="上级权限" prop="parentId">
-              <el-tree-select
-                v-model="formData.parentId"
-                :data="parentPermissionOptions"
-                :props="treeSelectProps"
-                placeholder="请选择上级权限"
-                style="width: 100%"
-                clearable
-                check-strictly
-              />
-            </el-form-item>
-          </el-col>
-        </el-row>
-
-        <el-row :gutter="20" v-if="formData.type !== 'button'">
-          <el-col :span="12">
-            <el-form-item label="路径" :prop="formData.type === 'api' ? 'path' : ''">
-              <el-input
-                v-model="formData.path"
-                :placeholder="formData.type === 'menu' ? '菜单路径（可选）' : '接口路径'"
-              />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12" v-if="formData.type === 'api'">
-            <el-form-item label="请求方法" prop="method">
-              <el-select
-                v-model="formData.method"
-                placeholder="请选择请求方法"
-                style="width: 100%"
-              >
-                <el-option label="GET" value="GET" />
-                <el-option label="POST" value="POST" />
-                <el-option label="PUT" value="PUT" />
-                <el-option label="DELETE" value="DELETE" />
-                <el-option label="PATCH" value="PATCH" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
-
+        <el-form-item label="父级权限">
+          <el-tree-select
+            v-model="formData.parentId"
+            :data="parentPermissionOptions"
+            placeholder="请选择父级权限（不选择则为顶级权限）"
+            clearable
+            check-strictly
+            :render-after-expand="false"
+            style="width: 100%"
+            node-key="value"
+            :props="treeSelectProps"
+          />
+        </el-form-item>
+        <el-form-item label="权限名称" prop="name">
+          <el-input v-model="formData.name" placeholder="请输入权限名称" />
+        </el-form-item>
+        <el-form-item label="权限编码" prop="code">
+          <el-input v-model="formData.code" placeholder="请输入权限编码" />
+        </el-form-item>
+        <el-form-item label="权限类型" prop="type">
+          <el-select v-model="formData.type" placeholder="请选择类型" @change="handleTypeChange">
+            <el-option label="菜单" value="menu" />
+            <el-option label="按钮" value="button" />
+            <el-option label="接口" value="api" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="接口路径" prop="path" v-if="formData.type === 'api'">
+          <el-input v-model="formData.path" placeholder="请输入接口路径" />
+        </el-form-item>
+        <el-form-item label="请求方法" prop="method" v-if="formData.type === 'api'">
+          <el-select v-model="formData.method" placeholder="请选择请求方法">
+            <el-option label="GET" value="GET" />
+            <el-option label="POST" value="POST" />
+            <el-option label="PUT" value="PUT" />
+            <el-option label="DELETE" value="DELETE" />
+            <el-option label="PATCH" value="PATCH" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-switch
+            v-model="formData.status"
+            :active-value="'active'"
+            :inactive-value="'inactive'"
+          />
+        </el-form-item>
         <el-form-item label="描述" prop="description">
           <el-input
             v-model="formData.description"
             type="textarea"
             :rows="3"
             placeholder="请输入权限描述"
+            style="width: 100%"
           />
-        </el-form-item>
-
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="formData.status">
-            <el-radio label="active">启用</el-radio>
-            <el-radio label="inactive">禁用</el-radio>
-          </el-radio-group>
         </el-form-item>
       </el-form>
       <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit" :loading="submitting">
-            确定
-          </el-button>
-        </div>
+        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSubmit" :loading="submitting">
+          确定
+        </el-button>
       </template>
     </el-dialog>
   </div>
@@ -368,7 +322,7 @@ const filteredPermissions = computed(() => {
   const filterTree = (nodes: Permission[]): Permission[] => {
     return nodes.filter(node => {
       let matches = true
-      
+
       // 按名称搜索
       if (searchForm.value.name) {
         matches = matches && (
@@ -376,17 +330,17 @@ const filteredPermissions = computed(() => {
           node.code.toLowerCase().includes(searchForm.value.name.toLowerCase())
         )
       }
-      
+
       // 按类型搜索
       if (searchForm.value.type) {
         matches = matches && node.type === searchForm.value.type
       }
-      
+
       // 按状态搜索
       if (searchForm.value.status) {
         matches = matches && node.status === searchForm.value.status
       }
-      
+
       // 如果有子节点，递归过滤
       if (node.children && node.children.length > 0) {
         const filteredChildren = filterTree(node.children)
@@ -394,7 +348,7 @@ const filteredPermissions = computed(() => {
           return true
         }
       }
-      
+
       return matches
     }).map(node => {
       if (node.children && node.children.length > 0) {
@@ -406,7 +360,7 @@ const filteredPermissions = computed(() => {
       return node
     })
   }
-  
+
   return filterTree(permissions.value)
 })
 
@@ -426,7 +380,7 @@ const parentPermissionOptions = computed(() => {
       children: node.children && node.children.length > 0 ? buildOptions(node.children, level + 1) : undefined
     }))
   }
-  
+
   return buildOptions(permissions.value.filter(p => p.type === 'menu'))
 })
 
@@ -506,11 +460,11 @@ const handleBatchDelete = async () => {
         type: 'warning'
       }
     )
-    
+
     // 批量删除权限
     const permissionIds = selectedPermissions.value.map(permission => permission.id)
     await deletePermissions(permissionIds)
-    
+
     ElMessage.success(`成功删除 ${selectedPermissions.value.length} 个权限`)
     selectedPermissions.value = []
     await loadPermissions()
@@ -628,9 +582,9 @@ const handleSubmit = async () => {
   try {
     await formRef.value?.validate()
     submitting.value = true
-    
+
     const parentIdToExpand = formData.value.parentId
-    
+
     if (isEdit.value) {
       await updatePermission(formData.value.id!, formData.value)
       ElMessage.success('更新权限成功')
@@ -638,10 +592,10 @@ const handleSubmit = async () => {
       await createPermission(formData.value)
       ElMessage.success('创建权限成功')
     }
-    
+
     dialogVisible.value = false
     await loadPermissions()
-    
+
     // 如果是新增子权限，展开父节点
     if (parentIdToExpand && !isEdit.value) {
       nextTick(() => {
@@ -666,7 +620,7 @@ const handleDelete = async (permission: Permission) => {
         type: 'warning'
       }
     )
-    
+
     await deletePermission(permission.id)
     ElMessage.success('删除权限成功')
     await loadPermissions()
@@ -744,10 +698,7 @@ const getMethodTagType = (method: string) => {
   }
 }
 
-const formatDate = (date: string | Date) => {
-  if (!date) return '-'
-  return new Date(date).toLocaleString('zh-CN')
-}
+
 
 // 生命周期
 onMounted(() => {
@@ -794,111 +745,13 @@ onMounted(() => {
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.permission-name {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  position: relative;
-}
-
 .permission-icon {
   margin-right: 8px;
   color: #409eff;
-  font-size: 16px;
 }
 
-.permission-name .type-tag {
-  margin-left: 8px;
-}
-
-/* 父子权限层级样式 */
-:deep(.el-table .el-table__row) {
-  position: relative;
-}
-
-/* 一级权限样式 */
-:deep(.el-table .el-table__row[data-level="0"]) {
-  background-color: #f8f9fa;
-  font-weight: 600;
-}
-
-:deep(.el-table .el-table__row[data-level="0"] .el-table__cell) {
-  border-top: 2px solid #409eff;
-}
-
-/* 二级权限样式 */
-:deep(.el-table .el-table__row[data-level="1"]) {
-  background-color: #fafbfc;
-}
-
-:deep(.el-table .el-table__row[data-level="1"] .permission-name) {
-  padding-left: 20px;
-  position: relative;
-}
-
-:deep(.el-table .el-table__row[data-level="1"] .permission-name::before) {
-  content: '';
-  position: absolute;
-  left: 8px;
-  top: 50%;
-  width: 8px;
-  height: 1px;
-  background-color: #dcdfe6;
-  transform: translateY(-50%);
-}
-
-/* 三级权限样式 */
-:deep(.el-table .el-table__row[data-level="2"]) {
-  background-color: #fcfdfe;
-}
-
-:deep(.el-table .el-table__row[data-level="2"] .permission-name) {
-  padding-left: 40px;
-  position: relative;
-}
-
-:deep(.el-table .el-table__row[data-level="2"] .permission-name::before) {
-  content: '';
-  position: absolute;
-  left: 28px;
-  top: 50%;
-  width: 8px;
-  height: 1px;
-  background-color: #dcdfe6;
-  transform: translateY(-50%);
-}
-
-/* 权限类型标签样式 */
-.permission-name .type-tag {
-  font-size: 11px;
-  padding: 2px 6px;
-  border-radius: 3px;
-}
-
-/* 菜单权限图标颜色 */
-.permission-name .permission-icon.menu-icon {
-  color: #409eff;
-}
-
-/* 按钮权限图标颜色 */
-.permission-name .permission-icon.button-icon {
-  color: #67c23a;
-}
-
-/* 接口权限图标颜色 */
-.permission-name .permission-icon.api-icon {
-  color: #e6a23c;
-}
-
-.text-placeholder {
-  color: #c0c4cc;
-  font-style: italic;
-}
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
+.text-gray-400 {
+  color: #909399;
 }
 
 :deep(.el-table .el-table__cell) {
@@ -907,24 +760,5 @@ onMounted(() => {
 
 :deep(.el-button + .el-button) {
   margin-left: 8px;
-}
-
-/* 树形表格展开图标样式 */
-:deep(.el-table__expand-icon) {
-  color: #409eff;
-}
-
-:deep(.el-table__expand-icon--expanded) {
-  transform: rotate(90deg);
-}
-
-/* 鼠标悬停效果 */
-:deep(.el-table .el-table__row:hover) {
-  background-color: #f5f7fa !important;
-}
-
-/* 选中行样式 */
-:deep(.el-table .el-table__row.current-row) {
-  background-color: #ecf5ff !important;
 }
 </style>

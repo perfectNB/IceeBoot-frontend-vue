@@ -47,9 +47,11 @@ export class MockLLMService {
   // 创建大模型
   static async createLLMModel(modelData: Partial<LLMModel>): Promise<LLMModel> {
     const newModel: LLMModel = {
-      id: Date.now(),
+      id: Date.now().toString(),
       name: modelData.name || '',
       remark: modelData.remark || '',
+      description: modelData.description || '',
+      icon: modelData.icon || '',
       keys: [],
       status: modelData.status || 'active',
       createTime: new Date().toISOString(),
@@ -99,7 +101,7 @@ export class MockLLMService {
     }
     
     const newKey: LLMKey = {
-      id: Date.now(),
+      id: Date.now().toString(),
       key: keyData.key || '',
       remark: keyData.remark || '',
       secretKey: keyData.secretKey || '',

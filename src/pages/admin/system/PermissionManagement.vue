@@ -129,6 +129,7 @@
             <span v-else class="text-gray-400">-</span>
           </template>
         </el-table-column>
+        <el-table-column prop="sort" label="排序" width="80" />
         <el-table-column label="状态" width="80">
           <template #default="{ row }">
             <el-switch
@@ -230,6 +231,9 @@
             <el-option label="PATCH" value="PATCH" />
           </el-select>
         </el-form-item>
+        <el-form-item label="排序" prop="sort">
+          <el-input-number v-model="formData.sort" :min="0" />
+        </el-form-item>
         <el-form-item label="状态">
           <el-switch
             v-model="formData.status"
@@ -307,6 +311,7 @@ const formData = ref<Partial<Permission>>({
   path: '',
   method: undefined,
   description: '',
+  sort: 0,
   status: 'active'
 })
 
@@ -563,6 +568,7 @@ const resetFormData = () => {
     path: '',
     method: undefined,
     description: '',
+    sort: 0,
     status: 'active'
   }
   formRef.value?.clearValidate()

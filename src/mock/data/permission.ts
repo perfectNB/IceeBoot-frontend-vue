@@ -14,6 +14,7 @@ export const mockPermissions: Permission[] = [
     parentId: null,
     path: '/admin/dashboard',
     description: '工作台查看权限',
+    sort: 1,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'

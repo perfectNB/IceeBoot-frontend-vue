@@ -79,6 +79,7 @@ export class MockPermissionService {
       path: permissionData.path,
       method: permissionData.method,
       description: permissionData.description,
+      sort: permissionData.sort || 0,
       status: permissionData.status || 'active',
       createTime: new Date().toISOString(),
       updateTime: new Date().toISOString()

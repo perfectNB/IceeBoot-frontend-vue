@@ -49,6 +49,14 @@ export interface MenuItem {
   permissions?: string[]
   link?: string
   children?: MenuItem[]
+  /**
+   * 是否拥有该菜单（用于角色菜单配置）
+   */
+  hasMenu?: boolean
+  /**
+   * 是否拥有该菜单权限（用于角色菜单配置回显）
+   */
+  hasPermission?: boolean
 }
 
 // API响应类型
@@ -97,6 +105,14 @@ export interface Role {
   description?: string
   permissions?: string[]
   permissionTree?: Permission[]
+  /**
+   * 角色拥有的菜单树
+   */
+  menuTree?: MenuItem[]
+  /**
+   * 角色拥有的菜单ID列表
+   */
+  menus?: string[]
   createTime?: string
   updateTime?: string
   status?: 'active' | 'inactive'

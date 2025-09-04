@@ -143,6 +143,21 @@ export const saveRolePermissions = async (roleId: string | number, permissionIds
   }
 }
 
+// 保存角色菜单
+export const saveRoleMenus = async (roleId: string | number, menuIds: string[]): Promise<void> => {
+  if (!isMockEnabled()) {
+    // 使用Mock数据
+    await MockRoleService.saveRoleMenus(Number(roleId), menuIds)
+  } else {
+    // 调用真实API
+    const response = await request.post(`/api/v1/roles/${roleId}/menus`, menuIds.map(Number))
+    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
+    if (!apiResponse || !apiResponse.success) {
+      throw new Error('保存角色菜单失败')
+    }
+  }
+}
+
 // 获取所有角色
 export const getAllRoles = async (): Promise<Role[]> => {
   if (!isMockEnabled()) {

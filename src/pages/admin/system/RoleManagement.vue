@@ -14,8 +14,8 @@
         <el-icon><Plus /></el-icon>
         新增角色
       </el-button>
-      <el-button 
-        type="danger" 
+      <el-button
+        type="danger"
         @click="handleBatchDelete"
         :disabled="selectedRoles.length === 0"
       >
@@ -95,7 +95,7 @@
             {{ formatDate(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column label="操作" width="350" fixed="right">
           <template #default="{ row }">
             <el-button
               type="primary"
@@ -104,6 +104,14 @@
               @click="handlePermissions(row)"
             >
               权限
+            </el-button>
+            <el-button
+              type="info"
+              size="small"
+              :icon="Menu"
+              @click="handleMenus(row)"
+            >
+              菜单
             </el-button>
             <el-button
               type="warning"
@@ -217,6 +225,32 @@
         />
       </div>
     </el-dialog>
+
+    <!-- 菜单配置对话框 -->
+    <el-dialog
+      v-model="menuDialogVisible"
+      title="菜单配置"
+      width="800px"
+      :close-on-click-modal="false"
+    >
+      <div class="permission-content">
+        <div class="permission-header">
+          <span class="role-name">角色：{{ currentRole?.name }}</span>
+          <el-button type="primary" size="small" @click="handleSaveMenus">
+            保存菜单
+          </el-button>
+        </div>
+        <el-tree
+          ref="menuTreeRef"
+          :data="menuTree"
+          :props="treeProps"
+          show-checkbox
+          node-key="id"
+          :default-checked-keys="checkedMenus"
+          class="permission-tree"
+        />
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -229,16 +263,19 @@ import {
   Search,
   Edit,
   Delete,
-  Key
+  Key,
+  Menu
 } from '@element-plus/icons-vue'
-import { getRoles, createRole, updateRole, deleteRole, deleteRoles, saveRolePermissions, getRoleById, updateRoleStatus } from '@/api/role'
+import { getRoles, createRole, updateRole, deleteRole, deleteRoles, saveRolePermissions, getRoleById, updateRoleStatus,saveRoleMenus } from '@/api/role'
 import { getAllPermissions } from '@/api/permission'
-import type { Role, Permission } from '@/types'
+import { getAllMenus } from '@/api/menu'
+import type { Role, Permission, MenuItem as MenuType } from '@/types'
 
 // 响应式数据
 const loading = ref(false)
 const roles = ref<Role[]>([])
 const permissions = ref<Permission[]>([])
+const menus = ref<MenuType[]>([])
 const selectedRoles = ref<Role[]>([])
 
 // 搜索表单
@@ -256,10 +293,12 @@ const pages = ref(0)
 // 对话框
 const dialogVisible = ref(false)
 const permissionDialogVisible = ref(false)
+const menuDialogVisible = ref(false)
 const isEdit = ref(false)
 const submitting = ref(false)
 const formRef = ref<FormInstance>()
 const permissionTreeRef = ref()
+const menuTreeRef = ref()
 
 // 表单数据
 const formData = ref<Partial<Role>>({
@@ -272,6 +311,7 @@ const formData = ref<Partial<Role>>({
 // 权限相关
 const currentRole = ref<Role | null>(null)
 const checkedPermissions = ref<string[]>([])
+const checkedMenus = ref<string[]>([])
 
 // 计算属性
 const dialogTitle = computed(() => isEdit.value ? '编辑角色' : '新增角色')
@@ -285,7 +325,7 @@ const permissionTree = computed(() => {
     label: string
     children: TreeNode[]
   }
-  
+
   const convertToTreeFormat = (nodes: Permission[]): TreeNode[] => {
     return nodes.map(node => ({
       id: Number(node.id),
@@ -295,6 +335,25 @@ const permissionTree = computed(() => {
   }
 
   return convertToTreeFormat(permissions.value)
+})
+
+const menuTree = computed(() => {
+  // 菜单树结构，转换为Element Plus Tree组件需要的格式
+  interface MenuTreeNode {
+    id: number
+    label: string
+    children: MenuTreeNode[]
+  }
+
+  const convertMenuToTreeFormat = (nodes: MenuType[]): MenuTreeNode[] => {
+    return nodes.map(node => ({
+      id: Number(node.id),
+      label: node.title,
+      children: node.children ? convertMenuToTreeFormat(node.children) : []
+    }))
+  }
+
+  return convertMenuToTreeFormat(menus.value)
 })
 
 const treeProps = {
@@ -354,6 +413,15 @@ const loadPermissions = async () => {
   } catch (error) {
     console.error('获取权限列表失败:', error)
     ElMessage.error('获取权限列表失败')
+  }
+}
+
+const loadMenus = async () => {
+  try {
+    menus.value = await getAllMenus()
+  } catch (error) {
+    console.error('获取菜单列表失败:', error)
+    ElMessage.error('获取菜单列表失败')
   }
 }
 
@@ -454,11 +522,11 @@ const handleBatchDelete = async () => {
         type: 'warning'
       }
     )
-    
+
     // 批量删除角色 - 使用新的批量删除API
     const roleIds = selectedRoles.value.map(role => role.id)
     await deleteRoles(roleIds)
-    
+
     ElMessage.success(`成功删除 ${selectedRoles.value.length} 个角色`)
     selectedRoles.value = []
     await loadRoles()
@@ -487,10 +555,10 @@ const handlePermissions = async (role: Role) => {
     currentRole.value = role
     // 获取角色的完整权限信息
     const roleDetail = await getRoleById(role.id)
-    
+
     // 更新权限树数据
     permissions.value = roleDetail.permissionTree || []
-    
+
     // 获取已选中的权限ID列表
      const getCheckedPermissionIds = (permissionTree: Permission[]): string[] => {
        const checkedIds: string[] = []
@@ -508,12 +576,47 @@ const handlePermissions = async (role: Role) => {
        traverse(permissionTree)
        return checkedIds
      }
-    
+
     checkedPermissions.value = getCheckedPermissionIds(roleDetail.permissionTree || [])
     permissionDialogVisible.value = true
   } catch (error) {
     console.error('获取角色权限失败:', error)
     ElMessage.error('获取角色权限失败')
+  }
+}
+
+const handleMenus = async (role: Role) => {
+  try {
+    currentRole.value = role
+    // 获取角色的完整菜单信息
+    const roleDetail = await getRoleById(role.id)
+
+    // 更新菜单树数据
+    menus.value = roleDetail.menuTree || []
+
+    // 获取已选中的菜单ID列表
+     const getCheckedMenuIds = (menuTree: MenuType[]): string[] => {
+       const checkedIds: string[] = []
+       const traverse = (nodes: MenuType[]) => {
+         nodes.forEach(node => {
+           if (node.hasPermission && (!node.children || node.children.length === 0)) {
+             // 只添加叶子节点的菜单ID
+             checkedIds.push(String(node.id))
+           }
+           if (node.children && node.children.length > 0) {
+             traverse(node.children)
+           }
+         })
+       }
+       traverse(menuTree)
+       return checkedIds
+     }
+
+    checkedMenus.value = getCheckedMenuIds(roleDetail.menuTree || [])
+    menuDialogVisible.value = true
+  } catch (error) {
+    console.error('获取角色菜单失败:', error)
+    ElMessage.error('获取角色菜单失败')
   }
 }
 
@@ -534,6 +637,26 @@ const handleSavePermissions = async () => {
   } catch (error) {
     console.error('保存权限失败:', error)
     ElMessage.error('保存权限失败')
+  }
+}
+
+const handleSaveMenus = async () => {
+  if (!menuTreeRef.value || !currentRole.value) return
+
+  const checkedKeys = menuTreeRef.value.getCheckedKeys()
+  const halfCheckedKeys = menuTreeRef.value.getHalfCheckedKeys()
+  const allCheckedKeys = [...checkedKeys, ...halfCheckedKeys]
+
+  try {
+    // 调用API保存角色菜单
+    await saveRoleMenus(currentRole.value.id, allCheckedKeys.map(String))
+    ElMessage.success('菜单保存成功')
+    menuDialogVisible.value = false
+    // 重新加载角色列表以更新菜单信息
+    await loadRoles()
+  } catch (error) {
+    console.error('保存菜单失败:', error)
+    ElMessage.error('保存菜单失败')
   }
 }
 
@@ -570,6 +693,7 @@ const formatDate = (date: string | Date) => {
 onMounted(() => {
   loadRoles()
   loadPermissions()
+  loadMenus()
 })
 </script>
 

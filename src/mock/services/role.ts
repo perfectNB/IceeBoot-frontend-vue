@@ -135,4 +135,22 @@ export class MockRoleService {
       updateTime: new Date().toISOString()
     }
   }
+
+  // 保存角色菜单
+  static async saveRoleMenus(roleId: number, menuIds: string[]): Promise<void> {
+    await mockDelay()
+    mockLog('保存角色菜单', { roleId, menuIds })
+    
+    const roleIndex = mockRoles.findIndex(r => r.id === roleId)
+    if (roleIndex === -1) {
+      throw new Error('角色不存在')
+    }
+    
+    // 更新角色的菜单列表
+    mockRoles[roleIndex] = {
+      ...mockRoles[roleIndex],
+      menus: menuIds,
+      updateTime: new Date().toISOString()
+    }
+  }
 }

@@ -87,7 +87,7 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="level" label="级别" width="80">
+        <el-table-column prop="level" label="级别" width="90">
           <template #default="{ row }">
             <el-tag :type="getLevelTagType(row.level)" size="small">{{ row.level }}</el-tag>
           </template>

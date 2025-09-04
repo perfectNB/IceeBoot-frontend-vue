@@ -176,27 +176,27 @@ export interface UploadFile {
 
 // 大模型Key类型
 export interface LLMKey {
-  id: string | number
-  key: string
+  id: number
+  llmProvider: string
   remark?: string
-  secretKey?: string
-  apiKey?: string
+  secretKey?: string | null
+  apiKey?: string | null
   status: 'active' | 'inactive'
   createTime: string
-  updateTime: string
+  updateTime: string | null
 }
 
 // 大模型类型
 export interface LLMModel {
-  id: string | number
-  name: string
-  remark: string
+  providerName: string
+  displayName: string
   keys: LLMKey[]
-  status: 'active' | 'inactive'
+  keyCount: number
+  activeKeyCount: number
+  // 前端扩展字段
   description?: string
   icon?: string
-  createTime: string
-  updateTime: string
+  status?: 'active' | 'inactive'
 }
 
 // Agent类型

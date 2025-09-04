@@ -9,16 +9,18 @@
     <div class="models-grid" v-loading="loading">
       <div 
         v-for="model in modelList" 
-        :key="model.id" 
+        :key="model.providerName" 
         class="model-card"
       >
         <div class="model-header">
           <div class="model-info">
             <div class="model-icon">
-              <img :src="model.icon" :alt="model.name" />
+              <div class="icon-text" :style="{ backgroundColor: getModelColor(model.displayName) }">
+                {{ getModelInitials(model.displayName) }}
+              </div>
             </div>
             <div class="model-details">
-              <h3 class="model-name">{{ model.name }}</h3>
+              <h3 class="model-name">{{ model.displayName }}</h3>
               <p class="model-description">{{ model.description }}</p>
             </div>
           </div>
@@ -63,7 +65,7 @@
     >
       <div class="key-management">
         <div class="key-header">
-          <h3>{{ currentModel?.name }} - API密钥</h3>
+          <h3>{{ currentModel?.displayName }} - API密钥</h3>
           <el-button type="primary" size="small" @click="handleAddKey">
             <el-icon><Plus /></el-icon>
             添加密钥
@@ -72,10 +74,10 @@
         
         <el-table :data="currentModel?.keys || []" stripe border>
           <el-table-column prop="id" label="ID" width="80" />
-          <el-table-column label="密钥" min-width="200">
+          <el-table-column label="API密钥" min-width="200">
             <template #default="{ row }">
               <span class="key-display">
-                {{ maskKey(row.key) }}
+                {{ maskKey(row.apiKey) }}
               </span>
             </template>
           </el-table-column>
@@ -105,8 +107,17 @@
             </template>
           </el-table-column>
           <el-table-column prop="createTime" label="创建时间" width="160" />
-          <el-table-column label="操作" width="120">
+          <el-table-column label="操作" width="180">
             <template #default="{ row }">
+              <el-button
+                type="primary"
+                size="small"
+                text
+                @click="handleEditKey(row)"
+              >
+                <el-icon><Edit /></el-icon>
+                编辑
+              </el-button>
               <el-button
                 type="danger"
                 size="small"
@@ -147,9 +158,9 @@
             placeholder="请输入密钥备注"
           />
         </el-form-item>
-        <el-form-item label="API密钥" prop="key">
+        <el-form-item label="API密钥" prop="apiKey">
           <el-input
-            v-model="keyForm.key"
+            v-model="keyForm.apiKey"
             type="textarea"
             :rows="3"
             placeholder="请输入API密钥"
@@ -190,14 +201,17 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import {
   Plus,
+  Edit,
   Delete,
   Key
 } from '@element-plus/icons-vue'
 import {
+  getLLMModels,
   addLLMModelKey,
+  updateLLMModelKey,
   deleteLLMModelKey,
   updateLLMModelKeyStatus
-} from '@/api'
+} from '@/api/llm'
 import type { LLMModel, LLMKey } from '@/types'
 
 // 响应式数据
@@ -208,109 +222,92 @@ const addKeyDialogVisible = ref(false)
 const keyFormRef = ref<FormInstance>()
 const currentModel = ref<LLMModel | null>(null)
 
-// 固定的AI模型列表
-const modelList = ref<LLMModel[]>([
-  {
-    id: '1',
-    name: 'DeepSeek',
-    remark: 'DeepSeek AI大模型',
-    description: '由深度求索开发的AI大模型，擅长代码生成和推理',
-    icon: 'https://via.placeholder.com/48/4F46E5/FFFFFF?text=DS',
-    keys: [],
-    status: 'active',
-    createTime: '2024-01-01 00:00:00',
-    updateTime: '2024-01-01 00:00:00'
-  },
-  {
-    id: '2',
-    name: '文心一言',
-    remark: '百度文心一言',
-    description: '百度开发的大语言模型，中文理解能力强',
-    icon: 'https://via.placeholder.com/48/FF6B35/FFFFFF?text=文心',
-    keys: [],
-    status: 'active',
-    createTime: '2024-01-01 00:00:00',
-    updateTime: '2024-01-01 00:00:00'
-  },
-  {
-    id: '3',
-    name: '通义千问',
-    remark: '阿里通义千问',
-    description: '阿里云开发的大语言模型，支持多种任务',
-    icon: 'https://via.placeholder.com/48/00D4AA/FFFFFF?text=通义',
-    keys: [],
-    status: 'active',
-    createTime: '2024-01-01 00:00:00',
-    updateTime: '2024-01-01 00:00:00'
-  },
-  {
-    id: '4',
-    name: 'Kimi',
-    remark: 'Moonshot Kimi',
-    description: 'Moonshot AI开发的长文本理解模型',
-    icon: 'https://via.placeholder.com/48/8B5CF6/FFFFFF?text=K',
-    keys: [],
-    status: 'active',
-    createTime: '2024-01-01 00:00:00',
-    updateTime: '2024-01-01 00:00:00'
-  },
-  {
-    id: '5',
-    name: 'ChatGPT',
-    remark: 'OpenAI ChatGPT',
-    description: 'OpenAI开发的对话式AI模型',
-    icon: 'https://via.placeholder.com/48/10B981/FFFFFF?text=GPT',
-    keys: [],
-    status: 'active',
-    createTime: '2024-01-01 00:00:00',
-    updateTime: '2024-01-01 00:00:00'
-  },
-  {
-    id: '6',
-    name: 'Grok',
-    remark: 'xAI Grok',
-    description: 'xAI开发的AI助手，具有幽默感',
-    icon: 'https://via.placeholder.com/48/F59E0B/FFFFFF?text=G',
-    keys: [],
-    status: 'active',
-    createTime: '2024-01-01 00:00:00',
-    updateTime: '2024-01-01 00:00:00'
-  },
-  {
-    id: '7',
-    name: 'Claude',
-    remark: 'Anthropic Claude',
-    description: 'Anthropic开发的AI助手，注重安全性',
-    icon: 'https://via.placeholder.com/48/EF4444/FFFFFF?text=C',
-    keys: [],
-    status: 'active',
-    createTime: '2024-01-01 00:00:00',
-    updateTime: '2024-01-01 00:00:00'
-  },
-  {
-    id: '8',
-    name: 'Gemini',
-    remark: 'Google Gemini',
-    description: 'Google开发的多模态AI模型',
-    icon: 'https://via.placeholder.com/48/3B82F6/FFFFFF?text=G',
-    keys: [],
-    status: 'active',
-    createTime: '2024-01-01 00:00:00',
-    updateTime: '2024-01-01 00:00:00'
-  }
-])
+// AI模型列表
+const modelList = ref<LLMModel[]>([])
 
 // 密钥表单
-const keyForm = reactive({
+const keyForm = reactive<{
+  id?: number
+  remark: string
+  secretKey: string
+  apiKey: string
+}>({
   remark: '',
-  key: '',
   secretKey: '',
   apiKey: ''
 })
 
 // 表单验证规则
 const keyFormRules = {
-  key: [{ required: true, message: '请输入API密钥', trigger: 'blur' }]
+  apiKey: [{ required: true, message: '请输入API密钥', trigger: 'blur' }]
+}
+
+// 加载模型数据
+const loadModels = async () => {
+  loading.value = true
+  try {
+    const models = await getLLMModels()
+    // 为每个模型添加扩展字段
+    modelList.value = models.map(model => ({
+      ...model,
+      description: getModelDescription(model.displayName),
+      icon: model.displayName,
+      status: 'active' as const
+    }))
+  } catch (error) {
+    console.error('加载模型数据失败:', error)
+    ElMessage.error('加载模型数据失败')
+  } finally {
+    loading.value = false
+  }
+}
+
+// 获取模型首字母
+const getModelInitials = (name: string) => {
+  if (!name) return ''
+  const words = name.split(' ')
+  if (words.length === 1) {
+    return name.substring(0, 2).toUpperCase()
+  }
+  return words.map(word => word.charAt(0)).join('').substring(0, 2).toUpperCase()
+}
+
+// 获取模型描述
+const getModelDescription = (displayName: string) => {
+  const descriptions = {
+    'DeepSeek': '由深度求索开发的AI大模型，擅长代码生成和推理',
+    '文心一言': '百度开发的大语言模型，中文理解能力强',
+    '通义千问': '阿里云开发的大语言模型，支持多种任务',
+    'Kimi': 'Moonshot AI开发的长文本理解模型',
+    '月之暗面 (Kimi)': 'Moonshot AI开发的长文本理解模型',
+    'ChatGPT': 'OpenAI开发的对话式AI模型',
+    'Grok': 'xAI开发的AI助手，具有幽默感',
+    'Claude': 'Anthropic开发的AI助手，注重安全性',
+    'Gemini': 'Google开发的多模态AI模型',
+    '智谱AI': '智谱AI开发的大语言模型',
+    '百川智能': '百川智能开发的大语言模型',
+    '讯飞星火': '科大讯飞开发的认知智能大模型'
+  }
+  return descriptions[displayName as keyof typeof descriptions] || '先进的AI大语言模型'
+}
+
+// 获取模型颜色
+const getModelColor = (name: string) => {
+  const colors = {
+    'DeepSeek': '#4F46E5',
+    '文心一言': '#FF6B35',
+    '通义千问': '#00D4AA',
+    'Kimi': '#8B5CF6',
+    '月之暗面 (Kimi)': '#8B5CF6',
+    'ChatGPT': '#10B981',
+    'Grok': '#F59E0B',
+    'Claude': '#EF4444',
+    'Gemini': '#3B82F6',
+    '智谱AI': '#9333EA',
+    '百川智能': '#F97316',
+    '讯飞星火': '#06B6D4'
+  }
+  return colors[name as keyof typeof colors] || '#6B7280'
 }
 
 // 掩码显示密钥
@@ -334,6 +331,7 @@ const handleStatusChange = async (model: LLMModel) => {
 
 // 管理密钥
 const handleManageKeys = (row: LLMModel) => {
+  // 直接使用模型中的密钥数据
   currentModel.value = row
   keyDialogVisible.value = true
 }
@@ -357,17 +355,16 @@ const handleDeleteKey = async (key: LLMKey) => {
       }
     )
     
-    await deleteLLMModelKey(currentModel.value!.id, key.id)
+    await deleteLLMModelKey(currentModel.value!.providerName, key.id)
     ElMessage.success('密钥删除成功')
+    
+    // 重新加载所有模型数据
+    await loadModels()
+    
     // 更新当前模型数据
-    const model = modelList.value.find((m: LLMModel) => m.id === currentModel.value!.id)
-    if (model) {
-      // 从密钥列表中移除删除的密钥
-      const keyIndex = model.keys.findIndex(k => k.id === key.id)
-      if (keyIndex > -1) {
-        model.keys.splice(keyIndex, 1)
-      }
-      currentModel.value = model
+    const updatedModel = modelList.value.find((m: LLMModel) => m.providerName === currentModel.value!.providerName)
+    if (updatedModel) {
+      currentModel.value = updatedModel
     }
   } catch (error) {
     if (error !== 'cancel') {
@@ -380,7 +377,7 @@ const handleDeleteKey = async (key: LLMKey) => {
 // 密钥状态变更
 const handleKeyStatusChange = async (key: LLMKey) => {
   try {
-    await updateLLMModelKeyStatus(currentModel.value!.id, key.id, key.status)
+    await updateLLMModelKeyStatus(currentModel.value!.providerName, key.id, key.status)
     ElMessage.success('密钥状态更新成功')
   } catch (error) {
     console.error('密钥状态更新失败:', error)
@@ -398,30 +395,39 @@ const handleSubmitKey = async () => {
     await keyFormRef.value.validate()
     submitting.value = true
     
-    await addLLMModelKey(currentModel.value!.id, keyForm)
-    ElMessage.success('密钥添加成功')
-    
-    addKeyDialogVisible.value = false
-    // 更新当前模型的密钥列表
-    const model = modelList.value.find((m: LLMModel) => m.id === currentModel.value!.id)
-    if (model) {
-      // 这里应该重新获取密钥列表，暂时模拟添加
-      const newKey = {
-        id: Date.now().toString(),
-        key: keyForm.key,
+    if (keyForm.id) {
+      // 编辑模式
+      await updateLLMModelKey(currentModel.value!.providerName, keyForm.id, keyForm)
+      ElMessage.success('密钥更新成功')
+    } else {
+      // 新增模式
+      const keyData = {
+        llmProvider: currentModel.value!.providerName,
+        remark: keyForm.remark,
         secretKey: keyForm.secretKey,
         apiKey: keyForm.apiKey,
-        remark: keyForm.remark,
-        status: 'active' as const,
-        createTime: new Date().toISOString(),
-        updateTime: new Date().toISOString()
+        status: 'active' as const
       }
-      model.keys.push(newKey)
-      currentModel.value = model
+      await addLLMModelKey(keyData)
+      ElMessage.success('密钥添加成功')
     }
+    
+    // 重新加载所有模型数据
+    await loadModels()
+    
+    // 更新当前模型数据
+    const updatedModel = modelList.value.find((m: LLMModel) => m.providerName === currentModel.value!.providerName)
+    if (updatedModel) {
+      currentModel.value = updatedModel
+    }
+    
+    // 关闭对话框
+    addKeyDialogVisible.value = false
   } catch (error) {
-    console.error('添加密钥失败:', error)
-    ElMessage.error('添加密钥失败')
+    if (error !== 'cancel') {
+      console.error('操作密钥失败:', error)
+      ElMessage.error('操作密钥失败')
+    }
   } finally {
     submitting.value = false
   }
@@ -430,18 +436,33 @@ const handleSubmitKey = async () => {
 // 重置密钥表单
 const resetKeyForm = () => {
   Object.assign(keyForm, {
+    id: undefined,
     remark: '',
-    key: '',
     secretKey: '',
     apiKey: ''
   })
   keyFormRef.value?.clearValidate()
 }
 
+// 编辑密钥
+const handleEditKey = (key: LLMKey) => {
+  // 重置表单
+  resetKeyForm()
+  
+  // 填充表单数据
+  Object.assign(keyForm, {
+    id: key.id,
+    remark: key.remark || '',
+    secretKey: key.secretKey || '',
+    apiKey: key.apiKey || ''
+  })
+  
+  addKeyDialogVisible.value = true
+}
+
 // 初始化
 onMounted(() => {
-  // 页面加载完成，模型数据已经在modelList中定义
-  loading.value = false
+  loadModels()
 })
 </script>
 
@@ -454,7 +475,7 @@ onMounted(() => {
 
 .page-header {
   margin-bottom: 32px;
-  text-align: center;
+  text-align: left;
 }
 
 .page-header h1 {
@@ -515,10 +536,16 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-.model-icon img {
+.model-icon .icon-text {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-weight: 600;
+  font-size: 16px;
+  border-radius: 12px;
 }
 
 .model-details {

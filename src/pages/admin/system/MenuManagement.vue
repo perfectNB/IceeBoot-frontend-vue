@@ -186,7 +186,27 @@
           <el-input v-model="formData.component" placeholder="请输入组件名称" />
         </el-form-item>
         <el-form-item label="图标" prop="icon">
-          <el-input v-model="formData.icon" placeholder="请输入图标名称" />
+          <div class="icon-input-wrapper">
+            <el-input 
+              v-model="formData.icon" 
+              placeholder="请输入图标名称或点击选择"
+              class="icon-input"
+            >
+              <template #prepend>
+                <el-icon v-if="formData.icon" class="selected-icon">
+                  <component :is="formData.icon" />
+                </el-icon>
+                <el-icon v-else class="placeholder-icon">
+                  <Picture />
+                </el-icon>
+              </template>
+              <template #append>
+                <el-button @click="showIconSelector = true" :icon="Search">
+                  选择
+                </el-button>
+              </template>
+            </el-input>
+          </div>
         </el-form-item>
         <el-form-item label="类型" prop="type">
           <el-select v-model="formData.type" placeholder="请选择类型" @change="handleTypeChange">
@@ -219,13 +239,48 @@
         </el-button>
       </template>
     </el-dialog>
+
+    <!-- 图标选择器对话框 -->
+    <el-dialog 
+      title="选择图标" 
+      v-model="showIconSelector" 
+      width="800px"
+      @close="iconSearchKeyword = ''"
+    >
+      <div class="icon-selector">
+        <div class="icon-search">
+          <el-input
+            v-model="iconSearchKeyword"
+            placeholder="搜索图标..."
+            :prefix-icon="Search"
+            clearable
+          />
+        </div>
+        <div class="icon-grid">
+          <div 
+            v-for="iconName in filteredIconList" 
+            :key="iconName"
+            class="icon-item"
+            @click="selectIcon(iconName)"
+          >
+            <el-icon class="icon">
+              <component :is="iconName" />
+            </el-icon>
+            <span class="icon-name">{{ iconName }}</span>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button @click="showIconSelector = false">取消</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox, type FormRules } from 'element-plus'
-import { Plus, Refresh, Edit, Delete, Search, Sort } from '@element-plus/icons-vue'
+import { Plus, Refresh, Edit, Delete, Search, Sort, Picture } from '@element-plus/icons-vue'
 import type { MenuItem } from '@/types'
 import { getAllMenus, createMenu, updateMenu, deleteMenu, deleteMenus } from '@/api/menu'
 import { useUserStore } from '@/stores/user'
@@ -236,10 +291,87 @@ const userStore = useUserStore()
 const loading = ref(false)
 const submitting = ref(false)
 const dialogVisible = ref(false)
+const showIconSelector = ref(false)
 const menuList = ref<MenuItem[]>([])
 const parentMenuOptions = ref<MenuItem[]>([])
 const selectedMenus = ref<MenuItem[]>([])
 const tableRef = ref()
+const iconSearchKeyword = ref('')
+
+// 图标列表数据
+const iconList = [
+  // 基础图标
+  'HomeFilled', 'User', 'Setting', 'Document', 'Folder', 'Star', 'Bell', 'Message', 'Calendar', 'TrendCharts',
+  'Lock', 'Key', 'Tools', 'Camera', 'VideoCamera', 'Headset', 'Trophy', 'Flag', 'PriceTag', 'Link',
+  'Share', 'Download', 'Upload', 'Printer', 'Files', 'CopyDocument', 'FolderAdd', 'FolderDelete', 'FolderOpened',
+  'Collection', 'DataBoard', 'PieChart', 'Histogram', 'DataLine', 'DataAnalysis', 'Guide', 'Compass',
+  'Place', 'MapLocation', 'OfficeBuilding', 'School', 'Shop', 'HotWater', 'ColdDrink', 'IceCream',
+  'Coffee', 'Orange', 'Apple', 'Watermelon', 'Burger', 'Chicken', 'Bowl', 'FirstAidKit',
+  'Smoking', 'NoSmoking', 'Male', 'Female', 'Suitcase', 'Briefcase', 'Handbag', 'WalletFilled',
+  'CreditCard', 'Money', 'GoldMedal', 'Present', 'Box', 'Goods', 'ShoppingBag', 'ShoppingCart',
+  'Sell', 'Promotion', 'Stamp', 'MessageBox', 'Notification', 'Mute', 'Service', 'Avatar',
+  'UserFilled', 'SwitchButton', 'Switch', 'Operation', 'Management', 'Coordinate', 'Expand', 'Fold',
+  'Aim', 'ScaleToOriginal', 'View', 'Hide', 'Loading', 'More', 'MoreFilled', 'Grid', 'Menu', 'List',
+  
+  // 箭头和方向图标
+  'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'ArrowLeftBold', 'ArrowRightBold', 'ArrowUpBold', 'ArrowDownBold',
+  'CaretLeft', 'CaretRight', 'CaretTop', 'CaretBottom', 'DArrowLeft', 'DArrowRight', 'DCaret', 'Back',
+  'Right', 'Bottom', 'Top', 'Sort', 'SortUp', 'SortDown', 'Rank', 'Position',
+  
+  // 状态和操作图标
+  'Check', 'Close', 'CircleCheck', 'CircleClose', 'CirclePlus', 'CircleCheckFilled', 'CircleCloseFilled', 'CirclePlusFilled',
+  'SuccessFilled', 'InfoFilled', 'WarningFilled', 'QuestionFilled', 'Minus', 'Plus', 'Remove', 'Delete',
+  'DeleteFilled', 'Edit', 'EditPen', 'Refresh', 'RefreshLeft', 'RefreshRight', 'Search', 'ZoomIn',
+  'ZoomOut', 'FullScreen', 'ScaleToOriginal', 'Crop', 'Picture', 'PictureFilled', 'PictureRounded', 'AlarmClock',
+  
+  // 媒体和娱乐图标
+  'VideoPlay', 'VideoPause', 'Microphone', 'MicrophoneFilled', 'Headset', 'Monitor', 'Mouse', 'Keyboard',
+  'Cpu', 'HardDrive', 'MemoryCard', 'Wifi', 'WifiOff', 'Signal', 'Cellphone', 'Iphone',
+  'TabletButton', 'Laptop', 'Watch', 'Camera', 'VideoCamera', 'Film', 'Headphones', 'MagicStick',
+  
+  // 天气和自然图标
+  'Sunny', 'Cloudy', 'PartlyCloudy', 'Overcast', 'Drizzling', 'Raining', 'Lightning', 'LightningFilled',
+  'Snowing', 'WindPower', 'Tornado', 'Typhoon', 'Sunrise', 'Sunset', 'MoonNight', 'Moon',
+  'Thermometer', 'Umbrella', 'UmbrellaFilled', 'Rainbow', 'Snowflake', 'IceCreamRound', 'IceCreamSquare', 'Cherry',
+  
+  // 交通和地点图标
+  'Van', 'Truck', 'CarFilled', 'BicycleFilled', 'MotorcycleFilled', 'Ship', 'AirplaneFilled', 'Train',
+  'Bus', 'Subway', 'Walking', 'MapLocation', 'LocationFilled', 'LocationInformation', 'Navigation', 'Guide',
+  'Compass', 'Position', 'AddLocation', 'RemoveLocation', 'OfficeBuilding', 'School', 'Hospital', 'Bank',
+  
+  // 食物和饮品图标
+  'Apple', 'Orange', 'Pear', 'Cherry', 'Watermelon', 'Grape', 'Strawberry', 'Lollipop',
+  'Sugar', 'Dessert', 'IceCream', 'IceCreamRound', 'IceCreamSquare', 'IceTea', 'Coffee', 'CoffeeCup',
+  'Milk', 'WineGlass', 'Goblet', 'GobletFull', 'GobletSquare', 'GobletSquareFull', 'Dish', 'DishDot',
+  'Bowl', 'KnifeFork', 'Fork', 'Spoon', 'ChopSticks', 'FoodAndDrinks', 'Burger', 'Pizza',
+  
+  // 购物和商业图标
+  'ShoppingBag', 'ShoppingCart', 'ShoppingCartFull', 'ShoppingTrolley', 'Goods', 'Box', 'Package',
+  'Present', 'GiftFilled', 'Sell', 'Sold', 'Promotion', 'DiscountFilled', 'PriceTag', 'Ticket',
+  'TicketFilled', 'Stamp', 'Postcard', 'CreditCard', 'BankCard', 'Money', 'Coin', 'Wallet',
+  'WalletFilled', 'PaymentFilled', 'GoldMedal', 'SilverMedal', 'BronzeMedal', 'Medal', 'Trophy', 'TrophyBase',
+  
+  // 办公和文档图标
+  'Document', 'DocumentAdd', 'DocumentDelete', 'DocumentRemove', 'DocumentChecked', 'DocumentCopy', 'CopyDocument', 'Notebook',
+  'Reading', 'ReadingLamp', 'Paperclip', 'TakeawayBox', 'Briefcase', 'Suitcase', 'SuitcaseLine', 'Handbag',
+  'Files', 'Folder', 'FolderAdd', 'FolderDelete', 'FolderOpened', 'FolderRemove', 'FolderChecked', 'Collection',
+  'Tickets', 'DataBoard', 'DataLine', 'DataAnalysis', 'PieChart', 'Histogram', 'TrendCharts', 'Platform',
+  
+  // 用户和社交图标
+  'User', 'UserFilled', 'Avatar', 'Male', 'Female', 'Postman', 'ChatDotRound',
+  'ChatLineRound', 'ChatRound', 'ChatSquare', 'Connection', 'Phone', 'PhoneFilled', 'Message', 'MessageBox',
+  'Bell', 'BellFilled', 'Notification', 'Mute', 'MuteNotification', 'Service', 'CustomerService', 'Headset'
+]
+
+// 过滤后的图标列表
+const filteredIconList = computed(() => {
+  if (!iconSearchKeyword.value) {
+    return iconList
+  }
+  return iconList.filter(icon => 
+    icon.toLowerCase().includes(iconSearchKeyword.value.toLowerCase())
+  )
+})
 
 // 搜索表单
 const searchForm = reactive({
@@ -543,6 +675,13 @@ const collapseAll = () => {
   }
 }
 
+// 选择图标
+const selectIcon = (iconName: string) => {
+  formData.icon = iconName
+  showIconSelector.value = false
+  iconSearchKeyword.value = ''
+}
+
 // 初始化
 onMounted(() => {
   loadMenus()
@@ -599,5 +738,88 @@ onMounted(() => {
 
 :deep(.el-button + .el-button) {
   margin-left: 8px;
+}
+
+/* 图标选择器样式 */
+.icon-input-wrapper {
+  width: 100%;
+}
+
+.icon-input {
+  width: 100%;
+}
+
+.selected-icon,
+.placeholder-icon {
+  font-size: 16px;
+}
+
+.selected-icon {
+  color: #409eff;
+}
+
+.placeholder-icon {
+  color: #c0c4cc;
+}
+
+.icon-selector {
+  max-height: 500px;
+}
+
+.icon-search {
+  margin-bottom: 20px;
+}
+
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 10px;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+}
+
+.icon-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px;
+  border: 1px solid #e4e7ed;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  background: #fff;
+}
+
+.icon-item:hover {
+  border-color: #409eff;
+  background: #f0f9ff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
+}
+
+.icon-item .icon {
+  font-size: 24px;
+  color: #606266;
+  margin-bottom: 8px;
+  transition: color 0.3s ease;
+}
+
+.icon-item:hover .icon {
+  color: #409eff;
+}
+
+.icon-item .icon-name {
+  font-size: 12px;
+  color: #909399;
+  text-align: center;
+  word-break: break-all;
+  line-height: 1.2;
+}
+
+.icon-item:hover .icon-name {
+  color: #409eff;
 }
 </style>

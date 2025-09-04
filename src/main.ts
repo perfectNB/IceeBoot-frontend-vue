@@ -18,10 +18,16 @@ import './styles/index.scss'
 // 主题初始化
 import { initTheme } from './utils/theme'
 
+// 控制台防护
+import consoleProtection from './utils/console-protection'
+
 const app = createApp(App)
 
 // 初始化主题
 initTheme()
+
+// 启动控制台防护
+consoleProtection.start()
 
 // 注册 Element Plus 图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {

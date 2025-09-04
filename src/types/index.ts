@@ -193,6 +193,8 @@ export interface LLMModel {
   remark: string
   keys: LLMKey[]
   status: 'active' | 'inactive'
+  description?: string
+  icon?: string
   createTime: string
   updateTime: string
 }

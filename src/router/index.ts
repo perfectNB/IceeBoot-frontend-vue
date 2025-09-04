@@ -194,7 +194,10 @@ router.beforeEach(async (to, from, next) => {
 
   // 获取token（会从localStorage恢复）
   const token = userStore.getToken()
-
+  if (to.path != '/'&&!token ) {
+    next('/')
+    return
+  }
   // 登录后访问首页强制跳转到管理后台
   if (token && to.path === '/') {
     next('/admin')
@@ -226,7 +229,10 @@ router.beforeEach(async (to, from, next) => {
   //   next('/')
   //   return
   // }
+
   if (Object.keys(to.meta).length === 0){
+
+
     next('/404')
   }
   if(to.fullPath=='/admin'){

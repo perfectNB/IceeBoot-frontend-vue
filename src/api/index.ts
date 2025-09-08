@@ -124,6 +124,18 @@ export {
   updateEmailKeyStatus
 } from './email'
 
+// 消息相关接口
+export {
+  getMessages,
+  getMessageById,
+  markMessageAsRead,
+  batchMarkAsRead,
+  deleteMessage,
+  batchDeleteMessages,
+  getUnreadCount,
+  markAllAsRead
+} from './message'
+
 /**
  * API接口类型定义
  */
@@ -154,5 +166,11 @@ export type {
   EmailKey,
   EmailProvider
 } from './email'
+
+export type {
+  MessageItem,
+  MessageType,
+  MessageQueryParams
+} from './message'
 
 

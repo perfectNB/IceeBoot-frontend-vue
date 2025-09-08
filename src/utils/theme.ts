@@ -9,8 +9,11 @@ const applyTheme = (dark: boolean) => {
   const html = document.documentElement
   if (dark) {
     html.setAttribute('data-theme', 'dark')
+    // 兼容 Element Plus 暗色主题
+    html.classList.add('dark')
   } else {
     html.setAttribute('data-theme', 'light')
+    html.classList.remove('dark')
   }
   // 同时保存到localStorage
   localStorage.setItem('zboot-theme', dark ? 'dark' : 'light')
@@ -19,7 +22,7 @@ const applyTheme = (dark: boolean) => {
 // 监听主题变化
 watch(isDark, (newValue) => {
   applyTheme(newValue)
-}, { immediate: true })
+})
 
 // 切换主题
 export const toggleTheme = (): void => {

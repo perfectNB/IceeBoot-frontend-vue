@@ -49,6 +49,35 @@
             class="theme-btn"
           />
 
+          <!-- 消息中心 -->
+          <el-dropdown @command="handleMessageCommand" class="message-dropdown">
+            <div class="message-info">
+              <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99">
+                <el-button
+                  :icon="Bell"
+                  text
+                  class="message-btn"
+                />
+              </el-badge>
+            </div>
+
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="center">
+                  <el-icon><Message /></el-icon>
+                  消息中心
+                  <el-tag v-if="unreadCount > 0" type="danger" size="small" class="unread-tag">
+                    {{ unreadCount }}
+                  </el-tag>
+                </el-dropdown-item>
+                <el-dropdown-item command="markAllRead" :disabled="unreadCount === 0">
+                  <el-icon><Check /></el-icon>
+                  全部已读
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+
           <!-- 用户信息 -->
           <el-dropdown @command="handleUserCommand">
             <div class="user-info">
@@ -107,12 +136,16 @@ import {
   User,
   Setting,
   SwitchButton,
-  ArrowDown
+  ArrowDown,
+  Bell,
+  Message,
+  Check
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { logout } from '@/api/auth'
 import { isMockEnabled } from '@/config/mock'
 import { isDark, toggleTheme } from '@/utils/theme'
+import { getUnreadCount, markAllAsRead } from '@/api/message'
 import SidebarMenu from '@/components/common/SidebarMenu.vue'
 
 const route = useRoute()
@@ -121,6 +154,9 @@ const userStore = useUserStore()
 
 // 侧边栏状态
 const isCollapsed = ref(false)
+
+// 未读消息数量
+const unreadCount = ref(0)
 
 // 菜单数据 - 从user store中获取
 const menus = computed(() => userStore.user?.menus || [])
@@ -143,7 +179,7 @@ const toggleSidebar = () => {
 const handleUserCommand = (command: string) => {
   switch (command) {
     case 'profile':
-      router.push('/admin/profile')
+      router.push('/admin/profile-center')
       break
     case 'settings':
       router.push('/admin/settings')
@@ -151,6 +187,34 @@ const handleUserCommand = (command: string) => {
     case 'logout':
       handleLogout()
       break
+  }
+}
+
+// 处理消息下拉菜单命令
+const handleMessageCommand = async (command: string) => {
+  switch (command) {
+    case 'center':
+      router.push('/admin/message-center')
+      break
+    case 'markAllRead':
+      try {
+        await markAllAsRead()
+        unreadCount.value = 0
+        ElMessage.success('所有消息已标记为已读')
+      } catch (error) {
+        console.error('标记所有消息已读失败:', error)
+        ElMessage.error('操作失败，请重试')
+      }
+      break
+  }
+}
+
+// 加载未读消息数量
+const loadUnreadCount = async () => {
+  try {
+    unreadCount.value = await getUnreadCount()
+  } catch (error) {
+    console.error('获取未读消息数量失败:', error)
   }
 }
 
@@ -181,9 +245,14 @@ const handleLogout = () => {
   })
 }
 
-// 组件挂载时无需额外操作，菜单数据已在user store中
+// 组件挂载时加载数据
 onMounted(() => {
   // 菜单数据通过computed从user store获取，无需额外加载
+  // 加载未读消息数量
+  loadUnreadCount()
+  
+  // 定期刷新未读消息数量（每5分钟）
+  setInterval(loadUnreadCount, 5 * 60 * 1000)
 })
 </script>
 
@@ -298,6 +367,32 @@ onMounted(() => {
 
   &:hover {
     background: var(--primary-extra-light);
+  }
+}
+
+.message-dropdown {
+  .message-info {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+  }
+
+  .message-btn {
+    font-size: 18px;
+
+    &:hover {
+      background: var(--primary-extra-light);
+    }
+  }
+
+  :deep(.el-dropdown-menu__item) {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    .unread-tag {
+      margin-left: auto;
+    }
   }
 }
 

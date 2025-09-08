@@ -35,6 +35,8 @@ const componentMap: Record<string, () => Promise<{ default: unknown }>> = {
   OSSManagement: () => import('@/pages/admin/third/OSSManagement.vue'),
   EmailManagement: () => import('@/pages/admin/third/EmailManagement.vue'),
   SMSManagement: () => import('@/pages/admin/third/SMSManagement.vue'),
+  ProfileCenter: () => import('@/pages/self/ProfileCenter.vue'),
+  MessageCenter: () => import('@/pages/self/MessageCenter.vue'),
 }
 
 // 将菜单数据转换为路由配置
@@ -106,9 +108,10 @@ async function loadDynamicRoutes(): Promise<void> {
     // 找到admin路由并添加子路由
     const adminRoute = router.getRoutes().find(route => route.path === '/admin')
     if (adminRoute) {
-      // 清空现有子路由
+      // 只清空动态路由，保留静态路由（如个人中心、消息中心）
+      const staticRouteNames = ['ProfileCenter', 'MessageCenter'] // 需要保留的静态路由名称
       adminRoute.children?.forEach(child => {
-        if (child.name) {
+        if (child.name && !staticRouteNames.includes(child.name as string)) {
           router.removeRoute(child.name)
         }
       })
@@ -168,7 +171,28 @@ const routes: RouteRecordRaw[] = [
       title: '管理后台',
       requiresAuth: true
     },
-    children: []
+    children: [
+      {
+        path: 'profile-center',
+        name: 'ProfileCenter',
+        component: () => import('@/pages/self/ProfileCenter.vue'),
+        meta: {
+          title: '个人中心',
+          requiresAuth: true,
+          hideInMenu: true
+        }
+      },
+      {
+        path: 'message-center',
+        name: 'MessageCenter',
+        component: () => import('@/pages/self/MessageCenter.vue'),
+        meta: {
+          title: '消息中心',
+          requiresAuth: true,
+          hideInMenu: true
+        }
+      }
+    ]
   }
 ]
 

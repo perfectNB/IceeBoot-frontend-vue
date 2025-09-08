@@ -27,12 +27,14 @@ const componentMap: Record<string, () => Promise<{ default: unknown }>> = {
   ChatInterface: () => import('@/pages/admin/ai/ChatInterface.vue'),
   FrontendCodegen: () => import('@/pages/admin/codegen/FrontendCodegen.vue'),
   BackendCodegen: () => import('@/pages/admin/codegen/BackendCodegen.vue'),
-  // Mock数据中的组件名映射
   FrontendCrud: () => import('@/pages/admin/codegen/FrontendCodegen.vue'),
   BackendCrud: () => import('@/pages/admin/codegen/BackendCodegen.vue'),
   AIChat: () => import('@/pages/admin/ai/ChatInterface.vue'),
   ApiDoc: () => import('@/pages/admin/monitor/ApiDocumentation.vue'),
-  ScheduledTask: () => import('@/pages/admin/monitor/TaskManagement.vue')
+  ScheduledTask: () => import('@/pages/admin/monitor/TaskManagement.vue'),
+  OSSManagement: () => import('@/pages/admin/third/OSSManagement.vue'),
+  EmailManagement: () => import('@/pages/admin/third/EmailManagement.vue'),
+  SMSManagement: () => import('@/pages/admin/third/SMSManagement.vue'),
 }
 
 // 将菜单数据转换为路由配置

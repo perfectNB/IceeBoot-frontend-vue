@@ -375,7 +375,7 @@ chore: 构建过程或辅助工具的变动
 
 如果您有任何问题或建议，请通过以下方式联系我们：
 
-- 📧 邮箱：support@zboot.com
+- 📧 邮箱：857787854@qq.com
 - 🐛 问题反馈：[GitHub Issues](https://github.com/your-username/zboot-frontend-vue/issues)
 - 💬 讨论交流：[GitHub Discussions](https://github.com/your-username/zboot-frontend-vue/discussions)
 

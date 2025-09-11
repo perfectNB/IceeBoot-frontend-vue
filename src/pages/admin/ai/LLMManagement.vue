@@ -4,12 +4,12 @@
       <h1 class="page-title">大模型管理</h1>
       <p class="page-description">管理AI大模型配置和API密钥</p>
     </div>
-    
+
     <!-- 模型卡片区域 -->
     <div class="models-grid" v-loading="loading">
-      <div 
-        v-for="model in modelList" 
-        :key="model.providerName" 
+      <div
+        v-for="model in modelList"
+        :key="model.providerName"
         class="model-card"
       >
         <div class="model-header">
@@ -33,14 +33,14 @@
             />
           </div>
         </div>
-        
+
         <div class="model-stats">
           <div class="stat-item">
             <span class="stat-label">API密钥数量</span>
             <span class="stat-value">{{ model.keys?.length || 0 }}</span>
           </div>
         </div>
-        
+
         <div class="model-actions">
           <el-button
             type="primary"
@@ -53,9 +53,9 @@
         </div>
       </div>
     </div>
-    
 
-    
+
+
     <!-- 密钥管理对话框 -->
     <el-dialog
       v-model="keyDialogVisible"
@@ -71,7 +71,7 @@
             添加密钥
           </el-button>
         </div>
-        
+
         <el-table :data="currentModel?.keys || []" stripe border>
           <el-table-column prop="id" label="ID" width="80" />
           <el-table-column label="API密钥" min-width="200">
@@ -131,14 +131,14 @@
           </el-table-column>
         </el-table>
       </div>
-      
+
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="keyDialogVisible = false">关闭</el-button>
         </div>
       </template>
     </el-dialog>
-    
+
     <!-- 添加密钥对话框 -->
     <el-dialog
       v-model="addKeyDialogVisible"
@@ -183,7 +183,7 @@
           />
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="addKeyDialogVisible = false">取消</el-button>
@@ -354,13 +354,13 @@ const handleDeleteKey = async (key: LLMKey) => {
         type: 'warning'
       }
     )
-    
+
     await deleteLLMModelKey(currentModel.value!.providerName, key.id)
     ElMessage.success('密钥删除成功')
-    
+
     // 重新加载所有模型数据
     await loadModels()
-    
+
     // 更新当前模型数据
     const updatedModel = modelList.value.find((m: LLMModel) => m.providerName === currentModel.value!.providerName)
     if (updatedModel) {
@@ -390,11 +390,11 @@ const handleKeyStatusChange = async (key: LLMKey) => {
 // 提交密钥
 const handleSubmitKey = async () => {
   if (!keyFormRef.value) return
-  
+
   try {
     await keyFormRef.value.validate()
     submitting.value = true
-    
+
     if (keyForm.id) {
       // 编辑模式
       await updateLLMModelKey(currentModel.value!.providerName, keyForm.id, keyForm)
@@ -411,16 +411,16 @@ const handleSubmitKey = async () => {
       await addLLMModelKey(keyData)
       ElMessage.success('密钥添加成功')
     }
-    
+
     // 重新加载所有模型数据
     await loadModels()
-    
+
     // 更新当前模型数据
     const updatedModel = modelList.value.find((m: LLMModel) => m.providerName === currentModel.value!.providerName)
     if (updatedModel) {
       currentModel.value = updatedModel
     }
-    
+
     // 关闭对话框
     addKeyDialogVisible.value = false
   } catch (error) {
@@ -448,7 +448,7 @@ const resetKeyForm = () => {
 const handleEditKey = (key: LLMKey) => {
   // 重置表单
   resetKeyForm()
-  
+
   // 填充表单数据
   Object.assign(keyForm, {
     id: key.id,
@@ -456,7 +456,7 @@ const handleEditKey = (key: LLMKey) => {
     secretKey: key.secretKey || '',
     apiKey: key.apiKey || ''
   })
-  
+
   addKeyDialogVisible.value = true
 }
 
@@ -679,13 +679,14 @@ onMounted(() => {
     grid-template-columns: 1fr;
     gap: 16px;
   }
-  
+
   .model-card {
     padding: 20px;
   }
-  
+
   .page-header h1 {
     font-size: 24px;
   }
 }
 </style>
+

@@ -65,7 +65,7 @@ export {
   addLLMModelKey,
   deleteLLMModelKey,
   updateLLMModelKeyStatus
-} from './llm'
+} from './llm.ts'
 
 export {
   getAgents,
@@ -172,5 +172,20 @@ export type {
   MessageType,
   MessageQueryParams
 } from './message'
+
+
+
+// AI聊天相关接口
+export {
+  getAiChatSessions,
+  createAiChatSession,
+  deleteAiChatSession,
+  streamAiChat,
+  getAiChatMessages,
+  type AiChatSession,
+  type AiChatMessage,
+  type CreateSessionParams,
+  type StreamChatRequest
+} from './aiChat'
 
 

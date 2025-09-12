@@ -47,6 +47,19 @@
               <el-radio-button value="read">已读消息</el-radio-button>
             </el-radio-group>
           </div>
+          <div class="time-filter">
+            <el-date-picker
+              v-model="timeRange"
+              type="datetimerange"
+              range-separator="至"
+              start-placeholder="开始时间"
+              end-placeholder="结束时间"
+              format="YYYY-MM-DD HH:mm:ss"
+              value-format="YYYY-MM-DD HH:mm:ss"
+              @change="handleTimeRangeChange"
+              clearable
+            />
+          </div>
           <div class="list-actions">
             <el-button
               v-if="activeTab === 'unread' && selectedMessages.length > 0"
@@ -84,10 +97,10 @@
             <el-table-column label="状态" width="80">
               <template #default="{ row }">
                 <el-tag
-                  :type="row.isRead ? 'success' : 'warning'"
+                  :type="row.status === 'read' ? 'success' : 'danger'"
                   size="small"
                 >
-                  {{ row.isRead ? '已读' : '未读' }}
+                  {{ row.status === 'read' ? '已读' : '未读' }}
                 </el-tag>
               </template>
             </el-table-column>
@@ -105,7 +118,7 @@
               <template #default="{ row }">
                 <div
                   class="message-title"
-                  :class="{ 'unread-title': !row.isRead }"
+                  :class="{ 'unread-title': row.status === 'unread' }"
                   @click="handleMessageClick(row)"
                 >
                   {{ row.title }}
@@ -126,27 +139,29 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="150">
+            <el-table-column label="操作" width="180">
               <template #default="{ row }">
-                <el-button
-                  v-if="!row.isRead"
-                  type="primary"
-                  size="small"
-                  text
-                  @click="handleMarkRead(row)"
-                >
-                  <el-icon><Check /></el-icon>
-                  标记已读
-                </el-button>
-                <el-button
-                  type="danger"
-                  size="small"
-                  text
-                  @click="handleDelete(row)"
-                >
-                  <el-icon><Delete /></el-icon>
-                  删除
-                </el-button>
+                <div class="action-buttons">
+                  <el-button
+                    v-if="row.status === 'unread'"
+                    type="primary"
+                    size="small"
+                    text
+                    @click="handleMarkRead(row)"
+                  >
+                    <el-icon><Check /></el-icon>
+                    标记已读
+                  </el-button>
+                  <el-button
+                    type="danger"
+                    size="small"
+                    text
+                    @click="handleDelete(row)"
+                  >
+                    <el-icon><Delete /></el-icon>
+                    删除
+                  </el-button>
+                </div>
               </template>
             </el-table-column>
           </el-table>
@@ -171,7 +186,7 @@
     <el-dialog
       v-model="showMessageDialog"
       :title="currentMessage?.title"
-      width="600px"
+      width="800px"
       :close-on-click-modal="false"
     >
       <div class="message-detail" v-if="currentMessage">
@@ -188,10 +203,10 @@
           <div class="meta-item">
             <span class="meta-label">状态：</span>
             <el-tag
-              :type="currentMessage.isRead ? 'success' : 'warning'"
+              :type="currentMessage.status === 'read' ? 'success' : 'danger'"
               size="small"
             >
-              {{ currentMessage.isRead ? '已读' : '未读' }}
+              {{ currentMessage.status === 'read' ? '已读' : '未读' }}
             </el-tag>
           </div>
           <div class="meta-item">
@@ -200,8 +215,7 @@
           </div>
         </div>
         <div class="message-body">
-          <div class="message-content-full">
-            {{ currentMessage.content }}
+          <div class="message-content-full" v-html="renderMarkdown(currentMessage.content)">
           </div>
         </div>
       </div>
@@ -210,7 +224,7 @@
         <div class="dialog-footer">
           <el-button @click="showMessageDialog = false">关闭</el-button>
           <el-button
-            v-if="currentMessage && !currentMessage.isRead"
+            v-if="currentMessage && currentMessage.status === 'unread'"
             type="primary"
             @click="handleMarkReadInDialog"
             :loading="markingRead"
@@ -234,14 +248,18 @@ import {
   Delete,
   Refresh
 } from '@element-plus/icons-vue'
+import { marked } from 'marked'
 import {
   getMessages,
   markMessageAsRead,
   deleteMessage,
   batchMarkAsRead,
   batchDeleteMessages,
+  getMessageStats,
   type MessageItem,
-  type MessageType
+  type MessageType,
+  type MessageStats,
+  type MessageQueryParams
 } from '@/api/message'
 
 // 响应式数据
@@ -254,6 +272,8 @@ const messageList = ref<MessageItem[]>([])
 const selectedMessages = ref<MessageItem[]>([])
 const showMessageDialog = ref(false)
 const currentMessage = ref<MessageItem | null>(null)
+const timeRange = ref<[string, string] | null>(null)
+const statsData = ref<MessageStats>({ unread: 0, read: 0, total: 0 })
 
 // 分页数据
 const pagination = reactive({
@@ -264,25 +284,23 @@ const pagination = reactive({
 
 // 统计数据
 const unreadCount = computed(() => {
-  return messageList.value.filter((msg: MessageItem) => !msg.isRead).length
+  return statsData.value.unread
 })
 
 const readCount = computed(() => {
-  return messageList.value.filter((msg: MessageItem) => msg.isRead).length
+  return statsData.value.read
 })
 
 const totalCount = computed(() => {
-  return messageList.value.length
+  return statsData.value.total
 })
 
 // 消息类型映射
 const getMessageTypeName = (type: MessageType): string => {
   const typeMap: Record<MessageType, string> = {
-    system: '系统通知',
-    security: '安全提醒',
-    task: '任务通知',
-    announcement: '公告',
-    reminder: '提醒'
+    system: '系统消息',
+    notice: '通知消息',
+    warning: '警告消息'
   }
   return typeMap[type] || '未知'
 }
@@ -290,10 +308,8 @@ const getMessageTypeName = (type: MessageType): string => {
 const getMessageTypeColor = (type: MessageType): string => {
   const colorMap: Record<MessageType, string> = {
     system: 'primary',
-    security: 'danger',
-    task: 'warning',
-    announcement: 'success',
-    reminder: 'info'
+    notice: 'success',
+    warning: 'danger'
   }
   return colorMap[type] || ''
 }
@@ -303,6 +319,32 @@ const formatDateTime = (dateStr: string): string => {
   return new Date(dateStr).toLocaleString('zh-CN')
 }
 
+// 渲染 Markdown
+const renderMarkdown = (content: string): string => {
+  if (!content) return ''
+  try {
+    const result = marked.parse(content, {
+      breaks: true,
+      gfm: true
+    })
+    return typeof result === 'string' ? result : ''
+  } catch (error) {
+    console.error('Markdown 解析失败:', error)
+    return content
+  }
+}
+
+// 加载消息统计
+const loadMessageStats = async () => {
+  try {
+    const stats = await getMessageStats()
+    statsData.value = stats
+  } catch (error) {
+    console.error('加载消息统计失败:', error)
+    ElMessage.error('加载消息统计失败')
+  }
+}
+
 // 加载消息列表
 const loadMessages = async () => {
   loading.value = true
@@ -310,8 +352,10 @@ const loadMessages = async () => {
     const params = {
       pageNum: pagination.current,
       pageSize: pagination.size,
-      status: activeTab.value === 'all' ? undefined : (activeTab.value === 'read' ? 'read' : 'unread')
-    }
+      status: activeTab.value === 'all' ? undefined : (activeTab.value === 'read' ? 'read' as const : 'unread' as const),
+      startTime: timeRange.value?.[0],
+      endTime: timeRange.value?.[1]
+    } as MessageQueryParams
 
     const result = await getMessages(params)
     messageList.value = result.records
@@ -326,6 +370,12 @@ const loadMessages = async () => {
 
 // 标签切换
 const handleTabChange = () => {
+  pagination.current = 1
+  loadMessages()
+}
+
+// 时间范围变化
+const handleTimeRangeChange = () => {
   pagination.current = 1
   loadMessages()
 }
@@ -353,7 +403,7 @@ const handleMessageClick = async (message: MessageItem) => {
   showMessageDialog.value = true
 
   // 如果是未读消息，自动标记为已读
-  if (!message.isRead) {
+  if (message.status === 'unread') {
     await handleMarkRead(message, false)
   }
 }
@@ -362,7 +412,7 @@ const handleMessageClick = async (message: MessageItem) => {
 const handleMarkRead = async (message: MessageItem, showSuccess = true) => {
   try {
     await markMessageAsRead(message.id)
-    message.isRead = true
+    message.status = 'read'
     if (showSuccess) {
       ElMessage.success('已标记为已读')
     }
@@ -460,10 +510,12 @@ const handleBatchDelete = async () => {
 // 刷新
 const handleRefresh = () => {
   loadMessages()
+  loadMessageStats()
 }
 
 // 初始化
 onMounted(() => {
+  loadMessageStats()
   loadMessages()
 })
 </script>
@@ -575,6 +627,8 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   background: #fafbfc;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 
 .filter-tabs {
@@ -583,6 +637,15 @@ onMounted(() => {
       border-radius: 6px;
       margin-right: 8px;
     }
+  }
+}
+
+.time-filter {
+  display: flex;
+  align-items: center;
+  
+  .el-date-editor {
+    width: 350px;
   }
 }
 
@@ -624,6 +687,12 @@ onMounted(() => {
   font-size: 14px;
 }
 
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
 .pagination-container {
   padding: 20px 24px;
   display: flex;
@@ -658,8 +727,79 @@ onMounted(() => {
     .message-content-full {
       line-height: 1.6;
       color: #303133;
-      white-space: pre-wrap;
       word-break: break-word;
+      
+      // Markdown 样式
+      :deep(h1), :deep(h2), :deep(h3), :deep(h4), :deep(h5), :deep(h6) {
+        margin: 16px 0 8px 0;
+        font-weight: 600;
+      }
+      
+      :deep(p) {
+        margin: 8px 0;
+      }
+      
+      :deep(ul), :deep(ol) {
+        margin: 8px 0;
+        padding-left: 20px;
+      }
+      
+      :deep(li) {
+        margin: 4px 0;
+      }
+      
+      :deep(code) {
+        background: #f5f5f5;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+      }
+      
+      :deep(pre) {
+        background: #f5f5f5;
+        padding: 12px;
+        border-radius: 6px;
+        overflow-x: auto;
+        margin: 8px 0;
+        
+        code {
+          background: none;
+          padding: 0;
+        }
+      }
+      
+      :deep(blockquote) {
+        border-left: 4px solid #ddd;
+        padding-left: 12px;
+        margin: 8px 0;
+        color: #666;
+      }
+      
+      :deep(a) {
+        color: #409eff;
+        text-decoration: none;
+        
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+      
+      :deep(table) {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 8px 0;
+        
+        th, td {
+          border: 1px solid #ddd;
+          padding: 8px 12px;
+          text-align: left;
+        }
+        
+        th {
+          background: #f5f5f5;
+          font-weight: 600;
+        }
+      }
     }
   }
 }
@@ -688,6 +828,12 @@ onMounted(() => {
     flex-direction: column;
     gap: 16px;
     align-items: stretch;
+  }
+
+  .time-filter {
+    .el-date-editor {
+      width: 100%;
+    }
   }
 
   .list-actions {

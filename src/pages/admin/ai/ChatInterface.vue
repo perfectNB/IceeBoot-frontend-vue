@@ -240,6 +240,8 @@
 import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import MarkdownIt from 'markdown-it'
+import hljs from 'highlight.js'
+import 'highlight.js/styles/github.css'
 import {
   Plus,
   Delete,
@@ -276,16 +278,46 @@ const currentMessages = ref<AiChatMessage[]>([])
 const mcpEnabled = ref(false)
 
 // Markdown渲染器
-const md = new MarkdownIt({
+const md: MarkdownIt = new MarkdownIt({
   html: true,
   linkify: true,
   typographer: true,
-  breaks: true
+  breaks: true,
+  highlight: function (str: string, lang: string): string {
+    if (lang && hljs.getLanguage(lang)) {
+      try {
+        const highlighted = hljs.highlight(str, { language: lang }).value
+        return `<pre class="hljs-code-block"><div class="code-header"><span class="code-lang">${lang}</span><button class="copy-btn" onclick="copyCode(this)" title="复制代码"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button></div><code class="hljs language-${lang}">${highlighted}</code></pre>`
+      } catch {
+        // 忽略高亮错误，使用普通文本
+      }
+    }
+    return `<pre class="hljs-code-block"><div class="code-header"><span class="code-lang">text</span><button class="copy-btn" onclick="copyCode(this)" title="复制代码"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button></div><code class="hljs">${md.utils.escapeHtml(str)}</code></pre>`
+  }
 })
 
 // 渲染Markdown内容
 const renderMarkdown = (content: string) => {
-  return md.render(content)
+  const rendered = md.render(content)
+  // 在客户端添加复制功能
+  nextTick(() => {
+    // 确保全局复制函数存在
+    const globalWindow = window as Window & { copyCode?: (button: HTMLElement) => void }
+    if (typeof globalWindow.copyCode === 'undefined') {
+      globalWindow.copyCode = (button: HTMLElement) => {
+        const codeBlock = button.closest('.hljs-code-block')
+        const code = codeBlock?.querySelector('code')?.textContent
+        if (code) {
+          navigator.clipboard.writeText(code).then(() => {
+            ElMessage.success('代码已复制到剪贴板')
+          }).catch(() => {
+            ElMessage.error('复制失败')
+          })
+        }
+      }
+    }
+  })
+  return rendered
 }
 
 // 默认厂商列表
@@ -1026,93 +1058,245 @@ onMounted(async () => {
 
           .markdown-content {
             line-height: 1.6;
+            font-size: 14px;
+            color: #374151;
 
+            // 标题样式
             h1, h2, h3, h4, h5, h6 {
-              margin: 16px 0 8px 0;
+              margin: 20px 0 12px 0;
               font-weight: 600;
               line-height: 1.25;
+              color: #1f2937;
             }
 
-            h1 { font-size: 1.5em; }
-            h2 { font-size: 1.3em; }
-            h3 { font-size: 1.1em; }
+            h1 { font-size: 1.75em; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
+            h2 { font-size: 1.5em; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }
+            h3 { font-size: 1.25em; }
+            h4 { font-size: 1.1em; }
+            h5 { font-size: 1em; }
+            h6 { font-size: 0.9em; color: #6b7280; }
 
+            // 段落样式
             p {
-              margin: 8px 0;
+              margin: 12px 0;
+              line-height: 1.7;
             }
 
+            // 列表样式优化
             ul, ol {
-              margin: 8px 0;
+              margin: 12px 0;
+              padding-left: 0;
+              list-style: none;
+            }
+
+            ul {
+              li {
+                position: relative;
+                margin: 8px 0;
+                padding-left: 24px;
+                line-height: 1.6;
+                
+                &::before {
+                  content: '•';
+                  position: absolute;
+                  left: 8px;
+                  top: 0;
+                  color: #6b7280;
+                  font-weight: bold;
+                }
+              }
+            }
+
+            ol {
+              counter-reset: list-counter;
+              
+              li {
+                position: relative;
+                margin: 8px 0;
+                padding-left: 32px;
+                line-height: 1.6;
+                counter-increment: list-counter;
+                
+                &::before {
+                  content: counter(list-counter) '.';
+                  position: absolute;
+                  left: 8px;
+                  top: 0;
+                  color: #6b7280;
+                  font-weight: 600;
+                  min-width: 20px;
+                }
+              }
+            }
+
+            // 嵌套列表
+            ul ul, ol ol, ul ol, ol ul {
+              margin: 4px 0;
               padding-left: 20px;
             }
 
-            li {
-              margin: 4px 0;
-            }
-
+            // 引用块样式
             blockquote {
               margin: 16px 0;
-              padding: 8px 16px;
-              border-left: 4px solid #409eff;
-              background-color: rgba(64, 158, 255, 0.1);
-              border-radius: 0 4px 4px 0;
+              padding: 12px 16px;
+              border-left: 4px solid #3b82f6;
+              background-color: #f8fafc;
+              border-radius: 0 6px 6px 0;
+              font-style: italic;
+              color: #475569;
             }
 
-            code {
-              background-color: rgba(0, 0, 0, 0.1);
-              padding: 2px 4px;
-              border-radius: 3px;
-              font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-              font-size: 0.9em;
+            // 行内代码样式
+            code:not(.hljs) {
+              background-color: #f1f5f9;
+              color: #e11d48;
+              padding: 2px 6px;
+              border-radius: 4px;
+              font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', monospace;
+              font-size: 0.875em;
+              font-weight: 500;
             }
 
-            pre {
-              background-color: #f8f9fa;
-              border: 1px solid #e9ecef;
-              border-radius: 6px;
-              padding: 12px;
-              margin: 12px 0;
-              overflow-x: auto;
-
-              code {
-                background: none;
-                padding: 0;
-                border-radius: 0;
+            // 代码块样式
+            .hljs-code-block {
+              margin: 16px 0;
+              border-radius: 8px;
+              overflow: hidden;
+              border: 1px solid #e5e7eb;
+              background-color: #f8fafc;
+              
+              .code-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 8px 16px;
+                background-color: #f1f5f9;
+                border-bottom: 1px solid #e5e7eb;
+                
+                .code-lang {
+                  font-size: 12px;
+                  color: #6b7280;
+                  font-weight: 500;
+                  text-transform: uppercase;
+                }
+                
+                .copy-btn {
+                  background: none;
+                  border: none;
+                  color: #6b7280;
+                  cursor: pointer;
+                  padding: 4px;
+                  border-radius: 4px;
+                  display: flex;
+                  align-items: center;
+                  transition: all 0.2s;
+                  
+                  &:hover {
+                    background-color: #e5e7eb;
+                    color: #374151;
+                  }
+                }
+              }
+              
+              pre {
+                margin: 0;
+                padding: 16px;
+                background-color: #ffffff;
+                overflow-x: auto;
+                
+                code {
+                  background: none;
+                  padding: 0;
+                  border-radius: 0;
+                  color: inherit;
+                  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', monospace;
+                  font-size: 13px;
+                  line-height: 1.5;
+                }
               }
             }
 
+            // 表格样式
             table {
-              border-collapse: collapse;
               width: 100%;
-              margin: 12px 0;
+              margin: 16px 0;
+              border-collapse: collapse;
+              border-radius: 8px;
+              overflow: hidden;
+              border: 1px solid #e5e7eb;
+              background-color: #ffffff;
+              
+              thead {
+                background-color: #f8fafc;
+              }
+              
+              th {
+                padding: 12px 16px;
+                text-align: left;
+                font-weight: 600;
+                color: #374151;
+                border-bottom: 2px solid #e5e7eb;
+                font-size: 13px;
+              }
+              
+              td {
+                padding: 12px 16px;
+                border-bottom: 1px solid #f3f4f6;
+                color: #4b5563;
+                font-size: 13px;
+                
+                &:last-child {
+                  border-right: none;
+                }
+              }
+              
+              tr {
+                &:hover {
+                  background-color: #f9fafb;
+                }
+                
+                &:last-child td {
+                  border-bottom: none;
+                }
+              }
             }
 
-            th, td {
-              border: 1px solid #ddd;
-              padding: 8px 12px;
-              text-align: left;
-            }
-
-            th {
-              background-color: #f8f9fa;
-              font-weight: 600;
-            }
-
+            // 链接样式
             a {
-              color: #409eff;
+              color: #3b82f6;
               text-decoration: none;
-
+              font-weight: 500;
+              
               &:hover {
                 text-decoration: underline;
+                color: #2563eb;
               }
             }
 
+            // 强调样式
             strong {
               font-weight: 600;
+              color: #1f2937;
             }
 
             em {
               font-style: italic;
+              color: #4b5563;
+            }
+
+            // 分割线
+            hr {
+              margin: 24px 0;
+              border: none;
+              border-top: 2px solid #e5e7eb;
+            }
+
+            // 图片样式
+            img {
+              max-width: 100%;
+              height: auto;
+              border-radius: 6px;
+              margin: 12px 0;
             }
           }
 

@@ -1,4 +1,4 @@
-import type { MessageItem, MessageQueryParams, MessageType } from '@/api/message'
+import type { MessageItem, MessageQueryParams } from '@/api/message'
 import type { PageResult } from '@/types'
 import { mockMessages } from '@/mock/data/message'
 
@@ -15,11 +15,7 @@ export class MockMessageService {
 
     // 按状态筛选
     if (params.status) {
-      if (params.status === 'read') {
-        filteredMessages = filteredMessages.filter(msg => msg.isRead)
-      } else if (params.status === 'unread') {
-        filteredMessages = filteredMessages.filter(msg => !msg.isRead)
-      }
+      filteredMessages = filteredMessages.filter(msg => msg.status === params.status)
     }
 
     // 按类型筛选
@@ -90,8 +86,8 @@ export class MockMessageService {
       throw new Error(`消息 "${id}" 不存在`)
     }
 
-    if (!message.isRead) {
-      message.isRead = true
+    if (message.status !== 'read') {
+      message.status = 'read'
       message.readTime = new Date().toISOString()
     }
   }
@@ -103,8 +99,8 @@ export class MockMessageService {
 
     for (const id of ids) {
       const message = this.messages.find(msg => msg.id === id)
-      if (message && !message.isRead) {
-        message.isRead = true
+      if (message && message.status !== 'read') {
+        message.status = 'read'
         message.readTime = new Date().toISOString()
       }
     }
@@ -141,7 +137,7 @@ export class MockMessageService {
     // 模拟网络延迟
     await new Promise(resolve => setTimeout(resolve, 100))
 
-    return this.messages.filter(msg => !msg.isRead).length
+    return this.messages.filter(msg => msg.status === 'unread').length
   }
 
   // 标记所有消息为已读
@@ -151,8 +147,8 @@ export class MockMessageService {
 
     const now = new Date().toISOString()
     this.messages.forEach(msg => {
-      if (!msg.isRead) {
-        msg.isRead = true
+      if (msg.status !== 'read') {
+        msg.status = 'read'
         msg.readTime = now
       }
     })
@@ -167,7 +163,7 @@ export class MockMessageService {
       ...messageData,
       id: Math.max(...this.messages.map(msg => msg.id)) + 1,
       createTime: new Date().toISOString(),
-      isRead: false
+      status: 'unread'
     }
 
     this.messages.unshift(newMessage)
@@ -184,32 +180,18 @@ export class MockMessageService {
     total: number
     unread: number
     read: number
-    byType: Record<MessageType, number>
   }> {
     // 模拟网络延迟
     await new Promise(resolve => setTimeout(resolve, 200))
 
     const total = this.messages.length
-    const unread = this.messages.filter(msg => !msg.isRead).length
-    const read = total - unread
-
-    const byType: Record<MessageType, number> = {
-      system: 0,
-      security: 0,
-      task: 0,
-      announcement: 0,
-      reminder: 0
-    }
-
-    this.messages.forEach(msg => {
-      byType[msg.type]++
-    })
+    const unread = this.messages.filter(msg => msg.status === 'unread').length
+    const read = this.messages.filter(msg => msg.status === 'read').length
 
     return {
       total,
       unread,
-      read,
-      byType
+      read
     }
   }
 }

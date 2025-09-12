@@ -32,9 +32,9 @@ const componentMap: Record<string, () => Promise<{ default: unknown }>> = {
   AIChat: () => import('@/pages/admin/ai/ChatInterface.vue'),
   ApiDoc: () => import('@/pages/admin/monitor/ApiDocumentation.vue'),
   ScheduledTask: () => import('@/pages/admin/monitor/TaskManagement.vue'),
-  OSSManagement: () => import('@/pages/admin/third/OSSManagement.vue'),
-  EmailManagement: () => import('@/pages/admin/third/EmailManagement.vue'),
-  SMSManagement: () => import('@/pages/admin/third/SMSManagement.vue'),
+  OSS: () => import('@/pages/admin/third/OSS.vue'),
+  Email: () => import('@/pages/admin/third/Email.vue'),
+  SMS: () => import('@/pages/admin/third/SMS.vue'),
   ProfileCenter: () => import('@/pages/self/ProfileCenter.vue'),
   MessageCenter: () => import('@/pages/self/MessageCenter.vue'),
 }

@@ -127,7 +127,6 @@ export {
 // 消息相关接口
 export {
   getMessages,
-  getMessageById,
   markMessageAsRead,
   batchMarkAsRead,
   deleteMessage,

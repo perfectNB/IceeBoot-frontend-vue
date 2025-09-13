@@ -145,7 +145,7 @@ import { useUserStore } from '@/stores/user'
 import { logout } from '@/api/auth'
 import { isMockEnabled } from '@/config/mock'
 import { isDark, toggleTheme } from '@/utils/theme'
-import { getUnreadCount, markAllAsRead } from '@/api/message'
+import { getMessageStats, allRead } from '@/api/message'
 import SidebarMenu from '@/components/common/SidebarMenu.vue'
 
 const route = useRoute()
@@ -198,7 +198,7 @@ const handleMessageCommand = async (command: string) => {
       break
     case 'markAllRead':
       try {
-        await markAllAsRead()
+        await allRead()
         unreadCount.value = 0
         ElMessage.success('所有消息已标记为已读')
       } catch (error) {
@@ -212,7 +212,8 @@ const handleMessageCommand = async (command: string) => {
 // 加载未读消息数量
 const loadUnreadCount = async () => {
   try {
-    unreadCount.value = await getUnreadCount()
+    const stats = await getMessageStats()
+    unreadCount.value = stats.unread
   } catch (error) {
     console.error('获取未读消息数量失败:', error)
   }

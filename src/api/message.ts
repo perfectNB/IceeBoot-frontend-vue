@@ -168,3 +168,19 @@ export const getMessageStats = async (): Promise<MessageStats> => {
     return apiResponse.result
   }
 }
+
+// 全部已读
+export const allRead = async (): Promise<void> => {
+  if (!isMockEnabled()) {
+    // 使用Mock数据
+    const { MockMessageService } = await import('@/mock/services/message')
+    await MockMessageService.allRead()
+  } else {
+    // 调用真实API
+    const response = await request.put('/api/v1/messages/allRead')
+    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
+    if (!apiResponse || !apiResponse.success) {
+      throw new Error('全部已读失败')
+    }
+  }
+}

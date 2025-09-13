@@ -194,4 +194,18 @@ export class MockMessageService {
       read
     }
   }
+
+  // 全部已读
+  static async allRead(): Promise<void> {
+    // 模拟网络延迟
+    await new Promise(resolve => setTimeout(resolve, 500))
+
+    const now = new Date().toISOString()
+    this.messages.forEach(msg => {
+      if (msg.status !== 'read') {
+        msg.status = 'read'
+        msg.readTime = now
+      }
+    })
+  }
 }

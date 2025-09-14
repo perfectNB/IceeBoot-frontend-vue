@@ -86,7 +86,7 @@
               </span>
             </template>
           </el-table-column>
-          <el-table-column prop="defaultBucket" label="默认存储桶" min-width="150" />
+
           <el-table-column prop="customDomain" label="自定义域名" min-width="150" />
           <el-table-column prop="endpoint" label="端点" min-width="200" />
           <el-table-column prop="region" label="区域" width="120" />
@@ -167,12 +167,7 @@
             placeholder="请输入AccessKey Secret"
           />
         </el-form-item>
-        <el-form-item label="默认存储桶" prop="defaultBucket">
-          <el-input
-            v-model="keyForm.defaultBucket"
-            placeholder="请输入默认存储桶名称"
-          />
-        </el-form-item>
+
         <el-form-item label="自定义域名" prop="customDomain">
           <el-input
             v-model="keyForm.customDomain"
@@ -242,7 +237,6 @@ const keyForm = reactive<{
   remark: string
   accessKeyId: string
   accessKeySecret: string
-  defaultBucket: string
   endpoint: string
   region: string
   customDomain: string
@@ -250,7 +244,6 @@ const keyForm = reactive<{
   remark: '',
   accessKeyId: '',
   accessKeySecret: '',
-  defaultBucket: '',
   endpoint: '',
   region: '',
   customDomain: ''
@@ -259,8 +252,7 @@ const keyForm = reactive<{
 // 表单验证规则
 const keyFormRules = {
   accessKeyId: [{ required: true, message: '请输入AccessKey ID', trigger: 'blur' }],
-  accessKeySecret: [{ required: true, message: '请输入AccessKey Secret', trigger: 'blur' }],
-  defaultBucket: [{ required: true, message: '请输入默认存储桶名称', trigger: 'blur' }]
+  accessKeySecret: [{ required: true, message: '请输入AccessKey Secret', trigger: 'blur' }]
 }
 
 // 获取服务商首字母
@@ -280,7 +272,10 @@ const getProviderColor = (name: string) => {
     '华为云OBS': '#FF6B35',
     '腾讯云COS': '#006EFF',
     'MinIO': '#C72E29',
-    '七牛云': '#00D4AA'
+    '七牛云': '#00D4AA',
+    '亚马逊S3': '#FF9900',
+    '谷歌云存储': '#4285F4',
+    '微软Azure': '#0078D4'
   }
   return colors[name as keyof typeof colors] || '#6B7280'
 }
@@ -373,9 +368,15 @@ const handleSubmitKey = async () => {
       // 编辑模式
       const keyData = {
         ossProvider: currentProvider.value!.providerName,
-        ...keyForm
+        id: keyForm.id,
+        remark: keyForm.remark,
+        accessKeyId: keyForm.accessKeyId,
+        accessKeySecret: keyForm.accessKeySecret,
+        endpoint: keyForm.endpoint,
+        region: keyForm.region,
+        customDomain: keyForm.customDomain
       }
-      await updateOSSKey(currentProvider.value!.providerName, keyForm.id, keyData)
+      await updateOSSKey(keyForm.id, keyData)
       ElMessage.success('密钥更新成功')
 
       // 重新加载所有服务商数据
@@ -424,7 +425,6 @@ const resetKeyForm = () => {
     remark: '',
     accessKeyId: '',
     accessKeySecret: '',
-    defaultBucket: '',
     endpoint: '',
     region: '',
     customDomain: ''
@@ -441,7 +441,6 @@ const handleEditKey = (key: OSSKey) => {
     remark: key.remark || '',
     accessKeyId: key.accessKeyId || '',
     accessKeySecret: key.accessKeySecret || '',
-    defaultBucket: key.defaultBucket || '',
     endpoint: key.endpoint || '',
     region: key.region || '',
     customDomain: key.customDomain || ''
@@ -636,6 +635,11 @@ onMounted(() => {
   background: #f8f9fa;
   padding: 4px 8px;
   border-radius: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: inline-block;
+  max-width: 100%;
 }
 
 .dialog-footer {

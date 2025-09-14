@@ -16,7 +16,7 @@ const applyTheme = (dark: boolean) => {
     html.classList.remove('dark')
   }
   // 同时保存到localStorage
-  localStorage.setItem('zboot-theme', dark ? 'dark' : 'light')
+  localStorage.setItem('iceeboot-theme', dark ? 'dark' : 'light')
 }
 
 // 监听主题变化
@@ -41,7 +41,7 @@ export const getTheme = (): ThemeMode => {
 
 // 初始化主题
 export const initTheme = (): void => {
-  const savedTheme = localStorage.getItem('zboot-theme')
+  const savedTheme = localStorage.getItem('iceeboot-theme')
   if (savedTheme && (savedTheme === 'dark' || savedTheme === 'light')) {
     // 直接设置isDark的值，而不是通过setTheme函数
     isDark.value = savedTheme === 'dark'
@@ -55,17 +55,17 @@ export const initTheme = (): void => {
 // 监听系统主题变化
 export const watchSystemTheme = (): (() => void) => {
   const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-  
+
   const handleChange = (e: MediaQueryListEvent) => {
     // 只有在没有手动设置主题时才跟随系统
-    const savedTheme = localStorage.getItem('zboot-theme')
+    const savedTheme = localStorage.getItem('iceeboot-theme')
     if (!savedTheme) {
       setTheme(e.matches ? 'dark' : 'light')
     }
   }
-  
+
   mediaQuery.addEventListener('change', handleChange)
-  
+
   // 返回清理函数
   return () => {
     mediaQuery.removeEventListener('change', handleChange)

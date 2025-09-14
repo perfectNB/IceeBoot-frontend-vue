@@ -4,8 +4,8 @@
     <header class="navbar">
       <div class="navbar-container">
         <div class="navbar-brand">
-          <img src="@/assets/logo.svg" alt="ZBoot" class="logo" />
-          <span class="brand-text">ZBoot超级脚手架</span>
+          <img src="@/assets/logo.svg" alt="IceeBoot" class="logo" />
+          <span class="brand-text">IceeBoot超级脚手架</span>
         </div>
 
         <div class="navbar-actions">
@@ -39,7 +39,7 @@
         <div class="hero-container">
           <div class="hero-content">
             <h1 class="hero-title">
-              <span class="gradient-text">ZBoot</span>
+              <span class="gradient-text">IceeBoot</span>
               <br>
               AI化超级脚手架
             </h1>

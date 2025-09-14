@@ -7,8 +7,8 @@
     >
       <div class="sidebar-header">
         <div class="logo">
-          <img src="@/assets/logo.svg" alt="ZBoot" class="logo-img" />
-          <span v-show="!isCollapsed" class="logo-text">ZBoot</span>
+          <img src="@/assets/logo.svg" alt="IceeBoot" class="logo-img" />
+          <span v-show="!isCollapsed" class="logo-text">IceeBoot</span>
         </div>
       </div>
 
@@ -251,7 +251,7 @@ onMounted(() => {
   // 菜单数据通过computed从user store获取，无需额外加载
   // 加载未读消息数量
   loadUnreadCount()
-  
+
   // 定期刷新未读消息数量（每5分钟）
   setInterval(loadUnreadCount, 5 * 60 * 1000)
 })

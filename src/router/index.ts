@@ -218,7 +218,7 @@ router.beforeEach(async (to, from, next) => {
 
   // 设置页面标题
   if (to.meta.title) {
-    document.title = `${to.meta.title} - ZBoot Admin`
+    document.title = `${to.meta.title} - IceeBoot Admin`
   }
 
   // 获取token（会从localStorage恢复）

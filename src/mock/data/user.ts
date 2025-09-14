@@ -11,7 +11,7 @@ export const mockUsers: User[] = [
     username: 'admin',
     nickname: '超级管理员',
     avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
-    email: 'admin@zboot.com',
+    email: 'admin@iceeboot.com',
     phone: '13800138000',
     roles: ['admin'],
     permissions: [
@@ -88,7 +88,7 @@ export const mockUsers: User[] = [
     username: 'system_admin',
     nickname: '系统管理员',
     avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
-    email: 'system@zboot.com',
+    email: 'system@iceeboot.com',
     phone: '13800138001',
     roles: ['system_admin'],
     permissions: [
@@ -121,7 +121,7 @@ export const mockUsers: User[] = [
     username: 'user',
     nickname: '普通用户',
     avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
-    email: 'user@zboot.com',
+    email: 'user@iceeboot.com',
     phone: '13800138002',
     roles: ['user'],
     permissions: ['dashboard:view'],
@@ -134,7 +134,7 @@ export const mockUsers: User[] = [
     username: 'user_admin',
     nickname: '用户管理员',
     avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
-    email: 'useradmin@zboot.com',
+    email: 'useradmin@iceeboot.com',
     phone: '13800138003',
     roles: ['user_admin'],
     permissions: [
@@ -161,7 +161,7 @@ export const mockLoginUsers = [
       username: 'admin',
       nickname: '超级管理员',
       avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
-      email: 'admin@zboot.com',
+      email: 'admin@iceeboot.com',
       roles: ['admin'],
       permissions: [
         'dashboard:view',
@@ -237,7 +237,7 @@ export const mockLoginUsers = [
       username: 'system_admin',
       nickname: '系统管理员',
       avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
-      email: 'system@zboot.com',
+      email: 'system@iceeboot.com',
       roles: ['system_admin'],
       permissions: [
         'dashboard:view',
@@ -270,7 +270,7 @@ export const mockLoginUsers = [
       username: 'user',
       nickname: '普通用户',
       avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
-      email: 'user@zboot.com',
+      email: 'user@iceeboot.com',
       roles: ['user'],
       permissions: [
         'dashboard:view',
@@ -285,7 +285,7 @@ export const mockLoginUsers = [
       username: 'user_admin',
       nickname: '用户管理员',
       avatar: 'https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png',
-      email: 'useradmin@zboot.com',
+      email: 'useradmin@iceeboot.com',
       roles: ['user_admin'],
       permissions: [
         'dashboard:view',

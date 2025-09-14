@@ -1,6 +1,6 @@
 <div align="center">
-  <img src="./src/assets/logo.svg" alt="ZBoot Logo" width="120" height="120">
-  <h1>🚀 ZBoot超级脚手架 前端版</h1>
+  <img src="./src/assets/logo.svg" alt="IceeBoot Logo" width="120" height="120">
+  <h1>🚀 IceeBoot超级脚手架 前端版</h1>
   <p>基于 Vue 3 + TypeScript + Element Plus 的现代化前后端分离管理系统</p>
   
   [![Vue](https://img.shields.io/badge/Vue-3.5.18-4FC08D?style=flat-square&logo=vue.js)](https://vuejs.org/)
@@ -12,7 +12,7 @@
 
 ## 📖 项目介绍
 
-**ZBoot超级脚手架前端版** 是一个基于 **Vue 3 + TypeScript + Element Plus** 构建的现代化前后端分离管理系统。项目采用最新的前端技术栈，内置完整的权限管理、用户管理、角色管理等核心功能，并集成了多种AI大模型和智能体服务，为企业级应用开发提供强大的基础框架。
+**IceeBoot超级脚手架前端版** 是一个基于 **Vue 3 + TypeScript + Element Plus** 构建的现代化前后端分离管理系统。项目采用最新的前端技术栈，内置完整的权限管理、用户管理、角色管理等核心功能，并集成了多种AI大模型和智能体服务，为企业级应用开发提供强大的基础框架。
 
 ### ✨ 核心特性
 
@@ -52,7 +52,7 @@
 ## 🏗️ 项目结构
 
 ```
-zboot-frontend-vue/
+iceeboot-frontend-vue/
 ├── public/                     # 静态资源目录
 │   └── favicon.ico            # 网站图标
 ├── src/                       # 源代码目录
@@ -155,9 +155,9 @@ zboot-frontend-vue/
 
 ```typescript
 const envConfig: Record<string, string> = {
-  development: 'http://localhost:9000/zboot',  // 开发环境
-  test: 'http://test.example.com/zboot',       // 测试环境
-  production: 'http://api.example.com/zboot'   // 生产环境
+  development: 'http://localhost:9000/iceeboot',  // 开发环境
+  test: 'http://test.example.com/iceeboot',       // 测试环境
+  production: 'http://api.example.com/iceeboot'   // 生产环境
 }
 ```
 
@@ -180,10 +180,10 @@ const envConfig: Record<string, string> = {
 
 ```bash
 # 克隆项目
-git clone https://github.com/your-username/zboot-frontend-vue.git
+git clone https://github.com/your-username/iceeboot-frontend-vue.git
 
 # 进入项目目录
-cd zboot-frontend-vue
+cd iceeboot-frontend-vue
 
 # 安装依赖
 npm install
@@ -376,12 +376,12 @@ chore: 构建过程或辅助工具的变动
 如果您有任何问题或建议，请通过以下方式联系我们：
 
 - 📧 邮箱：857787854@qq.com
-- 🐛 问题反馈：[GitHub Issues](https://github.com/your-username/zboot-frontend-vue/issues)
-- 💬 讨论交流：[GitHub Discussions](https://github.com/your-username/zboot-frontend-vue/discussions)
+- 🐛 问题反馈：[GitHub Issues](https://github.com/your-username/iceeboot-frontend-vue/issues)
+- 💬 讨论交流：[GitHub Discussions](https://github.com/your-username/iceeboot-frontend-vue/discussions)
 
 ---
 
 <div align="center">
   <p>⭐ 如果这个项目对您有帮助，请给我们一个Star！</p>
-  <p>Made with ❤️ by ZBoot Team</p>
+  <p>Made with ❤️ by IceeBoot Team</p>
 </div>

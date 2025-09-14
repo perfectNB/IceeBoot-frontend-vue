@@ -15,7 +15,7 @@ export const taskData: Task[] = [
   {
     id: '1',
     name: '用户数据同步任务',
-    className: 'com.zboot.job.UserSyncJob',
+    className: 'com.iceeboot.job.UserSyncJob',
     cronExpression: '0 0 2 * * ?',
     status: 'running',
     description: '每天凌晨2点同步用户数据到数据仓库',
@@ -27,7 +27,7 @@ export const taskData: Task[] = [
   {
     id: '2',
     name: '日志清理任务',
-    className: 'com.zboot.job.LogCleanupJob',
+    className: 'com.iceeboot.job.LogCleanupJob',
     cronExpression: '0 0 1 * * ?',
     status: 'running',
     description: '每天凌晨1点清理30天前的系统日志',
@@ -39,7 +39,7 @@ export const taskData: Task[] = [
   {
     id: '3',
     name: '邮件发送任务',
-    className: 'com.zboot.job.EmailSendJob',
+    className: 'com.iceeboot.job.EmailSendJob',
     cronExpression: '0 */5 * * * ?',
     status: 'running',
     description: '每5分钟检查并发送待发邮件',
@@ -51,7 +51,7 @@ export const taskData: Task[] = [
   {
     id: '4',
     name: '缓存预热任务',
-    className: 'com.zboot.job.CacheWarmupJob',
+    className: 'com.iceeboot.job.CacheWarmupJob',
     cronExpression: '0 30 8 * * ?',
     status: 'stopped',
     description: '每天早上8:30预热系统缓存',
@@ -63,7 +63,7 @@ export const taskData: Task[] = [
   {
     id: '5',
     name: '数据备份任务',
-    className: 'com.zboot.job.DataBackupJob',
+    className: 'com.iceeboot.job.DataBackupJob',
     cronExpression: '0 0 3 * * ?',
     status: 'running',
     description: '每天凌晨3点备份重要业务数据',
@@ -75,7 +75,7 @@ export const taskData: Task[] = [
   {
     id: '6',
     name: '统计报表生成',
-    className: 'com.zboot.job.ReportGenerateJob',
+    className: 'com.iceeboot.job.ReportGenerateJob',
     cronExpression: '0 0 6 * * MON',
     status: 'paused',
     description: '每周一早上6点生成周统计报表',
@@ -87,7 +87,7 @@ export const taskData: Task[] = [
   {
     id: '7',
     name: '系统健康检查',
-    className: 'com.zboot.job.HealthCheckJob',
+    className: 'com.iceeboot.job.HealthCheckJob',
     cronExpression: '0 */10 * * * ?',
     status: 'running',
     description: '每10分钟检查系统各组件健康状态',
@@ -99,7 +99,7 @@ export const taskData: Task[] = [
   {
     id: '8',
     name: '临时文件清理',
-    className: 'com.zboot.job.TempFileCleanJob',
+    className: 'com.iceeboot.job.TempFileCleanJob',
     cronExpression: '0 0 4 * * ?',
     status: 'stopped',
     description: '每天凌晨4点清理系统临时文件',

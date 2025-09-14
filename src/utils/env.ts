@@ -2,9 +2,9 @@ import type { EnvConfig } from '@/types'
 
 // 环境配置
 const envConfig: Record<string, string> = {
-  development: 'http://localhost:9000/zboot',
-  test: 'http://test.example.com/zboot',
-  production: 'http://api.example.com/zboot'
+  development: 'http://localhost:9000/iceeboot',
+  test: 'http://test.example.com/iceeboot',
+  production: 'http://api.example.com/iceeboot'
 }
 
 // 获取当前环境
@@ -21,7 +21,7 @@ export const getBaseURL = (): string => {
 // 获取环境配置
 export const getEnvConfig = (): Partial<EnvConfig> => {
   return {
-    VITE_APP_TITLE: import.meta.env.VITE_APP_TITLE || 'ZBoot超级脚手架',
+    VITE_APP_TITLE: import.meta.env.VITE_APP_TITLE || 'IceeBoot超级脚手架',
     VITE_APP_BASE_API: getBaseURL(),
     VITE_APP_ENV: (import.meta.env.MODE as 'development' | 'test' | 'production') || 'development'
   }

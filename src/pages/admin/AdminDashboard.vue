@@ -2,9 +2,9 @@
   <div class="admin-dashboard">
     <div class="dashboard-header">
       <h1 class="page-title">工作台</h1>
-      <p class="page-description">欢迎使用 ZBoot 前端脚手架管理系统</p>
+      <p class="page-description">欢迎使用 IceeBoot 前端脚手架管理系统</p>
     </div>
-    
+
     <!-- 统计卡片 -->
     <div class="stats-grid">
       <div class="stat-card" v-for="stat in stats" :key="stat.title">
@@ -23,7 +23,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- 图表区域 -->
     <div class="charts-section">
       <div class="chart-row">
@@ -31,8 +31,8 @@
           <div class="card-header">
             <h3>访问趋势</h3>
             <el-button-group>
-              <el-button 
-                v-for="period in periods" 
+              <el-button
+                v-for="period in periods"
                 :key="period.value"
                 :type="activePeriod === period.value ? 'primary' : ''"
                 @click="activePeriod = period.value"
@@ -46,7 +46,7 @@
             <VChart :option="visitTrendOption" :loading="loading" autoresize />
           </div>
         </div>
-        
+
         <div class="chart-card">
           <div class="card-header">
             <h3>用户分布</h3>
@@ -57,16 +57,16 @@
         </div>
       </div>
     </div>
-    
+
     <!-- 快捷操作 -->
     <div class="quick-actions">
       <div class="section-header">
         <h3>快捷操作</h3>
       </div>
       <div class="actions-grid">
-        <div 
-          class="action-item" 
-          v-for="action in quickActions" 
+        <div
+          class="action-item"
+          v-for="action in quickActions"
           :key="action.title"
           @click="handleQuickAction(action)"
         >
@@ -81,7 +81,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- 最近活动 -->
     <div class="recent-activities">
       <div class="section-header">
@@ -89,9 +89,9 @@
         <el-button text @click="viewAllActivities">查看全部</el-button>
       </div>
       <div class="activities-list">
-        <div 
-          class="activity-item" 
-          v-for="activity in recentActivities" 
+        <div
+          class="activity-item"
+          v-for="activity in recentActivities"
           :key="activity.id"
         >
           <div class="activity-avatar">
@@ -307,17 +307,17 @@ const loadDashboardStats = async () => {
     loading.value = true
     const response = await getDashboardStats()
     dashboardStats.value = response.data
-    
+
     // 更新统计卡片数据
     stats.value[0].value = dashboardStats.value.totalUsers.toLocaleString()
     stats.value[0].trend = dashboardStats.value.userGrowth
-    
+
     stats.value[1].value = dashboardStats.value.todayVisits.toLocaleString()
     stats.value[1].trend = dashboardStats.value.visitGrowth
-    
+
     stats.value[2].value = dashboardStats.value.totalArticles.toLocaleString()
     stats.value[2].trend = dashboardStats.value.articleGrowth
-    
+
     stats.value[3].value = dashboardStats.value.systemStatus
   } catch (error) {
     console.error('加载统计数据失败:', error)
@@ -477,14 +477,14 @@ onMounted(() => {
 
 .dashboard-header {
   margin-bottom: 24px;
-  
+
   .page-title {
     font-size: 24px;
     font-weight: 600;
     color: var(--text-primary);
     margin: 0 0 8px 0;
   }
-  
+
   .page-description {
     color: var(--text-secondary);
     margin: 0;
@@ -507,7 +507,7 @@ onMounted(() => {
   align-items: center;
   gap: 16px;
   transition: all var(--transition-duration);
-  
+
   &:hover {
     box-shadow: var(--box-shadow-light);
     transform: translateY(-2px);
@@ -522,7 +522,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   .el-icon {
     font-size: 24px;
     color: var(--primary-color);
@@ -552,15 +552,15 @@ onMounted(() => {
   align-items: center;
   gap: 4px;
   font-size: 12px;
-  
+
   &.positive {
     color: var(--success-color);
   }
-  
+
   &.negative {
     color: var(--danger-color);
   }
-  
+
   .el-icon {
     font-size: 12px;
   }
@@ -589,7 +589,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  
+
   h3 {
     margin: 0;
     font-size: 16px;
@@ -613,17 +613,17 @@ onMounted(() => {
 .chart-placeholder {
   text-align: center;
   color: var(--text-secondary);
-  
+
   .el-icon {
     font-size: 48px;
     margin-bottom: 12px;
   }
-  
+
   p {
     margin: 0 0 8px 0;
     font-size: 16px;
   }
-  
+
   small {
     font-size: 12px;
     opacity: 0.7;
@@ -644,7 +644,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  
+
   h3 {
     margin: 0;
     font-size: 16px;
@@ -669,7 +669,7 @@ onMounted(() => {
   border-radius: 6px;
   cursor: pointer;
   transition: all var(--transition-duration);
-  
+
   &:hover {
     background: var(--bg-color-page);
     border-color: var(--primary-color);
@@ -684,7 +684,7 @@ onMounted(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  
+
   .el-icon {
     font-size: 20px;
     color: var(--primary-color);
@@ -721,7 +721,7 @@ onMounted(() => {
   gap: 12px;
   padding: 12px 0;
   border-bottom: 1px solid var(--border-extra-light);
-  
+
   &:last-child {
     border-bottom: none;
   }
@@ -755,11 +755,11 @@ onMounted(() => {
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .chart-row {
     grid-template-columns: 1fr;
   }
-  
+
   .actions-grid {
     grid-template-columns: 1fr;
   }

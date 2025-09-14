@@ -65,7 +65,7 @@ export {
   addLLMModelKey,
   deleteLLMModelKey,
   updateLLMModelKeyStatus
-} from './llm'
+} from './llm.ts'
 
 export {
   getAgents,
@@ -97,6 +97,44 @@ export {
 // 其他业务接口
 // export * from './business'
 
+// OSS相关接口
+export {
+  getOSSProviders,
+  addOSSKey,
+  updateOSSKey,
+  deleteOSSKey,
+  updateOSSKeyStatus
+} from './oss'
+
+// SMS相关接口
+export {
+  getSMSProviders,
+  addSMSKey,
+  updateSMSKey,
+  deleteSMSKey,
+  updateSMSKeyStatus
+} from './sms'
+
+// Email相关接口
+export {
+  getEmailProviders,
+  addEmailKey,
+  updateEmailKey,
+  deleteEmailKey,
+  updateEmailKeyStatus
+} from './email'
+
+// 消息相关接口
+export {
+  getMessages,
+  markMessageAsRead,
+  batchMarkAsRead,
+  deleteMessage,
+  batchDeleteMessages,
+  getUnreadCount,
+  markAllAsRead
+} from './message'
+
 /**
  * API接口类型定义
  */
@@ -111,5 +149,42 @@ export type {
   PageParams,
   PageResult
 } from '@/types'
+
+// 第三方服务类型定义
+export type {
+  OSSKey,
+  OSSProvider
+} from './oss'
+
+export type {
+  SMSKey,
+  SMSProvider
+} from './sms'
+
+export type {
+  EmailKey,
+  EmailProvider
+} from './email'
+
+export type {
+  MessageItem,
+  MessageType,
+  MessageQueryParams
+} from './message'
+
+
+
+// AI聊天相关接口
+export {
+  getAiChatSessions,
+  createAiChatSession,
+  deleteAiChatSession,
+  streamAiChat,
+  getAiChatMessages,
+  type AiChatSession,
+  type AiChatMessage,
+  type CreateSessionParams,
+  type StreamChatRequest
+} from './aiChat'
 
 

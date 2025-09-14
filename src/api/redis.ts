@@ -56,13 +56,7 @@ export const getRedisKeys = async (params: RedisQueryParams): Promise<RedisRespo
 
 // 删除Redis键
 export const deleteRedisKey = async (key: string): Promise<void> => {
-  if (!isMockEnabled()) {
-    // 使用Mock数据
-    await MockRedisService.deleteRedisKey(key)
-  } else {
-    // 调用真实API - 统一使用批量删除接口
-    await deleteRedisKeys([key])
-  }
+  return await deleteRedisKeys([key])
 }
 
 // 批量删除Redis键
@@ -74,7 +68,9 @@ export const deleteRedisKeys = async (keys: string[]): Promise<void> => {
     }
   } else {
     // 调用真实API
-    const response = await request.delete('/api/v1/redis/keys', keys as unknown as Record<string, unknown>)
+    const response = await request.delete('/api/v1/redis/keys', {},{
+      data: keys.map(String)
+    })
     const apiResponse = response as unknown as {code: number, message: string, success: boolean}
     if (!apiResponse || !apiResponse.success) {
       throw new Error('批量删除Redis键失败')

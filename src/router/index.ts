@@ -18,6 +18,9 @@ const componentMap: Record<string, () => Promise<{ default: unknown }>> = {
   RoleManagement: () => import('@/pages/admin/system/RoleManagement.vue'),
   PermissionManagement: () => import('@/pages/admin/system/PermissionManagement.vue'),
   MenuManagement: () => import('@/pages/admin/system/MenuManagement.vue'),
+  EmailManagement: () => import('@/pages/admin/system/EmailManagement.vue'),
+  FileManagement: () => import('@/pages/admin/system/FileManagement.vue'),
+  SmsManagement: () => import('@/pages/admin/system/SmsManagement.vue'),
   RedisManagement: () => import('@/pages/admin/monitor/RedisManagement.vue'),
   TaskManagement: () => import('@/pages/admin/monitor/TaskManagement.vue'),
   LogManagement: () => import('@/pages/admin/monitor/LogManagement.vue'),
@@ -27,12 +30,16 @@ const componentMap: Record<string, () => Promise<{ default: unknown }>> = {
   ChatInterface: () => import('@/pages/admin/ai/ChatInterface.vue'),
   FrontendCodegen: () => import('@/pages/admin/codegen/FrontendCodegen.vue'),
   BackendCodegen: () => import('@/pages/admin/codegen/BackendCodegen.vue'),
-  // Mock数据中的组件名映射
   FrontendCrud: () => import('@/pages/admin/codegen/FrontendCodegen.vue'),
   BackendCrud: () => import('@/pages/admin/codegen/BackendCodegen.vue'),
   AIChat: () => import('@/pages/admin/ai/ChatInterface.vue'),
   ApiDoc: () => import('@/pages/admin/monitor/ApiDocumentation.vue'),
-  ScheduledTask: () => import('@/pages/admin/monitor/TaskManagement.vue')
+  ScheduledTask: () => import('@/pages/admin/monitor/TaskManagement.vue'),
+  OSS: () => import('@/pages/admin/third/OSS.vue'),
+  Email: () => import('@/pages/admin/third/Email.vue'),
+  SMS: () => import('@/pages/admin/third/SMS.vue'),
+  ProfileCenter: () => import('@/pages/self/ProfileCenter.vue'),
+  MessageCenter: () => import('@/pages/self/MessageCenter.vue'),
 }
 
 // 将菜单数据转换为路由配置
@@ -104,9 +111,10 @@ async function loadDynamicRoutes(): Promise<void> {
     // 找到admin路由并添加子路由
     const adminRoute = router.getRoutes().find(route => route.path === '/admin')
     if (adminRoute) {
-      // 清空现有子路由
+      // 只清空动态路由，保留静态路由（如个人中心、消息中心）
+      const staticRouteNames = ['ProfileCenter', 'MessageCenter'] // 需要保留的静态路由名称
       adminRoute.children?.forEach(child => {
-        if (child.name) {
+        if (child.name && !staticRouteNames.includes(child.name as string)) {
           router.removeRoute(child.name)
         }
       })
@@ -166,7 +174,28 @@ const routes: RouteRecordRaw[] = [
       title: '管理后台',
       requiresAuth: true
     },
-    children: []
+    children: [
+      {
+        path: 'profile-center',
+        name: 'ProfileCenter',
+        component: () => import('@/pages/self/ProfileCenter.vue'),
+        meta: {
+          title: '个人中心',
+          requiresAuth: true,
+          hideInMenu: true
+        }
+      },
+      {
+        path: 'message-center',
+        name: 'MessageCenter',
+        component: () => import('@/pages/self/MessageCenter.vue'),
+        meta: {
+          title: '消息中心',
+          requiresAuth: true,
+          hideInMenu: true
+        }
+      }
+    ]
   }
 ]
 

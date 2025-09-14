@@ -7,7 +7,7 @@
 
     <!-- 操作区域 -->
     <div class="action-section">
-      <el-button type="primary" @click="handleCreate">
+      <el-button type="primary" @click="handleCreate" v-if="hasPermission('system:user:view')">
         <el-icon><Plus /></el-icon>
         新建用户
       </el-button>
@@ -15,11 +15,14 @@
         type="danger"
         @click="handleBatchDelete"
         :disabled="selectedUsers.length === 0"
+        v-if="hasPermission('system:user:delete')"
       >
         <el-icon><Delete /></el-icon>
         批量删除
       </el-button>
-      <el-button @click="handleExport">
+      <el-button @click="handleExport"
+                 v-if="hasPermission('system:user:export')"
+      >
         <el-icon><Download /></el-icon>
         导出
       </el-button>
@@ -164,6 +167,7 @@
               :icon="Delete"
               @click="handleDelete(row)"
               :disabled="row.username === 'admin'"
+              v-if="hasPermission('system:user:delete')"
             >
               删除
             </el-button>
@@ -282,6 +286,7 @@ import {
 } from '@/api'
 import { deleteUsers } from '@/api/user'
 import { getAllRoles } from '@/api/role'
+import {hasPermission} from "@/utils/permission.ts";
 
 interface SearchForm {
   username: string

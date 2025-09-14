@@ -121,6 +121,7 @@ export interface Role {
 // 权限相关类型
 export interface Permission {
   id: string | number
+  sort: string | number
   name: string
   code: string
   type: 'menu' | 'button' | 'api'

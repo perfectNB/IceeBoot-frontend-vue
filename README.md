@@ -1,13 +1,66 @@
 <div align="center">
   <img src="./src/assets/logo.svg" alt="IceeBoot Logo" width="120" height="120">
-  <h1>🚀 IceeBoot超级脚手架 前端版</h1>
-  <p>基于 Vue 3 + TypeScript + Element Plus 的现代化前后端分离管理系统</p>
+  <h1>🚀 IceeBoot超级脚手架—前端</h1>
+  <p>基于 SpringBoot + Ai大模型 + Mcp + Vue 3 + TypeScript + Element Plus 的现代化前后端分离管理系统</p>
   
   [![Vue](https://img.shields.io/badge/Vue-3.5.18-4FC08D?style=flat-square&logo=vue.js)](https://vuejs.org/)
   [![TypeScript](https://img.shields.io/badge/TypeScript-5.8.0-3178C6?style=flat-square&logo=typescript)](https://www.typescriptlang.org/)
   [![Element Plus](https://img.shields.io/badge/Element%20Plus-2.10.5-409EFF?style=flat-square&logo=element)](https://element-plus.org/)
   [![Vite](https://img.shields.io/badge/Vite-7.1.0-646CFF?style=flat-square&logo=vite)](https://vitejs.dev/)
   [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](./LICENSE)
+  
+  <p>
+    <a href="https://gitee.com/woshinibaba438cnmlgb/zboot-frontend-vue">🎨 前端仓库</a> |
+    <a href="https://gitee.com/woshinibaba438cnmlgb/zboot-backend-java">⚡ 后端仓库</a>
+  </p>
+</div>
+
+## 🕸️项目地址
+- **前端**：https://gitee.com/woshinibaba438cnmlgb/zboot-frontend-vue
+- **后端**：https://gitee.com/woshinibaba438cnmlgb/zboot-backend-java
+- **使用文档**：还没写，带上线.....
+- **项目官网**：还没做，带上线.....
+
+## 📸 项目展示
+
+### 🏠 首页展示
+<div align="center">
+  <img src="./src/assets/img/首页展示.png" alt="首页展示" width="800">
+  <p><em>系统首页 - 简洁美观的界面设计</em></p>
+</div>
+
+<div align="center">
+  <img src="./src/assets/img/首页展示2.png" alt="首页展示2" width="800">
+  <p><em>首页详情 - 丰富的功能模块展示</em></p>
+</div>
+
+### 🏡 主页功能
+<div align="center">
+  <img src="./src/assets/img/主页展示.png" alt="主页展示" width="800">
+  <p><em>主页界面 - 完整的管理后台布局</em></p>
+</div>
+
+### 🤖 AI智能集成
+<div align="center">
+  <img src="./src/assets/img/Ai展示.png" alt="AI展示" width="800">
+  <p><em>AI对话界面 - 支持多种大模型的智能对话</em></p>
+</div>
+
+<div align="center">
+  <img src="./src/assets/img/Ai集成展示.png" alt="AI集成展示" width="800">
+  <p><em>AI集成管理 - 统一管理各类AI服务和模型</em></p>
+</div>
+
+### 🛠️ 代码生成器
+<div align="center">
+  <img src="./src/assets/img/代码生成器展示.png" alt="代码生成器展示" width="800">
+  <p><em>代码生成器 - 一键生成前后端代码，提升开发效率</em></p>
+</div>
+
+### 📊 系统监控
+<div align="center">
+  <img src="./src/assets/img/监控展示.png" alt="监控展示" width="800">
+  <p><em>系统监控 - 实时监控系统运行状态和性能指标</em></p>
 </div>
 
 ## 📖 项目介绍
@@ -371,13 +424,14 @@ chore: 构建过程或辅助工具的变动
 - [Vite](https://vitejs.dev/) - 下一代前端构建工具
 - [TypeScript](https://www.typescriptlang.org/) - JavaScript超集
 
-## 📞 联系我们
+## 📞 联系我
 
-如果您有任何问题或建议，请通过以下方式联系我们：
+如果您有任何问题、建议或合作意向，欢迎通过以下方式联系：
 
-- 📧 邮箱：857787854@qq.com
-- 🐛 问题反馈：[GitHub Issues](https://github.com/your-username/iceeboot-frontend-vue/issues)
-- 💬 讨论交流：[GitHub Discussions](https://github.com/your-username/iceeboot-frontend-vue/discussions)
+- 📧 **邮箱**：857787854@qq.com
+- 💬 **QQ群**：待建立
+- 🐧 QQ：857787854
+- 🛰️ 微信：CodeIcee
 
 ---
 

@@ -47,6 +47,7 @@
             :icon="Key"
             @click="handleManageKeys(provider)"
             class="manage-keys-btn"
+            v-if="hasPermission('third:sms:view')"
           >
             管理密钥
           </el-button>
@@ -64,7 +65,7 @@
       <div class="key-management">
         <div class="key-header">
           <h3>{{ currentProvider?.displayName }} - 短信密钥</h3>
-          <el-button type="primary" size="small" @click="handleAddKey">
+          <el-button type="primary" size="small" @click="handleAddKey" v-if="hasPermission('third:sms:create')">
             <el-icon><Plus /></el-icon>
             添加密钥
           </el-button>
@@ -108,6 +109,7 @@
                 size="small"
                 text
                 @click="handleEditKey(row)"
+                v-if="hasPermission('third:sms:edit')"
               >
                 <el-icon><Edit /></el-icon>
                 编辑
@@ -117,6 +119,7 @@
                 size="small"
                 text
                 @click="handleDeleteKey(row)"
+                v-if="hasPermission('third:sms:delete')"
               >
                 <el-icon><Delete /></el-icon>
                 删除
@@ -216,6 +219,7 @@ import {
   deleteSMSKey,
   updateSMSKeyStatus
 } from '@/api/sms'
+import { hasPermission } from '@/utils/permission'
 import type { SMSProvider, SMSKey } from '@/api/sms'
 
 // 响应式数据

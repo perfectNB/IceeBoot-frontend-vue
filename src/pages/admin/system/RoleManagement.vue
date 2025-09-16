@@ -10,6 +10,7 @@
       <el-button
         type="primary"
         @click="handleCreate"
+        v-if="hasPermission('system:role:create')"
       >
         <el-icon><Plus /></el-icon>
         新增角色
@@ -18,6 +19,7 @@
         type="danger"
         @click="handleBatchDelete"
         :disabled="selectedRoles.length === 0"
+        v-if="hasPermission('system:role:delete')"
       >
         <el-icon><Delete /></el-icon>
         批量删除
@@ -102,6 +104,7 @@
               size="small"
               :icon="Key"
               @click="handlePermissions(row)"
+              v-if="hasPermission('system:role:permission:view')"
             >
               权限
             </el-button>
@@ -110,6 +113,7 @@
               size="small"
               :icon="Menu"
               @click="handleMenus(row)"
+              v-if="hasPermission('system:role:menu:view')"
             >
               菜单
             </el-button>
@@ -118,6 +122,7 @@
               size="small"
               :icon="Edit"
               @click="handleEdit(row)"
+              v-if="hasPermission('system:role:edit')"
             >
               编辑
             </el-button>
@@ -127,6 +132,7 @@
               :icon="Delete"
               @click="handleDelete(row)"
               :disabled="row.name === 'admin'"
+              v-if="hasPermission('system:role:delete')"
             >
               删除
             </el-button>
@@ -269,6 +275,7 @@ import {
 import { getRoles, createRole, updateRole, deleteRole, deleteRoles, saveRolePermissions, getRoleById, updateRoleStatus,saveRoleMenus } from '@/api/role'
 import { getAllPermissions } from '@/api/permission'
 import { getAllMenus } from '@/api/menu'
+import { hasPermission } from '@/utils/permission'
 import type { Role, Permission, MenuItem as MenuType } from '@/types'
 
 // 响应式数据

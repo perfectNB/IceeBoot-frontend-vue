@@ -47,6 +47,7 @@
             :icon="Key"
             @click="handleManageKeys(provider)"
             class="manage-keys-btn"
+            v-if="hasPermission('third:email:view')"
           >
             管理密钥
           </el-button>
@@ -64,7 +65,7 @@
       <div class="key-management">
         <div class="key-header">
           <h3>{{ currentProvider?.displayName }} - 邮件密钥</h3>
-          <el-button type="primary" size="small" @click="handleAddKey">
+          <el-button type="primary" size="small" @click="handleAddKey" v-if="hasPermission('third:email:create')">
             <el-icon><Plus /></el-icon>
             添加密钥
           </el-button>
@@ -109,6 +110,7 @@
                 size="small"
                 text
                 @click="handleEditKey(row)"
+                v-if="hasPermission('third:email:edit')"
               >
                 <el-icon><Edit /></el-icon>
                 编辑
@@ -118,6 +120,7 @@
                 size="small"
                 text
                 @click="handleDeleteKey(row)"
+                v-if="hasPermission('third:email:delete')"
               >
                 <el-icon><Delete /></el-icon>
                 删除
@@ -212,6 +215,11 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
+
+// 定义组件名称
+defineOptions({
+  name: 'EmailManagement'
+})
 import {
   Plus,
   Edit,
@@ -227,6 +235,7 @@ import {
   deleteEmailKey,
   updateEmailKeyStatus
 } from '@/api/email'
+import { hasPermission } from '@/utils/permission'
 import type { EmailProvider, EmailKey } from '@/api/email'
 
 // 响应式数据

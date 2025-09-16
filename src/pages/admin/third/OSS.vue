@@ -47,6 +47,7 @@
             :icon="Key"
             @click="handleManageKeys(provider)"
             class="manage-keys-btn"
+            v-if="hasPermission('third:oss:view')"
           >
             管理密钥
           </el-button>
@@ -64,7 +65,7 @@
       <div class="key-management">
         <div class="key-header">
           <h3>{{ currentProvider?.displayName }} - OSS密钥</h3>
-          <el-button type="primary" size="small" @click="handleAddKey">
+          <el-button type="primary" size="small" @click="handleAddKey" v-if="hasPermission('third:oss:create')">
             <el-icon><Plus /></el-icon>
             添加密钥
           </el-button>
@@ -109,6 +110,7 @@
                 size="small"
                 text
                 @click="handleEditKey(row)"
+                v-if="hasPermission('third:oss:edit')"
               >
                 <el-icon><Edit /></el-icon>
                 编辑
@@ -118,6 +120,7 @@
                 size="small"
                 text
                 @click="handleDeleteKey(row)"
+                v-if="hasPermission('third:oss:delete')"
               >
                 <el-icon><Delete /></el-icon>
                 删除
@@ -218,6 +221,7 @@ import {
   deleteOSSKey,
   updateOSSKeyStatus
 } from '@/api/oss'
+import { hasPermission } from '@/utils/permission'
 import type { OSSProvider, OSSKey } from '@/api/oss'
 
 // 响应式数据

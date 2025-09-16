@@ -47,6 +47,7 @@
             :icon="Key"
             @click="handleManageKeys(model)"
             class="manage-keys-btn"
+            v-if="hasPermission('ai:llm:view')"
           >
             管理密钥
           </el-button>
@@ -66,7 +67,7 @@
       <div class="key-management">
         <div class="key-header">
           <h3>{{ currentModel?.displayName }} - API密钥</h3>
-          <el-button type="primary" size="small" @click="handleAddKey">
+          <el-button type="primary" size="small" @click="handleAddKey" v-if="hasPermission('ai:llm:create')">
             <el-icon><Plus /></el-icon>
             添加密钥
           </el-button>
@@ -114,6 +115,7 @@
                 size="small"
                 text
                 @click="handleEditKey(row)"
+                v-if="hasPermission('ai:llm:edit')"
               >
                 <el-icon><Edit /></el-icon>
                 编辑
@@ -123,6 +125,7 @@
                 size="small"
                 text
                 @click="handleDeleteKey(row)"
+                v-if="hasPermission('ai:llm:delete')"
               >
                 <el-icon><Delete /></el-icon>
                 删除
@@ -212,6 +215,7 @@ import {
   deleteLLMModelKey,
   updateLLMModelKeyStatus
 } from '@/api/llm'
+import { hasPermission } from '@/utils/permission'
 import type { LLMModel, LLMKey } from '@/types'
 
 // 响应式数据

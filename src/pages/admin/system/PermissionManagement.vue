@@ -98,8 +98,8 @@
         stripe
         @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="55" />
-        <el-table-column prop="name" label="权限名称" min-width="235">
+        <el-table-column type="selection" width="40" />
+        <el-table-column prop="name" label="权限名称" min-width="275">
           <template #default="{ row }">
             <el-icon v-if="getPermissionIcon(row.type)" class="permission-icon">
               <component :is="getPermissionIcon(row.type)" />
@@ -115,7 +115,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="path" label="接口路径" min-width="150">
+        <el-table-column prop="path" label="接口路径" min-width="255">
           <template #default="{ row }">
             <span v-if="row.path">{{ row.path }}</span>
             <span v-else class="text-gray-400">-</span>

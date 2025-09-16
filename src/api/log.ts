@@ -36,7 +36,7 @@ export interface LogResponse {
 
 // 获取日志列表
 export const getLogs = async (params: LogQueryParams): Promise<LogResponse> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockLogService.getLogs(params)
   } else {
@@ -52,7 +52,7 @@ export const getLogs = async (params: LogQueryParams): Promise<LogResponse> => {
 
 // 删除日志（批量删除）
 export const deleteLogs = async (ids: string[]): Promise<boolean> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockLogService.batchDeleteLogs(ids)
     return true
@@ -81,7 +81,7 @@ export const batchDeleteLogs = async (ids: string[]): Promise<void> => {
 
 // 清空日志
 export const clearLogs = async (params?: { level?: string; beforeDate?: string }): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockLogService.clearLogs(params)
   } else {

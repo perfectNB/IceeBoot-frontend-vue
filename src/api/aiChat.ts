@@ -47,7 +47,7 @@ export interface StreamChatRequest {
 
 // 获取对话会话列表
 export const getAiChatSessions = async (params: PageParams): Promise<PageResult<AiChatSession>> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     const mockResult = await MockChatService.getChatSessions(params)
     // 转换ChatSession到AiChatSession格式
@@ -87,7 +87,7 @@ export const getAiChatSessions = async (params: PageParams): Promise<PageResult<
 
 // 创建对话会话
 export const createAiChatSession = async (data: CreateSessionParams): Promise<AiChatSession> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     const mockSession = await MockChatService.createChatSession({
       title: data.title,
@@ -126,7 +126,7 @@ export const createAiChatSession = async (data: CreateSessionParams): Promise<Ai
 
 // 删除对话会话
 export const deleteAiChatSession = async (ids: (string | number)[]): Promise<boolean> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     for (const id of ids.map(Number)) {
       await MockChatService.deleteChatSession(id)

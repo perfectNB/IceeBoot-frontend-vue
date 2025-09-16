@@ -36,7 +36,7 @@ export interface EmailProvider {
 
 // 获取Email服务商列表
 export const getEmailProviders = async (): Promise<EmailProvider[]> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockEmailService.getEmailProviders()
   } else {
@@ -52,7 +52,7 @@ export const getEmailProviders = async (): Promise<EmailProvider[]> => {
 
 // 获取Email服务商详情
 export const getEmailProvider = async (providerName: string): Promise<EmailProvider> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     const providers = await MockEmailService.getEmailProviders()
     const provider = providers.find(p => p.providerName === providerName)
@@ -73,7 +73,7 @@ export const getEmailProvider = async (providerName: string): Promise<EmailProvi
 
 // 获取Email密钥列表
 export const getEmailKeys = async (providerName: string): Promise<EmailKey[]> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     const providers = await MockEmailService.getEmailProviders()
     const provider = providers.find(p => p.providerName === providerName)
@@ -92,7 +92,7 @@ export const getEmailKeys = async (providerName: string): Promise<EmailKey[]> =>
 
 // 创建Email密钥
 export const createEmailKey = async (data: Omit<EmailKey, 'id' | 'createTime'>): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockEmailService.addEmailKey(data)
   } else {
@@ -107,7 +107,7 @@ export const createEmailKey = async (data: Omit<EmailKey, 'id' | 'createTime'>):
 
 // 更新Email密钥
 export const updateEmailKey = async (emailProvider: string, keyId: number, data: Partial<EmailKey>): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockEmailService.updateEmailKey(emailProvider, keyId, data)
   } else {
@@ -123,7 +123,7 @@ export const updateEmailKey = async (emailProvider: string, keyId: number, data:
 
 // 删除Email密钥（批量删除）
 export const deleteEmailKeys = async (ids: number[]): Promise<boolean> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     for (const keyId of ids) {
       const providers = await MockEmailService.getEmailProviders()
@@ -155,7 +155,7 @@ export const deleteEmailKey = async (keyId: number): Promise<void> => {
 
 // 启用Email密钥
 export const enableEmailKey = async (keyId: number): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     // 需要先找到对应的provider
     const providers = await MockEmailService.getEmailProviders()
@@ -176,7 +176,7 @@ export const enableEmailKey = async (keyId: number): Promise<void> => {
 
 // 禁用Email密钥
 export const disableEmailKey = async (keyId: number): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     // 需要先找到对应的provider
     const providers = await MockEmailService.getEmailProviders()

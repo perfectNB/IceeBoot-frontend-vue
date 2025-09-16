@@ -219,7 +219,7 @@ const startPolling = () => {
 
   pollingTimer = setInterval(async () => {
     try {
-      if (!isMockEnabled()) {
+      if (isMockEnabled()) {
         // 真实API模式：检查微信登录状态
         const response = await checkWechatLogin(scene.value)
         if (response.data.accessToken) {

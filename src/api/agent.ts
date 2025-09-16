@@ -9,7 +9,7 @@ import { MockAgentService } from '@/mock/services/agent'
 
 // 获取Agent列表
 export const getAgents = async (params: PageParams): Promise<PageResult<Agent>> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockAgentService.getAgents(params)
   } else {
@@ -41,7 +41,7 @@ export const getAgent = async (id: string | number): Promise<Agent> => {
 
 // 创建Agent
 export const createAgent = async (data: Partial<Agent>): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockAgentService.createAgent(data)
   } else {
@@ -56,7 +56,7 @@ export const createAgent = async (data: Partial<Agent>): Promise<void> => {
 
 // 更新Agent
 export const updateAgent = async (id: string | number, data: Partial<Agent>): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockAgentService.updateAgent(id, data)
   } else {
@@ -72,7 +72,7 @@ export const updateAgent = async (id: string | number, data: Partial<Agent>): Pr
 
 // 删除Agent（批量删除）
 export const deleteAgents = async (ids: (string | number)[]): Promise<boolean> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     for (const id of ids) {
       await MockAgentService.deleteAgent(id)

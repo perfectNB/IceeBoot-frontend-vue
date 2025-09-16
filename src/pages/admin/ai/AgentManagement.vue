@@ -7,7 +7,7 @@
     
     <!-- 操作区域 -->
     <div class="action-section">
-      <el-button type="primary" @click="handleCreate">
+      <el-button type="primary" @click="handleCreate" v-if="hasPermission('ai:agent:create')">
         <el-icon><Plus /></el-icon>
         新建Agent
       </el-button>
@@ -15,6 +15,7 @@
         type="danger"
         @click="handleBatchDelete"
         :disabled="selectedRows.length === 0"
+        v-if="hasPermission('ai:agent:delete')"
       >
         <el-icon><Delete /></el-icon>
         批量删除
@@ -129,6 +130,7 @@
               size="small"
               :icon="Edit"
               @click="handleEdit(row)"
+              v-if="hasPermission('ai:agent:edit')"
             >
               编辑
             </el-button>
@@ -137,6 +139,7 @@
               size="small"
               :icon="Delete"
               @click="handleDelete(row)"
+              v-if="hasPermission('ai:agent:delete')"
             >
               删除
             </el-button>
@@ -268,6 +271,7 @@ import {
   deleteAgent,
   updateAgentStatus
 } from '@/api'
+import { hasPermission } from '@/utils/permission'
 import type { Agent } from '@/types'
 
 // 响应式数据

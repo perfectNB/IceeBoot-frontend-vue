@@ -12,7 +12,7 @@
         <template #header>
           <div class="card-header">
             <span>存储桶管理</span>
-            <el-button type="primary" @click="handleAddBucket">
+            <el-button type="primary" @click="handleAddBucket" v-if="hasPermission('system:file:create')">
               <el-icon><Plus /></el-icon>
               新增存储桶
             </el-button>
@@ -95,19 +95,19 @@
           <el-table-column prop="createTime" label="创建时间" width="180" />
           <el-table-column label="操作" width="280" fixed="right">
             <template #default="{ row }">
-              <el-button type="primary" size="small" @click="handleViewFiles(row)">
+              <el-button type="primary" size="small" @click="handleViewFiles(row)" v-if="hasPermission('system:file:view')">
                 <el-icon><Document /></el-icon>
                 查看文件
               </el-button>
-              <el-button type="success" size="small" @click="handleUploadFile(row)">
+              <el-button type="success" size="small" @click="handleUploadFile(row)" v-if="hasPermission('system:file:upload')">
                 <el-icon><Upload /></el-icon>
                 上传文件
               </el-button>
-              <el-button type="warning" size="small" @click="handleEditBucket(row)">
+              <el-button type="warning" size="small" @click="handleEditBucket(row)" v-if="hasPermission('system:file:edit')">
                 <el-icon><Edit /></el-icon>
                 编辑
               </el-button>
-              <el-button type="danger" size="small" @click="handleDeleteBucket(row)">
+              <el-button type="danger" size="small" @click="handleDeleteBucket(row)" v-if="hasPermission('system:file:delete')">
                 <el-icon><Delete /></el-icon>
                 删除
               </el-button>
@@ -117,7 +117,7 @@
 
         <!-- 批量操作 -->
         <div class="batch-operations" v-if="selectedBuckets.length > 0">
-          <el-button type="danger" @click="handleBatchDeleteBuckets">
+          <el-button type="danger" @click="handleBatchDeleteBuckets" v-if="hasPermission('system:file:delete')">
             <el-icon><Delete /></el-icon>
             批量删除 ({{ selectedBuckets.length }})
           </el-button>
@@ -427,6 +427,7 @@ import {
   type OSSProvider,
   type OSSKey
 } from '@/api/oss'
+import { hasPermission } from '@/utils/permission'
 
 // 存储桶相关状态
 const bucketLoading = ref(false)

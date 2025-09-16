@@ -10,6 +10,7 @@
       <el-button
         type="primary"
         @click="handleCreate"
+        v-if="hasPermission('monitor:redis:create')"
       >
         <el-icon><Plus /></el-icon>
         添加缓存

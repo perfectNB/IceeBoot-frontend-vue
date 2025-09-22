@@ -12,7 +12,7 @@
         <template #header>
           <div class="card-header">
             <span>存储桶管理</span>
-            <el-button type="primary" @click="handleAddBucket" v-if="hasPermission('system:file:create')">
+            <el-button type="primary" @click="handleAddBucket" v-if="hasPermission('system:bucket:create')">
               <el-icon><Plus /></el-icon>
               新增存储桶
             </el-button>
@@ -93,7 +93,7 @@
             </template>
           </el-table-column>
           <el-table-column prop="createTime" label="创建时间" width="180" />
-          <el-table-column label="操作" width="280" fixed="right">
+          <el-table-column label="操作" width="350" fixed="right">
             <template #default="{ row }">
               <el-button type="primary" size="small" @click="handleViewFiles(row)" v-if="hasPermission('system:file:view')">
                 <el-icon><Document /></el-icon>
@@ -103,11 +103,11 @@
                 <el-icon><Upload /></el-icon>
                 上传文件
               </el-button>
-              <el-button type="warning" size="small" @click="handleEditBucket(row)" v-if="hasPermission('system:file:edit')">
+              <el-button type="warning" size="small" @click="handleEditBucket(row)" v-if="hasPermission('system:bucket:edit')">
                 <el-icon><Edit /></el-icon>
                 编辑
               </el-button>
-              <el-button type="danger" size="small" @click="handleDeleteBucket(row)" v-if="hasPermission('system:file:delete')">
+              <el-button type="danger" size="small" @click="handleDeleteBucket(row)" v-if="hasPermission('system:bucket:delete')">
                 <el-icon><Delete /></el-icon>
                 删除
               </el-button>
@@ -117,7 +117,7 @@
 
         <!-- 批量操作 -->
         <div class="batch-operations" v-if="selectedBuckets.length > 0">
-          <el-button type="danger" @click="handleBatchDeleteBuckets" v-if="hasPermission('system:file:delete')">
+          <el-button type="danger" @click="handleBatchDeleteBuckets" v-if="hasPermission('system:bucket:delete')">
             <el-icon><Delete /></el-icon>
             批量删除 ({{ selectedBuckets.length }})
           </el-button>
@@ -155,13 +155,13 @@
           <el-input v-model="bucketForm.bucketName" placeholder="请输入存储桶名称" />
         </el-form-item>
         <el-form-item label="服务商" prop="provider">
-          <el-select 
-            v-model="bucketForm.provider" 
-            placeholder="请选择服务商" 
+          <el-select
+            v-model="bucketForm.provider"
+            placeholder="请选择服务商"
             style="width: 100%"
             @change="handleProviderChange"
           >
-            <el-option 
+            <el-option
               v-for="provider in availableProviders"
               :key="provider.providerName"
               :label="provider.displayName"
@@ -171,14 +171,14 @@
           </el-select>
         </el-form-item>
         <el-form-item label="密钥" prop="keyId">
-          <el-select 
-            v-model="bucketForm.keyId" 
-            placeholder="请选择密钥" 
+          <el-select
+            v-model="bucketForm.keyId"
+            placeholder="请选择密钥"
             style="width: 100%"
             :disabled="!bucketForm.provider"
             clearable
           >
-            <el-option 
+            <el-option
               v-for="key in availableKeys"
               :key="key.id"
               :label="key.remark || `密钥${key.id}`"
@@ -547,7 +547,7 @@ const getProviderName = (provider: string) => {
 // 获取文件图标
 const getFileIcon = (fileName: string, fileType: string) => {
   const extension = fileName.split('.').pop()?.toLowerCase() || ''
-  
+
   // 根据文件扩展名或类型返回对应图标
   if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'svg', 'webp'].includes(extension) || fileType === 'image') {
     return Picture
@@ -576,7 +576,7 @@ const getFileIcon = (fileName: string, fileType: string) => {
   if (['mp3', 'wav', 'flac', 'aac'].includes(extension) || fileType === 'audio') {
     return Microphone
   }
-  
+
   return Document // 默认图标
 }
 

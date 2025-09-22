@@ -287,12 +287,12 @@ const md: MarkdownIt = new MarkdownIt({
     if (lang && hljs.getLanguage(lang)) {
       try {
         const highlighted = hljs.highlight(str, { language: lang }).value
-        return `<pre class="hljs-code-block"><div class="code-header"><span class="code-lang">${lang}</span><button class="copy-btn" onclick="copyCode(this)" title="复制代码"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button></div><code class="hljs language-${lang}">${highlighted}</code></pre>`
+        return `<pre class="hljs-code-block"><div class="code-header"><span class="code-lang">${lang}</span><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><span class="btn-label">Copy code</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button></div><code class="hljs language-${lang}">${highlighted}</code></pre>`
       } catch {
         // 忽略高亮错误，使用普通文本
       }
     }
-    return `<pre class="hljs-code-block"><div class="code-header"><span class="code-lang">text</span><button class="copy-btn" onclick="copyCode(this)" title="复制代码"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button></div><code class="hljs">${md.utils.escapeHtml(str)}</code></pre>`
+    return `<pre class="hljs-code-block"><div class="code-header"><span class="code-lang">text</span><button class="copy-btn" onclick="copyCode(this)" title="Copy code"><span class="btn-label">Copy code</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg></button></div><code class="hljs">${md.utils.escapeHtml(str)}</code></pre>`
   }
 })
 
@@ -305,15 +305,24 @@ const renderMarkdown = (content: string) => {
     const globalWindow = window as Window & { copyCode?: (button: HTMLElement) => void }
     if (typeof globalWindow.copyCode === 'undefined') {
       globalWindow.copyCode = (button: HTMLElement) => {
-        const codeBlock = button.closest('.hljs-code-block')
-        const code = codeBlock?.querySelector('code')?.textContent
-        if (code) {
-          navigator.clipboard.writeText(code).then(() => {
-            ElMessage.success('代码已复制到剪贴板')
-          }).catch(() => {
-            ElMessage.error('复制失败')
-          })
-        }
+        const codeBlock = button.closest('.hljs-code-block') as HTMLElement | null
+        const code = codeBlock?.querySelector('code')?.textContent || ''
+        const label = button.querySelector('.btn-label') as HTMLElement | null
+        if (!code) return
+        navigator.clipboard.writeText(code).then(() => {
+          if (label) {
+            button.classList.add('copied')
+            label.textContent = 'Copied!'
+            ;(button as HTMLButtonElement).disabled = true
+            setTimeout(() => {
+              button.classList.remove('copied')
+              label.textContent = 'Copy code'
+              ;(button as HTMLButtonElement).disabled = false
+            }, 1500)
+          }
+        }).catch(() => {
+          // 忽略失败，不弹出全局提示，保持 ChatGPT 行为
+        })
       }
     }
   })
@@ -719,7 +728,7 @@ const handleSendMessage = async () => {
 
     // 根据MCP开关选择不同的流接口
     const streamFunction = mcpEnabled.value ? streamIntelligentAiChat : streamAiChat
-    
+
     await streamFunction(
       streamRequest,
       // onMessage: 接收流式数据
@@ -938,7 +947,7 @@ onMounted(async () => {
         .mcp-switch {
           display: flex;
           align-items: center;
-          
+
           .switch-label {
             font-size: 14px;
             color: #606266;
@@ -976,6 +985,8 @@ onMounted(async () => {
       .message-item {
         display: flex;
         margin-bottom: 20px;
+        align-items: flex-start;
+        gap: 12px;
 
         &.user {
           flex-direction: row-reverse;
@@ -983,7 +994,7 @@ onMounted(async () => {
           .message-content {
             background-color: #409eff;
             color: white;
-            margin-right: 12px;
+            margin-right: 0;
 
             .message-time {
               color: rgba(255, 255, 255, 0.8);
@@ -995,7 +1006,7 @@ onMounted(async () => {
           .message-content {
             background-color: #f5f7fa;
             color: #303133;
-            margin-left: 12px;
+            margin-left: 0;
           }
         }
 
@@ -1004,13 +1015,23 @@ onMounted(async () => {
         }
 
         .message-content {
-          max-width: 70%;
-          padding: 12px 16px;
-          border-radius: 12px;
+          max-width: calc(100% - 80px);
+          width: fit-content;
+          padding: 16px 20px;
+          border-radius: 16px;
+          box-sizing: border-box;
+          word-wrap: break-word;
+          word-break: break-word;
+          overflow-wrap: break-word;
+          hyphens: auto;
+          box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 
           .message-text {
             line-height: 1.5;
             word-wrap: break-word;
+            word-break: break-word;
+            overflow-wrap: break-word;
+            white-space: pre-wrap;
 
             .loading-icon {
               animation: spin 1s linear infinite;
@@ -1058,245 +1079,341 @@ onMounted(async () => {
 
           .markdown-content {
             line-height: 1.6;
-            font-size: 14px;
+            font-size: 15px;
             color: #374151;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+
+            // 重置所有元素的默认边距
+            * {
+              margin: 0;
+              padding: 0;
+            }
 
             // 标题样式
             h1, h2, h3, h4, h5, h6 {
-              margin: 20px 0 12px 0;
+              margin: 1.5em 0 0.5em 0;
               font-weight: 600;
-              line-height: 1.25;
+              line-height: 1.3;
               color: #1f2937;
+              
+              &:first-child {
+                margin-top: 0;
+              }
             }
-
-            h1 { font-size: 1.75em; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px; }
-            h2 { font-size: 1.5em; border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; }
-            h3 { font-size: 1.25em; }
+            h1 { font-size: 1.5em; }
+            h2 { font-size: 1.3em; }
+            h3 { font-size: 1.2em; }
             h4 { font-size: 1.1em; }
             h5 { font-size: 1em; }
             h6 { font-size: 0.9em; color: #6b7280; }
 
-            // 段落样式
+            // 段落
             p {
-              margin: 12px 0;
-              line-height: 1.7;
-            }
-
-            // 列表样式优化
-            ul, ol {
-              margin: 12px 0;
-              padding-left: 0;
-              list-style: none;
-            }
-
-            ul {
-              li {
-                position: relative;
-                margin: 8px 0;
-                padding-left: 24px;
-                line-height: 1.6;
-                
-                &::before {
-                  content: '•';
-                  position: absolute;
-                  left: 8px;
-                  top: 0;
-                  color: #6b7280;
-                  font-weight: bold;
-                }
-              }
-            }
-
-            ol {
-              counter-reset: list-counter;
+              margin: 0.75em 0;
               
-              li {
-                position: relative;
-                margin: 8px 0;
-                padding-left: 32px;
-                line-height: 1.6;
-                counter-increment: list-counter;
-                
-                &::before {
-                  content: counter(list-counter) '.';
-                  position: absolute;
-                  left: 8px;
-                  top: 0;
-                  color: #6b7280;
-                  font-weight: 600;
-                  min-width: 20px;
-                }
+              &:first-child {
+                margin-top: 0;
+              }
+              
+              &:last-child {
+                margin-bottom: 0;
               }
             }
 
-            // 嵌套列表
-            ul ul, ol ol, ul ol, ol ul {
-              margin: 4px 0;
-              padding-left: 20px;
+            // 列表样式优化 - 修复对齐问题
+            ul, ol {
+              margin: 0.75em 0;
+              padding-left: 0;
+              list-style-position: inside;
+              
+              &:first-child {
+                margin-top: 0;
+              }
+              
+              &:last-child {
+                margin-bottom: 0;
+              }
+            }
+            
+            ul {
+              list-style-type: disc;
+            }
+            
+            ol {
+              list-style-type: decimal;
+            }
+            
+            li {
+              margin: 0.4em 0;
+              line-height: 1.6;
+              padding-left: 0.5em;
+              
+              // 嵌套列表
+              ul, ol {
+                margin: 0.4em 0 0.4em 1.2em;
+                padding-left: 0;
+              }
+              
+              // 嵌套列表项
+              li {
+                margin: 0.2em 0;
+                padding-left: 0.3em;
+              }
+            }
+            
+            // 确保列表项内容正确显示
+            li > p {
+              margin: 0;
+              display: inline;
             }
 
-            // 引用块样式
+            // 引用块
             blockquote {
-              margin: 16px 0;
+              margin: 1em 0;
               padding: 12px 16px;
-              border-left: 4px solid #3b82f6;
-              background-color: #f8fafc;
-              border-radius: 0 6px 6px 0;
+              border-left: 3px solid #d1d5db;
+              background-color: #f9fafb;
+              border-radius: 6px;
+              color: #374151;
               font-style: italic;
-              color: #475569;
+              
+              &:first-child {
+                margin-top: 0;
+              }
+              
+              &:last-child {
+                margin-bottom: 0;
+              }
+              
+              p {
+                margin: 0;
+              }
             }
 
-            // 行内代码样式
+            // 行内代码
             code:not(.hljs) {
-              background-color: #f1f5f9;
-              color: #e11d48;
-              padding: 2px 6px;
-              border-radius: 4px;
-              font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', monospace;
-              font-size: 0.875em;
-              font-weight: 500;
+              background-color: rgba(175, 184, 193, 0.2);
+              color: #d73a49;
+              padding: 0.2em 0.4em;
+              border-radius: 3px;
+              font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace;
+              font-size: 0.85em;
+              font-weight: 600;
             }
 
-            // 代码块样式
+            // 代码块
             .hljs-code-block {
-              margin: 16px 0;
+              margin: 1em 0;
               border-radius: 8px;
               overflow: hidden;
-              border: 1px solid #e5e7eb;
-              background-color: #f8fafc;
+              border: 1px solid #e1e4e8;
+              background-color: #f6f8fa;
+              position: relative;
               
+              &:first-child {
+                margin-top: 0;
+              }
+              
+              &:last-child {
+                margin-bottom: 0;
+              }
+
               .code-header {
-                display: flex;
-                justify-content: space-between;
+                display: none;
+              }
+              
+              .copy-btn {
+                position: absolute;
+                top: 12px;
+                right: 12px;
+                display: inline-flex;
                 align-items: center;
-                padding: 8px 16px;
-                background-color: #f1f5f9;
-                border-bottom: 1px solid #e5e7eb;
+                gap: 6px;
+                background: rgba(255, 255, 255, 0.9);
+                backdrop-filter: blur(8px);
+                border: 1px solid rgba(0, 0, 0, 0.1);
+                color: #374151;
+                cursor: pointer;
+                padding: 6px 10px;
+                border-radius: 8px;
+                transition: all 0.2s ease;
+                font-size: 13px;
+                font-weight: 500;
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+                z-index: 10;
+                opacity: 0;
+                transform: translateY(-2px);
                 
-                .code-lang {
-                  font-size: 12px;
-                  color: #6b7280;
-                  font-weight: 500;
-                  text-transform: uppercase;
+                .btn-label {
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
                 }
-                
-                .copy-btn {
-                  background: none;
-                  border: none;
-                  color: #6b7280;
-                  cursor: pointer;
-                  padding: 4px;
-                  border-radius: 4px;
-                  display: flex;
-                  align-items: center;
-                  transition: all 0.2s;
+
+                svg {
+                  width: 14px;
+                  height: 14px;
+                }
+
+                &:hover {
+                  opacity: 1;
+                  background-color: #f3f4f6;
+                  border-color: #9ca3af;
+                  color: #374151;
+                  transform: translateY(0);
+                  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+                }
+
+                &:active {
+                  transform: translateY(0);
+                  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+                }
+
+                &.copied {
+                  color: #059669;
+                  border-color: #10b981;
+                  background-color: #ecfdf5;
                   
-                  &:hover {
-                    background-color: #e5e7eb;
-                    color: #374151;
+                  .btn-label {
+                    color: #059669;
                   }
                 }
+              }
+
+              &:hover .copy-btn {
+                opacity: 1;
+                transform: translateY(0);
               }
               
               pre {
                 margin: 0;
-                padding: 16px;
-                background-color: #ffffff;
+                padding: 20px;
+                background-color: #f8f9fa;
                 overflow-x: auto;
-                
+                position: relative;
+
                 code {
                   background: none;
                   padding: 0;
                   border-radius: 0;
-                  color: inherit;
-                  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Consolas', monospace;
-                  font-size: 13px;
+                  color: #24292f;
+                  font-family: 'JetBrains Mono', 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace;
+                  font-size: 14px;
                   line-height: 1.5;
+                  font-weight: 400;
                 }
               }
             }
 
-            // 表格样式
+            // 表格样式修复
             table {
               width: 100%;
-              margin: 16px 0;
+              margin: 1em 0;
               border-collapse: collapse;
               border-radius: 8px;
               overflow: hidden;
-              border: 1px solid #e5e7eb;
+              border: 1px solid #e1e5e9;
               background-color: #ffffff;
+              font-size: 14px;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
               
-              thead {
-                background-color: #f8fafc;
+              &:first-child {
+                margin-top: 0;
               }
               
-              th {
+              &:last-child {
+                margin-bottom: 0;
+              }
+
+              thead {
+                background-color: #f8f9fa;
+              }
+
+              th, td {
                 padding: 12px 16px;
                 text-align: left;
-                font-weight: 600;
-                color: #374151;
-                border-bottom: 2px solid #e5e7eb;
-                font-size: 13px;
-              }
-              
-              td {
-                padding: 12px 16px;
-                border-bottom: 1px solid #f3f4f6;
-                color: #4b5563;
-                font-size: 13px;
+                border-bottom: 1px solid #e1e5e9;
+                vertical-align: top;
+                border-right: 1px solid #e1e5e9;
                 
                 &:last-child {
                   border-right: none;
                 }
               }
+
+              th {
+                font-weight: 600;
+                color: #1f2937;
+                font-size: 14px;
+                background-color: #f8f9fa;
+              }
               
-              tr {
-                &:hover {
-                  background-color: #f9fafb;
-                }
-                
-                &:last-child td {
-                  border-bottom: none;
-                }
+              td {
+                color: #374151;
+                background-color: #ffffff;
+              }
+              
+              tbody tr:nth-child(even) td {
+                background-color: #f9fafb;
+              }
+              
+              tbody tr:hover td {
+                background-color: #f3f4f6;
+              }
+              
+              tr:last-child th,
+              tr:last-child td {
+                border-bottom: none;
               }
             }
 
-            // 链接样式
+            // 链接
             a {
-              color: #3b82f6;
+              color: #0969da;
               text-decoration: none;
               font-weight: 500;
               
               &:hover {
                 text-decoration: underline;
-                color: #2563eb;
+                color: #0550ae;
+              }
+              
+              &:visited {
+                color: #8250df;
               }
             }
 
-            // 强调样式
+            // 强调和斜体
             strong {
               font-weight: 600;
-              color: #1f2937;
+              color: #24292f;
             }
-
+            
             em {
               font-style: italic;
-              color: #4b5563;
+              color: #656d76;
             }
-
+            
             // 分割线
             hr {
-              margin: 24px 0;
+              margin: 1.5em 0;
               border: none;
-              border-top: 2px solid #e5e7eb;
+              border-top: 1px solid #d0d7de;
+              
+              &:first-child {
+                margin-top: 0;
+              }
+              
+              &:last-child {
+                margin-bottom: 0;
+              }
             }
-
-            // 图片样式
+            
+            // 图片
             img {
               max-width: 100%;
               height: auto;
               border-radius: 6px;
-              margin: 12px 0;
+              margin: 0.5em 0;
+              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             }
           }
 

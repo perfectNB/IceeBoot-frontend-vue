@@ -28,7 +28,7 @@ export interface MessageQueryParams extends PageParams {
 
 // 获取消息列表
 export const getMessages = async (params: MessageQueryParams): Promise<PageResult<MessageItem>> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     const { MockMessageService } = await import('@/mock/services/message')
     return await MockMessageService.getMessages(params)
@@ -46,7 +46,7 @@ export const getMessages = async (params: MessageQueryParams): Promise<PageResul
 
 // 标记消息为已读
 export const markMessageAsRead = async (id: number): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     const { MockMessageService } = await import('@/mock/services/message')
     await MockMessageService.markAsRead(id)
@@ -62,7 +62,7 @@ export const markMessageAsRead = async (id: number): Promise<void> => {
 
 // 批量标记消息为已读
 export const batchMarkAsRead = async (ids: number[]): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     const { MockMessageService } = await import('@/mock/services/message')
     await MockMessageService.batchMarkAsRead(ids)
@@ -78,7 +78,7 @@ export const batchMarkAsRead = async (ids: number[]): Promise<void> => {
 
 // 删除消息
 export const deleteMessage = async (id: number): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     const { MockMessageService } = await import('@/mock/services/message')
     await MockMessageService.deleteMessage(id)
@@ -96,7 +96,7 @@ export const deleteMessage = async (id: number): Promise<void> => {
 
 // 批量删除消息
 export const batchDeleteMessages = async (ids: number[]): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     const { MockMessageService } = await import('@/mock/services/message')
     await MockMessageService.batchDeleteMessages(ids)
@@ -154,7 +154,7 @@ export interface MessageStats {
 
 // 获取消息统计
 export const getMessageStats = async (): Promise<MessageStats> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     const { MockMessageService } = await import('@/mock/services/message')
     return await MockMessageService.getMessageStats()
@@ -171,7 +171,7 @@ export const getMessageStats = async (): Promise<MessageStats> => {
 
 // 全部已读
 export const allRead = async (): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     const { MockMessageService } = await import('@/mock/services/message')
     await MockMessageService.allRead()

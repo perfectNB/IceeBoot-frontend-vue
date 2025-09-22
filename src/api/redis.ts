@@ -38,7 +38,7 @@ export interface CreateRedisKeyParams {
 
 // 获取Redis键列表
 export const getRedisKeys = async (params: RedisQueryParams): Promise<RedisResponse> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockRedisService.getRedisKeys(params)
   } else {
@@ -61,7 +61,7 @@ export const deleteRedisKey = async (key: string): Promise<void> => {
 
 // 批量删除Redis键
 export const deleteRedisKeys = async (keys: string[]): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据 - 逐个删除
     for (const key of keys) {
       await MockRedisService.deleteRedisKey(key)
@@ -80,7 +80,7 @@ export const deleteRedisKeys = async (keys: string[]): Promise<void> => {
 
 // 创建Redis键
 export const createRedisKey = async (params: CreateRedisKeyParams): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockRedisService.createRedisKey(params)
   } else {
@@ -95,7 +95,7 @@ export const createRedisKey = async (params: CreateRedisKeyParams): Promise<void
 
 // 获取Redis键详情
 export const getRedisKeyDetail = async (key: string): Promise<RedisKey> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockRedisService.getRedisKeyDetail(key)
   } else {

@@ -34,7 +34,7 @@ export interface OSSProvider {
 
 // 获取OSS服务商列表
 export const getOSSProviders = async (): Promise<OSSProvider[]> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockOSSService.getOSSProviders()
   } else {
@@ -50,7 +50,7 @@ export const getOSSProviders = async (): Promise<OSSProvider[]> => {
 
 // 获取OSS服务商详情
 export const getOSSProvider = async (providerName: string): Promise<OSSProvider> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     const providers = await MockOSSService.getOSSProviders()
     const provider = providers.find(p => p.providerName === providerName)
@@ -71,7 +71,7 @@ export const getOSSProvider = async (providerName: string): Promise<OSSProvider>
 
 // 获取OSS密钥列表
 export const getOSSKeys = async (providerName: string): Promise<OSSKey[]> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     const providers = await MockOSSService.getOSSProviders()
     const provider = providers.find(p => p.providerName === providerName)
@@ -90,7 +90,7 @@ export const getOSSKeys = async (providerName: string): Promise<OSSKey[]> => {
 
 // 创建OSS密钥
 export const createOSSKey = async (data: Omit<OSSKey, 'id' | 'createTime'>): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockOSSService.addOSSKey(data.ossProvider || '', data)
   } else {
@@ -105,7 +105,7 @@ export const createOSSKey = async (data: Omit<OSSKey, 'id' | 'createTime'>): Pro
 
 // 更新OSS密钥
 export const updateOSSKey = async (keyId: number, data: Partial<OSSKey>): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     // 需要先找到对应的provider
     const providers = await MockOSSService.getOSSProviders()
@@ -127,7 +127,7 @@ export const updateOSSKey = async (keyId: number, data: Partial<OSSKey>): Promis
 
 // 删除OSS密钥（批量删除）
 export const deleteOSSKeys = async (ids: number[]): Promise<boolean> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     for (const keyId of ids) {
       const providers = await MockOSSService.getOSSProviders()
@@ -159,7 +159,7 @@ export const deleteOSSKey = async (keyId: number): Promise<void> => {
 
 // 启用OSS密钥
 export const enableOSSKey = async (keyId: number): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     // 需要先找到对应的provider
     const providers = await MockOSSService.getOSSProviders()
@@ -180,7 +180,7 @@ export const enableOSSKey = async (keyId: number): Promise<void> => {
 
 // 禁用OSS密钥
 export const disableOSSKey = async (keyId: number): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     // 需要先找到对应的provider
     const providers = await MockOSSService.getOSSProviders()
@@ -285,7 +285,7 @@ export interface UploadFileParams {
 
 // 获取存储桶列表
 export const getBucketList = async (params: BucketQueryParams): Promise<PageResult<OssBucket>> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockOSSService.getBucketList(params)
   } else {
@@ -301,7 +301,7 @@ export const getBucketList = async (params: BucketQueryParams): Promise<PageResu
 
 // 创建存储桶
 export const createBucket = async (data: CreateBucketData): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockOSSService.createBucket(data)
   } else {
@@ -316,7 +316,7 @@ export const createBucket = async (data: CreateBucketData): Promise<void> => {
 
 // 更新存储桶
 export const updateBucket = async (data: UpdateBucketData): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockOSSService.updateBucket(data)
   } else {
@@ -330,9 +330,9 @@ export const updateBucket = async (data: UpdateBucketData): Promise<void> => {
         description: data.description || '',
         status: data.status
       }
-      
+
       const response = await request.put('/api/v1/oss-files/buckets', requestData)
-      
+
       // 处理不同的响应格式
       type UpdateBucketResponse = {
         code?: number
@@ -340,15 +340,15 @@ export const updateBucket = async (data: UpdateBucketData): Promise<void> => {
         success?: boolean
         data?: unknown
       }
-      
+
       if (response && typeof response === 'object') {
         const apiResponse = response as unknown as UpdateBucketResponse
-        
+
         // 检查success状态
         if (apiResponse.success === false) {
           throw new Error(apiResponse.message || '更新存储桶失败')
         }
-        
+
         // 检查code状态
         if (apiResponse.code && apiResponse.code !== 200 && apiResponse.code !== 0) {
           throw new Error(apiResponse.message || '更新存储桶失败')
@@ -366,7 +366,7 @@ export const updateBucket = async (data: UpdateBucketData): Promise<void> => {
 
 // 删除存储桶（批量删除）
 export const deleteBuckets = async (ids: number[]): Promise<boolean> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockOSSService.deleteBuckets(ids)
   } else {
@@ -384,7 +384,7 @@ export const deleteBuckets = async (ids: number[]): Promise<boolean> => {
 
 // 获取文件列表
 export const getFileList = async (params: FileQueryParams): Promise<PageResult<OssFile>> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockOSSService.getFileList(params)
   } else {
@@ -400,7 +400,7 @@ export const getFileList = async (params: FileQueryParams): Promise<PageResult<O
 
 // 上传文件
 export const uploadFile = async (params: UploadFileParams): Promise<OssFile> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockOSSService.uploadFile(params)
   } else {
@@ -420,7 +420,7 @@ export const uploadFile = async (params: UploadFileParams): Promise<OssFile> => 
           'Content-Type': 'multipart/form-data'
         }
       })
-      
+
       // 处理不同的响应格式
       type ApiResponse = {
         code?: number
@@ -429,31 +429,31 @@ export const uploadFile = async (params: UploadFileParams): Promise<OssFile> => 
         success?: boolean
         data?: OssFile
       } & Partial<OssFile>
-      
+
       if (response && typeof response === 'object') {
         const apiResponse = response as unknown as ApiResponse
-        
+
         // 检查是否有result字段
         if (apiResponse.result) {
           return apiResponse.result
         }
-        
+
         // 检查是否有data字段
         if (apiResponse.data) {
           return apiResponse.data
         }
-        
+
         // 检查success状态
         if (apiResponse.success === false) {
           throw new Error(apiResponse.message || '上传文件失败')
         }
-        
+
         // 如果响应本身就是文件对象
         if (apiResponse.id && apiResponse.fileName) {
           return apiResponse as OssFile
         }
       }
-      
+
       throw new Error('上传文件响应数据格式错误')
     } catch (error: unknown) {
       const err = error as Error & { response?: { status?: number } }
@@ -468,7 +468,7 @@ export const uploadFile = async (params: UploadFileParams): Promise<OssFile> => 
 
 // 删除文件（批量删除）
 export const deleteFiles = async (ids: number[]): Promise<boolean> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockOSSService.deleteFiles(ids)
   } else {
@@ -477,7 +477,7 @@ export const deleteFiles = async (ids: number[]): Promise<boolean> => {
       const response = await request.delete('/api/v1/oss-files', {}, {
         data: ids
       })
-      
+
       // 处理不同的响应格式
       type DeleteApiResponse = {
         code?: number
@@ -485,23 +485,23 @@ export const deleteFiles = async (ids: number[]): Promise<boolean> => {
         success?: boolean
         data?: unknown
       }
-      
+
       if (response && typeof response === 'object') {
         const apiResponse = response as unknown as DeleteApiResponse
-        
+
         // 检查success状态
         if (apiResponse.success === false) {
           throw new Error(apiResponse.message || '删除文件失败')
         }
-        
+
         // 检查code状态（有些API使用code字段）
         if (apiResponse.code && apiResponse.code !== 200 && apiResponse.code !== 0) {
           throw new Error(apiResponse.message || '删除文件失败')
         }
-        
+
         return true
       }
-      
+
       // 如果响应为空或者是其他格式，默认认为成功
       return true
     } catch (error: unknown) {
@@ -527,7 +527,7 @@ export interface DownloadFileResponse {
 
 // 下载文件 - 返回下载链接
 export const getDownloadUrl = async (id: number): Promise<string> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     const blob = await MockOSSService.downloadFile(id)
     // 为Mock数据创建临时URL
@@ -537,16 +537,16 @@ export const getDownloadUrl = async (id: number): Promise<string> => {
       // 调用真实API - 获取下载链接
       const response = await request.get<DownloadFileResponse>(`/api/v1/oss-files/download/${id}`)
       const apiResponse = response as unknown as DownloadFileResponse
-      
+
       if (!apiResponse || !apiResponse.success) {
         throw new Error(apiResponse?.message || '获取下载链接失败')
       }
-      
+
       // 返回下载链接（在message字段中）
       return apiResponse.message
     } catch (error: unknown) {
       const err = error as Error & { response?: { status?: number, data?: unknown } }
-      
+
       // 检查是否是HTTP错误
       if (err.response) {
         if (err.response.status === 404) {
@@ -557,7 +557,7 @@ export const getDownloadUrl = async (id: number): Promise<string> => {
           throw new Error(`获取下载链接失败：HTTP ${err.response.status}`)
         }
       }
-      
+
       throw new Error('获取下载链接失败：' + (err.message || '未知错误'))
     }
   }
@@ -565,7 +565,7 @@ export const getDownloadUrl = async (id: number): Promise<string> => {
 
 // 下载文件 - 通过链接下载为Blob（保持向后兼容）
 export const downloadFile = async (id: number): Promise<Blob> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // Mock模式下直接返回Blob
     return await MockOSSService.downloadFile(id)
   } else {
@@ -579,7 +579,7 @@ export const downloadFile = async (id: number): Promise<Blob> => {
 export const downloadFileByUrl = async (id: number): Promise<void> => {
   try {
     const downloadUrl = await getDownloadUrl(id)
-    
+
     // 直接打开下载链接
     window.open(downloadUrl, '_blank')
   } catch (error) {
@@ -592,11 +592,11 @@ export const downloadAndSaveFile = async (id: number, fileName?: string): Promis
   try {
     // 获取下载链接
     const downloadUrl = await getDownloadUrl(id)
-    
+
     // 创建下载链接
     const link = document.createElement('a')
     link.href = downloadUrl
-    
+
     // 设置文件名，如果没有提供则使用默认名称
     if (fileName) {
       // 确保文件名是安全的
@@ -605,19 +605,19 @@ export const downloadAndSaveFile = async (id: number, fileName?: string): Promis
     } else {
       link.download = `file_${id}_${Date.now()}`
     }
-    
+
     // 设置target为_blank以确保在新窗口打开（某些浏览器需要）
     link.target = '_blank'
-    
+
     // 触发下载
     document.body.appendChild(link)
     link.click()
-    
+
     // 清理
     document.body.removeChild(link)
-    
+
     // 如果是Mock数据创建的临时URL，需要清理
-    if (!isMockEnabled() && downloadUrl.startsWith('blob:')) {
+    if (isMockEnabled() && downloadUrl.startsWith('blob:')) {
       window.URL.revokeObjectURL(downloadUrl)
     }
   } catch (error) {

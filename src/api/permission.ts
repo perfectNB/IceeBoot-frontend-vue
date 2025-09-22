@@ -5,7 +5,7 @@ import { MockPermissionService } from '@/mock/services/permission'
 
 // 获取权限列表
 export const getPermissions = async (params: PageParams): Promise<PageResult<Permission>> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockPermissionService.getPermissions(params)
   } else {
@@ -21,7 +21,7 @@ export const getPermissions = async (params: PageParams): Promise<PageResult<Per
 
 // 获取所有权限（不分页）
 export const getAllPermissions = async (): Promise<Permission[]> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据 - 返回所有权限
     return await MockPermissionService.getAllPermissions()
   } else {
@@ -39,7 +39,7 @@ export const getAllPermissions = async (): Promise<Permission[]> => {
 
 // 创建权限
 export const createPermission = async (data: Partial<Permission>): Promise<Permission> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockPermissionService.createPermission(data)
   } else {
@@ -55,7 +55,7 @@ export const createPermission = async (data: Partial<Permission>): Promise<Permi
 
 // 更新权限
 export const updatePermission = async (id: string | number, data: Partial<Permission>): Promise<Permission> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockPermissionService.updatePermission(Number(id), data)
   } else {
@@ -72,7 +72,7 @@ export const updatePermission = async (id: string | number, data: Partial<Permis
 
 // 删除权限
 export const deletePermission = async (id: string | number): Promise<boolean> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockPermissionService.deletePermission(Number(id))
     return true
@@ -91,7 +91,7 @@ export const deletePermission = async (id: string | number): Promise<boolean> =>
 
 // 批量删除权限
 export const deletePermissions = async (ids: (string | number)[]): Promise<boolean> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     for (const id of ids) {
       await MockPermissionService.deletePermission(Number(id))
@@ -112,7 +112,7 @@ export const deletePermissions = async (ids: (string | number)[]): Promise<boole
 
 // 获取权限详情
 export const getPermissionById = async (id: string | number): Promise<Permission> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockPermissionService.getPermissionById(Number(id))
   } else {

@@ -16,7 +16,7 @@ export interface RolePageParams {
 
 // 获取角色列表
 export const getRoles = async (params: RolePageParams): Promise<PageResult<Role>> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockRoleService.getRoles(params)
   } else {
@@ -32,7 +32,7 @@ export const getRoles = async (params: RolePageParams): Promise<PageResult<Role>
 
 // 创建角色
 export const createRole = async (data: Partial<Role>): Promise<Role> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     const mockData = {
       ...data,
@@ -60,7 +60,7 @@ export const createRole = async (data: Partial<Role>): Promise<Role> => {
 
 // 更新角色
 export const updateRole = async (id: string | number, data: Partial<Role>): Promise<Role> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     const mockData = {
       ...data,
@@ -88,7 +88,7 @@ export const updateRole = async (id: string | number, data: Partial<Role>): Prom
 
 // 删除角色（批量删除）
 export const deleteRoles = async (ids: (string | number)[]): Promise<boolean> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     for (const id of ids) {
       await MockRoleService.deleteRole(Number(id))
@@ -114,7 +114,7 @@ export const deleteRole = async (id: string | number): Promise<boolean> => {
 
 // 获取角色详情
 export const getRoleById = async (id: string | number): Promise<Role> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockRoleService.getRoleById(Number(id))
   } else {
@@ -130,7 +130,7 @@ export const getRoleById = async (id: string | number): Promise<Role> => {
 
 // 保存角色权限
 export const saveRolePermissions = async (roleId: string | number, permissionIds: string[]): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockRoleService.saveRolePermissions(Number(roleId), permissionIds)
   } else {
@@ -145,7 +145,7 @@ export const saveRolePermissions = async (roleId: string | number, permissionIds
 
 // 保存角色菜单
 export const saveRoleMenus = async (roleId: string | number, menuIds: string[]): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockRoleService.saveRoleMenus(Number(roleId), menuIds)
   } else {
@@ -160,7 +160,7 @@ export const saveRoleMenus = async (roleId: string | number, menuIds: string[]):
 
 // 获取所有角色
 export const getAllRoles = async (): Promise<Role[]> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockRoleService.getAllRoles()
   } else {
@@ -176,7 +176,7 @@ export const getAllRoles = async (): Promise<Role[]> => {
 
 // 更新角色状态
 export const updateRoleStatus = async (id: string | number, status: 'active' | 'inactive'): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据 - 通过updateRole函数更新状态
     await updateRole(id, { status })
   } else {

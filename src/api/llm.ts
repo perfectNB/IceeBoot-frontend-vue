@@ -9,7 +9,7 @@ import { MockLLMService } from '@/mock/services/llm'
 
 // 获取大模型列表
 export const getLLMModels = async (): Promise<LLMModel[]> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     const result = await MockLLMService.getLLMModels({})
     return result.records
@@ -108,7 +108,7 @@ export const getLLMModelKeys = async (providerName: string): Promise<LLMKey[]> =
 
 // 创建密钥
 export const createLLMKey = async (data: Omit<LLMKey, 'id' | 'createTime' | 'updateTime'>): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockLLMService.addLLMKey(data.llmProvider, data)
   } else {
@@ -124,7 +124,7 @@ export const createLLMKey = async (data: Omit<LLMKey, 'id' | 'createTime' | 'upd
 
 // 更新密钥
 export const updateLLMKey = async (keyId: number, data: Partial<LLMKey>): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     const models = await MockLLMService.getLLMModels({})
     const model = models.records.find(m => m.keys.some(k => k.id === keyId))
@@ -150,7 +150,7 @@ export const updateLLMKey = async (keyId: number, data: Partial<LLMKey>): Promis
 
 // 删除密钥（批量删除）
 export const deleteLLMKeys = async (ids: number[]): Promise<boolean> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     for (const keyId of ids) {
       const models = await MockLLMService.getLLMModels({})

@@ -228,7 +228,7 @@ const handleLogout = () => {
   }).then(async () => {
     try {
       // 调用退出登录API（非mock模式）
-      if (!isMockEnabled()) {
+      if (isMockEnabled()) {
         await logout()
       }
 

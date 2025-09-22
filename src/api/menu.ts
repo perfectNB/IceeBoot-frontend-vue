@@ -5,7 +5,7 @@ import { MockMenuService } from '@/mock/services/menu'
 
 // 获取菜单列表（分页）
 export const getMenus = async (params: PageParams): Promise<PageResult<MenuItem>> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据 - 模拟分页
     const allMenus = await MockMenuService.getAllMenus()
     let filteredMenus = [...allMenus]
@@ -51,7 +51,7 @@ export const getMenus = async (params: PageParams): Promise<PageResult<MenuItem>
 
 // 获取用户菜单
 export const getUserMenus = async (userId?: number): Promise<MenuItem[]> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     const response=await MockMenuService.getUserMenus(userId || 1)
     return response
@@ -68,7 +68,7 @@ export const getUserMenus = async (userId?: number): Promise<MenuItem[]> => {
 
 // 获取所有菜单（树形结构，不分页）
 export const getAllMenus = async (): Promise<MenuItem[]> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockMenuService.getAllMenus()
   } else {
@@ -84,7 +84,7 @@ export const getAllMenus = async (): Promise<MenuItem[]> => {
 
 // 创建菜单
 export const createMenu = async (data: Partial<MenuItem>): Promise<MenuItem> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockMenuService.createMenu(data)
   } else {
@@ -100,7 +100,7 @@ export const createMenu = async (data: Partial<MenuItem>): Promise<MenuItem> => 
 
 // 更新菜单
 export const updateMenu = async (id: string | number, data: Partial<MenuItem>): Promise<MenuItem> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据 - 先获取现有菜单，然后删除再创建（模拟更新）
     const existingMenu = await MockMenuService.getMenuById(Number(id))
     await MockMenuService.deleteMenu(Number(id))
@@ -120,7 +120,7 @@ export const updateMenu = async (id: string | number, data: Partial<MenuItem>): 
 
 // 删除菜单
 export const deleteMenu = async (id: string | number): Promise<boolean> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockMenuService.deleteMenu(Number(id))
     return true
@@ -139,7 +139,7 @@ export const deleteMenu = async (id: string | number): Promise<boolean> => {
 
 // 批量删除菜单
 export const deleteMenus = async (ids: (string | number)[]): Promise<boolean> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     for (const id of ids) {
       await MockMenuService.deleteMenu(Number(id))
@@ -160,7 +160,7 @@ export const deleteMenus = async (ids: (string | number)[]): Promise<boolean> =>
 
 // 获取菜单详情
 export const getMenuById = async (id: string | number): Promise<MenuItem> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockMenuService.getMenuById(Number(id))
   } else {

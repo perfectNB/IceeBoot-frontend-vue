@@ -6,7 +6,7 @@ import type { LoginForm, LoginResponse, User } from '@/types'
 
 // 登录接口
 export const login = async (data: LoginForm): Promise<LoginResponse> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     return await MockAuthService.login(data)
   } else {
     const response = await request.post<{result: LoginResponse}>('/api/v1/auth/login', data as unknown as Record<string, unknown>)
@@ -26,7 +26,7 @@ export const logout = () => {
 
 // 获取用户信息
 export const getUserInfo = async () => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // Mock模式：获取当前登录用户信息
     const token = localStorage.getItem('accessToken')
     if (!token) {

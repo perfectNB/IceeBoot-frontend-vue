@@ -33,7 +33,7 @@ export interface SMSProvider {
 
 // 获取SMS服务商列表
 export const getSMSProviders = async (): Promise<SMSProvider[]> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockSMSService.getSMSProviders()
   } else {
@@ -49,7 +49,7 @@ export const getSMSProviders = async (): Promise<SMSProvider[]> => {
 
 // 获取SMS服务商详情
 export const getSMSProvider = async (providerName: string): Promise<SMSProvider> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     const providers = await MockSMSService.getSMSProviders()
     const provider = providers.find(p => p.providerName === providerName)
@@ -70,7 +70,7 @@ export const getSMSProvider = async (providerName: string): Promise<SMSProvider>
 
 // 获取SMS密钥列表
 export const getSMSKeys = async (providerName: string): Promise<SMSKey[]> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     const providers = await MockSMSService.getSMSProviders()
     const provider = providers.find(p => p.providerName === providerName)
@@ -89,7 +89,7 @@ export const getSMSKeys = async (providerName: string): Promise<SMSKey[]> => {
 
 // 创建SMS密钥
 export const createSMSKey = async (data: Omit<SMSKey, 'id' | 'createTime'>): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockSMSService.addSMSKey(data)
   } else {
@@ -104,7 +104,7 @@ export const createSMSKey = async (data: Omit<SMSKey, 'id' | 'createTime'>): Pro
 
 // 更新SMS密钥
 export const updateSMSKey = async (smsProvider: string, keyId: number, data: Partial<SMSKey>): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockSMSService.updateSMSKey(smsProvider, keyId, data)
   } else {
@@ -120,7 +120,7 @@ export const updateSMSKey = async (smsProvider: string, keyId: number, data: Par
 
 // 删除SMS密钥（批量删除）
 export const deleteSMSKeys = async (ids: number[]): Promise<boolean> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     for (const keyId of ids) {
       const providers = await MockSMSService.getSMSProviders()
@@ -152,7 +152,7 @@ export const deleteSMSKey = async (keyId: number): Promise<void> => {
 
 // 启用SMS密钥
 export const enableSMSKey = async (keyId: number): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     // 需要先找到对应的provider
     const providers = await MockSMSService.getSMSProviders()
@@ -173,7 +173,7 @@ export const enableSMSKey = async (keyId: number): Promise<void> => {
 
 // 禁用SMS密钥
 export const disableSMSKey = async (keyId: number): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     // 需要先找到对应的provider
     const providers = await MockSMSService.getSMSProviders()

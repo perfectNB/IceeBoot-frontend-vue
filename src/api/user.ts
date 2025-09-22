@@ -11,7 +11,7 @@ export interface CreateUserData extends Partial<User> {
 
 // 获取用户列表
 export const getUserList = async (params: PageParams): Promise<PageResult<User>> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockUserService.getUserList(params)
   } else {
@@ -43,7 +43,7 @@ export const getUserById = async (id: string | number): Promise<User> => {
 
 // 创建用户
 export const createUser = async (data: CreateUserData): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockUserService.createUser(data)
   } else {
@@ -58,7 +58,7 @@ export const createUser = async (data: CreateUserData): Promise<void> => {
 
 // 更新用户
 export const updateUser = async (id: string | number, data: Partial<User>): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockUserService.updateUser(Number(id), data)
   } else {
@@ -74,7 +74,7 @@ export const updateUser = async (id: string | number, data: Partial<User>): Prom
 
 // 删除用户（批量删除）
 export const deleteUsers = async (ids: (string | number)[]): Promise<boolean> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockUserService.deleteUsers(ids.map(Number))
   } else {
@@ -97,7 +97,7 @@ export const deleteUser = async (id: string | number): Promise<boolean> => {
 
 // 重置用户密码
 export const resetUserPassword = async (id: string | number, newPassword: string): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockUserService.resetPassword(Number(id), newPassword)
   } else {
@@ -112,7 +112,7 @@ export const resetUserPassword = async (id: string | number, newPassword: string
 
 // 更新用户状态
 export const updateUserStatus = async (id: string | number, status: 'active' | 'inactive'): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockUserService.updateUserStatus(Number(id), status)
   } else {

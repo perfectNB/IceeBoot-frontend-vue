@@ -16,7 +16,7 @@ export const mockMenus: MenuItem[] = [
     type: 'menu',
     sort: 1,
     requiresAuth: true,
-    permissions: ['dashboard:view']
+    permissions: []
   },
   {
     id: 2,
@@ -27,22 +27,10 @@ export const mockMenus: MenuItem[] = [
     type: 'menu',
     sort: 2,
     requiresAuth: true,
-    permissions: ['system'],
+    permissions: [],
     children: [
       {
-        id: 21,
-        title: '角色管理',
-        name: 'RoleManagement',
-        path: '/admin/system/role',
-        component: 'RoleManagement',
-        icon: 'UserFilled',
-        parentId: 2,
-        type: 'menu',
-        sort: 2,
-        requiresAuth: true,
-      },
-      {
-        id: 22,
+        id: 6,
         title: '用户管理',
         name: 'UserManagement',
         path: '/admin/system/user',
@@ -52,10 +40,23 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 1,
         requiresAuth: true,
+        permissions: []
       },
-
       {
-        id: 23,
+        id: 7,
+        title: '角色管理',
+        name: 'RoleManagement',
+        path: '/admin/system/role',
+        component: 'RoleManagement',
+        icon: 'UserFilled',
+        parentId: 2,
+        type: 'menu',
+        sort: 2,
+        requiresAuth: true,
+        permissions: []
+      },
+      {
+        id: 8,
         title: '权限管理',
         name: 'PermissionManagement',
         path: '/admin/system/permission',
@@ -65,9 +66,10 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 3,
         requiresAuth: true,
+        permissions: []
       },
       {
-        id: 24,
+        id: 9,
         title: '菜单管理',
         name: 'MenuManagement',
         path: '/admin/system/menu',
@@ -77,6 +79,20 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 4,
         requiresAuth: true,
+        permissions: []
+      },
+      {
+        id: 26,
+        title: '文件管理',
+        name: 'FileManagement',
+        path: '/admin/system/file',
+        component: 'FileManagement',
+        icon: 'Files',
+        parentId: 2,
+        type: 'menu',
+        sort: 5,
+        requiresAuth: true,
+        permissions: []
       }
     ]
   },
@@ -89,10 +105,10 @@ export const mockMenus: MenuItem[] = [
     type: 'menu',
     sort: 3,
     requiresAuth: true,
-    permissions: ['monitor'],
+    permissions: [],
     children: [
       {
-        id: 31,
+        id: 10,
         title: 'Redis管理',
         name: 'RedisManagement',
         path: '/admin/monitor/redis',
@@ -102,9 +118,10 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 1,
         requiresAuth: true,
+        permissions: []
       },
       {
-        id: 32,
+        id: 11,
         title: '接口文档',
         name: 'ApiDoc',
         path: '',
@@ -114,10 +131,11 @@ export const mockMenus: MenuItem[] = [
         type: 'link',
         sort: 2,
         requiresAuth: true,
-        link: 'https://www.baidu.com'
+        link: 'http://localhost:9000/iceeboot/api/doc.html#/home',
+        permissions: []
       },
       {
-        id: 33,
+        id: 12,
         title: '定时任务',
         name: 'ScheduledTask',
         path: '/admin/monitor/task',
@@ -127,9 +145,10 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 3,
         requiresAuth: true,
+        permissions: []
       },
       {
-        id: 34,
+        id: 13,
         title: '日志管理',
         name: 'LogManagement',
         path: '/admin/monitor/log',
@@ -138,7 +157,8 @@ export const mockMenus: MenuItem[] = [
         parentId: 3,
         type: 'menu',
         sort: 4,
-        requiresAuth: true
+        requiresAuth: true,
+        permissions: []
       }
     ]
   },
@@ -151,10 +171,10 @@ export const mockMenus: MenuItem[] = [
     type: 'menu',
     sort: 4,
     requiresAuth: true,
-    permissions: ['ai'],
+    permissions: [],
     children: [
       {
-        id: 41,
+        id: 14,
         title: '大模型管理',
         name: 'LLMManagement',
         path: '/admin/ai/llm',
@@ -164,10 +184,10 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 1,
         requiresAuth: true,
-        permissions: ['ai:llm']
+        permissions: []
       },
       {
-        id: 42,
+        id: 15,
         title: 'Agent管理',
         name: 'AgentManagement',
         path: '/admin/ai/agent',
@@ -177,10 +197,10 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 2,
         requiresAuth: true,
-        permissions: ['ai:agent']
+        permissions: []
       },
       {
-        id: 43,
+        id: 16,
         title: 'AI对话',
         name: 'AIChat',
         path: '/admin/ai/chat',
@@ -190,7 +210,59 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 3,
         requiresAuth: true,
-        permissions: ['ai:chat']
+        permissions: []
+      }
+    ]
+  },
+  {
+    id: 22,
+    title: '三方管理',
+    name: 'ThreePartyManagement',
+    path: '/admin/third',
+    icon: 'Watermelon',
+    type: 'menu',
+    sort: 5,
+    requiresAuth: true,
+    permissions: [],
+    children: [
+      {
+        id: 23,
+        title: 'OSS管理',
+        name: 'OSS',
+        path: '/admin/third/oss',
+        component: 'OSS',
+        icon: 'Cloudy',
+        parentId: 22,
+        type: 'menu',
+        sort: 1,
+        requiresAuth: true,
+        permissions: []
+      },
+      {
+        id: 24,
+        title: '邮件管理',
+        name: 'Email',
+        path: '/admin/third/email',
+        component: 'Email',
+        icon: 'Message',
+        parentId: 22,
+        type: 'menu',
+        sort: 2,
+        requiresAuth: true,
+        permissions: []
+      },
+      {
+        id: 25,
+        title: '短信管理',
+        name: 'SMS',
+        path: '/admin/third/sms',
+        component: 'SMS',
+        icon: 'MessageBox',
+        parentId: 22,
+        type: 'menu',
+        sort: 3,
+        requiresAuth: true,
+        permissions: []
       }
     ]
   },
@@ -201,12 +273,12 @@ export const mockMenus: MenuItem[] = [
     path: '/admin/codegen',
     icon: 'Document',
     type: 'menu',
-    sort: 5,
+    sort: 8,
     requiresAuth: true,
-    permissions: ['codegen'],
+    permissions: [],
     children: [
       {
-        id: 51,
+        id: 17,
         title: '前端增删改查',
         name: 'FrontendCrud',
         path: '/admin/codegen/frontend',
@@ -216,10 +288,10 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 1,
         requiresAuth: true,
-        permissions: ['codegen:frontend']
+        permissions: []
       },
       {
-        id: 52,
+        id: 18,
         title: '后端增删改查',
         name: 'BackendCrud',
         path: '/admin/codegen/backend',
@@ -229,10 +301,10 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 2,
         requiresAuth: true,
-        permissions: ['codegen:backend']
+        permissions: []
       },
       {
-        id: 53,
+        id: 19,
         title: '前端生成测试代码',
         name: 'Student',
         path: '/admin/codegen/student',
@@ -242,9 +314,8 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 3,
         requiresAuth: true,
-        permissions: ['codegen:student']
+        permissions: []
       }
     ]
-  },
-
+  }
 ]

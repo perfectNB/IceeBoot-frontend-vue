@@ -291,14 +291,14 @@ router.beforeEach(async (to, from, next) => {
     }
 
     // 检查权限
-    if (to.meta.permissions && Array.isArray(to.meta.permissions)) {
+    if (to.meta.permissions && Array.isArray(to.meta.permissions) && to.meta.permissions.length > 0) {
       const hasPermission = to.meta.permissions.some(permission =>
         userStore.hasPermission(permission)
       )
 
       if (!hasPermission) {
         ElMessage.error('您没有访问该页面的权限')
-        next('/')
+        next('/admin/dashboard') // 跳转到仪表板而不是首页，避免循环
         return
       }
     }

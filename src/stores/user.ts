@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { User, LoginForm, LoginResponse } from '@/types'
-import { login as apiLogin, getUserInfo as apiGetUserInfo } from '@/api'
+import { login as apiLogin, getUserInfo as apiGetUserInfo, getUserMenus } from '@/api'
 import { resetDynamicRoutes } from '@/router'
 
 export const useUserStore = defineStore('user', () => {
@@ -52,7 +52,9 @@ export const useUserStore = defineStore('user', () => {
       const response = await apiLogin(loginForm)
 
       setToken(response.accessToken)
-      setUser(response.user)
+      // 登录成功后，获取用户可见菜单并同步到用户信息中，供侧边栏使用
+      const menus = await getUserMenus()
+      setUser({ ...(response.user as User), menus } as User)
 
       return response
     } catch (error) {
@@ -74,8 +76,11 @@ export const useUserStore = defineStore('user', () => {
       // 统一使用 auth.ts 中的获取用户信息接口
       const response = await apiGetUserInfo()
       const userInfo = response.data
-      setUser(userInfo)
-      return userInfo
+      // 获取并合并菜单到用户信息
+      const menus = await getUserMenus()
+      const mergedUser = { ...(userInfo as User), menus } as User
+      setUser(mergedUser)
+      return mergedUser
     } catch (error) {
       throw error
     }

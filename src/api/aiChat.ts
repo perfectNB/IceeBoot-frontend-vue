@@ -240,8 +240,8 @@ export const streamIntelligentAiChat = async (
   onError?: (error: Error) => void
 ): Promise<void> => {
   try {
-    // 调用智能流API - 使用EventSource进行SSE连接
-    const response = await fetch(`${getBaseURL()}/api/v1/chat/intelligent/stream`, {
+    // 调用工具流API - 使用EventSource进行SSE连接，支持MCP工具调用
+    const response = await fetch(`${getBaseURL()}/api/v1/chat/tool/stream`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -293,13 +293,16 @@ export const streamIntelligentAiChat = async (
             const normalized = seg.replace(/[“”]/g, '"')
             try {
               const parsed = JSON.parse(normalized)
-              // 兼容两种返回格式：
+              // 兼容三种返回格式：
               // 1) { content: string, finished?: boolean }
               // 2) OpenAI风格 { choices: [{ delta: { content: string } }] }
+              // 3) { type: 'message', data: string }
               if (typeof parsed.content === 'string' && parsed.content.length > 0) {
                 onMessage(parsed.content)
               } else if (parsed.choices && parsed.choices[0]?.delta?.content) {
                 onMessage(parsed.choices[0].delta.content)
+              } else if (typeof parsed.data === 'string' && parsed.data.length > 0) {
+                onMessage(parsed.data)
               }
 
               if (parsed.finished === true) {
@@ -307,10 +310,18 @@ export const streamIntelligentAiChat = async (
                 return
               }
             } catch {
-              // 兜底：从非标准JSON中提取content字段
-              const match = normalized.match(/\"content\"\s*:\s*\"([\s\S]*?)\"/)
-              if (match && match[1] && match[1].length > 0) {
-                onMessage(match[1])
+              // 兜底：从非标准JSON中提取content或data字段，或直接输出纯文本
+              const matchContent = normalized.match(/\"content\"\s*:\s*\"([\s\S]*?)\"/)
+              if (matchContent && matchContent[1] && matchContent[1].length > 0) {
+                onMessage(matchContent[1])
+              } else {
+                const matchData = normalized.match(/\"data\"\s*:\s*\"([\s\S]*?)\"/)
+                if (matchData && matchData[1] && matchData[1].length > 0) {
+                  onMessage(matchData[1])
+                } else if (normalized && normalized !== '[DONE]') {
+                  // 纯文本数据（如：你好啊）
+                  onMessage(normalized)
+                }
               }
             }
           }

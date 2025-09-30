@@ -21,6 +21,12 @@ import { initTheme } from './utils/theme'
 // 控制台防护
 import consoleProtection from './utils/console-protection'
 
+// 性能监控
+import { initPerformanceMonitoring } from './utils/performance'
+
+// SEO初始化
+import { initSEO } from './utils/seo'
+
 const app = createApp(App)
 
 // 初始化主题
@@ -28,6 +34,9 @@ initTheme()
 
 // 启动控制台防护
 consoleProtection.start()
+
+// 初始化SEO配置
+initSEO()
 
 // 注册 Element Plus 图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
@@ -64,3 +73,8 @@ app.mount('#app')
 
 // 初始化应用状态
 // initApp()
+
+// 初始化性能监控
+if (import.meta.env.PROD) {
+  initPerformanceMonitoring()
+}

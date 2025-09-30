@@ -1,0 +1,50 @@
+# robots.txt for IceeBoot Management System
+# 二次开发脚手架 - SEO配置模板
+
+User-agent: *
+# 只允许访问主页
+Allow: /$
+
+# 禁止访问所有其他页面和目录
+Disallow: /admin/
+Disallow: /home/
+Disallow: /api/
+Disallow: /config/
+Disallow: /logs/
+Disallow: /temp/
+Disallow: /cache/
+
+# 禁止访问开发相关文件
+Disallow: /*.json$
+Disallow: /*.ts$
+Disallow: /*.vue$
+Disallow: /src/
+Disallow: /node_modules/
+Disallow: /.git/
+Disallow: /.vscode/
+Disallow: /dist/
+
+# 允许必要的静态资源
+Allow: /*.css$
+Allow: /*.js$
+Allow: /static/
+Allow: /assets/
+Allow: /favicon.ico
+
+# 站点地图位置
+Sitemap: https://iceeboot.yxycompany.com/sitemap.xml
+
+# 爬取延迟（秒）
+Crawl-delay: 1
+
+# 针对百度爬虫的特殊配置
+User-agent: Baiduspider
+Allow: /$
+Disallow: /
+Crawl-delay: 2
+
+# 针对Google爬虫的配置
+User-agent: Googlebot
+Allow: /$
+Disallow: /
+Crawl-delay: 1

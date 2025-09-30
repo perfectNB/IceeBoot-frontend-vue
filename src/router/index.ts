@@ -4,6 +4,7 @@ import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 import type { MenuItem } from '@/types'
 import { getUserMenus } from '@/api/menu'
+import { setSEO, getSEOConfigByPath, getFullUrl } from '@/utils/seo'
 
 // 导入布局组件
 const AdminLayout = () => import('@/layouts/AdminLayout.vue')
@@ -151,6 +152,7 @@ const baseRoutes: RouteRecordRaw[] = [
       requiresAuth: false
     }
   },
+
   {
     path: '/404',
     name: 'NotFound',
@@ -220,6 +222,7 @@ router.beforeEach(async (to, from, next) => {
   if (to.meta.title) {
     document.title = `${to.meta.title} - IceeBoot Admin`
   }
+
 
   // 获取token（会从localStorage恢复）
   const token = userStore.getToken()
@@ -305,6 +308,29 @@ router.beforeEach(async (to, from, next) => {
   }
 
   next()
+})
+
+// SEO处理 - 仅对主页进行SEO优化
+router.afterEach((to) => {
+  // 只对主页进行SEO处理，其他页面不被搜索引擎收录
+  if (to.path === '/') {
+    const seoConfig = getSEOConfigByPath(to.path)
+    const fullUrl = getFullUrl(to.path)
+    
+    setSEO({
+      ...seoConfig,
+      canonical: fullUrl,
+      og: {
+        ...seoConfig.og,
+        url: fullUrl
+      }
+    })
+  } else {
+    // 其他页面设置为不被搜索引擎收录
+    setSEO({
+      robots: 'noindex,nofollow'
+    })
+  }
 })
 
 // 路由错误处理

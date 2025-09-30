@@ -152,6 +152,15 @@ export const streamAiChat = async (
   onComplete?: () => void,
   onError?: (error: Error) => void
 ): Promise<void> => {
+  // 检查是否为mock模式
+  if (isMockEnabled()) {
+    // Mock模式下显示提示信息
+    const mockMessage = '现在处于mock模式，不能发起大模型对话或者mcp，请您前往gitee拉下代码自行配置'
+    onMessage(mockMessage)
+    onComplete?.()
+    return
+  }
+
   try {
     // 调用真实API - 使用EventSource进行SSE连接
     const response = await fetch(`${getBaseURL()}/api/v1/chat/stream`, {
@@ -239,6 +248,15 @@ export const streamIntelligentAiChat = async (
   onComplete?: () => void,
   onError?: (error: Error) => void
 ): Promise<void> => {
+  // 检查是否为mock模式
+  if (isMockEnabled()) {
+    // Mock模式下显示提示信息
+    const mockMessage = '现在处于mock模式，不能发起大模型对话或者mcp，请您前往gitee拉下代码自行配置'
+    onMessage(mockMessage)
+    onComplete?.()
+    return
+  }
+
   try {
     // 调用工具流API - 使用EventSource进行SSE连接，支持MCP工具调用
     const response = await fetch(`${getBaseURL()}/api/v1/chat/tool/stream`, {
@@ -339,15 +357,21 @@ export const streamIntelligentAiChat = async (
 }
 
 export const getAiChatMessages = async (sessionId: number, params: PageParams): Promise<PageResult<AiChatMessage>> => {
-  // 调用真实API
-  const requestParams = {
-    ...params,
-    sessionId: sessionId
+  if (isMockEnabled()) {
+    // 使用Mock数据
+    const mockResult = await MockChatService.getChatMessages(sessionId, params)
+    return mockResult
+  } else {
+    // 调用真实API
+    const requestParams = {
+      ...params,
+      sessionId: sessionId
+    }
+    const response = await request.get<{result: PageResult<AiChatMessage>}>(`/api/v1/chat/message`, requestParams)
+    const apiResponse = response as unknown as {code: number, message: string, result: PageResult<AiChatMessage>, success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('获取AI聊天消息列表响应数据格式错误')
+    }
+    return apiResponse.result
   }
-  const response = await request.get<{result: PageResult<AiChatMessage>}>(`/api/v1/chat/message`, requestParams)
-  const apiResponse = response as unknown as {code: number, message: string, result: PageResult<AiChatMessage>, success: boolean}
-  if (!apiResponse || !apiResponse.result) {
-    throw new Error('获取AI聊天消息列表响应数据格式错误')
-  }
-  return apiResponse.result
 }

@@ -21,7 +21,12 @@ export const login = async (data: LoginForm): Promise<LoginResponse> => {
 
 // 登出接口
 export const logout = () => {
-  return request.post('/api/v1/auth/logout')
+  if (isMockEnabled()) {
+    // Mock模式：直接返回成功响应，不调用真实接口
+    return Promise.resolve({ success: true, message: '退出登录成功' })
+  } else {
+    return request.post('/api/v1/auth/logout')
+  }
 }
 
 // 获取用户信息

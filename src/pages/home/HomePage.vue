@@ -164,14 +164,16 @@
 
     <!-- 登录对话框 -->
     <LoginDialog v-model="showLoginDialog" @success="handleLoginSuccess" />
-    
+
     <!-- Mock模式提示对话框 -->
     <el-dialog
       v-model="showMockDialog"
       title="系统提示"
-      width="500px"
+      width="90%"
       :close-on-click-modal="false"
       class="mock-dialog"
+      center
+      :style="{ maxWidth: '500px' }"
     >
       <div class="mock-dialog-content">
         <div class="mock-icon">
@@ -180,10 +182,10 @@
         <div class="mock-text">
           <h3>当前处于Mock模式</h3>
           <p>系统正在使用模拟数据进行演示，所有数据均为测试数据，不代表真实业务数据。</p>
-          <p>如需体验完整功能，请访问我们的 
+          <p>如需体验完整功能，请访问我们的
             <a href="https://gitee.com/woshinibaba438cnmlgb/zboot-backend-java" target="_blank" class="gitee-link">
               Gitee仓库
-            </a> 
+            </a>
             获取完整项目代码。
           </p>
         </div>
@@ -200,9 +202,11 @@
     <el-dialog
       v-model="showContactDialog"
       title="联系我们"
-      width="800px"
+      width="90%"
       :close-on-click-modal="false"
       class="contact-dialog"
+      center
+      :style="{ maxWidth: '800px' }"
     >
       <div class="contact-dialog-content">
         <div class="contact-intro">
@@ -244,14 +248,14 @@ import {
   Sunny,
   Monitor,
   Lightning,
-  ChatDotRound, // eslint-disable-line
-  User, // eslint-disable-line
+  ChatDotRound,
+  User,
   Upload, // eslint-disable-line
-  Cellphone, // eslint-disable-line
+  Cellphone,
   Search, // eslint-disable-line
-  Iphone, // eslint-disable-line
-  Platform, // eslint-disable-line
-  Warning // eslint-disable-line
+  Iphone,
+  Platform,
+  Warning
 } from '@element-plus/icons-vue'
 import { isDark, toggleTheme } from '@/utils/theme'
 import LoginDialog from '../../components/common/LoginDialog.vue'
@@ -280,35 +284,35 @@ const socialPlatforms = [
     description: '关注我们的B站账号',
     icon: 'fab fa-bilibili',
     color: '#00A1D6',
-    qrCode: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iIzAwQTFENiIvPjx0ZXh0IHg9Ijc1IiB5PSI3NSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuWTlOWTqeWTlDwvdGV4dD48L3N2Zz4='
+    qrCode: new URL('@/assets/img/qr-code/bilibili.png', import.meta.url).href
   },
   {
     name: '抖音',
     description: '关注我们的抖音账号',
     icon: 'fab fa-tiktok',
     color: '#FE2C55',
-    qrCode: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI0ZFMkM1NSIvPjx0ZXh0IHg9Ijc1IiB5PSI3NSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE4IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuaKlumdojwvdGV4dD48L3N2Zz4='
+    qrCode: new URL('@/assets/img/qr-code/dy.png', import.meta.url).href
   },
   {
     name: '小红书',
     description: '关注我们的小红书账号',
     icon: 'fas fa-book',
     color: '#FF2442',
-    qrCode: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iI0ZGMjQ0MiIvPjx0ZXh0IHg9Ijc1IiB5PSI3NSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuWwj+e6ouS5pjwvdGV4dD48L3N2Zz4='
+    qrCode: new URL('@/assets/img/qr-code/xhs.png', import.meta.url).href
   },
   {
     name: '微信',
     description: '添加我们的微信',
     icon: 'fab fa-weixin',
     color: '#07C160',
-    qrCode: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iIzA3QzE2MCIvPjx0ZXh0IHg9Ijc1IiB5PSI3NSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE4IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuW+ruS/oDwvdGV4dD48L3N2Zz4='
+    qrCode: new URL('@/assets/img/qr-code/wx.png', import.meta.url).href
   },
   {
     name: 'QQ',
     description: '添加我们的QQ',
     icon: 'fab fa-qq',
     color: '#12B7F5',
-    qrCode: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iIzEyQjdGNSIvPjx0ZXh0IHg9Ijc1IiB5PSI3NSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjI0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPFFRPC90ZXh0Pjwvc3ZnPg=='
+    qrCode: new URL('@/assets/img/qr-code/qq.png', import.meta.url).href
   },
   {
     name: '微信群',
@@ -1044,6 +1048,19 @@ onMounted(() => {
 
 // Mock对话框样式
 .mock-dialog {
+  :deep(.el-dialog) {
+    margin: 0 auto;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+
+    @media (max-width: 768px) {
+      width: 95% !important;
+      margin: 0;
+    }
+  }
+
   .el-dialog__header {
     text-align: center;
     padding-bottom: 10px;
@@ -1051,6 +1068,10 @@ onMounted(() => {
 
   .el-dialog__body {
     padding: 20px 30px;
+
+    @media (max-width: 768px) {
+      padding: 15px 20px;
+    }
   }
 }
 
@@ -1097,10 +1118,28 @@ onMounted(() => {
     display: flex;
     justify-content: center;
     gap: 16px;
+
+    @media (max-width: 768px) {
+      flex-wrap: wrap;
+      gap: 12px;
+    }
   }
 
   // 联系我们对话框样式
   .contact-dialog {
+    :deep(.el-dialog) {
+      margin: 0 auto;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+
+      @media (max-width: 768px) {
+        width: 95% !important;
+        margin: 0;
+      }
+    }
+
     .el-dialog__header {
       text-align: center;
       padding-bottom: 10px;
@@ -1109,6 +1148,10 @@ onMounted(() => {
 
     .el-dialog__body {
       padding: 30px;
+
+      @media (max-width: 768px) {
+        padding: 20px 15px;
+      }
     }
   }
 
@@ -1139,6 +1182,13 @@ onMounted(() => {
     max-height: 400px;
     overflow-y: auto;
     padding: 10px;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+      gap: 15px;
+      max-height: 350px;
+      padding: 5px;
+    }
   }
 
   .qr-code-item {
@@ -1150,6 +1200,10 @@ onMounted(() => {
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
+
+    @media (max-width: 768px) {
+      padding: 15px;
+    }
 
     &::before {
       content: '';
@@ -1190,6 +1244,11 @@ onMounted(() => {
       border-radius: 8px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
       transition: transform 0.3s ease;
+
+      @media (max-width: 768px) {
+        width: 100px;
+        height: 100px;
+      }
     }
   }
 
@@ -1198,6 +1257,10 @@ onMounted(() => {
     align-items: center;
     justify-content: center;
     gap: 12px;
+
+    @media (max-width: 768px) {
+      gap: 8px;
+    }
   }
 
   .platform-icon {
@@ -1211,6 +1274,12 @@ onMounted(() => {
     font-size: 18px;
     transition: all 0.3s ease;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+
+    @media (max-width: 768px) {
+      width: 35px;
+      height: 35px;
+      font-size: 16px;
+    }
   }
 
   .platform-details {
@@ -1221,6 +1290,10 @@ onMounted(() => {
       font-size: 16px;
       font-weight: 600;
       margin: 0 0 4px 0;
+
+      @media (max-width: 768px) {
+        font-size: 14px;
+      }
     }
 
     p {
@@ -1228,6 +1301,10 @@ onMounted(() => {
       font-size: 12px;
       margin: 0;
       line-height: 1.4;
+
+      @media (max-width: 768px) {
+        font-size: 11px;
+      }
     }
   }
 
@@ -1265,59 +1342,5 @@ onMounted(() => {
       display: none;
     }
   }
-
-  .mock-dialog {
-      .el-dialog {
-        width: 90% !important;
-        margin: 0 auto;
-      }
-    }
-
-    .contact-dialog {
-      .el-dialog {
-        width: 95% !important;
-        margin: 0 auto;
-      }
-
-      .el-dialog__body {
-        padding: 20px 15px;
-      }
-    }
-
-    .qr-codes-grid {
-      grid-template-columns: 1fr;
-      gap: 15px;
-      max-height: 350px;
-      padding: 5px;
-    }
-
-    .qr-code-item {
-      padding: 15px;
-
-      .qr-code-image img {
-        width: 100px;
-        height: 100px;
-      }
-
-      .platform-info {
-        gap: 8px;
-      }
-
-      .platform-icon {
-        width: 35px;
-        height: 35px;
-        font-size: 16px;
-      }
-
-      .platform-details {
-        h4 {
-          font-size: 14px;
-        }
-
-        p {
-          font-size: 11px;
-        }
-      }
-    }
   }
 </style>

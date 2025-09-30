@@ -27,6 +27,7 @@ export const mockPermissions: Permission[] = [
     parentId: null,
     path: '/admin/system',
     description: '系统管理模块',
+    sort: 2,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -39,6 +40,7 @@ export const mockPermissions: Permission[] = [
     parentId: '2',
     path: '/admin/system/user',
     description: '用户管理页面',
+    sort: 3,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -50,6 +52,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '3',
     description: '查看用户权限',
+    sort: 4,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -61,6 +64,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '3',
     description: '新增用户按钮权限',
+    sort: 5,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -72,6 +76,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '3',
     description: '编辑用户按钮权限',
+    sort: 6,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -83,6 +88,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '3',
     description: '删除用户按钮权限',
+    sort: 7,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -96,6 +102,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/users',
     method: 'GET',
     description: '获取用户列表接口',
+    sort: 8,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -109,6 +116,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/users',
     method: 'POST',
     description: '创建用户接口',
+    sort: 9,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -122,6 +130,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/users/{id}',
     method: 'PUT',
     description: '更新用户接口',
+    sort: 10,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -135,6 +144,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/users/{id}',
     method: 'DELETE',
     description: '删除用户接口',
+    sort: 11,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -147,6 +157,7 @@ export const mockPermissions: Permission[] = [
     parentId: '2',
     path: '/admin/system/role',
     description: '角色管理页面',
+    sort: 1,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -158,6 +169,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '12',
     description: '查看角色权限',
+    sort: 2,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -169,6 +181,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '12',
     description: '新增角色按钮权限',
+    sort: 3,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -180,6 +193,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '12',
     description: '编辑角色按钮权限',
+    sort: 4,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -191,6 +205,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '12',
     description: '删除角色按钮权限',
+    sort: 5,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -203,6 +218,7 @@ export const mockPermissions: Permission[] = [
     parentId: '2',
     path: '/admin/system/permission',
     description: '权限管理页面',
+    sort: 6,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -214,6 +230,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '17',
     description: '查看权限权限',
+    sort: 7,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -225,6 +242,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '17',
     description: '新增权限按钮权限',
+    sort: 8,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -236,6 +254,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '17',
     description: '编辑权限按钮权限',
+    sort: 9,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -247,6 +266,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '17',
     description: '删除权限按钮权限',
+    sort: 10,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -259,6 +279,7 @@ export const mockPermissions: Permission[] = [
     parentId: '2',
     path: '/admin/system/menu',
     description: '菜单管理页面',
+    sort: 11,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -270,6 +291,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '22',
     description: '查看菜单权限',
+    sort: 12,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -281,6 +303,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '22',
     description: '新增菜单按钮权限',
+    sort: 13,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -292,6 +315,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '22',
     description: '编辑菜单按钮权限',
+    sort: 14,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -303,6 +327,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '22',
     description: '删除菜单按钮权限',
+    sort: 15,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -316,6 +341,7 @@ export const mockPermissions: Permission[] = [
     parentId: null,
     path: '/admin/monitor',
     description: '系统监控模块',
+    sort: 16,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -329,6 +355,7 @@ export const mockPermissions: Permission[] = [
     parentId: '27',
     path: '/admin/monitor/redis',
     description: 'Redis管理页面',
+    sort: 17,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -340,6 +367,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '28',
     description: '查看Redis权限',
+    sort: 18,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -351,6 +379,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '28',
     description: '删除Redis键权限',
+    sort: 19,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -364,6 +393,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/redis/keys',
     method: 'GET',
     description: 'Redis查询接口',
+    sort: 20,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -377,6 +407,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/redis/keys/{key}',
     method: 'DELETE',
     description: 'Redis删除接口',
+    sort: 21,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -390,6 +421,7 @@ export const mockPermissions: Permission[] = [
     parentId: '27',
     path: '/admin/monitor/api-doc',
     description: '接口文档页面',
+    sort: 22,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -403,6 +435,7 @@ export const mockPermissions: Permission[] = [
     parentId: '27',
     path: '/admin/monitor/task',
     description: '定时任务页面',
+    sort: 23,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -414,6 +447,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '34',
     description: '查看定时任务权限',
+    sort: 24,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -425,6 +459,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '34',
     description: '新增定时任务权限',
+    sort: 25,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -436,6 +471,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '34',
     description: '编辑定时任务权限',
+    sort: 26,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -447,6 +483,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '34',
     description: '删除定时任务权限',
+    sort: 27,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -458,6 +495,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '34',
     description: '启动定时任务权限',
+    sort: 28,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -469,6 +507,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '34',
     description: '停止定时任务权限',
+    sort: 29,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -482,6 +521,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/tasks',
     method: 'GET',
     description: '获取定时任务列表接口',
+    sort: 30,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -495,6 +535,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/tasks',
     method: 'POST',
     description: '创建定时任务接口',
+    sort: 31,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -508,6 +549,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/tasks/{id}',
     method: 'PUT',
     description: '更新定时任务接口',
+    sort: 32,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -521,6 +563,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/tasks/{id}',
     method: 'DELETE',
     description: '删除定时任务接口',
+    sort: 33,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -534,6 +577,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/tasks/{id}/start',
     method: 'POST',
     description: '启动定时任务接口',
+    sort: 34,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -547,6 +591,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/tasks/{id}/stop',
     method: 'POST',
     description: '停止定时任务接口',
+    sort: 35,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -560,6 +605,7 @@ export const mockPermissions: Permission[] = [
     parentId: '27',
     path: '/admin/monitor/log',
     description: '日志管理页面',
+    sort: 36,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -571,6 +617,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '47',
     description: '查看日志权限',
+    sort: 37,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -582,6 +629,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '47',
     description: '删除日志权限',
+    sort: 38,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -595,6 +643,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/logs',
     method: 'GET',
     description: '获取日志列表接口',
+    sort: 39,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -608,6 +657,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/logs/{id}',
     method: 'DELETE',
     description: '删除日志接口',
+    sort: 40,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -621,6 +671,7 @@ export const mockPermissions: Permission[] = [
     parentId: null,
     path: '/admin/ai',
     description: 'AI管理模块',
+    sort: 41,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -634,6 +685,7 @@ export const mockPermissions: Permission[] = [
     parentId: '52',
     path: '/admin/ai/llm',
     description: '大模型管理页面',
+    sort: 42,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -645,6 +697,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '53',
     description: '查看大模型权限',
+    sort: 43,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -656,6 +709,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '53',
     description: '新增大模型按钮权限',
+    sort: 44,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -667,6 +721,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '53',
     description: '编辑大模型按钮权限',
+    sort: 45,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -678,6 +733,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '53',
     description: '删除大模型按钮权限',
+    sort: 46,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -689,6 +745,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '53',
     description: '管理模型Key权限',
+    sort: 47,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -702,6 +759,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/ai/llm',
     method: 'GET',
     description: '获取大模型列表接口',
+    sort: 48,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -715,6 +773,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/ai/llm',
     method: 'POST',
     description: '创建大模型接口',
+    sort: 49,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -728,6 +787,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/ai/llm/{id}',
     method: 'PUT',
     description: '更新大模型接口',
+    sort: 50,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -741,6 +801,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/ai/llm/{id}',
     method: 'DELETE',
     description: '删除大模型接口',
+    sort: 51,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -754,6 +815,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/ai/llm/{id}/keys',
     method: 'POST',
     description: '添加模型Key接口',
+    sort: 52,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -767,6 +829,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/ai/llm/{id}/keys/{keyId}',
     method: 'DELETE',
     description: '删除模型Key接口',
+    sort: 53,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -780,6 +843,7 @@ export const mockPermissions: Permission[] = [
     parentId: '52',
     path: '/admin/ai/agent',
     description: 'Agent管理页面',
+    sort: 54,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -791,6 +855,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '65',
     description: '查看Agent权限',
+    sort: 55,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -802,6 +867,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '65',
     description: '新增Agent按钮权限',
+    sort: 56,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -813,6 +879,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '65',
     description: '编辑Agent按钮权限',
+    sort: 57,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -824,6 +891,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '65',
     description: '删除Agent按钮权限',
+    sort: 58,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -837,6 +905,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/ai/agent',
     method: 'GET',
     description: '获取Agent列表接口',
+    sort: 59,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -850,6 +919,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/ai/agent',
     method: 'POST',
     description: '创建Agent接口',
+    sort: 60,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -863,6 +933,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/ai/agent/{id}',
     method: 'PUT',
     description: '更新Agent接口',
+    sort: 61,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -876,6 +947,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/ai/agent/{id}',
     method: 'DELETE',
     description: '删除Agent接口',
+    sort: 62,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -889,6 +961,7 @@ export const mockPermissions: Permission[] = [
     parentId: '52',
     path: '/admin/ai/chat',
     description: 'AI对话页面',
+    sort: 63,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -900,6 +973,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '74',
     description: '查看对话权限',
+    sort: 64,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -911,6 +985,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '74',
     description: '创建对话权限',
+    sort: 65,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -922,6 +997,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '74',
     description: '发送消息权限',
+    sort: 66,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -933,6 +1009,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '74',
     description: '删除对话权限',
+    sort: 67,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -946,6 +1023,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/ai/chat/sessions',
     method: 'GET',
     description: '获取对话列表接口',
+    sort: 68,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -959,6 +1037,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/ai/chat/sessions',
     method: 'POST',
     description: '创建对话接口',
+    sort: 69,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -972,6 +1051,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/ai/chat/sessions/{id}/messages',
     method: 'POST',
     description: '发送消息接口',
+    sort: 70,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -985,6 +1065,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/ai/chat/sessions/{id}',
     method: 'DELETE',
     description: '删除对话接口',
+    sort: 71,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -998,6 +1079,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/ai/chat/models',
     method: 'GET',
     description: '获取可用模型接口',
+    sort: 72,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -1011,6 +1093,7 @@ export const mockPermissions: Permission[] = [
     path: '/api/v1/ai/chat/stream',
     method: 'POST',
     description: '流式对话接口',
+    sort: 73,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -1024,6 +1107,7 @@ export const mockPermissions: Permission[] = [
     parentId: null,
     path: '/admin/codegen',
     description: '代码生成模块',
+    sort: 74,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -1037,6 +1121,7 @@ export const mockPermissions: Permission[] = [
     parentId: '85',
     path: '/admin/codegen/frontend',
     description: '前端增删改查页面',
+    sort: 75,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -1048,6 +1133,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '86',
     description: '查看前端代码生成权限',
+    sort: 76,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -1059,6 +1145,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '86',
     description: '生成前端代码权限',
+    sort: 77,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -1072,6 +1159,7 @@ export const mockPermissions: Permission[] = [
     parentId: '85',
     path: '/admin/codegen/backend',
     description: '后端增删改查页面',
+    sort: 78,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -1083,6 +1171,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '89',
     description: '查看后端代码生成权限',
+    sort: 79,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -1094,6 +1183,7 @@ export const mockPermissions: Permission[] = [
     type: 'button',
     parentId: '89',
     description: '生成后端代码权限',
+    sort: 80,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
@@ -1106,6 +1196,7 @@ export const mockPermissions: Permission[] = [
     parentId: '85',
     path: '/admin/codegen/student',
     description: '前端生成测试代码',
+    sort: 81,
     status: 'active',
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'

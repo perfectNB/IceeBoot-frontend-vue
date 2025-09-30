@@ -2,9 +2,11 @@
   <el-dialog
     v-model="dialogVisible"
     title="用户登录"
-    width="400px"
+    width="500px"
     :before-close="handleClose"
     class="login-dialog"
+    center
+    :modal-class="'custom-modal'"
   >
     <div class="login-content">
       <!-- 登录方式切换 -->
@@ -278,45 +280,77 @@ watch(dialogVisible, (visible) => {
 <style scoped lang="scss">
 .login-dialog {
   :deep(.el-dialog) {
-    border-radius: 16px;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    max-width: 480px;
+    border-radius: 20px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
     background: var(--bg-color);
     backdrop-filter: blur(20px);
     border: 1px solid var(--border-extra-light);
+    overflow: hidden;
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary-color), var(--success-color), var(--info-color));
+    }
   }
 
   :deep(.el-dialog__header) {
     text-align: center;
-    padding: 30px 30px 0;
-    border-bottom: none;
+    padding: 35px 30px 25px;
+    border-bottom: 1px solid var(--border-extra-light);
+    background: linear-gradient(135deg, var(--bg-color) 0%, var(--bg-color-page) 100%);
+    position: relative;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 2px;
+      background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+      border-radius: 1px;
+    }
 
     .el-dialog__title {
-      font-size: 24px;
+      font-size: 26px;
       font-weight: 700;
       color: var(--text-primary);
       background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      margin-bottom: 8px;
     }
   }
 
   :deep(.el-dialog__body) {
-    padding: 20px 30px 30px;
+    padding: 30px;
+    background: var(--bg-color);
   }
 
   :deep(.el-dialog__headerbtn) {
     top: 20px;
     right: 20px;
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border-radius: 50%;
     background: var(--bg-color-page);
     transition: all var(--transition-duration);
+    border: 1px solid var(--border-extra-light);
 
     &:hover {
       background: var(--danger-color);
-      transform: rotate(90deg);
+      transform: rotate(90deg) scale(1.1);
+      border-color: var(--danger-color);
+      box-shadow: 0 4px 12px rgba(245, 108, 108, 0.3);
 
       .el-dialog__close {
         color: #ffffff;
@@ -328,10 +362,11 @@ watch(dialogVisible, (visible) => {
 .login-content {
   .login-tabs {
     :deep(.el-tabs__header) {
-      margin-bottom: 30px;
+      margin-bottom: 35px;
       background: var(--bg-color-page);
-      border-radius: 12px;
-      padding: 4px;
+      border-radius: 16px;
+      padding: 6px;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
     }
 
     :deep(.el-tabs__nav-wrap::after) {
@@ -341,14 +376,34 @@ watch(dialogVisible, (visible) => {
     :deep(.el-tabs__item) {
       font-size: 16px;
       font-weight: 600;
-      border-radius: 8px;
-      margin: 0 2px;
+      border-radius: 12px;
+      margin: 0 3px;
+      padding: 12px 20px;
       transition: all var(--transition-duration);
+      position: relative;
+      overflow: hidden;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        transition: left 0.6s;
+      }
+
+      &:hover::before {
+        left: 100%;
+      }
 
       &.is-active {
-        background: var(--bg-color);
+        background: linear-gradient(135deg, var(--bg-color), var(--border-extra-light));
         color: var(--primary-color);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border: 1px solid var(--border-lighter);
+        transform: translateY(-1px);
       }
     }
 
@@ -360,46 +415,107 @@ watch(dialogVisible, (visible) => {
 
 .login-form {
   .el-form-item {
-    margin-bottom: 24px;
+    margin-bottom: 28px;
+    position: relative;
   }
 
   :deep(.el-input) {
     .el-input__wrapper {
-      border-radius: 12px;
+      border-radius: 14px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-      border: 1px solid var(--border-lighter);
+      border: 2px solid var(--border-lighter);
       transition: all var(--transition-duration);
+      padding: 4px 16px;
+      background: var(--bg-color);
+      position: relative;
+      overflow: hidden;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(64, 158, 255, 0.05), transparent);
+        transition: left 0.6s;
+      }
 
       &:hover {
         border-color: var(--primary-light);
-        box-shadow: 0 4px 12px rgba(64, 158, 255, 0.1);
+        box-shadow: 0 6px 16px rgba(64, 158, 255, 0.15);
+        transform: translateY(-1px);
+
+        &::before {
+          left: 100%;
+        }
       }
 
       &.is-focus {
         border-color: var(--primary-color);
-        box-shadow: 0 4px 12px rgba(64, 158, 255, 0.2);
+        box-shadow: 0 8px 20px rgba(64, 158, 255, 0.25);
+        transform: translateY(-2px);
       }
+
+      .el-input__inner {
+        font-size: 15px;
+        font-weight: 500;
+      }
+    }
+
+    .el-input__prefix {
+      .el-icon {
+        font-size: 18px;
+        color: var(--text-secondary);
+        transition: color var(--transition-duration);
+      }
+    }
+
+    &:hover .el-input__prefix .el-icon {
+      color: var(--primary-color);
     }
   }
 
   .login-btn {
     width: 100%;
-    height: 48px;
+    height: 52px;
     font-size: 16px;
-    font-weight: 600;
-    border-radius: 12px;
+    font-weight: 700;
+    border-radius: 14px;
     background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
     border: none;
-    box-shadow: 0 4px 12px rgba(64, 158, 255, 0.3);
+    box-shadow: 0 6px 16px rgba(64, 158, 255, 0.3);
     transition: all var(--transition-duration);
+    position: relative;
+    overflow: hidden;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.6s;
+    }
 
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(64, 158, 255, 0.4);
+      transform: translateY(-3px);
+      box-shadow: 0 12px 24px rgba(64, 158, 255, 0.4);
+
+      &::before {
+        left: 100%;
+      }
     }
 
     &:active {
-      transform: translateY(0);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(64, 158, 255, 0.3);
+    }
+
+    &.is-loading {
+      transform: none;
     }
   }
 }

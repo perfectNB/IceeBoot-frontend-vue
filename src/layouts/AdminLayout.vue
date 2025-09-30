@@ -98,10 +98,10 @@
                   <el-icon><User /></el-icon>
                   个人中心
                 </el-dropdown-item>
-                <el-dropdown-item command="settings">
-                  <el-icon><Setting /></el-icon>
-                  系统设置
-                </el-dropdown-item>
+<!--                <el-dropdown-item command="settings">-->
+<!--                  <el-icon><Setting /></el-icon>-->
+<!--                  系统设置-->
+<!--                </el-dropdown-item>-->
                 <el-dropdown-item divided command="logout">
                   <el-icon><SwitchButton /></el-icon>
                   退出登录

@@ -3,6 +3,7 @@
 import type { ChatSession, ChatMessage, LLMModel, PageParams, PageResult } from '@/types'
 import { mockChatSessions, llmApiConfigs } from '../data/chat'
 import { mockLLMModels } from '../data'
+import type { AiChatMessage } from '@/api/aiChat'
 
 export class MockChatService {
 
@@ -106,6 +107,43 @@ export class MockChatService {
     session.updateTime = new Date().toISOString()
     
     return aiMessage
+  }
+
+  // 获取对话消息列表
+  static getChatMessages(sessionId: number, params: PageParams): PageResult<AiChatMessage> {
+    const session = mockChatSessions.find(s => s.id === sessionId)
+    
+    if (!session) {
+      throw new Error(`对话会话不存在: ${sessionId}`)
+    }
+    
+    const { pageNum = 1, pageSize = 20 } = params
+    const messages = session.messages || []
+    
+    const total = messages.length
+    const start = (pageNum - 1) * pageSize
+    const end = start + pageSize
+    const records = messages.slice(start, end).map(msg => ({
+      id: typeof msg.id === 'string' ? parseInt(msg.id) : msg.id,
+      sessionId: typeof sessionId === 'string' ? parseInt(sessionId) : sessionId,
+      role: msg.role,
+      content: msg.content,
+      timestamp: msg.timestamp,
+      userId: 1,
+      createTime: msg.timestamp,
+      updateTime: msg.timestamp
+    }))
+    const pages = Math.ceil(total / pageSize)
+    
+    return {
+      records,
+      total,
+      current: pageNum,
+      size: pageSize,
+      pages,
+      hasPrevious: pageNum > 1,
+      hasNext: pageNum < pages
+    }
   }
 
   // 获取可用的大模型列表

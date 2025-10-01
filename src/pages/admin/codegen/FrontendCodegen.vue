@@ -578,10 +578,7 @@ ${createButton}
         <el-icon><Delete /></el-icon>
         批量删除
       </el-button>
-      <el-button @click="handleExport">
-        <el-icon><Download /></el-icon>
-        导出
-      </el-button>
+
     </div>
 
     <!-- 搜索区域 -->
@@ -728,6 +725,8 @@ ${searchableFields.map(field => `      ${field.englishName}: searchForm.${field.
     })
     ${entityNameLower}List.value = result.records
     total.value = result.total
+    currentPage.value = result.current
+    pageSize.value = result.size
   } catch (error) {
     console.error('加载数据失败:', error)
     ElMessage.error('加载数据失败')
@@ -873,6 +872,7 @@ const handleSelectionChange = (selection: ${entityName}[]) => {
 // 分页大小变更
 const handleSizeChange = (size: number) => {
   pageSize.value = size
+  currentPage.value = 1
   loadData()
 }
 
@@ -1066,18 +1066,25 @@ ${fields.value.filter(f => f.searchable).map(field =>
       )
     }
 
+    // 分页参数默认值
+    const pageNum = params.pageNum || 1
+    const pageSize = params.pageSize || 10
+
     // 分页
     const total = filteredList.length
-    const start = (params.page - 1) * params.size
-    const end = start + params.size
-    const list = filteredList.slice(start, end)
+    const start = (pageNum - 1) * pageSize
+    const end = start + pageSize
+    const records = filteredList.slice(start, end)
+    const pages = Math.ceil(total / pageSize)
 
     return {
-      list,
+      records,
       total,
-      current: params.pageNum,
-      size: params.pageSize,
-      pages: Math.ceil(total / params.size)
+      current: pageNum,
+      size: pageSize,
+      pages,
+      hasPrevious: pageNum > 1,
+      hasNext: pageNum < pages
     }
   }
 
@@ -1162,7 +1169,21 @@ ${fields.value.map(field => {
     return updatedItem
   }
 
-  // 删除${configForm.pageTitle.replace('管理', '')}
+  // 删除${configForm.pageTitle.replace('管理', '')}（批量删除）
+  static async delete${entityName}s(ids: number[]): Promise<boolean> {
+    await mockDelay()
+    mockLog('批量删除${configForm.pageTitle.replace('管理', '')}', { ids })
+
+    ids.forEach(id => {
+      const index = mock${entityName}s.findIndex(r => r.id === id)
+      if (index !== -1) {
+        mock${entityName}s.splice(index, 1)
+      }
+    })
+    return true
+  }
+
+  // 删除单个${configForm.pageTitle.replace('管理', '')}（兼容性保留）
   static async delete${entityName}(id: number): Promise<boolean> {
     await mockDelay()
     mockLog('删除${configForm.pageTitle.replace('管理', '')}', { id })
@@ -1185,55 +1206,73 @@ const generateApiCode = (): string => {
   const apiMethods = selectedApis.value.map(api => {
     if (api === 'list') {
       return `// 获取${configForm.pageTitle.replace('管理', '')}列表
-export const get${entityName}List = async (params?: PageParams): Promise<PageResult<${entityName}>> => {
+export const get${entityName}List = async (params: PageParams): Promise<PageResult<${entityName}>> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    const mock${entityName}s = await Mock${entityName}Service.get${entityName}List(params || { pageNum: 1, pageSize: 20 })
-    return mock${entityName}s
+    return await Mock${entityName}Service.get${entityName}List(params)
   } else {
     // 调用真实API
-    const response = await request.get<PageResult<${entityName}>>('/api/v1/${entityNameLower}', params || { pageNum: 1, pageSize: 20 })
-    return response.data
+    const response = await request.get<{result: PageResult<${entityName}>}>('/api/v1/${entityNameLower}', params)
+    const apiResponse = response as unknown as {code: number, message: string, result: PageResult<${entityName}>, success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('获取${configForm.pageTitle.replace('管理', '')}列表响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }`
     } else if (api === 'create') {
       return `// 创建${configForm.pageTitle.replace('管理', '')}
-export const create${entityName} = async (data: Partial<${entityName}>): Promise<${entityName}> => {
+export const create${entityName} = async (data: Partial<${entityName}>): Promise<void> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    const result = await Mock${entityName}Service.create${entityName}(data)
-    return result
+    await Mock${entityName}Service.create${entityName}(data)
   } else {
     // 调用真实API
-    const response = await request.post<${entityName}>('/api/v1/${entityNameLower}', data)
-    return response.data
+    const response = await request.post('/api/v1/${entityNameLower}', data)
+    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
+    if (!apiResponse || !apiResponse.success) {
+      throw new Error('创建${configForm.pageTitle.replace('管理', '')}失败')
+    }
   }
 }`
     } else if (api === 'update') {
       return `// 更新${configForm.pageTitle.replace('管理', '')}
-export const update${entityName} = async (id: string | number, data: Partial<${entityName}>): Promise<${entityName}> => {
+export const update${entityName} = async (id: string | number, data: Partial<${entityName}>): Promise<void> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    const result = await Mock${entityName}Service.update${entityName}(Number(id), data)
-    return result
+    await Mock${entityName}Service.update${entityName}(Number(id), data)
   } else {
     // 调用真实API
-    const response = await request.put<${entityName}>('/api/v1/${entityNameLower}/' + id, data)
-    return response.data
+    const requestData = { ...data, id }
+    const response = await request.put('/api/v1/${entityNameLower}', requestData)
+    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
+    if (!apiResponse || !apiResponse.success) {
+      throw new Error('更新${configForm.pageTitle.replace('管理', '')}失败')
+    }
   }
 }`
     } else if (api === 'delete') {
-      return `// 删除${configForm.pageTitle.replace('管理', '')}
-export const delete${entityName} = async (id: string | number): Promise<boolean> => {
+      return `// 删除${configForm.pageTitle.replace('管理', '')}（批量删除）
+export const delete${entityName}s = async (ids: (string | number)[]): Promise<boolean> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    await Mock${entityName}Service.delete${entityName}(Number(id))
-    return true
+    return await Mock${entityName}Service.delete${entityName}s(ids.map(Number))
   } else {
     // 调用真实API
-    await request.delete('/api/v1/${entityNameLower}/' + id)
+    const response = await request.delete('/api/v1/${entityNameLower}', {}, {
+      data: ids.map(Number)
+    })
+    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
+    if (!apiResponse || !apiResponse.success) {
+      throw new Error('删除${configForm.pageTitle.replace('管理', '')}失败')
+    }
     return true
   }
+}
+
+// 删除单个${configForm.pageTitle.replace('管理', '')}（兼容性保留）
+export const delete${entityName} = async (id: string | number): Promise<boolean> => {
+  return await delete${entityName}s([id])
 }`
     } else if (api === 'detail') {
       return `// 获取${configForm.pageTitle.replace('管理', '')}详情
@@ -1243,8 +1282,12 @@ export const get${entityName}ById = async (id: string | number): Promise<${entit
     return await Mock${entityName}Service.get${entityName}ById(Number(id))
   } else {
     // 调用真实API
-    const response = await request.get<${entityName}>('/api/v1/${entityNameLower}/' + id)
-    return response.data
+    const response = await request.get<{result: ${entityName}}>('/api/v1/${entityNameLower}/' + id)
+    const apiResponse = response as unknown as {code: number, message: string, result: ${entityName}, success: boolean}
+    if (!apiResponse || !apiResponse.result) {
+      throw new Error('获取${configForm.pageTitle.replace('管理', '')}详情响应数据格式错误')
+    }
+    return apiResponse.result
   }
 }`
     }
@@ -1349,8 +1392,8 @@ updateTime: string
 // ${entityName}搜索表单
 export interface ${entityName}SearchForm {
 ${searchFields}
-page?: number
-size?: number
+pageNum?: number
+pageSize?: number
 }
 
 // ${entityName}创建数据

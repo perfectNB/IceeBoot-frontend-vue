@@ -1,7 +1,3 @@
-/**
- * Agent管理API
- */
-
 import { request } from '@/utils/request'
 import type { Agent, PageParams, PageResult } from '@/types'
 import { isMockEnabled } from '@/config/mock'

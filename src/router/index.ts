@@ -41,6 +41,7 @@ const componentMap: Record<string, () => Promise<{ default: unknown }>> = {
   SMS: () => import('@/pages/admin/third/SMS.vue'),
   ProfileCenter: () => import('@/pages/self/ProfileCenter.vue'),
   MessageCenter: () => import('@/pages/self/MessageCenter.vue'),
+  FrontendTest: () => import('@/pages/admin/codegen/FrontendTest.vue'),
 }
 
 // 将菜单数据转换为路由配置
@@ -316,7 +317,7 @@ router.afterEach((to) => {
   if (to.path === '/') {
     const seoConfig = getSEOConfigByPath(to.path)
     const fullUrl = getFullUrl(to.path)
-    
+
     setSEO({
       ...seoConfig,
       canonical: fullUrl,

@@ -278,7 +278,7 @@ export interface UserDistribution {
   percentage: number
 }
 
-// 学生管理相关类型定义
+// 学生相关类型定义
 
 // Student实体
 export interface Student {
@@ -286,8 +286,7 @@ export interface Student {
   name: string // 名字
   age: number // 年龄
   sex: string // 性别
-  number: string // 学号
-  major: string // 专业
+  hobby?: string // 爱好
   createTime: string
   updateTime: string
 }
@@ -297,8 +296,6 @@ export interface StudentSearchForm {
   name?: string // 名字
   age?: number // 年龄
   sex?: string // 性别
-  number?: string // 学号
-  major?: string // 专业
   pageNum?: number
   pageSize?: number
 }
@@ -308,6 +305,5 @@ export interface StudentCreateData {
   name: string // 名字
   age: number // 年龄
   sex: string // 性别
-  number: string // 学号
-  major: string // 专业
+  hobby?: string // 爱好
 }

@@ -21,16 +21,16 @@ export class MockStudentService {
       filteredList = filteredList.filter(item =>
         item.name.toString().toLowerCase().includes(keyword) ||
         item.age.toString().toLowerCase().includes(keyword) ||
-        item.sex.toString().toLowerCase().includes(keyword) ||
-        item.number.toString().toLowerCase().includes(keyword) ||
-        item.major.toString().toLowerCase().includes(keyword)
+        item.sex.toString().toLowerCase().includes(keyword)
       )
     }
 
+    // 分页参数默认值
+    const pageNum = params.pageNum || 1
+    const pageSize = params.pageSize || 10
+
     // 分页
     const total = filteredList.length
-    const pageNum = params.pageNum || 1
-    const pageSize = params.pageSize || 20
     const start = (pageNum - 1) * pageSize
     const end = start + pageSize
     const records = filteredList.slice(start, end)
@@ -75,10 +75,9 @@ export class MockStudentService {
     const newItem: Student = {
       id: Math.max(...mockStudents.map(r => Number(r.id))) + 1,
       name: data.name || '曾南斌',
-      age: data.age || 23,
+      age: data.age || 24,
       sex: data.sex || '男',
-      number: data.number || '2018220111',
-      major: data.major || '软件工程',
+      hobby: data.hobby || '唱跳rap',
       createTime: new Date().toISOString(),
       updateTime: new Date().toISOString()
     }
@@ -108,7 +107,21 @@ export class MockStudentService {
     return updatedItem
   }
 
-  // 删除Student
+  // 删除Student（批量删除）
+  static async deleteStudents(ids: number[]): Promise<boolean> {
+    await mockDelay()
+    mockLog('批量删除Student', { ids })
+
+    ids.forEach(id => {
+      const index = mockStudents.findIndex(r => r.id === id)
+      if (index !== -1) {
+        mockStudents.splice(index, 1)
+      }
+    })
+    return true
+  }
+
+  // 删除单个Student（兼容性保留）
   static async deleteStudent(id: number): Promise<boolean> {
     await mockDelay()
     mockLog('删除Student', { id })

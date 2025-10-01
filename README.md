@@ -18,8 +18,8 @@
 ## 🕸️项目地址
 - **前端**：https://gitee.com/woshinibaba438cnmlgb/zboot-frontend-vue
 - **后端**：https://gitee.com/woshinibaba438cnmlgb/zboot-backend-java
-- **使用文档**：还没写，带上线.....
-- **项目官网**：还没做，带上线.....
+- **使用文档**：https://doc.iceeboot.yxycompany.com
+- **项目官网**：https://iceeboot.yxycompany.com/
 
 ## 📸 项目展示
 

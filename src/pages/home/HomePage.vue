@@ -230,11 +230,7 @@
           </div>
         </div>
       </div>
-      <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="showContactDialog = false">关闭</el-button>
-        </div>
-      </template>
+
     </el-dialog>
   </div>
 </template>
@@ -461,7 +457,7 @@ const handleExperience = () => {
 
 // 打开官方文档
 const openOfficialDocs = () => {
-  window.open('https://www.baidu.com', '_blank')
+  window.open('https://doc.iceeboot.yxycompany.com', '_blank')
 }
 
 // 打开Gitee
@@ -1158,7 +1154,7 @@ onMounted(() => {
   .contact-dialog-content {
     .contact-intro {
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 0px;
 
       h3 {
         color: var(--text-primary);

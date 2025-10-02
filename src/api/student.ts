@@ -5,7 +5,7 @@ import { MockStudentService } from '@/mock/services/student'
 
 // 获取学生列表
 export const getStudentList = async (params: PageParams): Promise<PageResult<Student>> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockStudentService.getStudentList(params)
   } else {
@@ -21,7 +21,7 @@ export const getStudentList = async (params: PageParams): Promise<PageResult<Stu
 
 // 创建学生
 export const createStudent = async (data: Partial<Student>): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockStudentService.createStudent(data)
   } else {
@@ -36,7 +36,7 @@ export const createStudent = async (data: Partial<Student>): Promise<void> => {
 
 // 更新学生
 export const updateStudent = async (id: string | number, data: Partial<Student>): Promise<void> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     await MockStudentService.updateStudent(Number(id), data)
   } else {
@@ -52,7 +52,7 @@ export const updateStudent = async (id: string | number, data: Partial<Student>)
 
 // 删除学生（批量删除）
 export const deleteStudents = async (ids: (string | number)[]): Promise<boolean> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockStudentService.deleteStudents(ids.map(Number))
   } else {
@@ -75,7 +75,7 @@ export const deleteStudent = async (id: string | number): Promise<boolean> => {
 
 // 获取学生详情
 export const getStudentById = async (id: string | number): Promise<Student> => {
-  if (!isMockEnabled()) {
+  if (isMockEnabled()) {
     // 使用Mock数据
     return await MockStudentService.getStudentById(Number(id))
   } else {

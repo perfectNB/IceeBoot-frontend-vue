@@ -306,9 +306,9 @@ export const mockMenus: MenuItem[] = [
       {
         id: 19,
         title: '前端生成测试代码',
-        name: 'Student',
-        path: '/admin/codegen/student',
-        component: 'Student',
+        name: ' FrontendTest',
+        path: '/admin/codegen/test',
+        component: 'FrontendTest',
         icon: 'Setting',
         parentId: 5,
         type: 'menu',

@@ -46,7 +46,7 @@ export interface StreamChatRequest {
 }
 
 // 获取对话会话列表
-export const getAiChatSessions = async (params: PageParams): Promise<PageResult<AiChatSession>> => {
+export const getAiChatSessions = async (params: PageParams & { type?: number }): Promise<PageResult<AiChatSession>> => {
   if (isMockEnabled()) {
     // 使用Mock数据
     const mockResult = await MockChatService.getChatSessions(params)
@@ -86,7 +86,7 @@ export const getAiChatSessions = async (params: PageParams): Promise<PageResult<
 }
 
 // 创建对话会话
-export const createAiChatSession = async (data: CreateSessionParams): Promise<AiChatSession> => {
+export const createAiChatSession = async (data: CreateSessionParams & { type?: number }): Promise<AiChatSession> => {
   if (isMockEnabled()) {
     // 使用Mock数据
     const mockSession = await MockChatService.createChatSession({
@@ -356,6 +356,121 @@ export const streamIntelligentAiChat = async (
   }
 }
 
+// RAG流式对话接口
+export const streamRagChat = async (
+  data: StreamChatRequest,
+  onMessage: (chunk: string) => void,
+  onComplete?: () => void,
+  onError?: (error: Error) => void
+): Promise<void> => {
+  // 检查是否为mock模式
+  if (isMockEnabled()) {
+    // Mock模式下显示提示信息
+    const mockMessage = '现在处于mock模式，不能发起大模型对话或者mcp，请您前往gitee拉下代码自行配置'
+    onMessage(mockMessage)
+    onComplete?.()
+    return
+  }
+
+  try {
+    // 调用RAG流API - 使用EventSource进行SSE连接
+    const response = await fetch(`${getBaseURL()}/api/v1/chat/rag/stream`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
+        'Accept': 'text/event-stream'
+      },
+      body: JSON.stringify(data)
+    })
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+
+    if (!response.body) {
+      throw new Error('Stream not supported')
+    }
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const lines = buffer.split('\n')
+        buffer = lines.pop() || ''
+
+        for (const line of lines) {
+          const trimmed = line.trim()
+          if (trimmed === '') continue
+          if (!trimmed.startsWith('data:')) continue
+
+          // 取出 data: 之后的内容，并兼容同一行包含多个 data:
+          const combined = trimmed.slice(5).trimStart()
+          const segments = combined
+            .split(/\s*data:\s*/)
+            .map(s => s.trim())
+            .filter(s => s.length > 0)
+
+          for (const seg of segments) {
+            if (seg === '[DONE]') {
+              onComplete?.()
+              return
+            }
+
+            const normalized = seg.replace(/[""]/g, '"')
+            try {
+              const parsed = JSON.parse(normalized)
+              // 兼容三种返回格式：
+              // 1) { content: string, finished?: boolean }
+              // 2) OpenAI风格 { choices: [{ delta: { content: string } }] }
+              // 3) { type: 'message', data: string }
+              if (typeof parsed.content === 'string' && parsed.content.length > 0) {
+                onMessage(parsed.content)
+              } else if (parsed.choices && parsed.choices[0]?.delta?.content) {
+                onMessage(parsed.choices[0].delta.content)
+              } else if (typeof parsed.data === 'string' && parsed.data.length > 0) {
+                onMessage(parsed.data)
+              }
+
+              if (parsed.finished === true) {
+                onComplete?.()
+                return
+              }
+            } catch {
+              // 兜底：从非标准JSON中提取content或data字段，或直接输出纯文本
+              const matchContent = normalized.match(/\"content\"\s*:\s*\"([\s\S]*?)\"/)
+              if (matchContent && matchContent[1] && matchContent[1].length > 0) {
+                onMessage(matchContent[1])
+              } else {
+                const matchData = normalized.match(/\"data\"\s*:\s*\"([\s\S]*?)\"/)
+                if (matchData && matchData[1] && matchData[1].length > 0) {
+                  onMessage(matchData[1])
+                } else if (normalized && normalized !== '[DONE]') {
+                  // 纯文本数据（如：你好啊）
+                  onMessage(normalized)
+                }
+              }
+            }
+          }
+        }
+      }
+      onComplete?.()
+    } finally {
+      reader.releaseLock()
+    }
+  } catch (error) {
+    console.error('RAG流式对话失败:', error)
+    onError?.(error as Error)
+    throw error
+  }
+}
+
 export const getAiChatMessages = async (sessionId: number, params: PageParams): Promise<PageResult<AiChatMessage>> => {
   if (isMockEnabled()) {
     // 使用Mock数据
@@ -373,5 +488,21 @@ export const getAiChatMessages = async (sessionId: number, params: PageParams): 
       throw new Error('获取AI聊天消息列表响应数据格式错误')
     }
     return apiResponse.result
+  }
+}
+
+// 清空对话会话消息
+export const clearAiChatSession = async (sessionId: number): Promise<boolean> => {
+  if (isMockEnabled()) {
+    // Mock模式下直接返回成功
+    return true
+  } else {
+    // 调用真实API
+    const response = await request.delete(`/api/v1/chat/clear/${sessionId}`)
+    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
+    if (!apiResponse || !apiResponse.success) {
+      throw new Error('清空对话会话消息失败')
+    }
+    return true
   }
 }

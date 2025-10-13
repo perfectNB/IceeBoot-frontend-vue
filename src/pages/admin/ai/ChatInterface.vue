@@ -252,7 +252,7 @@ import {
 import {
   getLLMModels
 } from '@/api'
-import { getAiChatSessions, getAiChatMessages, streamAiChat, streamIntelligentAiChat, deleteAiChatSession,createAiChatSession } from '@/api/aiChat'
+import { getAiChatSessions, getAiChatMessages, streamAiChat, streamIntelligentAiChat, deleteAiChatSession,createAiChatSession, clearAiChatSession } from '@/api/aiChat'
 import type { LLMModel } from '@/types'
 import type { AiChatSession, AiChatMessage, StreamChatRequest } from '@/api/aiChat'
 
@@ -655,7 +655,10 @@ const handleDeleteSession = async (session: AiChatSession) => {
 
 // 清空对话
 const handleClearMessages = async () => {
-  if (!currentSession.value) return
+  if (!currentSession.value) {
+    ElMessage.error('请先选择一个对话会话')
+    return
+  }
 
   try {
     await ElMessageBox.confirm(
@@ -668,7 +671,10 @@ const handleClearMessages = async () => {
       }
     )
 
-    // 清空消息（这里应该调用API）
+    // 调用清空对话接口
+    await clearAiChatSession(currentSession.value.id)
+    
+    // 清空本地消息列表
     currentMessages.value = []
     ElMessage.success('对话已清空')
   } catch (error) {

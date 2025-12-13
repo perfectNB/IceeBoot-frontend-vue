@@ -187,4 +187,23 @@ export {
   type StreamChatRequest
 } from './aiChat'
 
+// 支付相关接口
+export {
+  getPaymentConfigs,
+  createPaymentConfig,
+  updatePaymentConfig,
+  deletePaymentConfig,
+  deletePaymentConfigs,
+  updatePaymentConfigStatus,
+  getPayRecords,
+  getPayRecordDetail,
+  createPayQrCode,
+  deletePayRecord,
+  deletePayRecords,
+  type PaymentConfigVO,
+  type PaymentConfigQueryParams,
+  type PayRecordVO,
+  type PayRecordQueryParams
+} from './pay'
+
 

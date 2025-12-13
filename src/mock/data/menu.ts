@@ -267,6 +267,45 @@ export const mockMenus: MenuItem[] = [
     ]
   },
   {
+    id: 27,
+    title: '支付管理',
+    name: 'PaymentManagement',
+    path: '/admin/pay',
+    icon: 'Wallet',
+    type: 'menu',
+    sort: 6,
+    requiresAuth: true,
+    permissions: [],
+    children: [
+      {
+        id: 28,
+        title: '支付配置',
+        name: 'PayConfig',
+        path: '/admin/pay/config',
+        component: 'PayConfig',
+        icon: 'Setting',
+        parentId: 27,
+        type: 'menu',
+        sort: 1,
+        requiresAuth: true,
+        permissions: []
+      },
+      {
+        id: 29,
+        title: '支付记录',
+        name: 'PayRecord',
+        path: '/admin/pay/record',
+        component: 'PayRecord',
+        icon: 'Document',
+        parentId: 27,
+        type: 'menu',
+        sort: 2,
+        requiresAuth: true,
+        permissions: []
+      }
+    ]
+  },
+  {
     id: 5,
     title: '代码生成',
     name: 'CodeGeneration',

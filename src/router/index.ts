@@ -43,6 +43,8 @@ const componentMap: Record<string, () => Promise<{ default: unknown }>> = {
   ProfileCenter: () => import('@/pages/self/ProfileCenter.vue'),
   MessageCenter: () => import('@/pages/self/MessageCenter.vue'),
   FrontendTest: () => import('@/pages/admin/codegen/FrontendTest.vue'),
+  PayConfig: () => import('@/pages/admin/pay/PayConfig.vue'),
+  PayRecord: () => import('@/pages/admin/pay/PayRecord.vue'),
 }
 
 // 将菜单数据转换为路由配置

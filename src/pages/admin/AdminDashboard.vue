@@ -125,6 +125,7 @@ import {
 } from '@element-plus/icons-vue'
 import { getDashboardStats, getVisitTrend, getUserDistribution } from '@/api'
 import type { DashboardStats, VisitTrend, UserDistribution } from '@/types'
+import { isDark } from '@/utils/theme'
 import VChart from 'vue-echarts'
 import { use } from 'echarts/core'
 import { CanvasRenderer } from 'echarts/renderers'
@@ -147,6 +148,21 @@ use([
 ])
 
 const router = useRouter()
+
+const getCssVarValue = (name: string) => {
+  if (typeof window === 'undefined') {
+    return ''
+  }
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+}
+
+const chartBorderColor = computed(() => {
+  const color = getCssVarValue('--bg-color')
+  if (color) {
+    return color
+  }
+  return isDark.value ? '#1f1f1f' : '#fff'
+})
 
 // 响应式数据
 const dashboardStats = ref<DashboardStats>({
@@ -437,7 +453,7 @@ const userDistributionOption = computed(() => ({
       avoidLabelOverlap: false,
       itemStyle: {
         borderRadius: 10,
-        borderColor: '#fff',
+        borderColor: chartBorderColor.value,
         borderWidth: 2
       },
       label: {

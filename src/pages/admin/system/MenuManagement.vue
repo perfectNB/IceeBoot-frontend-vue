@@ -699,12 +699,12 @@ onMounted(() => {
 
 .page-header h2 {
   margin: 0 0 8px 0;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 .page-header p {
   margin: 0;
-  color: #909399;
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
@@ -713,7 +713,7 @@ onMounted(() => {
 }
 
 .search-section {
-  background: #fff;
+  background: var(--bg-color);
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -721,7 +721,7 @@ onMounted(() => {
 }
 
 .table-section {
-  background: #fff;
+  background: var(--bg-color);
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -759,7 +759,7 @@ onMounted(() => {
 }
 
 .placeholder-icon {
-  color: #c0c4cc;
+  color: var(--text-placeholder);
 }
 
 .icon-selector {
@@ -777,7 +777,7 @@ onMounted(() => {
   max-height: 400px;
   overflow-y: auto;
   padding: 10px;
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--border-light);
   border-radius: 8px;
 }
 
@@ -786,23 +786,23 @@ onMounted(() => {
   flex-direction: column;
   align-items: center;
   padding: 12px 8px;
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--border-light);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s ease;
-  background: #fff;
+  background: var(--bg-color);
 }
 
 .icon-item:hover {
   border-color: #409eff;
-  background: #f0f9ff;
+  background: rgba(64, 158, 255, 0.12);
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(64, 158, 255, 0.15);
 }
 
 .icon-item .icon {
   font-size: 24px;
-  color: #606266;
+  color: var(--text-regular);
   margin-bottom: 8px;
   transition: color 0.3s ease;
 }
@@ -813,7 +813,7 @@ onMounted(() => {
 
 .icon-item .icon-name {
   font-size: 12px;
-  color: #909399;
+  color: var(--text-secondary);
   text-align: center;
   word-break: break-all;
   line-height: 1.2;

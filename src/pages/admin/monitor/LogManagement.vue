@@ -423,17 +423,17 @@ onMounted(() => {
 
 .page-header h2 {
   margin: 0 0 8px 0;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 .page-header p {
   margin: 0;
-  color: #909399;
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
 .search-section {
-  background: #fff;
+  background: var(--bg-color);
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -441,7 +441,7 @@ onMounted(() => {
 }
 
 .table-section {
-  background: #fff;
+  background: var(--bg-color);
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -459,7 +459,7 @@ onMounted(() => {
 }
 
 .log-debug {
-  color: #909399;
+  color: var(--text-secondary);
 }
 
 .log-info {
@@ -478,15 +478,15 @@ onMounted(() => {
 .log-detail .message-section h4,
 .log-detail .stack-section h4 {
   margin: 0;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 :deep(.el-table .error-row) {
-  background-color: #fef0f0;
+  background-color: rgba(245, 108, 108, 0.12);
 }
 
 :deep(.el-table .warning-row) {
-  background-color: #fdf6ec;
+  background-color: rgba(230, 162, 60, 0.12);
 }
 
 :deep(.el-table .el-table__cell) {

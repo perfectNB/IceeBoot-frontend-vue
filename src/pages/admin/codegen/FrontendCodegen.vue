@@ -1468,14 +1468,14 @@ ${createFields}
   }
 
   .code-content {
-    background: #f8f9fa;
+    background: var(--bg-color-overlay);
     border: 1px solid var(--el-border-color-lighter);
     border-radius: 6px;
     padding: 16px;
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
     font-size: 13px;
     line-height: 1.5;
-    color: #333;
+    color: var(--text-regular);
     white-space: pre-wrap;
     word-wrap: break-word;
     max-height: 600px;

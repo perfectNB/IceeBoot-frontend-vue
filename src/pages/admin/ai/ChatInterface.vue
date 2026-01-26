@@ -821,12 +821,12 @@ onMounted(async () => {
     .page-title {
       font-size: 24px;
       font-weight: 600;
-      color: #303133;
+      color: var(--text-primary);
       margin: 0 0 8px 0;
     }
 
     .page-description {
-      color: #606266;
+      color: var(--text-regular);
       margin: 0;
     }
   }
@@ -834,7 +834,7 @@ onMounted(async () => {
   .chat-container {
     display: flex;
     height: calc(100% - 80px);
-    background: #fff;
+    background: var(--bg-color);
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     overflow: hidden;
@@ -842,20 +842,20 @@ onMounted(async () => {
 
   .session-sidebar {
     width: 300px;
-    border-right: 1px solid #e4e7ed;
+    border-right: 1px solid var(--border-light);
     display: flex;
     flex-direction: column;
 
     .sidebar-header {
       padding: 16px;
-      border-bottom: 1px solid #e4e7ed;
+      border-bottom: 1px solid var(--border-light);
       display: flex;
       justify-content: space-between;
       align-items: center;
 
       h3 {
         margin: 0;
-        color: #303133;
+        color: var(--text-primary);
       }
     }
 
@@ -871,7 +871,7 @@ onMounted(async () => {
 
     .session-item {
         padding: 12px 16px;
-        border-bottom: 1px solid #f5f7fa;
+        border-bottom: 1px solid var(--border-extra-light);
         cursor: pointer;
         display: flex;
         justify-content: space-between;
@@ -879,11 +879,11 @@ onMounted(async () => {
         transition: background-color 0.2s;
 
         &:hover {
-          background-color: #f5f7fa;
+          background-color: var(--bg-color-overlay);
         }
 
         &.active {
-          background-color: #ecf5ff;
+          background-color: rgba(64, 158, 255, 0.12);
           border-left: 3px solid #409eff;
         }
 
@@ -893,7 +893,7 @@ onMounted(async () => {
 
           .session-title {
             font-weight: 500;
-            color: #303133;
+            color: var(--text-primary);
             margin-bottom: 4px;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -902,13 +902,13 @@ onMounted(async () => {
 
           .session-model {
             font-size: 12px;
-            color: #909399;
+            color: var(--text-secondary);
             margin-bottom: 2px;
           }
 
           .session-time {
             font-size: 11px;
-            color: #c0c4cc;
+            color: var(--text-placeholder);
           }
         }
       }
@@ -929,7 +929,7 @@ onMounted(async () => {
 
     .chat-header {
       padding: 16px 20px;
-      border-bottom: 1px solid #e4e7ed;
+      border-bottom: 1px solid var(--border-light);
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -941,7 +941,7 @@ onMounted(async () => {
 
         h3 {
           margin: 0;
-          color: #303133;
+          color: var(--text-primary);
         }
       }
 
@@ -956,7 +956,7 @@ onMounted(async () => {
 
           .switch-label {
             font-size: 14px;
-            color: #606266;
+            color: var(--text-regular);
             white-space: nowrap;
           }
         }
@@ -979,7 +979,7 @@ onMounted(async () => {
         align-items: center;
         justify-content: center;
         padding: 10px;
-        color: #909399;
+        color: var(--text-secondary);
         font-size: 12px;
 
         .loading-icon {
@@ -1010,8 +1010,8 @@ onMounted(async () => {
 
         &.assistant {
           .message-content {
-            background-color: #f5f7fa;
-            color: #303133;
+            background-color: var(--bg-color-overlay);
+            color: var(--text-primary);
             margin-left: 0;
           }
         }
@@ -1071,7 +1071,7 @@ onMounted(async () => {
             }
 
             .thinking-text {
-              color: #909399;
+              color: var(--text-secondary);
               font-size: 14px;
             }
 
@@ -1086,7 +1086,7 @@ onMounted(async () => {
           .markdown-content {
             line-height: 1.6;
             font-size: 15px;
-            color: #374151;
+            color: var(--text-regular);
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
 
             // 重置所有元素的默认边距
@@ -1100,7 +1100,7 @@ onMounted(async () => {
               margin: 1.5em 0 0.5em 0;
               font-weight: 600;
               line-height: 1.3;
-              color: #1f2937;
+              color: var(--text-primary);
               
               &:first-child {
                 margin-top: 0;
@@ -1111,7 +1111,7 @@ onMounted(async () => {
             h3 { font-size: 1.2em; }
             h4 { font-size: 1.1em; }
             h5 { font-size: 1em; }
-            h6 { font-size: 0.9em; color: #6b7280; }
+            h6 { font-size: 0.9em; color: var(--text-secondary); }
 
             // 段落
             p {
@@ -1177,10 +1177,10 @@ onMounted(async () => {
             blockquote {
               margin: 1em 0;
               padding: 12px 16px;
-              border-left: 3px solid #d1d5db;
-              background-color: #f9fafb;
+              border-left: 3px solid var(--border-light);
+              background-color: var(--bg-color-overlay);
               border-radius: 6px;
-              color: #374151;
+              color: var(--text-regular);
               font-style: italic;
               
               &:first-child {
@@ -1212,8 +1212,8 @@ onMounted(async () => {
               margin: 1em 0;
               border-radius: 8px;
               overflow: hidden;
-              border: 1px solid #e1e4e8;
-              background-color: #f6f8fa;
+              border: 1px solid var(--border-light);
+              background-color: var(--bg-color-overlay);
               position: relative;
               
               &:first-child {
@@ -1235,10 +1235,10 @@ onMounted(async () => {
                 display: inline-flex;
                 align-items: center;
                 gap: 6px;
-                background: rgba(255, 255, 255, 0.9);
+                background: var(--bg-color);
                 backdrop-filter: blur(8px);
-                border: 1px solid rgba(0, 0, 0, 0.1);
-                color: #374151;
+                border: 1px solid var(--border-light);
+                color: var(--text-regular);
                 cursor: pointer;
                 padding: 6px 10px;
                 border-radius: 8px;
@@ -1261,9 +1261,9 @@ onMounted(async () => {
 
                 &:hover {
                   opacity: 1;
-                  background-color: #f3f4f6;
-                  border-color: #9ca3af;
-                  color: #374151;
+                  background-color: var(--bg-color-overlay);
+                  border-color: var(--border-base);
+                  color: var(--text-primary);
                   transform: translateY(0);
                   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
                 }
@@ -1292,7 +1292,7 @@ onMounted(async () => {
               pre {
                 margin: 0;
                 padding: 20px;
-                background-color: #f8f9fa;
+                background-color: var(--bg-color-overlay);
                 overflow-x: auto;
                 position: relative;
 
@@ -1300,7 +1300,7 @@ onMounted(async () => {
                   background: none;
                   padding: 0;
                   border-radius: 0;
-                  color: #24292f;
+                  color: var(--text-primary);
                   font-family: 'JetBrains Mono', 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace;
                   font-size: 14px;
                   line-height: 1.5;
@@ -1316,8 +1316,8 @@ onMounted(async () => {
               border-collapse: collapse;
               border-radius: 8px;
               overflow: hidden;
-              border: 1px solid #e1e5e9;
-              background-color: #ffffff;
+              border: 1px solid var(--border-light);
+              background-color: var(--bg-color);
               font-size: 14px;
               box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
               
@@ -1330,15 +1330,15 @@ onMounted(async () => {
               }
 
               thead {
-                background-color: #f8f9fa;
+                background-color: var(--bg-color-overlay);
               }
 
               th, td {
                 padding: 12px 16px;
                 text-align: left;
-                border-bottom: 1px solid #e1e5e9;
+                border-bottom: 1px solid var(--border-light);
                 vertical-align: top;
-                border-right: 1px solid #e1e5e9;
+                border-right: 1px solid var(--border-light);
                 
                 &:last-child {
                   border-right: none;
@@ -1347,22 +1347,22 @@ onMounted(async () => {
 
               th {
                 font-weight: 600;
-                color: #1f2937;
+                color: var(--text-primary);
                 font-size: 14px;
-                background-color: #f8f9fa;
+                background-color: var(--bg-color-overlay);
               }
               
               td {
-                color: #374151;
-                background-color: #ffffff;
+                color: var(--text-regular);
+                background-color: var(--bg-color);
               }
               
               tbody tr:nth-child(even) td {
-                background-color: #f9fafb;
+                background-color: var(--bg-color-overlay);
               }
               
               tbody tr:hover td {
-                background-color: #f3f4f6;
+                background-color: rgba(64, 158, 255, 0.08);
               }
               
               tr:last-child th,
@@ -1434,7 +1434,7 @@ onMounted(async () => {
 
     .input-area {
       padding: 20px;
-      border-top: 1px solid #e4e7ed;
+      border-top: 1px solid var(--border-light);
 
       .input-container {
         .input-actions {
@@ -1445,7 +1445,7 @@ onMounted(async () => {
 
           .input-tip {
             font-size: 12px;
-            color: #909399;
+            color: var(--text-secondary);
           }
         }
       }
@@ -1457,7 +1457,7 @@ onMounted(async () => {
     align-items: center;
     justify-content: center;
     padding: 10px;
-    color: #909399;
+    color: var(--text-secondary);
     font-size: 12px;
 
     .loading-icon {
@@ -1479,7 +1479,7 @@ onMounted(async () => {
     p {
       margin: 0;
       font-size: 12px;
-      color: #909399;
+      color: var(--text-secondary);
       line-height: 1.4;
     }
   }

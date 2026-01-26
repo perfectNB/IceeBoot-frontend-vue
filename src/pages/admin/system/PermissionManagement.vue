@@ -723,12 +723,12 @@ onMounted(() => {
 
 .page-header h2 {
   margin: 0 0 8px 0;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 .page-header p {
   margin: 0;
-  color: #909399;
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
@@ -737,7 +737,7 @@ onMounted(() => {
 }
 
 .search-section {
-  background: #fff;
+  background: var(--bg-color);
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -745,7 +745,7 @@ onMounted(() => {
 }
 
 .table-section {
-  background: #fff;
+  background: var(--bg-color);
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -757,7 +757,7 @@ onMounted(() => {
 }
 
 .text-gray-400 {
-  color: #909399;
+  color: var(--text-secondary);
 }
 
 :deep(.el-table .el-table__cell) {

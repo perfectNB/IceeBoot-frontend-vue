@@ -523,7 +523,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .message-center {
   padding: 20px;
-  background: #f5f7fa;
+  background: var(--bg-color-page);
   min-height: 100vh;
 }
 
@@ -534,14 +534,14 @@ onMounted(() => {
 
 .page-title {
   margin: 0 0 12px 0;
-  color: #303133;
+  color: var(--text-primary);
   font-size: 32px;
   font-weight: 700;
 }
 
 .page-description {
   margin: 0;
-  color: #909399;
+  color: var(--text-secondary);
   font-size: 16px;
 }
 
@@ -559,11 +559,11 @@ onMounted(() => {
 }
 
 .stat-card {
-  background: #fff;
+  background: var(--bg-color);
   border-radius: 12px;
   padding: 20px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--border-light);
   display: flex;
   align-items: center;
   gap: 16px;
@@ -602,31 +602,31 @@ onMounted(() => {
   .stat-value {
     font-size: 24px;
     font-weight: 700;
-    color: #303133;
+    color: var(--text-primary);
     margin-bottom: 4px;
   }
 
   .stat-label {
     font-size: 14px;
-    color: #909399;
+    color: var(--text-secondary);
   }
 }
 
 .message-list-container {
-  background: #fff;
+  background: var(--bg-color);
   border-radius: 16px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--border-light);
   overflow: hidden;
 }
 
 .list-header {
   padding: 20px 24px;
-  border-bottom: 1px solid #e4e7ed;
+  border-bottom: 1px solid var(--border-light);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: #fafbfc;
+  background: var(--bg-color-overlay);
   flex-wrap: wrap;
   gap: 16px;
 }
@@ -660,7 +660,7 @@ onMounted(() => {
 
 .message-title {
   cursor: pointer;
-  color: #606266;
+  color: var(--text-regular);
   transition: color 0.3s;
 
   &:hover {
@@ -669,12 +669,12 @@ onMounted(() => {
 
   &.unread-title {
     font-weight: 600;
-    color: #303133;
+    color: var(--text-primary);
   }
 }
 
 .message-content-preview {
-  color: #909399;
+  color: var(--text-secondary);
   font-size: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -683,7 +683,7 @@ onMounted(() => {
 }
 
 .message-time {
-  color: #909399;
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
@@ -697,8 +697,8 @@ onMounted(() => {
   padding: 20px 24px;
   display: flex;
   justify-content: center;
-  border-top: 1px solid #e4e7ed;
-  background: #fafbfc;
+  border-top: 1px solid var(--border-light);
+  background: var(--bg-color-overlay);
 }
 
 .message-detail {
@@ -708,7 +708,7 @@ onMounted(() => {
     gap: 16px;
     margin-bottom: 20px;
     padding: 16px;
-    background: #f8f9fa;
+    background: var(--bg-color-overlay);
     border-radius: 8px;
 
     .meta-item {
@@ -718,7 +718,7 @@ onMounted(() => {
 
       .meta-label {
         font-weight: 500;
-        color: #606266;
+        color: var(--text-regular);
       }
     }
   }
@@ -726,7 +726,7 @@ onMounted(() => {
   .message-body {
     .message-content-full {
       line-height: 1.6;
-      color: #303133;
+      color: var(--text-primary);
       word-break: break-word;
       
       // Markdown 样式
@@ -749,14 +749,14 @@ onMounted(() => {
       }
       
       :deep(code) {
-        background: #f5f5f5;
+        background: var(--bg-color-overlay);
         padding: 2px 4px;
         border-radius: 3px;
         font-family: 'Courier New', monospace;
       }
       
       :deep(pre) {
-        background: #f5f5f5;
+        background: var(--bg-color-overlay);
         padding: 12px;
         border-radius: 6px;
         overflow-x: auto;
@@ -769,10 +769,10 @@ onMounted(() => {
       }
       
       :deep(blockquote) {
-        border-left: 4px solid #ddd;
+        border-left: 4px solid var(--border-light);
         padding-left: 12px;
         margin: 8px 0;
-        color: #666;
+        color: var(--text-regular);
       }
       
       :deep(a) {
@@ -790,13 +790,13 @@ onMounted(() => {
         margin: 8px 0;
         
         th, td {
-          border: 1px solid #ddd;
+          border: 1px solid var(--border-light);
           padding: 8px 12px;
           text-align: left;
         }
         
         th {
-          background: #f5f5f5;
+          background: var(--bg-color-overlay);
           font-weight: 600;
         }
       }

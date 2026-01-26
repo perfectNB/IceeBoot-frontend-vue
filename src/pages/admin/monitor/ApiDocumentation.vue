@@ -53,12 +53,12 @@ onMounted(() => {
 
 .page-header h2 {
   margin: 0 0 8px 0;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 .page-header p {
   margin: 0;
-  color: #909399;
+  color: var(--text-secondary);
   font-size: 14px;
 }
 
@@ -87,13 +87,13 @@ onMounted(() => {
 
 .redirect-content h3 {
   margin: 0 0 16px 0;
-  color: #303133;
+  color: var(--text-primary);
   font-size: 20px;
 }
 
 .redirect-content p {
   margin: 0 0 30px 0;
-  color: #606266;
+  color: var(--text-regular);
   font-size: 14px;
 }
 

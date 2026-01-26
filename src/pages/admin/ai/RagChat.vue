@@ -742,7 +742,7 @@ onMounted(async () => {
 .rag-chat-interface {
   display: flex;
   flex-direction: column;
-  background-color: #f5f5f5;
+  background-color: var(--bg-color-page);
 }
 
 .chat-container {
@@ -754,15 +754,15 @@ onMounted(async () => {
 
 .session-sidebar {
   width: 300px;
-  background: white;
-  border-right: 1px solid #e4e7ed;
+  background: var(--bg-color);
+  border-right: 1px solid var(--border-light);
   display: flex;
   flex-direction: column;
 }
 
 .sidebar-header {
   padding: 16px;
-  border-bottom: 1px solid #e4e7ed;
+  border-bottom: 1px solid var(--border-light);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -771,7 +771,7 @@ onMounted(async () => {
 .sidebar-header h3 {
   margin: 0;
   font-size: 16px;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 .session-list {
@@ -792,11 +792,11 @@ onMounted(async () => {
 }
 
 .session-item:hover {
-  background-color: #f5f7fa;
+  background-color: var(--bg-color-overlay);
 }
 
 .session-item.active {
-  background-color: #ecf5ff;
+  background-color: rgba(64, 158, 255, 0.12);
   border-color: #409eff;
 }
 
@@ -807,7 +807,7 @@ onMounted(async () => {
 
 .session-title {
   font-weight: 500;
-  color: #303133;
+  color: var(--text-primary);
   margin-bottom: 4px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -816,13 +816,13 @@ onMounted(async () => {
 
 .session-model {
   font-size: 12px;
-  color: #909399;
+  color: var(--text-secondary);
   margin-bottom: 2px;
 }
 
 .session-time {
   font-size: 12px;
-  color: #c0c4cc;
+  color: var(--text-placeholder);
 }
 
 .session-loading {
@@ -830,7 +830,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   padding: 16px;
-  color: #909399;
+  color: var(--text-secondary);
 }
 
 .loading-icon {
@@ -847,7 +847,7 @@ onMounted(async () => {
   flex: 1;
   display: flex;
   flex-direction: column;
-  background: white;
+  background: var(--bg-color);
 }
 
 .empty-state {
@@ -859,17 +859,17 @@ onMounted(async () => {
 
 .chat-header {
   padding: 16px 24px;
-  border-bottom: 1px solid #e4e7ed;
+  border-bottom: 1px solid var(--border-light);
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: white;
+  background: var(--bg-color);
 }
 
 .chat-header .session-info h3 {
   margin: 0 0 8px 0;
   font-size: 18px;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 .header-actions {
@@ -882,7 +882,7 @@ onMounted(async () => {
   flex: 1;
   overflow-y: auto;
   padding: 16px 24px;
-  background: #fafafa;
+  background: var(--bg-color-page);
 }
 
 .loading-more {
@@ -890,7 +890,7 @@ onMounted(async () => {
   align-items: center;
   justify-content: center;
   padding: 16px;
-  color: #909399;
+  color: var(--text-secondary);
 }
 
 .message-item {
@@ -931,15 +931,15 @@ onMounted(async () => {
 }
 
 .message-item.assistant .message-text {
-  background: white;
-  border: 1px solid #e4e7ed;
+  background: var(--bg-color);
+  border: 1px solid var(--border-light);
   border-bottom-left-radius: 4px;
-  color: #303133;
+  color: var(--text-primary);
 }
 
 .message-time {
   font-size: 12px;
-  color: #c0c4cc;
+  color: var(--text-placeholder);
   margin-top: 8px;
 }
 
@@ -975,14 +975,14 @@ onMounted(async () => {
 }
 
 .thinking-text {
-  color: #909399;
+  color: var(--text-secondary);
   font-style: italic;
 }
 
 .input-area {
   padding: 16px 24px;
-  background: white;
-  border-top: 1px solid #e4e7ed;
+  background: var(--bg-color);
+  border-top: 1px solid var(--border-light);
 }
 
 .input-container {
@@ -998,7 +998,7 @@ onMounted(async () => {
 
 .input-tip {
   font-size: 12px;
-  color: #909399;
+  color: var(--text-secondary);
 }
 
 /* Markdown样式 */
@@ -1033,9 +1033,9 @@ onMounted(async () => {
 .markdown-content blockquote {
   margin: 16px 0;
   padding: 8px 16px;
-  background: #f8f9fa;
+  background: var(--bg-color-overlay);
   border-left: 4px solid #409eff;
-  color: #666;
+  color: var(--text-regular);
 }
 
 .markdown-content table {
@@ -1046,13 +1046,13 @@ onMounted(async () => {
 
 .markdown-content th,
 .markdown-content td {
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--border-light);
   padding: 8px 12px;
   text-align: left;
 }
 
 .markdown-content th {
-  background: #f5f7fa;
+  background: var(--bg-color-overlay);
   font-weight: 600;
 }
 
@@ -1061,8 +1061,8 @@ onMounted(async () => {
   margin: 16px 0;
   border-radius: 8px;
   overflow: hidden;
-  background: #f8f9fa;
-  border: 1px solid #e4e7ed;
+  background: var(--bg-color-overlay);
+  border: 1px solid var(--border-light);
 }
 
 .code-header {
@@ -1070,13 +1070,13 @@ onMounted(async () => {
   justify-content: space-between;
   align-items: center;
   padding: 8px 16px;
-  background: #f1f3f4;
-  border-bottom: 1px solid #e4e7ed;
+  background: var(--bg-color-overlay);
+  border-bottom: 1px solid var(--border-light);
   font-size: 12px;
 }
 
 .code-lang {
-  color: #666;
+  color: var(--text-regular);
   font-weight: 500;
 }
 
@@ -1086,17 +1086,17 @@ onMounted(async () => {
   gap: 4px;
   padding: 4px 8px;
   background: transparent;
-  border: 1px solid #d0d7de;
+  border: 1px solid var(--border-light);
   border-radius: 4px;
-  color: #656d76;
+  color: var(--text-regular);
   font-size: 12px;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .copy-btn:hover {
-  background: #f3f4f6;
-  border-color: #8c959f;
+  background: var(--bg-color-overlay);
+  border-color: var(--border-base);
 }
 
 .copy-btn.copied {
@@ -1121,7 +1121,7 @@ onMounted(async () => {
 
 /* 行内代码样式 */
 .markdown-content code:not(.hljs) {
-  background: #f1f3f4;
+  background: var(--bg-color-overlay);
   padding: 2px 6px;
   border-radius: 4px;
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;

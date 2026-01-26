@@ -501,7 +501,7 @@ const handleGenerate = async () => {
   }
 
   pre {
-    background: #f5f5f5;
+    background: var(--bg-color-overlay);
     padding: 15px;
     border-radius: 4px;
     overflow-x: auto;

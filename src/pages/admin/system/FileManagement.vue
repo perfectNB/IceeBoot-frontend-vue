@@ -587,9 +587,9 @@ const getFileIconColor = (fileType: string) => {
     document: '#409EFF',
     video: '#E6A23C',
     audio: '#F56C6C',
-    archive: '#909399'
+    archive: 'var(--text-secondary)'
   }
-  return colorMap[fileType] || '#606266'
+  return colorMap[fileType] || 'var(--text-regular)'
 }
 
 // 可用密钥列表
@@ -998,14 +998,14 @@ onMounted(() => {
 
 .page-header h2 {
   margin: 0 0 8px 0;
-  color: #303133;
+  color: var(--text-primary);
   font-size: 24px;
   font-weight: 600;
 }
 
 .page-header p {
   margin: 0;
-  color: #606266;
+  color: var(--text-regular);
   font-size: 14px;
 }
 
@@ -1022,15 +1022,15 @@ onMounted(() => {
 .search-form {
   margin-bottom: 20px;
   padding: 20px;
-  background-color: #f8f9fa;
+  background-color: var(--bg-color-overlay);
   border-radius: 6px;
 }
 
 .batch-operations {
   margin: 20px 0;
   padding: 10px;
-  background-color: #f0f9ff;
-  border: 1px solid #bfdbfe;
+  background-color: rgba(64, 158, 255, 0.12);
+  border: 1px solid var(--primary-light);
   border-radius: 6px;
 }
 

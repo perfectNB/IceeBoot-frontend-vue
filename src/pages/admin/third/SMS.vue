@@ -467,7 +467,7 @@ onMounted(() => {
 <style scoped>
 .sms-management {
   padding: 20px;
-  background: #f5f7fa;
+  background: var(--bg-color-page);
   min-height: 100vh;
 }
 
@@ -478,14 +478,14 @@ onMounted(() => {
 
 .page-header h1 {
   margin: 0 0 12px 0;
-  color: #303133;
+  color: var(--text-primary);
   font-size: 32px;
   font-weight: 700;
 }
 
 .page-header p {
   margin: 0;
-  color: #909399;
+  color: var(--text-secondary);
   font-size: 16px;
 }
 
@@ -497,11 +497,11 @@ onMounted(() => {
 }
 
 .provider-card {
-  background: #fff;
+  background: var(--bg-color);
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--border-light);
   transition: all 0.3s ease;
   position: relative;
   overflow: hidden;
@@ -554,14 +554,14 @@ onMounted(() => {
   margin: 0 0 8px 0;
   font-size: 20px;
   font-weight: 600;
-  color: #303133;
+  color: var(--text-primary);
   line-height: 1.2;
 }
 
 .provider-description {
   margin: 0;
   font-size: 14px;
-  color: #606266;
+  color: var(--text-regular);
   line-height: 1.4;
 }
 
@@ -572,7 +572,7 @@ onMounted(() => {
 .provider-stats {
   margin-bottom: 20px;
   padding: 16px;
-  background: #f8f9fa;
+  background: var(--bg-color-overlay);
   border-radius: 12px;
 }
 
@@ -584,7 +584,7 @@ onMounted(() => {
 
 .stat-label {
   font-size: 14px;
-  color: #606266;
+  color: var(--text-regular);
   font-weight: 500;
 }
 
@@ -613,12 +613,12 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #e4e7ed;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .key-management .key-header h3 {
   margin: 0;
-  color: #303133;
+  color: var(--text-primary);
   font-size: 20px;
   font-weight: 600;
 }
@@ -626,8 +626,8 @@ onMounted(() => {
 .key-management .key-display {
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 12px;
-  color: #606266;
-  background: #f8f9fa;
+  color: var(--text-regular);
+  background: var(--bg-color-overlay);
   padding: 4px 8px;
   border-radius: 4px;
 }

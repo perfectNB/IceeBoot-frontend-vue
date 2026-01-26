@@ -381,7 +381,7 @@ onMounted(() => {
 <style scoped lang="scss">
 .profile-center {
   padding: 20px;
-  background: #f5f7fa;
+  background: var(--bg-color-page);
   min-height: 100vh;
 }
 
@@ -392,14 +392,14 @@ onMounted(() => {
 
 .page-title {
   margin: 0 0 12px 0;
-  color: #303133;
+  color: var(--text-primary);
   font-size: 32px;
   font-weight: 700;
 }
 
 .page-description {
   margin: 0;
-  color: #909399;
+  color: var(--text-secondary);
   font-size: 16px;
 }
 
@@ -410,11 +410,11 @@ onMounted(() => {
 }
 
 .profile-card {
-  background: #fff;
+  background: var(--bg-color);
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--border-light);
   height: fit-content;
 }
 
@@ -451,12 +451,12 @@ onMounted(() => {
     margin: 0 0 8px 0;
     font-size: 24px;
     font-weight: 600;
-    color: #303133;
+    color: var(--text-primary);
   }
 
   .user-username {
     margin: 0 0 12px 0;
-    color: #909399;
+    color: var(--text-secondary);
     font-size: 14px;
   }
 }
@@ -466,7 +466,7 @@ onMounted(() => {
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   padding-top: 24px;
-  border-top: 1px solid #e4e7ed;
+  border-top: 1px solid var(--border-light);
 }
 
 .stat-item {
@@ -481,7 +481,7 @@ onMounted(() => {
 
   .stat-label {
     font-size: 12px;
-    color: #909399;
+    color: var(--text-secondary);
   }
 }
 
@@ -492,11 +492,11 @@ onMounted(() => {
 }
 
 .info-section {
-  background: #fff;
+  background: var(--bg-color);
   border-radius: 16px;
   padding: 24px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e4e7ed;
+  border: 1px solid var(--border-light);
 }
 
 .section-header {
@@ -505,14 +505,14 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #e4e7ed;
+  border-bottom: 1px solid var(--border-light);
 }
 
 .section-title {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: #303133;
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -529,14 +529,14 @@ onMounted(() => {
   .info-label {
     display: block;
     font-size: 14px;
-    color: #606266;
+    color: var(--text-regular);
     margin-bottom: 8px;
     font-weight: 500;
   }
 
   .info-value {
     font-size: 16px;
-    color: #303133;
+    color: var(--text-primary);
     min-height: 32px;
     display: flex;
     align-items: center;
@@ -548,7 +548,7 @@ onMounted(() => {
   justify-content: flex-end;
   gap: 12px;
   padding-top: 20px;
-  border-top: 1px solid #e4e7ed;
+  border-top: 1px solid var(--border-light);
 }
 
 .roles-section {
@@ -559,7 +559,7 @@ onMounted(() => {
   h4 {
     margin: 0 0 12px 0;
     font-size: 14px;
-    color: #606266;
+    color: var(--text-regular);
     font-weight: 500;
   }
 }
@@ -591,13 +591,13 @@ onMounted(() => {
 
   .login-label {
     font-size: 14px;
-    color: #606266;
+    color: var(--text-regular);
     font-weight: 500;
   }
 
   .login-value {
     font-size: 14px;
-    color: #303133;
+    color: var(--text-primary);
   }
 }
 

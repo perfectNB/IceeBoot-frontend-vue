@@ -56,7 +56,7 @@ export const getPaymentConfigsService = (params: PaymentConfigQueryParams) => {
   return {
     code: 200,
     message: '获取成功',
-    result: {
+    data: {
       records,
       total,
       current: pageNum,
@@ -91,7 +91,7 @@ export const createPaymentConfigService = (data: Partial<PaymentConfigVO>) => {
   return {
     code: 200,
     message: '创建成功',
-    result: newConfig,
+    data: newConfig,
     success: true,
     timestamp: Date.now()
   }
@@ -106,7 +106,7 @@ export const updatePaymentConfigService = (id: number | string, data: Partial<Pa
     return {
       code: 404,
       message: '配置不存在',
-      result: null,
+      data: null,
       success: false,
       timestamp: Date.now()
     }
@@ -121,7 +121,7 @@ export const updatePaymentConfigService = (id: number | string, data: Partial<Pa
   return {
     code: 200,
     message: '更新成功',
-    result: paymentConfigs[index],
+    data: paymentConfigs[index],
     success: true,
     timestamp: Date.now()
   }
@@ -136,7 +136,7 @@ export const deletePaymentConfigService = (id: number | string) => {
     return {
       code: 404,
       message: '配置不存在',
-      result: null,
+      data: null,
       success: false,
       timestamp: Date.now()
     }
@@ -147,7 +147,7 @@ export const deletePaymentConfigService = (id: number | string) => {
   return {
     code: 200,
     message: '删除成功',
-    result: null,
+    data: null,
     success: true,
     timestamp: Date.now()
   }
@@ -163,7 +163,7 @@ export const deletePaymentConfigsService = (ids: (number | string)[]) => {
   return {
     code: 200,
     message: `成功删除 ${ids.length} 个配置`,
-    result: null,
+    data: null,
     success: true,
     timestamp: Date.now()
   }
@@ -178,7 +178,7 @@ export const updatePaymentConfigStatusService = (id: number | string, status: 'a
     return {
       code: 404,
       message: '配置不存在',
-      result: null,
+      data: null,
       success: false,
       timestamp: Date.now()
     }
@@ -190,7 +190,7 @@ export const updatePaymentConfigStatusService = (id: number | string, status: 'a
   return {
     code: 200,
     message: '状态更新成功',
-    result: paymentConfigs[index],
+    data: paymentConfigs[index],
     success: true,
     timestamp: Date.now()
   }
@@ -262,7 +262,7 @@ export const getPayRecordsService = (params: PayRecordQueryParams) => {
   return {
     code: 200,
     message: '获取成功',
-    result: {
+    data: {
       records,
       total,
       current: pageNum,
@@ -285,7 +285,7 @@ export const getPayRecordDetailService = (id: number | string) => {
     return {
       code: 404,
       message: '记录不存在',
-      result: null,
+      data: null,
       success: false,
       timestamp: Date.now()
     }
@@ -294,7 +294,7 @@ export const getPayRecordDetailService = (id: number | string) => {
   return {
     code: 200,
     message: '获取成功',
-    result: record,
+    data: record,
     success: true,
     timestamp: Date.now()
   }
@@ -309,7 +309,7 @@ export const createPayQrCodeService = (configId: number | string) => {
     return {
       code: 404,
       message: '配置不存在',
-      result: null,
+      data: null,
       success: false,
       timestamp: Date.now()
     }
@@ -319,7 +319,7 @@ export const createPayQrCodeService = (configId: number | string) => {
     return {
       code: 400,
       message: '该配置已禁用',
-      result: null,
+      data: null,
       success: false,
       timestamp: Date.now()
     }
@@ -330,7 +330,7 @@ export const createPayQrCodeService = (configId: number | string) => {
   return {
     code: 200,
     message: '二维码生成成功',
-    result: qrCodeUrl,
+    data: qrCodeUrl,
     success: true,
     timestamp: Date.now()
   }
@@ -345,7 +345,7 @@ export const deletePayRecordService = (id: number | string) => {
     return {
       code: 404,
       message: '记录不存在',
-      result: null,
+      data: null,
       success: false,
       timestamp: Date.now()
     }
@@ -356,7 +356,7 @@ export const deletePayRecordService = (id: number | string) => {
   return {
     code: 200,
     message: '删除成功',
-    result: null,
+    data: null,
     success: true,
     timestamp: Date.now()
   }
@@ -372,7 +372,7 @@ export const deletePayRecordsService = (ids: (number | string)[]) => {
   return {
     code: 200,
     message: `成功删除 ${ids.length} 条记录`,
-    result: null,
+    data: null,
     success: true,
     timestamp: Date.now()
   }

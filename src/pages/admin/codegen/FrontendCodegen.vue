@@ -1212,12 +1212,12 @@ export const get${entityName}List = async (params: PageParams): Promise<PageResu
     return await Mock${entityName}Service.get${entityName}List(params)
   } else {
     // 调用真实API
-    const response = await request.get<{result: PageResult<${entityName}>}>('/api/v1/${entityNameLower}', params)
-    const apiResponse = response as unknown as {code: number, message: string, result: PageResult<${entityName}>, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<{data: PageResult<${entityName}>}>('/api/v1/${entityNameLower}', params)
+    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<${entityName}>, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取${configForm.pageTitle.replace('管理', '')}列表响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }`
     } else if (api === 'create') {
@@ -1282,12 +1282,12 @@ export const get${entityName}ById = async (id: string | number): Promise<${entit
     return await Mock${entityName}Service.get${entityName}ById(Number(id))
   } else {
     // 调用真实API
-    const response = await request.get<{result: ${entityName}}>('/api/v1/${entityNameLower}/' + id)
-    const apiResponse = response as unknown as {code: number, message: string, result: ${entityName}, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<{data: ${entityName}}>('/api/v1/${entityNameLower}/' + id)
+    const apiResponse = response as unknown as {code: number, message: string, data: ${entityName}, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取${configForm.pageTitle.replace('管理', '')}详情响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }`
     }

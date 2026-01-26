@@ -9,12 +9,12 @@ export const login = async (data: LoginForm): Promise<LoginResponse> => {
   if (isMockEnabled()) {
     return await MockAuthService.login(data)
   } else {
-    const response = await request.post<{result: LoginResponse}>('/api/v1/auth/login', data as unknown as Record<string, unknown>)
-    const apiResponse = response as unknown as {code: number, message: string, result: LoginResponse, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.post<LoginResponse>('/api/v1/auth/login', data as unknown as Record<string, unknown>)
+    const apiResponse = response as unknown as {code: number, message: string, data: LoginResponse, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('登录响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 
 }
@@ -39,12 +39,12 @@ export const getUserInfo = async () => {
     return { data: userInfo }
   } else {
 
-    const response = await request.get<{result: User}>('/api/v1/auth/user')
-    const apiResponse = response as unknown as {code: number, message: string, result: User, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<User>('/api/v1/auth/user')
+    const apiResponse = response as unknown as {code: number, message: string, data: User, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取用户信息响应数据格式错误')
     }
-    return { data: apiResponse.result }
+    return { data: apiResponse.data }
   }
 }
 

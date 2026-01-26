@@ -1,6 +1,5 @@
 import { request } from '@/utils/request'
 import { isMockEnabled } from '@/config/mock'
-import type { ApiResponse } from '@/types'
 import { MockRedisService } from '@/mock/services/redis'
 
 export interface RedisKey {
@@ -43,12 +42,12 @@ export const getRedisKeys = async (params: RedisQueryParams): Promise<RedisRespo
     return await MockRedisService.getRedisKeys(params)
   } else {
     // 调用真实API
-    const response = await request.get<{result: RedisResponse}>('/api/v1/redis/keys',  params )
-    const apiResponse = response as unknown as {code: number, message: string, result: RedisResponse, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<RedisResponse>('/api/v1/redis/keys',  params )
+    const apiResponse = response as unknown as {code: number, message: string, data: RedisResponse, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取Redis键列表响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -100,7 +99,11 @@ export const getRedisKeyDetail = async (key: string): Promise<RedisKey> => {
     return await MockRedisService.getRedisKeyDetail(key)
   } else {
     // 调用真实API
-    const response = await request.get<ApiResponse<RedisKey>>(`/api/v1/redis/keys/${encodeURIComponent(key)}`)
-    return response.data.data
+    const response = await request.get<RedisKey>(`/api/v1/redis/keys/${encodeURIComponent(key)}`)
+    const apiResponse = response as unknown as { code: number, message: string, data: RedisKey, success: boolean }
+    if (!apiResponse || !apiResponse.data) {
+      throw new Error('获取Redis键详情响应数据格式错误')
+    }
+    return apiResponse.data
   }
 }

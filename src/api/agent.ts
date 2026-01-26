@@ -10,12 +10,12 @@ export const getAgents = async (params: PageParams): Promise<PageResult<Agent>> 
     return await MockAgentService.getAgents(params)
   } else {
     // 调用真实API
-    const response = await request.get<{result: PageResult<Agent>}>('/api/v1/agents',  params )
-    const apiResponse = response as unknown as {code: number, message: string, result: PageResult<Agent>, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<{data: PageResult<Agent>}>('/api/v1/agents',  params )
+    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<Agent>, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取Agent列表响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -26,12 +26,12 @@ export const getAgent = async (id: string | number): Promise<Agent> => {
     return await MockAgentService.getAgent(id)
   } else {
     // 调用真实API
-    const response = await request.get<{result: Agent}>(`/api/v1/agent/${id}`)
-    const apiResponse = response as unknown as {code: number, message: string, result: Agent, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<{data: Agent}>(`/api/v1/agent/${id}`)
+    const apiResponse = response as unknown as {code: number, message: string, data: Agent, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取Agent详情响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 

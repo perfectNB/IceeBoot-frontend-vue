@@ -77,12 +77,12 @@ export const getAiChatSessions = async (params: PageParams & { type?: number }):
     }
   } else {
     // 调用真实API
-    const response = await request.get<{result: PageResult<AiChatSession>}>('/api/v1/chat/sessions', params)
-    const apiResponse = response as unknown as {code: number, message: string, result: PageResult<AiChatSession>, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<PageResult<AiChatSession>>('/api/v1/chat/sessions', params)
+    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<AiChatSession>, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取AI聊天会话列表响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -116,12 +116,12 @@ export const createAiChatSession = async (data: CreateSessionParams & { type?: n
     }
   } else {
     // 调用真实API
-    const response = await request.post('/api/v1/chat/sessions', data as unknown as Record<string, unknown>)
-    const apiResponse = response as unknown as {code: number, message: string, result: AiChatSession, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
+    const response = await request.post<AiChatSession>('/api/v1/chat/sessions', data as unknown as Record<string, unknown>)
+    const apiResponse = response as unknown as {code: number, message: string, data: AiChatSession, success: boolean}
+    if (!apiResponse || !apiResponse.success || !apiResponse.data) {
       throw new Error('创建AI聊天会话失败')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -498,12 +498,12 @@ export const getAiChatMessages = async (sessionId: number, params: PageParams): 
       ...params,
       sessionId: sessionId
     }
-    const response = await request.get<{result: PageResult<AiChatMessage>}>(`/api/v1/chat/message`, requestParams)
-    const apiResponse = response as unknown as {code: number, message: string, result: PageResult<AiChatMessage>, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<PageResult<AiChatMessage>>(`/api/v1/chat/message`, requestParams)
+    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<AiChatMessage>, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取AI聊天消息列表响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 

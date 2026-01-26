@@ -15,12 +15,12 @@ export const getLLMModels = async (): Promise<LLMModel[]> => {
     return result.records
   } else {
     // 调用真实API
-    const response = await request.get<{result: LLMModel[]}>('/api/v1/llm-keys')
-    const apiResponse = response as unknown as {code: number, message: string, result: LLMModel[], success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<{data: LLMModel[]}>('/api/v1/llm-keys')
+    const apiResponse = response as unknown as {code: number, message: string, data: LLMModel[], success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取LLM模型列表响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -31,12 +31,12 @@ export const getLLMModel = async (providerName: string): Promise<LLMModel> => {
     return await MockLLMService.getLLMModel(providerName)
   } else {
     // 调用真实API
-    const response = await request.get<{result: LLMModel}>(`/api/v1/llm-keys/${providerName}`)
-    const apiResponse = response as unknown as {code: number, message: string, result: LLMModel, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<{data: LLMModel}>(`/api/v1/llm-keys/${providerName}`)
+    const apiResponse = response as unknown as {code: number, message: string, data: LLMModel, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取LLM模型详情响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -47,12 +47,12 @@ export const createLLMModel = async (data: Partial<LLMModel>): Promise<LLMModel>
     return await MockLLMService.createLLMModel(data)
   } else {
     // 调用真实API
-    const response = await request.post<{result: LLMModel}>('/api/v1/llm-keys', data)
-    const apiResponse = response as unknown as {code: number, message: string, result: LLMModel, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.post<{data: LLMModel}>('/api/v1/llm-keys', data)
+    const apiResponse = response as unknown as {code: number, message: string, data: LLMModel, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('创建LLM模型响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -63,12 +63,12 @@ export const updateLLMModel = async (providerName: string, data: Partial<LLMMode
     return await MockLLMService.updateLLMModel(providerName, data)
   } else {
     // 调用真实API
-    const response = await request.put<{result: LLMModel}>(`/api/v1/llm-keys/${providerName}`, data)
-    const apiResponse = response as unknown as {code: number, message: string, result: LLMModel, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.put<{data: LLMModel}>(`/api/v1/llm-keys/${providerName}`, data)
+    const apiResponse = response as unknown as {code: number, message: string, data: LLMModel, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('更新LLM模型响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -96,12 +96,12 @@ export const getLLMModelKeys = async (providerName: string): Promise<LLMKey[]> =
     return model?.keys || []
   } else {
     // 调用真实API - 从完整列表中筛选
-    const response = await request.get<{result: LLMModel[]}>('/api/v1/llm-keys')
-    const apiResponse = response as unknown as {code: number, message: string, result: LLMModel[], success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<{data: LLMModel[]}>('/api/v1/llm-keys')
+    const apiResponse = response as unknown as {code: number, message: string, data: LLMModel[], success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取密钥列表响应数据格式错误')
     }
-    const model = apiResponse.result.find(m => m.providerName === providerName)
+    const model = apiResponse.data.find(m => m.providerName === providerName)
     return model?.keys || []
   }
 }

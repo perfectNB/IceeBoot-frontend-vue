@@ -10,12 +10,12 @@ export const getStudentList = async (params: PageParams): Promise<PageResult<Stu
     return await MockStudentService.getStudentList(params)
   } else {
     // 调用真实API
-    const response = await request.get<{result: PageResult<Student>}>('/api/v1/student', params)
-    const apiResponse = response as unknown as {code: number, message: string, result: PageResult<Student>, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<PageResult<Student>>('/api/v1/student', params)
+    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<Student>, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取学生列表响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -80,11 +80,11 @@ export const getStudentById = async (id: string | number): Promise<Student> => {
     return await MockStudentService.getStudentById(Number(id))
   } else {
     // 调用真实API
-    const response = await request.get<{result: Student}>('/api/v1/student/' + id)
-    const apiResponse = response as unknown as {code: number, message: string, result: Student, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<Student>('/api/v1/student/' + id)
+    const apiResponse = response as unknown as {code: number, message: string, data: Student, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取学生详情响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }

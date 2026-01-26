@@ -34,12 +34,12 @@ export const getMessages = async (params: MessageQueryParams): Promise<PageResul
     return await MockMessageService.getMessages(params)
   } else {
     // 调用真实API
-    const response = await request.get('/api/v1/messages',  params )
-    const apiResponse = response as unknown as {code: number, message: string, result: PageResult<MessageItem>, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
+    const response = await request.get<PageResult<MessageItem>>('/api/v1/messages',  params )
+    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<MessageItem>, success: boolean}
+    if (!apiResponse || !apiResponse.success || !apiResponse.data) {
       throw new Error('获取消息列表失败')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -120,12 +120,12 @@ export const getUnreadCount = async (): Promise<number> => {
     return await MockMessageService.getUnreadCount()
   } else {
     // 调用真实API
-    const response = await request.get('/api/v1/messages/unread-count')
-    const apiResponse = response as unknown as {code: number, message: string, result: number, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
+    const response = await request.get<number>('/api/v1/messages/unread-count')
+    const apiResponse = response as unknown as {code: number, message: string, data: number, success: boolean}
+    if (!apiResponse || !apiResponse.success || typeof apiResponse.data !== 'number') {
       throw new Error('获取未读消息数量失败')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -160,12 +160,12 @@ export const getMessageStats = async (): Promise<MessageStats> => {
     return await MockMessageService.getMessageStats()
   } else {
     // 调用真实API
-    const response = await request.get('/api/v1/messages/stats')
-    const apiResponse = response as unknown as {code: number, message: string, result: MessageStats, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
+    const response = await request.get<MessageStats>('/api/v1/messages/stats')
+    const apiResponse = response as unknown as {code: number, message: string, data: MessageStats, success: boolean}
+    if (!apiResponse || !apiResponse.success || !apiResponse.data) {
       throw new Error('获取消息统计失败')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 

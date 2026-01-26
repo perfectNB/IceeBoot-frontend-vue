@@ -2,7 +2,7 @@
  * OSS存储管理API
  */
 
-import { request } from '@/utils/request'
+import { request, normalizeApiResponse } from '@/utils/request'
 import service from '@/utils/request'
 import type { PageParams, PageResult } from '@/types'
 import { isMockEnabled } from '@/config/mock'
@@ -39,12 +39,12 @@ export const getOSSProviders = async (): Promise<OSSProvider[]> => {
     return await MockOSSService.getOSSProviders()
   } else {
     // 调用真实API
-    const response = await request.get<{result: OSSProvider[]}>('/api/v1/oss-keys')
-    const apiResponse = response as unknown as {code: number, message: string, result: OSSProvider[], success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<{data: OSSProvider[]}>('/api/v1/oss-keys')
+    const apiResponse = response as unknown as {code: number, message: string, data: OSSProvider[], success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取OSS服务商列表响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -60,12 +60,12 @@ export const getOSSProvider = async (providerName: string): Promise<OSSProvider>
     return provider
   } else {
     // 调用真实API
-    const response = await request.get<{result: OSSProvider}>(`/api/v1/oss-keys/providers/${providerName}`)
-    const apiResponse = response as unknown as {code: number, message: string, result: OSSProvider, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<{data: OSSProvider}>(`/api/v1/oss-keys/providers/${providerName}`)
+    const apiResponse = response as unknown as {code: number, message: string, data: OSSProvider, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取OSS服务商详情响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -78,12 +78,12 @@ export const getOSSKeys = async (providerName: string): Promise<OSSKey[]> => {
     return provider?.keys || []
   } else {
     // 调用真实API - 从完整列表中筛选
-    const response = await request.get<{result: OSSProvider[]}>('/api/v1/oss-keys/providers')
-    const apiResponse = response as unknown as {code: number, message: string, result: OSSProvider[], success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<{data: OSSProvider[]}>('/api/v1/oss-keys/providers')
+    const apiResponse = response as unknown as {code: number, message: string, data: OSSProvider[], success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取密钥列表响应数据格式错误')
     }
-    const provider = apiResponse.result.find(p => p.providerName === providerName)
+    const provider = apiResponse.data.find(p => p.providerName === providerName)
     return provider?.keys || []
   }
 }
@@ -290,12 +290,12 @@ export const getBucketList = async (params: BucketQueryParams): Promise<PageResu
     return await MockOSSService.getBucketList(params)
   } else {
     // 调用真实API
-    const response = await request.get<{result: PageResult<OssBucket>}>('/api/v1/oss-files/buckets', params)
-    const apiResponse = response as unknown as {code: number, message: string, result: PageResult<OssBucket>, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<{data: PageResult<OssBucket>}>('/api/v1/oss-files/buckets', params)
+    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<OssBucket>, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取存储桶列表响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -389,12 +389,12 @@ export const getFileList = async (params: FileQueryParams): Promise<PageResult<O
     return await MockOSSService.getFileList(params)
   } else {
     // 调用真实API
-    const response = await request.get<{result: PageResult<OssFile>}>('/api/v1/oss-files', params)
-    const apiResponse = response as unknown as {code: number, message: string, result: PageResult<OssFile>, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<{data: PageResult<OssFile>}>('/api/v1/oss-files', params)
+    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<OssFile>, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取文件列表响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -425,30 +425,22 @@ export const uploadFile = async (params: UploadFileParams): Promise<OssFile> => 
       type ApiResponse = {
         code?: number
         message?: string
-        result?: OssFile
         success?: boolean
         data?: OssFile
       } & Partial<OssFile>
 
       if (response && typeof response === 'object') {
-        const apiResponse = response as unknown as ApiResponse
+        const payload = (response as { data?: unknown }).data ?? response
+        const apiResponse = normalizeApiResponse(payload as ApiResponse) as ApiResponse
 
-        // 检查是否有result字段
-        if (apiResponse.result) {
-          return apiResponse.result
-        }
-
-        // 检查是否有data字段
         if (apiResponse.data) {
           return apiResponse.data
         }
 
-        // 检查success状态
         if (apiResponse.success === false) {
           throw new Error(apiResponse.message || '上传文件失败')
         }
 
-        // 如果响应本身就是文件对象
         if (apiResponse.id && apiResponse.fileName) {
           return apiResponse as OssFile
         }

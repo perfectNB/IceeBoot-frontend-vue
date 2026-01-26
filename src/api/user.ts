@@ -16,12 +16,12 @@ export const getUserList = async (params: PageParams): Promise<PageResult<User>>
     return await MockUserService.getUserList(params)
   } else {
     // 调用真实API
-    const response = await request.get<{result: PageResult<User>}>('/api/v1/users', params)
-    const apiResponse = response as unknown as {code: number, message: string, result: PageResult<User>, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<PageResult<User>>('/api/v1/users', params)
+    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<User>, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取用户列表响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -32,12 +32,12 @@ export const getUserById = async (id: string | number): Promise<User> => {
     return await MockUserService.getUserInfo(Number(id))
   } else {
     // 调用真实API
-    const response = await request.get<{result: User}>(`/api/v1/users/${id}`)
-    const apiResponse = response as unknown as {code: number, message: string, result: User, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<User>(`/api/v1/users/${id}`)
+    const apiResponse = response as unknown as {code: number, message: string, data: User, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取用户详情响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 

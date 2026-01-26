@@ -41,12 +41,12 @@ export const getEmailProviders = async (): Promise<EmailProvider[]> => {
     return await MockEmailService.getEmailProviders()
   } else {
     // 调用真实API
-    const response = await request.get<{result: EmailProvider[]}>('/api/v1/email-keys')
-    const apiResponse = response as unknown as {code: number, message: string, result: EmailProvider[], success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<EmailProvider[]>('/api/v1/email-keys')
+    const apiResponse = response as unknown as {code: number, message: string, data: EmailProvider[], success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取Email服务商列表响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -62,12 +62,12 @@ export const getEmailProvider = async (providerName: string): Promise<EmailProvi
     return provider
   } else {
     // 调用真实API
-    const response = await request.get<{result: EmailProvider}>(`/api/v1/email-keys/${providerName}`)
-    const apiResponse = response as unknown as {code: number, message: string, result: EmailProvider, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<EmailProvider>(`/api/v1/email-keys/${providerName}`)
+    const apiResponse = response as unknown as {code: number, message: string, data: EmailProvider, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取Email服务商详情响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -80,12 +80,12 @@ export const getEmailKeys = async (providerName: string): Promise<EmailKey[]> =>
     return provider?.keys || []
   } else {
     // 调用真实API - 从完整列表中筛选
-    const response = await request.get<{result: EmailProvider[]}>('/api/v1/email-keys')
-    const apiResponse = response as unknown as {code: number, message: string, result: EmailProvider[], success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<EmailProvider[]>('/api/v1/email-keys')
+    const apiResponse = response as unknown as {code: number, message: string, data: EmailProvider[], success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取密钥列表响应数据格式错误')
     }
-    const provider = apiResponse.result.find(p => p.providerName === providerName)
+    const provider = apiResponse.data.find(p => p.providerName === providerName)
     return provider?.keys || []
   }
 }

@@ -14,12 +14,12 @@ export const getChatSessions = async (params: PageParams): Promise<PageResult<Ch
     return await MockChatService.getChatSessions(params)
   } else {
     // 调用真实API
-    const response = await request.get<{result: PageResult<ChatSession>}>('/api/v1/ai/chat/sessions',  params )
-    const apiResponse = response as unknown as {code: number, message: string, result: PageResult<ChatSession>, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<{data: PageResult<ChatSession>}>('/api/v1/ai/chat/sessions',  params )
+    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<ChatSession>, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取聊天会话列表响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 

@@ -1,7 +1,7 @@
 /**
  * 支付管理相关 API
  */
-import { request } from '@/utils/request'
+import { normalizeApiResponse, request } from '@/utils/request'
 import { isMockEnabled } from '@/config/mock'
 import * as MockPayService from '@/mock/services/pay'
 
@@ -105,15 +105,19 @@ export const getPaymentConfigs = async (params?: PaymentConfigQueryParams): Prom
   if (isMockEnabled()) {
     // 使用Mock数据
     const response = await MockPayService.getPaymentConfigsService(params || {})
-    return response.result
-  } else {
-    // 调用真实API
-    const response = await request.get<{ result: PageResult<PaymentConfigVO> }>('/api/v1/pay/configs', params || {})
-    const apiResponse = response as unknown as { code: number; message: string; result: PageResult<PaymentConfigVO>; success: boolean }
-    if (!apiResponse || !apiResponse.result) {
+    const apiResponse = normalizeApiResponse<PageResult<PaymentConfigVO>>(response)
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取支付配置列表响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
+  } else {
+    // 调用真实API
+    const response = await request.get<PageResult<PaymentConfigVO>>('/api/v1/pay/configs', params || {})
+    const apiResponse = response as unknown as { code: number; message: string; data: PageResult<PaymentConfigVO>; success: boolean }
+    if (!apiResponse || !apiResponse.data) {
+      throw new Error('获取支付配置列表响应数据格式错误')
+    }
+    return apiResponse.data
   }
 }
 
@@ -204,15 +208,19 @@ export const getPayRecords = async (params: PayRecordQueryParams): Promise<PageR
   if (isMockEnabled()) {
     // 使用Mock数据
     const response = await MockPayService.getPayRecordsService(params)
-    return response.result
-  } else {
-    // 调用真实API
-    const response = await request.get<{ result: PageResult<PayRecordVO> }>('/api/v1/pay/records', params)
-    const apiResponse = response as unknown as { code: number; message: string; result: PageResult<PayRecordVO>; success: boolean }
-    if (!apiResponse || !apiResponse.result) {
+    const apiResponse = normalizeApiResponse<PageResult<PayRecordVO>>(response)
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取支付记录列表响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
+  } else {
+    // 调用真实API
+    const response = await request.get<PageResult<PayRecordVO>>('/api/v1/pay/records', params)
+    const apiResponse = response as unknown as { code: number; message: string; data: PageResult<PayRecordVO>; success: boolean }
+    if (!apiResponse || !apiResponse.data) {
+      throw new Error('获取支付记录列表响应数据格式错误')
+    }
+    return apiResponse.data
   }
 }
 
@@ -223,18 +231,19 @@ export const getPayRecordDetail = async (id: number | string): Promise<PayRecord
   if (isMockEnabled()) {
     // 使用Mock数据
     const response = await MockPayService.getPayRecordDetailService(id)
-    if (!response.result) {
+    const apiResponse = normalizeApiResponse<PayRecordVO | null>(response)
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取支付记录详情失败')
     }
-    return response.result
+    return apiResponse.data
   } else {
     // 调用真实API
-    const response = await request.get<{ result: PayRecordVO }>(`/api/v1/pay/records/${id}`)
-    const apiResponse = response as unknown as { code: number; message: string; result: PayRecordVO; success: boolean }
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<PayRecordVO>(`/api/v1/pay/records/${id}`)
+    const apiResponse = response as unknown as { code: number; message: string; data: PayRecordVO; success: boolean }
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取支付记录详情响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -245,10 +254,11 @@ export const createPayQrCode = async (configId: number | string): Promise<string
   if (isMockEnabled()) {
     // 使用Mock数据
     const response = await MockPayService.createPayQrCodeService(configId)
-    if (!response.result) {
+    const apiResponse = normalizeApiResponse<string | null>(response)
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('生成支付链接失败')
     }
-    return response.result
+    return apiResponse.data
   } else {
     // 调用真实API
     const response = await request.get<string>(`/api/v1/pay/create-qr/${configId}`)
@@ -262,7 +272,7 @@ export const createPayQrCode = async (configId: number | string): Promise<string
       throw new Error('获取支付链接失败')
     }
 
-    const payUrl = apiResponse.data || apiResponse.message
+    const payUrl = apiResponse.data
 
     if (!payUrl || typeof payUrl !== 'string') {
       console.error('支付链接无效:', payUrl)

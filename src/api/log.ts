@@ -41,12 +41,12 @@ export const getLogs = async (params: LogQueryParams): Promise<LogResponse> => {
     return await MockLogService.getLogs(params)
   } else {
     // 调用真实API
-    const response = await request.get<{result: LogResponse}>('/api/v1/logs',  params )
-    const apiResponse = response as unknown as {code: number, message: string, result: LogResponse, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<LogResponse>('/api/v1/logs',  params )
+    const apiResponse = response as unknown as {code: number, message: string, data: LogResponse, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取日志列表响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 

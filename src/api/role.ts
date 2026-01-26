@@ -21,12 +21,12 @@ export const getRoles = async (params: RolePageParams): Promise<PageResult<Role>
     return await MockRoleService.getRoles(params)
   } else {
     // 调用真实API
-    const response = await request.get<{result: PageResult<Role>}>('/api/v1/roles', params)
-    const apiResponse = response as unknown as {code: number, message: string, result: PageResult<Role>, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<PageResult<Role>>('/api/v1/roles', params)
+    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<Role>, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取角色列表响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -119,12 +119,12 @@ export const getRoleById = async (id: string | number): Promise<Role> => {
     return await MockRoleService.getRoleById(Number(id))
   } else {
     // 调用真实API
-    const response = await request.get(`/api/v1/roles/${id}`, { params: {} })
-    const apiResponse = response as unknown as {code: number, message: string, result: Role, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<Role>(`/api/v1/roles/${id}`, { params: {} })
+    const apiResponse = response as unknown as {code: number, message: string, data: Role, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取角色详情失败')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -166,11 +166,11 @@ export const getAllRoles = async (): Promise<Role[]> => {
   } else {
     // 调用真实API
     const response = await request.get<Role[]>('/api/v1/roles/getAll')
-    const apiResponse = response as unknown as {code: number, message: string, result: Role[], success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const apiResponse = response as unknown as {code: number, message: string, data: Role[], success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取所有角色失败')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 

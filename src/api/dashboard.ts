@@ -19,15 +19,15 @@ export const getDashboardStats = async (): Promise<ApiResponse<DashboardStats>> 
     }
   } else {
     // 调用真实API
-    const response = await request.get<{result: DashboardStats}>('/api/v1/dashboard/stats')
-    const apiResponse = response as unknown as {code: number, message: string, result: DashboardStats, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<{data: DashboardStats}>('/api/v1/dashboard/stats')
+    const apiResponse = response as unknown as {code: number, message: string, data: DashboardStats, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取工作台统计数据响应格式错误')
     }
     return {
       code: apiResponse.code,
       message: apiResponse.message,
-      data: apiResponse.result,
+      data: apiResponse.data,
       success: apiResponse.success,
       timestamp: Date.now()
     }
@@ -48,15 +48,15 @@ export const getVisitTrend = async (period: string): Promise<ApiResponse<VisitTr
     }
   } else {
     // 调用真实API
-    const response = await request.get<{result: VisitTrend[]}>('/api/v1/dashboard/visit-trend', { period })
-    const apiResponse = response as unknown as {code: number, message: string, result: VisitTrend[], success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<{data: VisitTrend[]}>('/api/v1/dashboard/visit-trend', { period })
+    const apiResponse = response as unknown as {code: number, message: string, data: VisitTrend[], success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取访问趋势数据响应格式错误')
     }
     return {
       code: apiResponse.code,
       message: apiResponse.message,
-      data: apiResponse.result,
+      data: apiResponse.data,
       success: apiResponse.success,
       timestamp: Date.now()
     }
@@ -77,15 +77,15 @@ export const getUserDistribution = async (): Promise<ApiResponse<UserDistributio
     }
   } else {
     // 调用真实API
-    const response = await request.get<{result: UserDistribution[]}>('/api/v1/dashboard/user-distribution')
-    const apiResponse = response as unknown as {code: number, message: string, result: UserDistribution[], success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<{data: UserDistribution[]}>('/api/v1/dashboard/user-distribution')
+    const apiResponse = response as unknown as {code: number, message: string, data: UserDistribution[], success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取用户分布数据响应格式错误')
     }
     return {
       code: apiResponse.code,
       message: apiResponse.message,
-      data: apiResponse.result,
+      data: apiResponse.data,
       success: apiResponse.success,
       timestamp: Date.now()
     }

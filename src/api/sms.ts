@@ -38,12 +38,12 @@ export const getSMSProviders = async (): Promise<SMSProvider[]> => {
     return await MockSMSService.getSMSProviders()
   } else {
     // 调用真实API
-    const response = await request.get<{result: SMSProvider[]}>('/api/v1/sms-keys')
-    const apiResponse = response as unknown as {code: number, message: string, result: SMSProvider[], success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<{data: SMSProvider[]}>('/api/v1/sms-keys')
+    const apiResponse = response as unknown as {code: number, message: string, data: SMSProvider[], success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取SMS服务商列表响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -59,12 +59,12 @@ export const getSMSProvider = async (providerName: string): Promise<SMSProvider>
     return provider
   } else {
     // 调用真实API
-    const response = await request.get<{result: SMSProvider}>(`/api/v1/sms-keys/${providerName}`)
-    const apiResponse = response as unknown as {code: number, message: string, result: SMSProvider, success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<{data: SMSProvider}>(`/api/v1/sms-keys/${providerName}`)
+    const apiResponse = response as unknown as {code: number, message: string, data: SMSProvider, success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取SMS服务商详情响应数据格式错误')
     }
-    return apiResponse.result
+    return apiResponse.data
   }
 }
 
@@ -77,12 +77,12 @@ export const getSMSKeys = async (providerName: string): Promise<SMSKey[]> => {
     return provider?.keys || []
   } else {
     // 调用真实API - 从完整列表中筛选
-    const response = await request.get<{result: SMSProvider[]}>('/api/v1/sms-keys')
-    const apiResponse = response as unknown as {code: number, message: string, result: SMSProvider[], success: boolean}
-    if (!apiResponse || !apiResponse.result) {
+    const response = await request.get<{data: SMSProvider[]}>('/api/v1/sms-keys')
+    const apiResponse = response as unknown as {code: number, message: string, data: SMSProvider[], success: boolean}
+    if (!apiResponse || !apiResponse.data) {
       throw new Error('获取密钥列表响应数据格式错误')
     }
-    const provider = apiResponse.result.find(p => p.providerName === providerName)
+    const provider = apiResponse.data.find(p => p.providerName === providerName)
     return provider?.keys || []
   }
 }

@@ -5,6 +5,29 @@ import { useUserStore } from '@/stores/user'
 import router from '@/router'
 import type { ApiResponse } from '@/types'
 
+type ApiResponseLike<T = Record<string, unknown>> = {
+  code?: number
+  message?: string
+  success?: boolean
+  data?: T
+  result?: T
+}
+
+export const normalizeApiResponse = <T = Record<string, unknown>>(payload: ApiResponseLike<T>): ApiResponseLike<T> => {
+  if (!payload || typeof payload !== 'object') {
+    return payload
+  }
+  const normalized = { ...payload } as ApiResponseLike<T>
+  if (normalized.data === undefined) {
+    if (normalized.result !== undefined) {
+      normalized.data = normalized.result
+    } else if (normalized.success && typeof normalized.message === 'string') {
+      normalized.data = normalized.message as unknown as T
+    }
+  }
+  return normalized
+}
+
 // 创建axios实例
 const service: AxiosInstance = axios.create({
   baseURL: getBaseURL(),
@@ -36,6 +59,7 @@ service.interceptors.request.use(
 // 响应拦截器
 service.interceptors.response.use(
   (response: AxiosResponse<ApiResponse>) => {
+    response.data = normalizeApiResponse(response.data) as ApiResponse
     const { data } = response
     const { code, message, success } = data
 

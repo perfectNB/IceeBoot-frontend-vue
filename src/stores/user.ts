@@ -11,10 +11,54 @@ export const useUserStore = defineStore('user', () => {
   const permissions = ref<string[]>([])
   const roles = ref<string[]>([])
 
+  type TokenStorage = 'local' | 'session' | 'memory'
+  const TOKEN_KEY = 'accessToken'
+  const rawStorageType = import.meta.env.VITE_TOKEN_STORAGE as string | undefined
+  const tokenStorageType: TokenStorage =
+    rawStorageType === 'session' || rawStorageType === 'memory' ? rawStorageType : 'local'
+  let memoryToken = ''
+
+  const getStorage = (): Storage | null => {
+    if (tokenStorageType === 'session') return sessionStorage
+    if (tokenStorageType === 'local') return localStorage
+    return null
+  }
+
+  const safeGet = (storage: Storage | null, key: string): string => {
+    if (!storage) return ''
+    try {
+      return storage.getItem(key) || ''
+    } catch {
+      return ''
+    }
+  }
+
+  const safeSet = (storage: Storage | null, key: string, value: string): void => {
+    if (!storage) return
+    try {
+      storage.setItem(key, value)
+    } catch {
+      return
+    }
+  }
+
+  const safeRemove = (storage: Storage | null, key: string): void => {
+    if (!storage) return
+    try {
+      storage.removeItem(key)
+    } catch {
+      return
+    }
+  }
+
   // 获取token
   const getToken = (): string => {
     if (!token.value) {
-      token.value = localStorage.getItem('accessToken') || ''
+      if (tokenStorageType === 'memory') {
+        token.value = memoryToken
+      } else {
+        token.value = safeGet(getStorage(), TOKEN_KEY)
+      }
     }
     return token.value
   }
@@ -22,13 +66,21 @@ export const useUserStore = defineStore('user', () => {
   // 设置token
   const setToken = (newToken: string): void => {
     token.value = newToken
-    localStorage.setItem('accessToken', newToken)
+    if (tokenStorageType === 'memory') {
+      memoryToken = newToken
+    } else {
+      safeSet(getStorage(), TOKEN_KEY, newToken)
+    }
   }
 
   // 清除token
   const clearToken = (): void => {
     token.value = ''
-    localStorage.removeItem('accessToken')
+    if (tokenStorageType === 'memory') {
+      memoryToken = ''
+    } else {
+      safeRemove(getStorage(), TOKEN_KEY)
+    }
   }
 
   // 设置用户信息

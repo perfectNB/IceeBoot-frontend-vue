@@ -33,10 +33,6 @@ export const logout = () => {
 export const getUserInfo = async () => {
   if (isMockEnabled()) {
     // Mock模式：获取当前登录用户信息
-    const token = localStorage.getItem('accessToken')
-    if (!token) {
-      throw new Error('未登录')
-    }
     // 从token中解析用户ID（简化处理，实际应该从token中解析）
     const userId = 1 // 默认管理员用户
     const userInfo = await MockUserService.getUserInfo(userId)

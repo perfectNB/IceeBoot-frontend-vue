@@ -3,6 +3,7 @@
  */
 
 import { request } from '@/utils/request'
+import { useUserStore } from '@/stores/user'
 import type { PageParams, PageResult } from '@/types'
 import { isMockEnabled } from '@/config/mock'
 import { MockChatService } from '@/mock/services/chat'
@@ -163,13 +164,18 @@ export const streamAiChat = async (
 
   try {
     // 调用真实API - 使用EventSource进行SSE连接
+    const userStore = useUserStore()
+    const token = userStore.getToken()
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Accept': 'text/event-stream'
+    }
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
     const response = await fetch(`${getBaseURL()}/api/v1/chat/stream`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        'Accept': 'text/event-stream'
-      },
+      headers,
       body: JSON.stringify(data)
     })
 
@@ -259,13 +265,18 @@ export const streamIntelligentAiChat = async (
 
   try {
     // 调用工具流API - 使用EventSource进行SSE连接，支持MCP工具调用
+    const userStore = useUserStore()
+    const token = userStore.getToken()
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Accept': 'text/event-stream'
+    }
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
     const response = await fetch(`${getBaseURL()}/api/v1/chat/tool/stream`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        'Accept': 'text/event-stream'
-      },
+      headers,
       body: JSON.stringify(data)
     })
 
@@ -374,13 +385,18 @@ export const streamRagChat = async (
 
   try {
     // 调用RAG流API - 使用EventSource进行SSE连接
+    const userStore = useUserStore()
+    const token = userStore.getToken()
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Accept': 'text/event-stream'
+    }
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
     const response = await fetch(`${getBaseURL()}/api/v1/chat/rag/stream`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        'Accept': 'text/event-stream'
-      },
+      headers,
       body: JSON.stringify(data)
     })
 

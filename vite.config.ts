@@ -2,7 +2,6 @@ import { fileURLToPath, URL } from 'node:url'
 
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
 import { VitePWA } from 'vite-plugin-pwa'
 import legacy from '@vitejs/plugin-legacy'
 
@@ -10,7 +9,6 @@ import legacy from '@vitejs/plugin-legacy'
 export default defineConfig({
   plugins: [
     vue(),
-    vueDevTools(),
     // PWA配置
     VitePWA({
       registerType: 'autoUpdate',

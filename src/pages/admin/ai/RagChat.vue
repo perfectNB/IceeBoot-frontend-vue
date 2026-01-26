@@ -172,6 +172,7 @@ import {
 import { getAiChatSessions, getAiChatMessages, deleteAiChatSession, createAiChatSession, clearAiChatSession } from '@/api/aiChat'
 import type { AiChatSession, AiChatMessage, StreamChatRequest } from '@/api/aiChat'
 import { getBaseURL } from '@/utils/env'
+import { useUserStore } from '@/stores/user'
 
 // 响应式数据
 const isLoading = ref(false)
@@ -527,13 +528,18 @@ const streamRagChat = async (
 ): Promise<void> => {
   try {
     // 调用RAG流式对话API
+    const userStore = useUserStore()
+    const token = userStore.getToken()
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Accept': 'text/event-stream'
+    }
+    if (token) {
+      headers.Authorization = `Bearer ${token}`
+    }
     const response = await fetch(`${getBaseURL()}/api/v1/chat/rag/stream`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('accessToken')}`,
-        'Accept': 'text/event-stream'
-      },
+      headers,
       body: JSON.stringify(data)
     })
 

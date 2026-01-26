@@ -134,7 +134,6 @@ import {
   Moon,
   Sunny,
   User,
-  Setting,
   SwitchButton,
   ArrowDown,
   Bell,

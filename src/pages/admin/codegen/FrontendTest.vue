@@ -169,19 +169,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Search,
   Refresh,
   Plus,
-  Download,
   Edit,
   Delete
 } from '@element-plus/icons-vue'
 import type { Student } from '@/types'
 import {
-  getStudentById,
   deleteStudent,
   updateStudent,
   getStudentList,
@@ -387,11 +385,6 @@ const handleDelete = async (row: Student) => {
   }
 }
 
-// 导出
-const handleExport = () => {
-  ElMessage.info('导出功能开发中...')
-}
-
 // 选择变更
 const handleSelectionChange = (selection: Student[]) => {
   selectedRows.value = selection
@@ -408,18 +401,6 @@ const handleSizeChange = (size: number) => {
 const handleCurrentChange = (page: number) => {
   currentPage.value = page
   loadData()
-}
-
-// 状态变更
-const handleStatusChange = async (row: Student) => {
-  try {
-    await updateStudent(row.id, row)
-    ElMessage.success('状态更新成功')
-  } catch (error) {
-    console.error('状态更新失败:', error)
-    ElMessage.error('状态更新失败')
-    await loadData() // 重新加载数据恢复状态
-  }
 }
 
 // 组件挂载

@@ -1,7 +1,7 @@
 /**
  * 支付管理 Mock 服务
  */
-import type { PaymentConfigVO, PayRecordVO, PayRecordQueryParams, PaymentConfigQueryParams } from '@/api/pay'
+import type { PaymentConfigVO, PayRecordQueryParams, PaymentConfigQueryParams } from '@/api/pay'
 import { mockPaymentConfigs, mockPayRecords, generateQrCodeUrl } from '../data/pay'
 
 // 复制数据避免污染原始数据
@@ -77,6 +77,7 @@ export const createPaymentConfigService = (data: Partial<PaymentConfigVO>) => {
   const newConfig: PaymentConfigVO = {
     id: Math.max(...paymentConfigs.map(c => c.id), 0) + 1,
     configName: data.configName || '',
+    payCode: data.payCode || `PAY_${Date.now()}`,
     amount: data.amount || 0,
     amountYuan: data.amountYuan || '0.00',
     description: data.description || '',
@@ -376,4 +377,3 @@ export const deletePayRecordsService = (ids: (number | string)[]) => {
     timestamp: Date.now()
   }
 }
-

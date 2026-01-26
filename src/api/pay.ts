@@ -252,29 +252,24 @@ export const createPayQrCode = async (configId: number | string): Promise<string
   } else {
     // 调用真实API
     const response = await request.get<string>(`/api/v1/pay/create-qr/${configId}`)
-    
-    console.log('获取支付链接完整响应:', response)
-    
-    const apiResponse = response as any
-    
+    const apiResponse = response as unknown as { success: boolean; code: number; message?: string; data?: string }
+
     if (!apiResponse) {
       throw new Error('服务器无响应')
     }
-    
+
     if (!apiResponse.success || apiResponse.code !== 200) {
       throw new Error('获取支付链接失败')
     }
-    
-    // 后端返回格式：支付链接在 message 字段中
-    const payUrl = apiResponse.message
-    
+
+    const payUrl = apiResponse.data || apiResponse.message
+
     if (!payUrl || typeof payUrl !== 'string') {
       console.error('支付链接无效:', payUrl)
       console.error('完整响应对象:', apiResponse)
       throw new Error('支付链接为空或格式错误')
     }
-    
-    console.log('支付链接:', payUrl)
+
     return payUrl
   }
 }
@@ -314,4 +309,3 @@ export const deletePayRecords = async (ids: (number | string)[]): Promise<void> 
     }
   }
 }
-

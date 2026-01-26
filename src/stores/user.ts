@@ -101,11 +101,11 @@ export const useUserStore = defineStore('user', () => {
   const login = async (loginForm: LoginForm): Promise<LoginResponse> => {
     try {
       // 统一使用 auth.ts 中的登录接口
-      const response = await apiLogin(loginForm)
+      const response = await apiLogin(loginForm, { skipErrorMessage: true })
 
       setToken(response.accessToken)
       // 登录成功后，获取用户可见菜单并同步到用户信息中，供侧边栏使用
-      const menus = await getUserMenus()
+      const menus = await getUserMenus(undefined, { skipErrorMessage: true })
       setUser({ ...(response.user as User), menus } as User)
 
       return response

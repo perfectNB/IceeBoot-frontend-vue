@@ -1,4 +1,5 @@
 import { request } from '@/utils/request'
+import type { AxiosRequestConfig } from 'axios'
 import type { MenuItem, PageParams, PageResult } from '@/types'
 import { isMockEnabled } from '@/config/mock'
 import { MockMenuService } from '@/mock/services/menu'
@@ -50,14 +51,17 @@ export const getMenus = async (params: PageParams): Promise<PageResult<MenuItem>
 }
 
 // 获取用户菜单
-export const getUserMenus = async (userId?: number): Promise<MenuItem[]> => {
+export const getUserMenus = async (
+  userId?: number,
+  config?: AxiosRequestConfig & { skipErrorMessage?: boolean }
+): Promise<MenuItem[]> => {
   if (isMockEnabled()) {
     // 使用Mock数据
     const response=await MockMenuService.getUserMenus(userId || 1)
     return response
   } else {
     // 调用真实API
-    const response = await request.get<MenuItem[]>('/api/v1/menus/user')
+    const response = await request.get<MenuItem[]>('/api/v1/menus/user', undefined, config)
     const apiResponse = response as unknown as {code: number, message: string, data: MenuItem[], success: boolean}
     if (!apiResponse || !apiResponse.data) {
       throw new Error('获取用户菜单响应数据格式错误')

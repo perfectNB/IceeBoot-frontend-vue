@@ -98,10 +98,38 @@ function menuToRoute(menu: MenuItem, isChild = false): RouteRecordRaw {
 
 // 动态路由是否已加载
 let dynamicRoutesLoaded = false
+let firstMenuPath: string | null = null
 
 // 重置动态路由状态（用于登出时清理）
 export function resetDynamicRoutes(): void {
   dynamicRoutesLoaded = false
+  firstMenuPath = null
+}
+
+function normalizeMenuPath(path: string): string {
+  if (path.startsWith('/admin')) {
+    return path
+  }
+  const normalized = path.replace(/^\/+/, '')
+  return normalized ? `/admin/${normalized}` : '/admin'
+}
+
+function resolveFirstMenuPath(menus: MenuItem[]): string | null {
+  for (const menu of menus) {
+    if (menu.type === 'link') {
+      continue
+    }
+    if (menu.children && menu.children.length > 0) {
+      const childPath = resolveFirstMenuPath(menu.children)
+      if (childPath) {
+        return childPath
+      }
+    }
+    if (menu.path) {
+      return normalizeMenuPath(menu.path)
+    }
+  }
+  return null
 }
 
 // 生成动态路由并添加到路由器
@@ -112,6 +140,7 @@ async function loadDynamicRoutes(): Promise<void> {
   try {
     const menus = await getUserMenus()
     const dynamicRoutes = menus.map(menu => menuToRoute(menu))
+    firstMenuPath = resolveFirstMenuPath(menus)
 
     // 找到admin路由并添加子路由
     const adminRoute = router.getRoutes().find(route => route.path === '/admin')
@@ -132,10 +161,14 @@ async function loadDynamicRoutes(): Promise<void> {
       // 设置默认重定向到第一个菜单
       if (dynamicRoutes.length > 0) {
         const firstRoute = dynamicRoutes[0]
+        const redirectPath = firstRoute.path.startsWith('/') ? `/admin${firstRoute.path}` : `/admin/${firstRoute.path}`
         router.addRoute('admin', {
           path: '',
-          redirect: firstRoute.path.startsWith('/') ? `/admin${firstRoute.path}` : `/admin/${firstRoute.path}`
+          redirect: redirectPath
         })
+        if (!firstMenuPath) {
+          firstMenuPath = redirectPath
+        }
       }
     }
 
@@ -228,25 +261,16 @@ router.beforeEach(async (to, from, next) => {
   }
 
 
-  // 获取token（会从localStorage恢复）
   const token = userStore.getToken()
-  if (to.path != '/'&&!token ) {
+  if (!token && to.path !== '/') {
     next('/')
     return
   }
-  // 登录后访问首页强制跳转到管理后台
-  if (token && to.path === '/') {
-    next('/admin')
-    return
-  }
 
-  // 如果是访问admin路径且有token，优先加载动态路由
-  if (to.path.startsWith('/') && token) {
+  if (token) {
     try {
       const wasLoaded = dynamicRoutesLoaded
       await loadDynamicRoutes()
-
-      // 如果动态路由刚刚加载完成，需要重新导航到目标路由
       if (!wasLoaded) {
         next({ ...to, replace: true })
         return
@@ -259,20 +283,23 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
-  // // 如果访问admin路径但没有token，跳转到首页
-  // if (to.path.startsWith('/admin') && !token) {
-  //   ElMessage.warning('请先登录')
-  //   next('/')
-  //   return
-  // }
-
-  if (Object.keys(to.meta).length === 0){
-
-
-    next('/404')
+  if (token && to.path === '/') {
+    if (firstMenuPath) {
+      next(firstMenuPath)
+    } else {
+      next('/admin')
+    }
+    return
   }
-  if(to.fullPath=='/admin'){
-    next('/admin/dashboard')
+
+  if (to.path === '/admin' && firstMenuPath) {
+    next(firstMenuPath)
+    return
+  }
+
+  if (to.matched.length === 0) {
+    next('/404')
+    return
   }
   // 检查是否需要认证
   if (to.meta.requiresAuth) {
@@ -305,7 +332,7 @@ router.beforeEach(async (to, from, next) => {
 
       if (!hasPermission) {
         ElMessage.error('您没有访问该页面的权限')
-        next('/admin/dashboard') // 跳转到仪表板而不是首页，避免循环
+        next('/admin')
         return
       }
     }

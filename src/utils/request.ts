@@ -13,6 +13,10 @@ type ApiResponseLike<T = Record<string, unknown>> = {
   result?: T
 }
 
+type RequestConfig = AxiosRequestConfig & {
+  skipErrorMessage?: boolean
+}
+
 export const normalizeApiResponse = <T = Record<string, unknown>>(payload: ApiResponseLike<T>): ApiResponseLike<T> => {
   if (!payload || typeof payload !== 'object') {
     return payload
@@ -83,8 +87,12 @@ service.interceptors.response.use(
 
     // 权限不足
     if (code === 403) {
-      ElMessage.error(message || '权限不足')
-      return Promise.reject(new Error(message || '权限不足'))
+      const normalizedMessage = message || '权限不足'
+      const skipErrorMessage = Boolean((response.config as RequestConfig | undefined)?.skipErrorMessage)
+      if (!skipErrorMessage) {
+        ElMessage.error(normalizedMessage)
+      }
+      return Promise.reject(new Error(normalizedMessage))
     }
 
     // 其他错误
@@ -135,7 +143,13 @@ service.interceptors.response.use(
       message = error.message || '请求失败'
     }
 
-    ElMessage.error(message)
+    if (error && typeof error === 'object') {
+      ;(error as Error).message = message
+    }
+    const skipErrorMessage = Boolean((error?.config as RequestConfig | undefined)?.skipErrorMessage)
+    if (!skipErrorMessage) {
+      ElMessage.error(message)
+    }
     return Promise.reject(error)
   }
 )
@@ -145,7 +159,7 @@ export const request = {
   async get<T = Record<string, unknown>>(
     url: string,
     params?: Record<string, unknown>,
-    config?: AxiosRequestConfig
+    config?: RequestConfig
   ): Promise<ApiResponse<T>> {
     const response = await service.get(url, { params, ...config })
     return response.data
@@ -154,7 +168,7 @@ export const request = {
   async post<T = Record<string, unknown>>(
     url: string,
     data?: Record<string, unknown> | unknown[],
-    config?: AxiosRequestConfig
+    config?: RequestConfig
   ): Promise<ApiResponse<T>> {
     const response = await service.post(url, data, config)
     return response.data
@@ -163,7 +177,7 @@ export const request = {
   async put<T = Record<string, unknown>>(
     url: string,
     data?: Record<string, unknown>,
-    config?: AxiosRequestConfig
+    config?: RequestConfig
   ): Promise<ApiResponse<T>> {
     const response = await service.put(url, data, config)
     return response.data
@@ -172,7 +186,7 @@ export const request = {
   async delete<T = Record<string, unknown>>(
     url: string,
     params?: Record<string, unknown>,
-    config?: AxiosRequestConfig
+    config?: RequestConfig
   ): Promise<ApiResponse<T>> {
     const response = await service.delete(url, { params, ...config })
     return response.data
@@ -181,7 +195,7 @@ export const request = {
   async patch<T = Record<string, unknown>>(
     url: string,
     data?: Record<string, unknown>,
-    config?: AxiosRequestConfig
+    config?: RequestConfig
   ): Promise<ApiResponse<T>> {
     const response = await service.patch(url, data, config)
     return response.data

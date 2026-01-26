@@ -3,13 +3,14 @@ import { isMockEnabled } from '@/config/mock'
 import { MockAuthService } from '@/mock/services/auth'
 import { MockUserService } from '@/mock/services/user'
 import type { LoginForm, LoginResponse, User } from '@/types'
+import type { AxiosRequestConfig } from 'axios'
 
 // 登录接口
-export const login = async (data: LoginForm): Promise<LoginResponse> => {
+export const login = async (data: LoginForm, config?: AxiosRequestConfig & { skipErrorMessage?: boolean }): Promise<LoginResponse> => {
   if (isMockEnabled()) {
     return await MockAuthService.login(data)
   } else {
-    const response = await request.post<LoginResponse>('/api/v1/auth/login', data as unknown as Record<string, unknown>)
+    const response = await request.post<LoginResponse>('/api/v1/auth/login', data as unknown as Record<string, unknown>, config)
     const apiResponse = response as unknown as {code: number, message: string, data: LoginResponse, success: boolean}
     if (!apiResponse || !apiResponse.data) {
       throw new Error('登录响应数据格式错误')

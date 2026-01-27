@@ -9,7 +9,11 @@
     :modal-class="'custom-modal'"
   >
     <div class="login-content">
-      <!-- 登录方式切换 -->
+      <div class="login-hero">
+        <div class="hero-glow"></div>
+        <div class="hero-title">欢迎回来</div>
+        <div class="hero-subtitle">登录后继续使用系统</div>
+      </div>
       <el-tabs v-model="activeTab" class="login-tabs">
         <!-- 账号密码登录 -->
         <el-tab-pane label="账号登录" name="account">
@@ -288,6 +292,7 @@ watch(dialogVisible, (visible) => {
     border: 1px solid var(--border-extra-light);
     overflow: hidden;
     position: relative;
+    animation: dialog-pop 0.45s cubic-bezier(0.22, 1, 0.36, 1);
 
     &::before {
       content: '';
@@ -360,6 +365,42 @@ watch(dialogVisible, (visible) => {
 }
 
 .login-content {
+  animation: content-fade 0.5s ease;
+
+  .login-hero {
+    position: relative;
+    padding: 18px 16px 24px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, rgba(64, 158, 255, 0.08), rgba(103, 194, 58, 0.08));
+    border: 1px solid var(--border-extra-light);
+    margin-bottom: 22px;
+    overflow: hidden;
+  }
+
+  .hero-glow {
+    position: absolute;
+    top: -60px;
+    right: -40px;
+    width: 140px;
+    height: 140px;
+    background: radial-gradient(circle, rgba(64, 158, 255, 0.35), transparent 70%);
+    filter: blur(2px);
+    animation: glow-float 6s ease-in-out infinite;
+  }
+
+  .hero-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    letter-spacing: 0.5px;
+  }
+
+  .hero-subtitle {
+    margin-top: 6px;
+    font-size: 13px;
+    color: var(--text-secondary);
+  }
+
   .login-tabs {
     :deep(.el-tabs__header) {
       margin-bottom: 35px;
@@ -567,12 +608,61 @@ watch(dialogVisible, (visible) => {
     height: 200px;
     border: 1px solid var(--border-lighter);
     border-radius: 8px;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+    animation: qrcode-float 4s ease-in-out infinite;
   }
 
   .qrcode-tip {
     margin: 16px 0 8px;
     color: var(--text-secondary);
     font-size: 14px;
+  }
+}
+
+:deep(.custom-modal) {
+  backdrop-filter: blur(10px);
+  background: rgba(15, 23, 42, 0.45);
+}
+
+@keyframes dialog-pop {
+  0% {
+    transform: translateY(20px) scale(0.98);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes content-fade {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes glow-float {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(10px);
+    opacity: 1;
+  }
+}
+
+@keyframes qrcode-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
   }
 }
 </style>

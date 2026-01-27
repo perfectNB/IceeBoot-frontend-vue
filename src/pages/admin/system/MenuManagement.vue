@@ -7,9 +7,9 @@
 
     <!-- 操作区域 -->
     <div class="action-section">
-      <el-button 
-        type="primary" 
-        :icon="Plus" 
+      <el-button
+        type="primary"
+        :icon="Plus"
         @click="handleAdd"
         v-if="hasPermission('system:menu:create')"
       >
@@ -24,8 +24,8 @@
         <el-icon><Delete /></el-icon>
         批量删除
       </el-button>
-      <el-button 
-        :icon="Refresh" 
+      <el-button
+        :icon="Refresh"
         @click="loadMenus"
       >
         刷新
@@ -76,9 +76,9 @@
 
     <!-- 表格区域 -->
     <div class="table-section">
-      <el-table 
+      <el-table
         ref="tableRef"
-        :data="filteredMenuList" 
+        :data="filteredMenuList"
         v-loading="loading"
         row-key="id"
         default-expand-all
@@ -115,27 +115,27 @@
         </el-table-column>
         <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
-            <el-button 
-              type="success" 
-              size="small" 
+            <el-button
+              type="success"
+              size="small"
               :icon="Plus"
               @click="handleAddChild(row)"
               v-if="hasPermission('system:menu:create') && row.type === 'menu'"
             >
               添加子菜单
             </el-button>
-            <el-button 
-              type="primary" 
-              size="small" 
+            <el-button
+              type="primary"
+              size="small"
               :icon="Edit"
               @click="handleEdit(row)"
               v-if="hasPermission('system:menu:edit')"
             >
               编辑
             </el-button>
-            <el-button 
-              type="danger" 
-              size="small" 
+            <el-button
+              type="danger"
+              size="small"
               :icon="Delete"
               @click="handleDelete(row)"
               v-if="hasPermission('system:menu:delete')"
@@ -148,16 +148,16 @@
     </div>
 
     <!-- 新增/编辑对话框 -->
-    <el-dialog 
-      :title="dialogTitle" 
-      v-model="dialogVisible" 
+    <el-dialog
+      :title="dialogTitle"
+      v-model="dialogVisible"
       width="600px"
       @close="resetForm"
     >
-      <el-form 
-        ref="formRef" 
-        :model="formData" 
-        :rules="formRules" 
+      <el-form
+        ref="formRef"
+        :model="formData"
+        :rules="formRules"
         label-width="100px"
       >
         <el-form-item label="父级菜单">
@@ -187,8 +187,8 @@
         </el-form-item>
         <el-form-item label="图标" prop="icon">
           <div class="icon-input-wrapper">
-            <el-input 
-              v-model="formData.icon" 
+            <el-input
+              v-model="formData.icon"
               placeholder="请输入图标名称或点击选择"
               class="icon-input"
             >
@@ -224,13 +224,7 @@
         <el-form-item label="需要认证">
           <el-switch v-model="formData.requiresAuth" />
         </el-form-item>
-        <el-form-item label="权限标识" prop="permissions">
-          <el-input 
-            v-model="formData.permissions" 
-            placeholder="请输入权限标识，如：system:menu:list"
-            style="width: 100%"
-          />
-        </el-form-item>
+
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
@@ -241,9 +235,9 @@
     </el-dialog>
 
     <!-- 图标选择器对话框 -->
-    <el-dialog 
-      title="选择图标" 
-      v-model="showIconSelector" 
+    <el-dialog
+      title="选择图标"
+      v-model="showIconSelector"
       width="800px"
       @close="iconSearchKeyword = ''"
     >
@@ -257,8 +251,8 @@
           />
         </div>
         <div class="icon-grid">
-          <div 
-            v-for="iconName in filteredIconList" 
+          <div
+            v-for="iconName in filteredIconList"
             :key="iconName"
             class="icon-item"
             @click="selectIcon(iconName)"
@@ -312,51 +306,51 @@ const iconList = [
   'Sell', 'Promotion', 'Stamp', 'MessageBox', 'Notification', 'Mute', 'Service', 'Avatar',
   'UserFilled', 'SwitchButton', 'Switch', 'Operation', 'Management', 'Coordinate', 'Expand', 'Fold',
   'Aim', 'ScaleToOriginal', 'View', 'Hide', 'Loading', 'More', 'MoreFilled', 'Grid', 'Menu', 'List',
-  
+
   // 箭头和方向图标
   'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'ArrowLeftBold', 'ArrowRightBold', 'ArrowUpBold', 'ArrowDownBold',
   'CaretLeft', 'CaretRight', 'CaretTop', 'CaretBottom', 'DArrowLeft', 'DArrowRight', 'DCaret', 'Back',
   'Right', 'Bottom', 'Top', 'Sort', 'SortUp', 'SortDown', 'Rank', 'Position',
-  
+
   // 状态和操作图标
   'Check', 'Close', 'CircleCheck', 'CircleClose', 'CirclePlus', 'CircleCheckFilled', 'CircleCloseFilled', 'CirclePlusFilled',
   'SuccessFilled', 'InfoFilled', 'WarningFilled', 'QuestionFilled', 'Minus', 'Plus', 'Remove', 'Delete',
   'DeleteFilled', 'Edit', 'EditPen', 'Refresh', 'RefreshLeft', 'RefreshRight', 'Search', 'ZoomIn',
   'ZoomOut', 'FullScreen', 'ScaleToOriginal', 'Crop', 'Picture', 'PictureFilled', 'PictureRounded', 'AlarmClock',
-  
+
   // 媒体和娱乐图标
   'VideoPlay', 'VideoPause', 'Microphone', 'MicrophoneFilled', 'Headset', 'Monitor', 'Mouse', 'Keyboard',
   'Cpu', 'HardDrive', 'MemoryCard', 'Wifi', 'WifiOff', 'Signal', 'Cellphone', 'Iphone',
   'TabletButton', 'Laptop', 'Watch', 'Camera', 'VideoCamera', 'Film', 'Headphones', 'MagicStick',
-  
+
   // 天气和自然图标
   'Sunny', 'Cloudy', 'PartlyCloudy', 'Overcast', 'Drizzling', 'Raining', 'Lightning', 'LightningFilled',
   'Snowing', 'WindPower', 'Tornado', 'Typhoon', 'Sunrise', 'Sunset', 'MoonNight', 'Moon',
   'Thermometer', 'Umbrella', 'UmbrellaFilled', 'Rainbow', 'Snowflake', 'IceCreamRound', 'IceCreamSquare', 'Cherry',
-  
+
   // 交通和地点图标
   'Van', 'Truck', 'CarFilled', 'BicycleFilled', 'MotorcycleFilled', 'Ship', 'AirplaneFilled', 'Train',
   'Bus', 'Subway', 'Walking', 'MapLocation', 'LocationFilled', 'LocationInformation', 'Navigation', 'Guide',
   'Compass', 'Position', 'AddLocation', 'RemoveLocation', 'OfficeBuilding', 'School', 'Hospital', 'Bank',
-  
+
   // 食物和饮品图标
   'Apple', 'Orange', 'Pear', 'Cherry', 'Watermelon', 'Grape', 'Strawberry', 'Lollipop',
   'Sugar', 'Dessert', 'IceCream', 'IceCreamRound', 'IceCreamSquare', 'IceTea', 'Coffee', 'CoffeeCup',
   'Milk', 'WineGlass', 'Goblet', 'GobletFull', 'GobletSquare', 'GobletSquareFull', 'Dish', 'DishDot',
   'Bowl', 'KnifeFork', 'Fork', 'Spoon', 'ChopSticks', 'FoodAndDrinks', 'Burger', 'Pizza',
-  
+
   // 购物和商业图标
   'ShoppingBag', 'ShoppingCart', 'ShoppingCartFull', 'ShoppingTrolley', 'Goods', 'Box', 'Package',
   'Present', 'GiftFilled', 'Sell', 'Sold', 'Promotion', 'DiscountFilled', 'PriceTag', 'Ticket',
   'TicketFilled', 'Stamp', 'Postcard', 'CreditCard', 'BankCard', 'Money', 'Coin', 'Wallet',
   'WalletFilled', 'PaymentFilled', 'GoldMedal', 'SilverMedal', 'BronzeMedal', 'Medal', 'Trophy', 'TrophyBase',
-  
+
   // 办公和文档图标
   'Document', 'DocumentAdd', 'DocumentDelete', 'DocumentRemove', 'DocumentChecked', 'DocumentCopy', 'CopyDocument', 'Notebook',
   'Reading', 'ReadingLamp', 'Paperclip', 'TakeawayBox', 'Briefcase', 'Suitcase', 'SuitcaseLine', 'Handbag',
   'Files', 'Folder', 'FolderAdd', 'FolderDelete', 'FolderOpened', 'FolderRemove', 'FolderChecked', 'Collection',
   'Tickets', 'DataBoard', 'DataLine', 'DataAnalysis', 'PieChart', 'Histogram', 'TrendCharts', 'Platform',
-  
+
   // 用户和社交图标
   'User', 'UserFilled', 'Avatar', 'Male', 'Female', 'Postman', 'ChatDotRound',
   'ChatLineRound', 'ChatRound', 'ChatSquare', 'Connection', 'Phone', 'PhoneFilled', 'Message', 'MessageBox',
@@ -368,7 +362,7 @@ const filteredIconList = computed(() => {
   if (!iconSearchKeyword.value) {
     return iconList
   }
-  return iconList.filter(icon => 
+  return iconList.filter(icon =>
     icon.toLowerCase().includes(iconSearchKeyword.value.toLowerCase())
   )
 })
@@ -402,14 +396,14 @@ const formRules = computed((): FormRules => {
     type: [{ required: true, message: '请选择类型', trigger: 'change' }],
     permissions: [{ required: true, message: '请输入权限标识', trigger: 'blur' }]
   }
-  
+
   // 根据类型动态添加验证规则
   if (formData.type === 'link') {
     rules.link = [{ required: true, message: '请输入链接地址', trigger: 'blur' }]
   } else {
     rules.path = [{ required: true, message: '请输入路径', trigger: 'blur' }]
   }
-  
+
   return rules
 })
 
@@ -420,17 +414,17 @@ const isEdit = ref(false)
 // 过滤菜单列表
 const filteredMenuList = computed(() => {
   let filtered = menuList.value
-  
+
   if (searchForm.title) {
-    filtered = filtered.filter(menu => 
+    filtered = filtered.filter(menu =>
       menu.title.toLowerCase().includes(searchForm.title.toLowerCase())
     )
   }
-  
+
   if (searchForm.type) {
     filtered = filtered.filter(menu => menu.type === searchForm.type)
   }
-  
+
   return filtered
 })
 
@@ -496,7 +490,7 @@ const handleDelete = async (row: MenuItem) => {
         type: 'warning'
       }
     )
-    
+
     await deleteMenu(row.id)
     ElMessage.success('删除成功')
     loadMenus()
@@ -512,13 +506,13 @@ const handleSubmit = async () => {
   try {
     await formRef.value?.validate()
     submitting.value = true
-    
+
     // 准备提交数据，将permissions字符串转换为数组
     const submitData = {
       ...formData,
       permissions: formData.permissions ? formData.permissions.split(',').map(p => p.trim()).filter(p => p) : []
     } as MenuItem
-    
+
     if (isEdit.value) {
       await updateMenu(submitData.id!, submitData)
       ElMessage.success('更新成功')
@@ -526,7 +520,7 @@ const handleSubmit = async () => {
       await createMenu(submitData)
       ElMessage.success('创建成功')
     }
-    
+
     dialogVisible.value = false
     loadMenus()
   } catch {
@@ -602,11 +596,11 @@ const handleBatchDelete = async () => {
         type: 'warning'
       }
     )
-    
+
     // 批量删除菜单
     const menuIds = selectedMenus.value.map(menu => menu.id)
     await deleteMenus(menuIds)
-    
+
     ElMessage.success(`成功删除 ${selectedMenus.value.length} 个菜单`)
     selectedMenus.value = []
     loadMenus()

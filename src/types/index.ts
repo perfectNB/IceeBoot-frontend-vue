@@ -61,13 +61,16 @@ export interface MenuItem {
 
 // API响应类型
 export interface ApiResponse<T = Record<string, unknown>> {
-  code: number
-  message: string
-  data: T
-  success: boolean
+  code?: number
+  message?: string
+  data?: T
+  result?: T
+  success?: boolean
   timestamp?: number
   fail?: boolean
 }
+
+export type ApiResponseLike<T = Record<string, unknown>> = ApiResponse<T>
 
 // 分页相关类型
 export interface PageParams {

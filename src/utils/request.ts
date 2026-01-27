@@ -3,15 +3,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { getBaseURL } from './env'
 import { useUserStore } from '@/stores/user'
 import router from '@/router'
-import type { ApiResponse } from '@/types'
-
-type ApiResponseLike<T = Record<string, unknown>> = {
-  code?: number
-  message?: string
-  success?: boolean
-  data?: T
-  result?: T
-}
+import type { ApiResponse, ApiResponseLike } from '@/types'
 
 type RequestConfig = AxiosRequestConfig & {
   skipErrorMessage?: boolean

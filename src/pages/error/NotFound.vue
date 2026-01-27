@@ -1,19 +1,24 @@
 <template>
   <div class="error-page">
-    <div class="error-container">
-      <div class="error-illustration">
+    <div class="error-glow"></div>
+    <div class="error-card">
+      <div class="error-visual">
+        <div class="orbit">
+          <div class="planet"></div>
+          <div class="satellite"></div>
+        </div>
         <div class="error-code">404</div>
         <div class="error-icon">
           <el-icon><DocumentDelete /></el-icon>
         </div>
       </div>
-      
+
       <div class="error-content">
-        <h1 class="error-title">页面不存在</h1>
+        <h1 class="error-title">页面迷路了</h1>
         <p class="error-description">
-          抱歉，您访问的页面不存在或已被删除。
+          你访问的页面可能被移走、改名，或暂时不可用。
         </p>
-        
+
         <div class="error-actions">
           <el-button type="primary" @click="goHome">
             <el-icon><HomeFilled /></el-icon>
@@ -26,12 +31,12 @@
         </div>
       </div>
     </div>
-    
-    <!-- 背景装饰 -->
+
     <div class="background-decoration">
       <div class="floating-shape shape-1"></div>
       <div class="floating-shape shape-2"></div>
       <div class="floating-shape shape-3"></div>
+      <div class="floating-shape shape-4"></div>
     </div>
   </div>
 </template>
@@ -63,106 +68,153 @@ const goBack = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: radial-gradient(circle at top, #1e293b 0%, #0f172a 45%, #0b1120 100%);
   position: relative;
   overflow: hidden;
+  padding: 40px 20px;
 }
 
-.error-container {
-  text-align: center;
+.error-glow {
+  position: absolute;
+  top: -120px;
+  left: 50%;
+  width: 540px;
+  height: 540px;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.25), transparent 70%);
+  filter: blur(10px);
+  opacity: 0.8;
+  z-index: 0;
+}
+
+.error-card {
+  position: relative;
   z-index: 2;
-  position: relative;
+  width: min(960px, 92vw);
+  padding: 40px;
+  border-radius: 28px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  backdrop-filter: blur(18px);
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr);
+  gap: 32px;
+  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.45);
+  animation: card-rise 0.6s ease;
 }
 
-.error-illustration {
-  margin-bottom: 40px;
+.error-visual {
   position: relative;
+  min-height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.orbit {
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  border: 1px dashed rgba(148, 163, 184, 0.35);
+  animation: spin 12s linear infinite;
+}
+
+.planet {
+  position: absolute;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #38bdf8, #6366f1);
+  top: -18px;
+  left: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.6);
+}
+
+.satellite {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #f8fafc;
+  bottom: 10px;
+  right: 10px;
+  box-shadow: 0 0 10px rgba(248, 250, 252, 0.6);
 }
 
 .error-code {
   font-size: 120px;
   font-weight: 900;
-  color: rgba(255, 255, 255, 0.9);
-  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-  margin-bottom: 20px;
+  color: transparent;
+  background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+  -webkit-background-clip: text;
+  background-clip: text;
+  text-shadow: 0 10px 30px rgba(56, 189, 248, 0.25);
   line-height: 1;
-  
-  @media (max-width: 768px) {
-    font-size: 80px;
-  }
+  margin-bottom: 8px;
 }
 
 .error-icon {
+  margin-top: 6px;
   .el-icon {
-    font-size: 80px;
-    color: rgba(255, 255, 255, 0.8);
-    
-    @media (max-width: 768px) {
-      font-size: 60px;
-    }
+    font-size: 56px;
+    color: rgba(248, 250, 252, 0.9);
   }
 }
 
 .error-content {
-  max-width: 500px;
-  margin: 0 auto;
-  padding: 0 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
 }
 
 .error-title {
-  font-size: 32px;
-  font-weight: 600;
-  color: white;
-  margin: 0 0 16px 0;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
-  
-  @media (max-width: 768px) {
-    font-size: 24px;
-  }
+  font-size: 30px;
+  font-weight: 700;
+  color: #f8fafc;
+  margin: 0;
 }
 
 .error-description {
-  font-size: 16px;
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0 0 32px 0;
-  line-height: 1.6;
-  
-  @media (max-width: 768px) {
-    font-size: 14px;
-  }
+  font-size: 15px;
+  color: rgba(226, 232, 240, 0.85);
+  margin: 0 0 8px 0;
+  line-height: 1.7;
 }
 
 .error-actions {
   display: flex;
   gap: 16px;
-  justify-content: center;
   flex-wrap: wrap;
   
   .el-button {
-    padding: 12px 24px;
+    padding: 12px 28px;
     font-size: 14px;
-    border-radius: 8px;
+    border-radius: 999px;
     
     &.el-button--primary {
-      background: rgba(255, 255, 255, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      color: white;
-      backdrop-filter: blur(10px);
+      background: linear-gradient(135deg, #38bdf8, #6366f1);
+      border: none;
+      color: #f8fafc;
+      box-shadow: 0 10px 24px rgba(56, 189, 248, 0.35);
       
       &:hover {
-        background: rgba(255, 255, 255, 0.3);
-        border-color: rgba(255, 255, 255, 0.4);
+        transform: translateY(-2px);
+        box-shadow: 0 14px 30px rgba(99, 102, 241, 0.4);
       }
     }
     
     &:not(.el-button--primary) {
-      background: transparent;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      color: white;
+      background: rgba(148, 163, 184, 0.1);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      color: rgba(248, 250, 252, 0.9);
       
       &:hover {
-        background: rgba(255, 255, 255, 0.1);
-        border-color: rgba(255, 255, 255, 0.4);
+        background: rgba(148, 163, 184, 0.2);
+        transform: translateY(-2px);
       }
     }
   }
@@ -180,32 +232,40 @@ const goBack = () => {
 
 .floating-shape {
   position: absolute;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(56, 189, 248, 0.12);
   border-radius: 50%;
   animation: float 6s ease-in-out infinite;
   
   &.shape-1 {
-    width: 100px;
-    height: 100px;
-    top: 20%;
-    left: 10%;
+    width: 120px;
+    height: 120px;
+    top: 15%;
+    left: 8%;
     animation-delay: 0s;
   }
   
   &.shape-2 {
-    width: 150px;
-    height: 150px;
-    top: 60%;
-    right: 15%;
+    width: 180px;
+    height: 180px;
+    top: 70%;
+    right: 10%;
     animation-delay: 2s;
   }
   
   &.shape-3 {
-    width: 80px;
-    height: 80px;
-    bottom: 20%;
-    left: 20%;
+    width: 90px;
+    height: 90px;
+    bottom: 16%;
+    left: 22%;
     animation-delay: 4s;
+  }
+
+  &.shape-4 {
+    width: 140px;
+    height: 140px;
+    top: 30%;
+    right: 25%;
+    animation-delay: 1s;
   }
 }
 
@@ -220,31 +280,43 @@ const goBack = () => {
   }
 }
 
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes card-rise {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 // 响应式设计
 @media (max-width: 768px) {
+  .error-card {
+    grid-template-columns: 1fr;
+    padding: 28px;
+  }
+
+  .error-code {
+    font-size: 86px;
+  }
+
   .error-actions {
     flex-direction: column;
-    align-items: center;
-    
+    align-items: flex-start;
+
     .el-button {
       width: 200px;
-    }
-  }
-  
-  .floating-shape {
-    &.shape-1 {
-      width: 60px;
-      height: 60px;
-    }
-    
-    &.shape-2 {
-      width: 80px;
-      height: 80px;
-    }
-    
-    &.shape-3 {
-      width: 50px;
-      height: 50px;
     }
   }
 }

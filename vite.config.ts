@@ -60,6 +60,9 @@ export default defineConfig({
   publicDir: 'public',
   // 开发服务器配置
   server: {
+    host: true,
+    port: 5173,
+    strictPort: true,
     fs: {
       // 允许访问document目录
       allow: ['..', 'document']

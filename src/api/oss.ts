@@ -39,12 +39,7 @@ export const getOSSProviders = async (): Promise<OSSProvider[]> => {
     return await MockOSSService.getOSSProviders()
   } else {
     // 调用真实API
-    const response = await request.get<{data: OSSProvider[]}>('/api/v1/oss-keys')
-    const apiResponse = response as unknown as {code: number, message: string, data: OSSProvider[], success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取OSS服务商列表响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<OSSProvider[]>('/api/v1/oss-keys')
   }
 }
 
@@ -60,12 +55,7 @@ export const getOSSProvider = async (providerName: string): Promise<OSSProvider>
     return provider
   } else {
     // 调用真实API
-    const response = await request.get<{data: OSSProvider}>(`/api/v1/oss-keys/providers/${providerName}`)
-    const apiResponse = response as unknown as {code: number, message: string, data: OSSProvider, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取OSS服务商详情响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<OSSProvider>(`/api/v1/oss-keys/providers/${providerName}`)
   }
 }
 
@@ -78,12 +68,8 @@ export const getOSSKeys = async (providerName: string): Promise<OSSKey[]> => {
     return provider?.keys || []
   } else {
     // 调用真实API - 从完整列表中筛选
-    const response = await request.get<{data: OSSProvider[]}>('/api/v1/oss-keys/providers')
-    const apiResponse = response as unknown as {code: number, message: string, data: OSSProvider[], success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取密钥列表响应数据格式错误')
-    }
-    const provider = apiResponse.data.find(p => p.providerName === providerName)
+    const response = await request.get<OSSProvider[]>('/api/v1/oss-keys/providers')
+    const provider = response.find(p => p.providerName === providerName)
     return provider?.keys || []
   }
 }
@@ -95,11 +81,7 @@ export const createOSSKey = async (data: Omit<OSSKey, 'id' | 'createTime'>): Pro
     await MockOSSService.addOSSKey(data.ossProvider || '', data)
   } else {
     // 调用真实API
-    const response = await request.post('/api/v1/oss-keys', data)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('创建OSS密钥失败')
-    }
+    await request.post('/api/v1/oss-keys', data)
   }
 }
 
@@ -117,11 +99,7 @@ export const updateOSSKey = async (keyId: number, data: Partial<OSSKey>): Promis
   } else {
     // 调用真实API - 后端接口是PUT /api/v1/oss-keys，ID包含在请求体中
     const requestData = { ...data, id: keyId }
-    const response = await request.put('/api/v1/oss-keys', requestData)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('更新OSS密钥失败')
-    }
+    await request.put('/api/v1/oss-keys', requestData)
   }
 }
 
@@ -141,13 +119,9 @@ export const deleteOSSKeys = async (ids: number[]): Promise<boolean> => {
     return true
   } else {
     // 调用真实API
-    const response = await request.delete('/api/v1/oss-keys', {}, {
+    await request.delete('/api/v1/oss-keys', {}, {
       data: ids
     })
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('删除OSS密钥失败')
-    }
     return true
   }
 }
@@ -170,11 +144,7 @@ export const enableOSSKey = async (keyId: number): Promise<void> => {
     await MockOSSService.updateOSSKey(provider.providerName, keyId, { status: 'active' })
   } else {
     // 调用真实API
-    const response = await request.put(`/api/v1/oss-keys/${keyId}/enable`)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('启用OSS密钥失败')
-    }
+    await request.put(`/api/v1/oss-keys/${keyId}/enable`)
   }
 }
 
@@ -191,11 +161,7 @@ export const disableOSSKey = async (keyId: number): Promise<void> => {
     await MockOSSService.updateOSSKey(provider.providerName, keyId, { status: 'inactive' })
   } else {
     // 调用真实API
-    const response = await request.put(`/api/v1/oss-keys/${keyId}/disable`)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('禁用OSS密钥失败')
-    }
+    await request.put(`/api/v1/oss-keys/${keyId}/disable`)
   }
 }
 
@@ -290,12 +256,7 @@ export const getBucketList = async (params: BucketQueryParams): Promise<PageResu
     return await MockOSSService.getBucketList(params)
   } else {
     // 调用真实API
-    const response = await request.get<{data: PageResult<OssBucket>}>('/api/v1/oss-files/buckets', params)
-    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<OssBucket>, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取存储桶列表响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<PageResult<OssBucket>>('/api/v1/oss-files/buckets', params)
   }
 }
 
@@ -306,11 +267,7 @@ export const createBucket = async (data: CreateBucketData): Promise<void> => {
     await MockOSSService.createBucket(data)
   } else {
     // 调用真实API
-    const response = await request.post('/api/v1/oss-files/buckets', data as unknown as Record<string, unknown>)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('创建存储桶失败')
-    }
+    await request.post('/api/v1/oss-files/buckets', data as unknown as Record<string, unknown>)
   }
 }
 
@@ -320,47 +277,16 @@ export const updateBucket = async (data: UpdateBucketData): Promise<void> => {
     // 使用Mock数据
     await MockOSSService.updateBucket(data)
   } else {
-    try {
-      // 调用真实API - 确保传递完整的数据
-      const requestData = {
-        id: data.id,
-        bucketName: data.bucketName,
-        provider: data.provider,
-        keyId: data.keyId,
-        description: data.description || '',
-        status: data.status
-      }
-
-      const response = await request.put('/api/v1/oss-files/buckets', requestData)
-
-      // 处理不同的响应格式
-      type UpdateBucketResponse = {
-        code?: number
-        message?: string
-        success?: boolean
-        data?: unknown
-      }
-
-      if (response && typeof response === 'object') {
-        const apiResponse = response as unknown as UpdateBucketResponse
-
-        // 检查success状态
-        if (apiResponse.success === false) {
-          throw new Error(apiResponse.message || '更新存储桶失败')
-        }
-
-        // 检查code状态
-        if (apiResponse.code && apiResponse.code !== 200 && apiResponse.code !== 0) {
-          throw new Error(apiResponse.message || '更新存储桶失败')
-        }
-      }
-    } catch (error: unknown) {
-      const err = error as Error & { response?: { status?: number } }
-      if (err.response && err.response.status) {
-        throw new Error(`更新存储桶失败：HTTP ${err.response.status}`)
-      }
-      throw new Error('更新存储桶失败：' + (err.message || '未知错误'))
+    const requestData = {
+      id: data.id,
+      bucketName: data.bucketName,
+      provider: data.provider,
+      keyId: data.keyId,
+      description: data.description || '',
+      status: data.status
     }
+
+    await request.put('/api/v1/oss-files/buckets', requestData)
   }
 }
 
@@ -371,13 +297,9 @@ export const deleteBuckets = async (ids: number[]): Promise<boolean> => {
     return await MockOSSService.deleteBuckets(ids)
   } else {
     // 调用真实API
-    const response = await request.delete('/api/v1/oss-files/buckets', {}, {
+    await request.delete('/api/v1/oss-files/buckets', {}, {
       data: ids
     })
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('删除存储桶失败')
-    }
     return true
   }
 }
@@ -389,12 +311,7 @@ export const getFileList = async (params: FileQueryParams): Promise<PageResult<O
     return await MockOSSService.getFileList(params)
   } else {
     // 调用真实API
-    const response = await request.get<{data: PageResult<OssFile>}>('/api/v1/oss-files', params)
-    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<OssFile>, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取文件列表响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<PageResult<OssFile>>('/api/v1/oss-files', params)
   }
 }
 
@@ -464,47 +381,10 @@ export const deleteFiles = async (ids: number[]): Promise<boolean> => {
     // 使用Mock数据
     return await MockOSSService.deleteFiles(ids)
   } else {
-    try {
-      // 调用真实API
-      const response = await request.delete('/api/v1/oss-files', {}, {
-        data: ids
-      })
-
-      // 处理不同的响应格式
-      type DeleteApiResponse = {
-        code?: number
-        message?: string
-        success?: boolean
-        data?: unknown
-      }
-
-      if (response && typeof response === 'object') {
-        const apiResponse = response as unknown as DeleteApiResponse
-
-        // 检查success状态
-        if (apiResponse.success === false) {
-          throw new Error(apiResponse.message || '删除文件失败')
-        }
-
-        // 检查code状态（有些API使用code字段）
-        if (apiResponse.code && apiResponse.code !== 200 && apiResponse.code !== 0) {
-          throw new Error(apiResponse.message || '删除文件失败')
-        }
-
-        return true
-      }
-
-      // 如果响应为空或者是其他格式，默认认为成功
-      return true
-    } catch (error: unknown) {
-      const err = error as Error & { response?: { status?: number } }
-      // 如果是网络错误或其他错误，重新抛出
-      if (err.response && err.response.status) {
-        // HTTP错误
-        throw new Error(`删除文件失败：HTTP ${err.response.status}`)
-      }
-      throw new Error('删除文件失败：' + (err.message || '未知错误'))
-    }
+    await request.delete('/api/v1/oss-files', {}, {
+      data: ids
+    })
+    return true
   }
 }
 

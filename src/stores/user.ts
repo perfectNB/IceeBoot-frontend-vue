@@ -126,8 +126,7 @@ export const useUserStore = defineStore('user', () => {
   const getUserInfo = async (): Promise<User> => {
     try {
       // 统一使用 auth.ts 中的获取用户信息接口
-      const response = await apiGetUserInfo()
-      const userInfo = response.data
+      const userInfo = await apiGetUserInfo()
       // 获取并合并菜单到用户信息
       const menus = await getUserMenus()
       const mergedUser = { ...(userInfo as User), menus } as User

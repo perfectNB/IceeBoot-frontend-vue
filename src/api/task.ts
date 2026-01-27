@@ -40,12 +40,7 @@ export const getTasks = async (params: TaskQueryParams): Promise<TaskResponse> =
     return await MockTaskService.getTasks(params)
   } else {
     // 调用真实API
-    const response = await request.get<TaskResponse>('/api/v1/tasks',  params )
-    const apiResponse = response as unknown as {code: number, message: string, data: TaskResponse, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取任务列表响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<TaskResponse>('/api/v1/tasks', params)
   }
 }
 
@@ -56,8 +51,7 @@ export const createTask = async (data: Omit<Task, 'id'>): Promise<Task> => {
     return await MockTaskService.createTask(data)
   } else {
     // 调用真实API
-    const response = await request.post<Task>('/api/v1/tasks', data)
-    return response.data
+    return await request.post<Task>('/api/v1/tasks', data)
   }
 }
 
@@ -68,8 +62,7 @@ export const updateTask = async (id: string, data: Partial<Task>): Promise<Task>
     return await MockTaskService.updateTask(id, data)
   } else {
     // 调用真实API
-    const response = await request.put<Task>(`/api/v1/tasks/${id}`, data)
-    return response.data
+    return await request.put<Task>(`/api/v1/tasks/${id}`, data)
   }
 }
 

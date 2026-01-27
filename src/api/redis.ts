@@ -42,12 +42,7 @@ export const getRedisKeys = async (params: RedisQueryParams): Promise<RedisRespo
     return await MockRedisService.getRedisKeys(params)
   } else {
     // 调用真实API
-    const response = await request.get<RedisResponse>('/api/v1/redis/keys',  params )
-    const apiResponse = response as unknown as {code: number, message: string, data: RedisResponse, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取Redis键列表响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<RedisResponse>('/api/v1/redis/keys', params)
   }
 }
 
@@ -67,13 +62,9 @@ export const deleteRedisKeys = async (keys: string[]): Promise<void> => {
     }
   } else {
     // 调用真实API
-    const response = await request.delete('/api/v1/redis/keys', {},{
+    await request.delete('/api/v1/redis/keys', {},{
       data: keys.map(String)
     })
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('批量删除Redis键失败')
-    }
   }
 }
 
@@ -84,11 +75,7 @@ export const createRedisKey = async (params: CreateRedisKeyParams): Promise<void
     await MockRedisService.createRedisKey(params)
   } else {
     // 调用真实API
-    const response = await request.post('/api/v1/redis/keys', params as unknown as Record<string, unknown>)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('创建Redis键失败')
-    }
+    await request.post('/api/v1/redis/keys', params as unknown as Record<string, unknown>)
   }
 }
 
@@ -99,11 +86,6 @@ export const getRedisKeyDetail = async (key: string): Promise<RedisKey> => {
     return await MockRedisService.getRedisKeyDetail(key)
   } else {
     // 调用真实API
-    const response = await request.get<RedisKey>(`/api/v1/redis/keys/${encodeURIComponent(key)}`)
-    const apiResponse = response as unknown as { code: number, message: string, data: RedisKey, success: boolean }
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取Redis键详情响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<RedisKey>(`/api/v1/redis/keys/${encodeURIComponent(key)}`)
   }
 }

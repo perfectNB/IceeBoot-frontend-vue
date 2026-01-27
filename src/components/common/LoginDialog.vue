@@ -191,8 +191,8 @@ const generateQrCode = async () => {
     } else {
       // 真实API模式
       const response = await getWechatQrCode()
-      qrCode.value = response.data.qrCode
-      scene.value = response.data.scene
+      qrCode.value = response.qrCode
+      scene.value = response.scene
     }
 
     // 开始轮询检查登录状态
@@ -224,9 +224,9 @@ const startPolling = () => {
       if (isMockEnabled()) {
         // 真实API模式：检查微信登录状态
         const response = await checkWechatLogin(scene.value)
-        if (response.data.accessToken) {
-          userStore.setToken(response.data.accessToken)
-          userStore.setUser(response.data.user)
+        if (response.accessToken) {
+          userStore.setToken(response.accessToken)
+          userStore.setUser(response.user)
           // 移除重复的登录成功提示，由父组件统一处理
           emit('success')
           stopPolling()

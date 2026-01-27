@@ -14,12 +14,7 @@ export const getChatSessions = async (params: PageParams): Promise<PageResult<Ch
     return await MockChatService.getChatSessions(params)
   } else {
     // 调用真实API
-    const response = await request.get<{data: PageResult<ChatSession>}>('/api/v1/ai/chat/sessions',  params )
-    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<ChatSession>, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取聊天会话列表响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<PageResult<ChatSession>>('/api/v1/ai/chat/sessions', params)
   }
 }
 
@@ -30,8 +25,7 @@ export const getChatSession = async (id: string | number): Promise<ChatSession> 
     return await MockChatService.getChatSession(id)
   } else {
     // 调用真实API
-    const response = await request.get<ChatSession>(`/api/v1/ai/chat/sessions/${id}`)
-    return response.data
+    return await request.get<ChatSession>(`/api/v1/ai/chat/sessions/${id}`)
   }
 }
 
@@ -42,8 +36,7 @@ export const createChatSession = async (data: Partial<ChatSession>): Promise<Cha
     return await MockChatService.createChatSession(data)
   } else {
     // 调用真实API
-    const response = await request.post<ChatSession>('/api/v1/ai/chat/sessions', data)
-    return response.data
+    return await request.post<ChatSession>('/api/v1/ai/chat/sessions', data)
   }
 }
 
@@ -65,8 +58,7 @@ export const sendMessage = async (sessionId: string | number, content: string): 
     return await MockChatService.sendMessage(sessionId, content)
   } else {
     // 调用真实API
-    const response = await request.post<ChatMessage>(`/api/v1/ai/chat/sessions/${sessionId}/messages`, { content })
-    return response.data
+    return await request.post<ChatMessage>(`/api/v1/ai/chat/sessions/${sessionId}/messages`, { content })
   }
 }
 
@@ -77,8 +69,7 @@ export const getAvailableModels = async (): Promise<LLMModel[]> => {
     return await MockChatService.getAvailableModels()
   } else {
     // 调用真实API
-    const response = await request.get<LLMModel[]>('/api/v1/ai/chat/models')
-    return response.data
+    return await request.get<LLMModel[]>('/api/v1/ai/chat/models')
   }
 }
 
@@ -89,8 +80,7 @@ export const getModelApiConfig = async (modelName: string): Promise<{ baseUrl: s
     return await MockChatService.getModelApiConfig(modelName)
   } else {
     // 调用真实API
-    const response = await request.get<{ baseUrl: string; endpoint: string; model: string } | null>(`/api/v1/ai/chat/models/${modelName}/config`)
-    return response.data
+    return await request.get<{ baseUrl: string; endpoint: string; model: string } | null>(`/api/v1/ai/chat/models/${modelName}/config`)
   }
 }
 

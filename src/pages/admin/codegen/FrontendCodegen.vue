@@ -1212,12 +1212,7 @@ export const get${entityName}List = async (params: PageParams): Promise<PageResu
     return await Mock${entityName}Service.get${entityName}List(params)
   } else {
     // 调用真实API
-    const response = await request.get<{data: PageResult<${entityName}>}>('/api/v1/${entityNameLower}', params)
-    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<${entityName}>, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取${configForm.pageTitle.replace('管理', '')}列表响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<PageResult<${entityName}>>('/api/v1/${entityNameLower}', params)
   }
 }`
     } else if (api === 'create') {
@@ -1228,11 +1223,7 @@ export const create${entityName} = async (data: Partial<${entityName}>): Promise
     await Mock${entityName}Service.create${entityName}(data)
   } else {
     // 调用真实API
-    const response = await request.post('/api/v1/${entityNameLower}', data)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('创建${configForm.pageTitle.replace('管理', '')}失败')
-    }
+    await request.post('/api/v1/${entityNameLower}', data)
   }
 }`
     } else if (api === 'update') {
@@ -1244,11 +1235,7 @@ export const update${entityName} = async (id: string | number, data: Partial<${e
   } else {
     // 调用真实API
     const requestData = { ...data, id }
-    const response = await request.put('/api/v1/${entityNameLower}', requestData)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('更新${configForm.pageTitle.replace('管理', '')}失败')
-    }
+    await request.put('/api/v1/${entityNameLower}', requestData)
   }
 }`
     } else if (api === 'delete') {
@@ -1259,13 +1246,9 @@ export const delete${entityName}s = async (ids: (string | number)[]): Promise<bo
     return await Mock${entityName}Service.delete${entityName}s(ids.map(Number))
   } else {
     // 调用真实API
-    const response = await request.delete('/api/v1/${entityNameLower}', {}, {
+    await request.delete('/api/v1/${entityNameLower}', {}, {
       data: ids.map(Number)
     })
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('删除${configForm.pageTitle.replace('管理', '')}失败')
-    }
     return true
   }
 }
@@ -1282,12 +1265,7 @@ export const get${entityName}ById = async (id: string | number): Promise<${entit
     return await Mock${entityName}Service.get${entityName}ById(Number(id))
   } else {
     // 调用真实API
-    const response = await request.get<{data: ${entityName}}>('/api/v1/${entityNameLower}/' + id)
-    const apiResponse = response as unknown as {code: number, message: string, data: ${entityName}, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取${configForm.pageTitle.replace('管理', '')}详情响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<${entityName}>('/api/v1/${entityNameLower}/' + id)
   }
 }`
     }

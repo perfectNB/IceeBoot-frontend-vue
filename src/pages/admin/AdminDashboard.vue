@@ -322,7 +322,7 @@ const loadDashboardStats = async () => {
   try {
     loading.value = true
     const response = await getDashboardStats()
-    dashboardStats.value = response.data
+    dashboardStats.value = response
 
     // 更新统计卡片数据
     stats.value[0].value = dashboardStats.value.totalUsers.toLocaleString()
@@ -347,7 +347,7 @@ const loadDashboardStats = async () => {
 const loadVisitTrend = async () => {
   try {
     const response = await getVisitTrend(activePeriod.value)
-    visitTrendData.value = response.data
+    visitTrendData.value = response
   } catch (error) {
     console.error('加载访问趋势数据失败:', error)
     ElMessage.error('加载访问趋势数据失败')
@@ -358,7 +358,7 @@ const loadVisitTrend = async () => {
 const loadUserDistribution = async () => {
   try {
     const response = await getUserDistribution()
-    userDistributionData.value = response.data
+    userDistributionData.value = response
   } catch (error) {
     console.error('加载用户分布数据失败:', error)
     ElMessage.error('加载用户分布数据失败')

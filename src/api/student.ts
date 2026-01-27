@@ -10,12 +10,7 @@ export const getStudentList = async (params: PageParams): Promise<PageResult<Stu
     return await MockStudentService.getStudentList(params)
   } else {
     // 调用真实API
-    const response = await request.get<PageResult<Student>>('/api/v1/student', params)
-    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<Student>, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取学生列表响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<PageResult<Student>>('/api/v1/student', params)
   }
 }
 
@@ -26,11 +21,7 @@ export const createStudent = async (data: Partial<Student>): Promise<void> => {
     await MockStudentService.createStudent(data)
   } else {
     // 调用真实API
-    const response = await request.post('/api/v1/student', data)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('创建学生失败')
-    }
+    await request.post('/api/v1/student', data)
   }
 }
 
@@ -42,11 +33,7 @@ export const updateStudent = async (id: string | number, data: Partial<Student>)
   } else {
     // 调用真实API
     const requestData = { ...data, id }
-    const response = await request.put('/api/v1/student', requestData)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('更新学生失败')
-    }
+    await request.put('/api/v1/student', requestData)
   }
 }
 
@@ -57,13 +44,9 @@ export const deleteStudents = async (ids: (string | number)[]): Promise<boolean>
     return await MockStudentService.deleteStudents(ids.map(Number))
   } else {
     // 调用真实API
-    const response = await request.delete('/api/v1/student', {}, {
+    await request.delete('/api/v1/student', {}, {
       data: ids.map(Number)
     })
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('删除学生失败')
-    }
     return true
   }
 }
@@ -80,11 +63,6 @@ export const getStudentById = async (id: string | number): Promise<Student> => {
     return await MockStudentService.getStudentById(Number(id))
   } else {
     // 调用真实API
-    const response = await request.get<Student>('/api/v1/student/' + id)
-    const apiResponse = response as unknown as {code: number, message: string, data: Student, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取学生详情响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<Student>('/api/v1/student/' + id)
   }
 }

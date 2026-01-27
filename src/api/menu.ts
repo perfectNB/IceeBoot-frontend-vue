@@ -41,12 +41,7 @@ export const getMenus = async (params: PageParams): Promise<PageResult<MenuItem>
     }
   } else {
     // 调用真实API
-    const response = await request.get<PageResult<MenuItem>>('/api/v1/menus', params)
-    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<MenuItem>, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取菜单列表响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<PageResult<MenuItem>>('/api/v1/menus', params)
   }
 }
 
@@ -61,12 +56,7 @@ export const getUserMenus = async (
     return response
   } else {
     // 调用真实API
-    const response = await request.get<MenuItem[]>('/api/v1/menus/user', undefined, config)
-    const apiResponse = response as unknown as {code: number, message: string, data: MenuItem[], success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取用户菜单响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<MenuItem[]>('/api/v1/menus/user', undefined, config)
   }
 }
 
@@ -77,12 +67,7 @@ export const getAllMenus = async (): Promise<MenuItem[]> => {
     return await MockMenuService.getAllMenus()
   } else {
     // 调用真实API
-    const response = await request.get<MenuItem[]>('/api/v1/menus/tree')
-    const apiResponse = response as unknown as {code: number, message: string, data: MenuItem[], success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取所有菜单响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<MenuItem[]>('/api/v1/menus/tree')
   }
 }
 
@@ -93,12 +78,7 @@ export const createMenu = async (data: Partial<MenuItem>): Promise<MenuItem> => 
     return await MockMenuService.createMenu(data)
   } else {
     // 调用真实API
-    const response = await request.post('/api/v1/menus', data)
-    const apiResponse = response as unknown as {code: number, message: string, data: MenuItem, success: boolean}
-    if (!apiResponse || !apiResponse.success || !apiResponse.data) {
-      throw new Error('创建菜单失败')
-    }
-    return apiResponse.data
+    return await request.post<MenuItem>('/api/v1/menus', data)
   }
 }
 
@@ -113,12 +93,7 @@ export const updateMenu = async (id: string | number, data: Partial<MenuItem>): 
   } else {
     // 调用真实API - 后端PUT请求需要在请求体中包含ID
     const requestData = { ...data, id }
-    const response = await request.put<MenuItem>('/api/v1/menus', requestData)
-    const apiResponse = response as unknown as {code: number, message: string, data: MenuItem, success: boolean}
-    if (!apiResponse || !apiResponse.success || !apiResponse.data) {
-      throw new Error('更新菜单失败')
-    }
-    return apiResponse.data
+    return await request.put<MenuItem>('/api/v1/menus', requestData)
   }
 }
 
@@ -130,13 +105,9 @@ export const deleteMenu = async (id: string | number): Promise<boolean> => {
     return true
   } else {
     // 调用真实API
-    const response = await request.delete('/api/v1/menus', {}, {
+    await request.delete('/api/v1/menus', {}, {
       data: [Number(id)]
     })
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('删除菜单失败')
-    }
     return true
   }
 }
@@ -151,13 +122,9 @@ export const deleteMenus = async (ids: (string | number)[]): Promise<boolean> =>
     return true
   } else {
     // 调用真实API
-    const response = await request.delete('/api/v1/menus', {}, {
+    await request.delete('/api/v1/menus', {}, {
       data: ids.map(Number)
     })
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('批量删除菜单失败')
-    }
     return true
   }
 }
@@ -169,11 +136,6 @@ export const getMenuById = async (id: string | number): Promise<MenuItem> => {
     return await MockMenuService.getMenuById(Number(id))
   } else {
     // 调用真实API
-    const response = await request.get<MenuItem>(`/api/v1/menus/${id}`)
-    const apiResponse = response as unknown as {code: number, message: string, data: MenuItem, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取菜单详情响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<MenuItem>(`/api/v1/menus/${id}`)
   }
 }

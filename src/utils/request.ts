@@ -62,13 +62,13 @@ service.interceptors.request.use(
 
 // 响应拦截器
 service.interceptors.response.use(
-  (response: AxiosResponse<ApiResponse>) => {
-    response.data = normalizeApiResponse(response.data) as ApiResponse
+  (response: AxiosResponse<ApiResponse<unknown>>) => {
+    response.data = normalizeApiResponse(response.data) as ApiResponse<unknown>
     const { data } = response
     const { code, message, success } = data
 
     // 请求成功
-    if (success || code === 200) {
+    if (success || code === 200 || code === 0) {
       return response
     }
 
@@ -155,50 +155,58 @@ service.interceptors.response.use(
 )
 
 // 封装请求方法
+const extractResponseData = <T>(response: AxiosResponse<ApiResponse<T>>): T => {
+  const body = response.data as unknown as Record<string, unknown>
+  if (body && typeof body === 'object' && 'data' in body) {
+    return (body.data as T)
+  }
+  return response.data as unknown as T
+}
+
 export const request = {
   async get<T = Record<string, unknown>>(
     url: string,
     params?: Record<string, unknown>,
     config?: RequestConfig
-  ): Promise<ApiResponse<T>> {
-    const response = await service.get(url, { params, ...config })
-    return response.data
+  ): Promise<T> {
+    const response = await service.get<ApiResponse<T>>(url, { params, ...config })
+    return extractResponseData(response)
   },
 
   async post<T = Record<string, unknown>>(
     url: string,
     data?: Record<string, unknown> | unknown[],
     config?: RequestConfig
-  ): Promise<ApiResponse<T>> {
-    const response = await service.post(url, data, config)
-    return response.data
+  ): Promise<T> {
+    const response = await service.post<ApiResponse<T>>(url, data, config)
+    return extractResponseData(response)
   },
 
   async put<T = Record<string, unknown>>(
     url: string,
-    data?: Record<string, unknown>,
+    data?: Record<string, unknown> | unknown[] | unknown,
     config?: RequestConfig
-  ): Promise<ApiResponse<T>> {
-    const response = await service.put(url, data, config)
-    return response.data
+  ): Promise<T> {
+    const response = await service.put<ApiResponse<T>>(url, data, config)
+    return extractResponseData(response)
   },
 
   async delete<T = Record<string, unknown>>(
     url: string,
     params?: Record<string, unknown>,
     config?: RequestConfig
-  ): Promise<ApiResponse<T>> {
-    const response = await service.delete(url, { params, ...config })
-    return response.data
+  ): Promise<T> {
+    const response = await service.delete<ApiResponse<T>>(url, { params, ...config })
+    return extractResponseData(response)
   },
 
   async patch<T = Record<string, unknown>>(
     url: string,
-    data?: Record<string, unknown>,
+    data?: Record<string, unknown> | unknown[] | unknown,
     config?: RequestConfig
-  ): Promise<ApiResponse<T>> {
-    const response = await service.patch(url, data, config)
-    return response.data
+  ): Promise<T> {
+    const response = await service.patch<ApiResponse<T>>(url, data, config)
+    return extractResponseData(response)
   }
 }
 

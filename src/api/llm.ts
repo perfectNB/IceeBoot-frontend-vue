@@ -15,12 +15,7 @@ export const getLLMModels = async (): Promise<LLMModel[]> => {
     return result.records
   } else {
     // 调用真实API
-    const response = await request.get<{data: LLMModel[]}>('/api/v1/llm-keys')
-    const apiResponse = response as unknown as {code: number, message: string, data: LLMModel[], success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取LLM模型列表响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<LLMModel[]>('/api/v1/llm-keys')
   }
 }
 
@@ -31,12 +26,7 @@ export const getLLMModel = async (providerName: string): Promise<LLMModel> => {
     return await MockLLMService.getLLMModel(providerName)
   } else {
     // 调用真实API
-    const response = await request.get<{data: LLMModel}>(`/api/v1/llm-keys/${providerName}`)
-    const apiResponse = response as unknown as {code: number, message: string, data: LLMModel, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取LLM模型详情响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<LLMModel>(`/api/v1/llm-keys/${providerName}`)
   }
 }
 
@@ -47,12 +37,7 @@ export const createLLMModel = async (data: Partial<LLMModel>): Promise<LLMModel>
     return await MockLLMService.createLLMModel(data)
   } else {
     // 调用真实API
-    const response = await request.post<{data: LLMModel}>('/api/v1/llm-keys', data)
-    const apiResponse = response as unknown as {code: number, message: string, data: LLMModel, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('创建LLM模型响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.post<LLMModel>('/api/v1/llm-keys', data)
   }
 }
 
@@ -63,12 +48,7 @@ export const updateLLMModel = async (providerName: string, data: Partial<LLMMode
     return await MockLLMService.updateLLMModel(providerName, data)
   } else {
     // 调用真实API
-    const response = await request.put<{data: LLMModel}>(`/api/v1/llm-keys/${providerName}`, data)
-    const apiResponse = response as unknown as {code: number, message: string, data: LLMModel, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('更新LLM模型响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.put<LLMModel>(`/api/v1/llm-keys/${providerName}`, data)
   }
 }
 
@@ -79,11 +59,7 @@ export const deleteLLMModel = async (providerName: string): Promise<void> => {
     await MockLLMService.deleteLLMModel(providerName)
   } else {
     // 调用真实API
-    const response = await request.delete(`/api/v1/llm-keys/${providerName}`)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('删除LLM模型失败')
-    }
+    await request.delete(`/api/v1/llm-keys/${providerName}`)
   }
 }
 
@@ -96,12 +72,8 @@ export const getLLMModelKeys = async (providerName: string): Promise<LLMKey[]> =
     return model?.keys || []
   } else {
     // 调用真实API - 从完整列表中筛选
-    const response = await request.get<{data: LLMModel[]}>('/api/v1/llm-keys')
-    const apiResponse = response as unknown as {code: number, message: string, data: LLMModel[], success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取密钥列表响应数据格式错误')
-    }
-    const model = apiResponse.data.find(m => m.providerName === providerName)
+    const response = await request.get<LLMModel[]>('/api/v1/llm-keys')
+    const model = response.find(m => m.providerName === providerName)
     return model?.keys || []
   }
 }
@@ -114,11 +86,7 @@ export const createLLMKey = async (data: Omit<LLMKey, 'id' | 'createTime' | 'upd
   } else {
     // 调用真实API
     console.log('data', data)
-    const response = await request.post('/api/v1/llm-keys', data)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('创建密钥失败')
-    }
+    await request.post('/api/v1/llm-keys', data)
   }
 }
 
@@ -140,11 +108,7 @@ export const updateLLMKey = async (keyId: number, data: Partial<LLMKey>): Promis
   } else {
     // 调用真实API - 后端接口是PUT /api/v1/llm-keys，ID包含在请求体中
     const requestData = { ...data, id: keyId }
-    const response = await request.put('/api/v1/llm-keys', requestData)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('更新密钥失败')
-    }
+    await request.put('/api/v1/llm-keys', requestData)
   }
 }
 
@@ -164,13 +128,9 @@ export const deleteLLMKeys = async (ids: number[]): Promise<boolean> => {
     return true
   } else {
     // 调用真实API
-    const response = await request.delete('/api/v1/llm-keys', {}, {
+    await request.delete('/api/v1/llm-keys', {}, {
       data: ids
     })
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('删除密钥失败')
-    }
     return true
   }
 }
@@ -187,11 +147,7 @@ export const enableLLMKey = async (keyId: number): Promise<void> => {
     await updateLLMKey(keyId, { status: 'active' })
   } else {
     // 调用真实API
-    const response = await request.put(`/api/v1/llm-keys/${keyId}/enable`)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('启用密钥失败')
-    }
+    await request.put(`/api/v1/llm-keys/${keyId}/enable`)
   }
 }
 
@@ -202,11 +158,7 @@ export const disableLLMKey = async (keyId: number): Promise<void> => {
     await updateLLMKey(keyId, { status: 'inactive' })
   } else {
     // 调用真实API
-    const response = await request.put(`/api/v1/llm-keys/${keyId}/disable`)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('禁用密钥失败')
-    }
+    await request.put(`/api/v1/llm-keys/${keyId}/disable`)
   }
 }
 

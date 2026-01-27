@@ -38,12 +38,7 @@ export const getSMSProviders = async (): Promise<SMSProvider[]> => {
     return await MockSMSService.getSMSProviders()
   } else {
     // 调用真实API
-    const response = await request.get<{data: SMSProvider[]}>('/api/v1/sms-keys')
-    const apiResponse = response as unknown as {code: number, message: string, data: SMSProvider[], success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取SMS服务商列表响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<SMSProvider[]>('/api/v1/sms-keys')
   }
 }
 
@@ -59,12 +54,7 @@ export const getSMSProvider = async (providerName: string): Promise<SMSProvider>
     return provider
   } else {
     // 调用真实API
-    const response = await request.get<{data: SMSProvider}>(`/api/v1/sms-keys/${providerName}`)
-    const apiResponse = response as unknown as {code: number, message: string, data: SMSProvider, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取SMS服务商详情响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<SMSProvider>(`/api/v1/sms-keys/${providerName}`)
   }
 }
 
@@ -77,12 +67,8 @@ export const getSMSKeys = async (providerName: string): Promise<SMSKey[]> => {
     return provider?.keys || []
   } else {
     // 调用真实API - 从完整列表中筛选
-    const response = await request.get<{data: SMSProvider[]}>('/api/v1/sms-keys')
-    const apiResponse = response as unknown as {code: number, message: string, data: SMSProvider[], success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取密钥列表响应数据格式错误')
-    }
-    const provider = apiResponse.data.find(p => p.providerName === providerName)
+    const response = await request.get<SMSProvider[]>('/api/v1/sms-keys')
+    const provider = response.find(p => p.providerName === providerName)
     return provider?.keys || []
   }
 }
@@ -94,11 +80,7 @@ export const createSMSKey = async (data: Omit<SMSKey, 'id' | 'createTime'>): Pro
     await MockSMSService.addSMSKey(data)
   } else {
     // 调用真实API
-    const response = await request.post('/api/v1/sms-keys', data)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('创建SMS密钥失败')
-    }
+    await request.post('/api/v1/sms-keys', data)
   }
 }
 
@@ -110,11 +92,7 @@ export const updateSMSKey = async (smsProvider: string, keyId: number, data: Par
   } else {
     // 调用真实API
     const requestData = { ...data, id: keyId }
-    const response = await request.put('/api/v1/sms-keys', requestData)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('更新SMS密钥失败')
-    }
+    await request.put('/api/v1/sms-keys', requestData)
   }
 }
 
@@ -134,13 +112,9 @@ export const deleteSMSKeys = async (ids: number[]): Promise<boolean> => {
     return true
   } else {
     // 调用真实API
-    const response = await request.delete('/api/v1/sms-keys', {}, {
+    await request.delete('/api/v1/sms-keys', {}, {
       data: ids
     })
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('删除SMS密钥失败')
-    }
     return true
   }
 }
@@ -163,11 +137,7 @@ export const enableSMSKey = async (keyId: number): Promise<void> => {
     await MockSMSService.updateSMSKey(provider.providerName, keyId, { status: 'active' })
   } else {
     // 调用真实API
-    const response = await request.put(`/api/v1/sms-keys/${keyId}/enable`)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('启用SMS密钥失败')
-    }
+    await request.put(`/api/v1/sms-keys/${keyId}/enable`)
   }
 }
 
@@ -184,11 +154,7 @@ export const disableSMSKey = async (keyId: number): Promise<void> => {
     await MockSMSService.updateSMSKey(provider.providerName, keyId, { status: 'inactive' })
   } else {
     // 调用真实API
-    const response = await request.put(`/api/v1/sms-keys/${keyId}/disable`)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('禁用SMS密钥失败')
-    }
+    await request.put(`/api/v1/sms-keys/${keyId}/disable`)
   }
 }
 

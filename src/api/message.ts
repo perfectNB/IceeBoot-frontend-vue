@@ -1,5 +1,4 @@
 import { request } from '@/utils/request'
-import service from '@/utils/request'
 import { isMockEnabled } from '@/config/mock'
 import type { PageParams, PageResult } from '@/types'
 
@@ -34,12 +33,7 @@ export const getMessages = async (params: MessageQueryParams): Promise<PageResul
     return await MockMessageService.getMessages(params)
   } else {
     // 调用真实API
-    const response = await request.get<PageResult<MessageItem>>('/api/v1/messages',  params )
-    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<MessageItem>, success: boolean}
-    if (!apiResponse || !apiResponse.success || !apiResponse.data) {
-      throw new Error('获取消息列表失败')
-    }
-    return apiResponse.data
+    return await request.get<PageResult<MessageItem>>('/api/v1/messages', params)
   }
 }
 
@@ -52,11 +46,7 @@ export const markMessageAsRead = async (id: number): Promise<void> => {
     await MockMessageService.markAsRead(id)
   } else {
     // 调用真实API - 直接发送数组
-    const response = await service.put('/api/v1/messages', [id])
-    const apiResponse = response.data as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('标记消息已读失败')
-    }
+    await request.put('/api/v1/messages', [id])
   }
 }
 
@@ -68,11 +58,7 @@ export const batchMarkAsRead = async (ids: number[]): Promise<void> => {
     await MockMessageService.batchMarkAsRead(ids)
   } else {
     // 调用真实API - 直接发送数组
-    const response = await service.put('/api/v1/messages', ids)
-    const apiResponse = response.data as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('批量标记已读失败')
-    }
+    await request.put('/api/v1/messages', ids)
   }
 }
 
@@ -84,13 +70,9 @@ export const deleteMessage = async (id: number): Promise<void> => {
     await MockMessageService.deleteMessage(id)
   } else {
     // 调用真实API
-    const response = await request.delete('/api/v1/messages', {}, {
+    await request.delete('/api/v1/messages', {}, {
       data: [id]
     })
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('删除消息失败')
-    }
   }
 }
 
@@ -102,13 +84,9 @@ export const batchDeleteMessages = async (ids: number[]): Promise<void> => {
     await MockMessageService.batchDeleteMessages(ids)
   } else {
     // 调用真实API
-    const response = await request.delete('/api/v1/messages', {}, {
+    await request.delete('/api/v1/messages', {}, {
       data: ids
     })
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('批量删除消息失败')
-    }
   }
 }
 
@@ -120,12 +98,7 @@ export const getUnreadCount = async (): Promise<number> => {
     return await MockMessageService.getUnreadCount()
   } else {
     // 调用真实API
-    const response = await request.get<number>('/api/v1/messages/unread-count')
-    const apiResponse = response as unknown as {code: number, message: string, data: number, success: boolean}
-    if (!apiResponse || !apiResponse.success || typeof apiResponse.data !== 'number') {
-      throw new Error('获取未读消息数量失败')
-    }
-    return apiResponse.data
+    return await request.get<number>('/api/v1/messages/unread-count')
   }
 }
 
@@ -137,11 +110,7 @@ export const markAllAsRead = async (): Promise<void> => {
     await MockMessageService.markAllAsRead()
   } else {
     // 调用真实API
-    const response = await request.put('/api/v1/messages/mark-all-read')
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('标记所有消息已读失败')
-    }
+    await request.put('/api/v1/messages/mark-all-read')
   }
 }
 
@@ -160,12 +129,7 @@ export const getMessageStats = async (): Promise<MessageStats> => {
     return await MockMessageService.getMessageStats()
   } else {
     // 调用真实API
-    const response = await request.get<MessageStats>('/api/v1/messages/stats')
-    const apiResponse = response as unknown as {code: number, message: string, data: MessageStats, success: boolean}
-    if (!apiResponse || !apiResponse.success || !apiResponse.data) {
-      throw new Error('获取消息统计失败')
-    }
-    return apiResponse.data
+    return await request.get<MessageStats>('/api/v1/messages/stats')
   }
 }
 
@@ -177,10 +141,6 @@ export const allRead = async (): Promise<void> => {
     await MockMessageService.allRead()
   } else {
     // 调用真实API
-    const response = await request.put('/api/v1/messages/allRead')
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('全部已读失败')
-    }
+    await request.put('/api/v1/messages/allRead')
   }
 }

@@ -41,12 +41,7 @@ export const getEmailProviders = async (): Promise<EmailProvider[]> => {
     return await MockEmailService.getEmailProviders()
   } else {
     // 调用真实API
-    const response = await request.get<EmailProvider[]>('/api/v1/email-keys')
-    const apiResponse = response as unknown as {code: number, message: string, data: EmailProvider[], success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取Email服务商列表响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<EmailProvider[]>('/api/v1/email-keys')
   }
 }
 
@@ -62,12 +57,7 @@ export const getEmailProvider = async (providerName: string): Promise<EmailProvi
     return provider
   } else {
     // 调用真实API
-    const response = await request.get<EmailProvider>(`/api/v1/email-keys/${providerName}`)
-    const apiResponse = response as unknown as {code: number, message: string, data: EmailProvider, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取Email服务商详情响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<EmailProvider>(`/api/v1/email-keys/${providerName}`)
   }
 }
 
@@ -81,11 +71,7 @@ export const getEmailKeys = async (providerName: string): Promise<EmailKey[]> =>
   } else {
     // 调用真实API - 从完整列表中筛选
     const response = await request.get<EmailProvider[]>('/api/v1/email-keys')
-    const apiResponse = response as unknown as {code: number, message: string, data: EmailProvider[], success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取密钥列表响应数据格式错误')
-    }
-    const provider = apiResponse.data.find(p => p.providerName === providerName)
+    const provider = response.find(p => p.providerName === providerName)
     return provider?.keys || []
   }
 }
@@ -97,11 +83,7 @@ export const createEmailKey = async (data: Omit<EmailKey, 'id' | 'createTime'>):
     await MockEmailService.addEmailKey(data)
   } else {
     // 调用真实API
-    const response = await request.post('/api/v1/email-keys', data)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('创建Email密钥失败')
-    }
+    await request.post('/api/v1/email-keys', data)
   }
 }
 
@@ -113,11 +95,7 @@ export const updateEmailKey = async (emailProvider: string, keyId: number, data:
   } else {
     // 调用真实API
     const requestData = { ...data, id: keyId }
-    const response = await request.put('/api/v1/email-keys', requestData)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('更新Email密钥失败')
-    }
+    await request.put('/api/v1/email-keys', requestData)
   }
 }
 
@@ -137,13 +115,9 @@ export const deleteEmailKeys = async (ids: number[]): Promise<boolean> => {
     return true
   } else {
     // 调用真实API
-    const response = await request.delete('/api/v1/email-keys', {}, {
+    await request.delete('/api/v1/email-keys', {}, {
       data: ids
     })
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('删除Email密钥失败')
-    }
     return true
   }
 }
@@ -166,11 +140,7 @@ export const enableEmailKey = async (keyId: number): Promise<void> => {
     await MockEmailService.updateEmailKey(provider.providerName, keyId, { status: 'active' })
   } else {
     // 调用真实API
-    const response = await request.put(`/api/v1/email-keys/${keyId}/enable`)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('启用Email密钥失败')
-    }
+    await request.put(`/api/v1/email-keys/${keyId}/enable`)
   }
 }
 
@@ -187,11 +157,7 @@ export const disableEmailKey = async (keyId: number): Promise<void> => {
     await MockEmailService.updateEmailKey(provider.providerName, keyId, { status: 'inactive' })
   } else {
     // 调用真实API
-    const response = await request.put(`/api/v1/email-keys/${keyId}/disable`)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('禁用Email密钥失败')
-    }
+    await request.put(`/api/v1/email-keys/${keyId}/disable`)
   }
 }
 

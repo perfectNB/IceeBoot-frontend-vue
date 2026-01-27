@@ -112,12 +112,7 @@ export const getPaymentConfigs = async (params?: PaymentConfigQueryParams): Prom
     return apiResponse.data
   } else {
     // 调用真实API
-    const response = await request.get<PageResult<PaymentConfigVO>>('/api/v1/pay/configs', params || {})
-    const apiResponse = response as unknown as { code: number; message: string; data: PageResult<PaymentConfigVO>; success: boolean }
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取支付配置列表响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<PageResult<PaymentConfigVO>>('/api/v1/pay/configs', params || {})
   }
 }
 
@@ -130,11 +125,7 @@ export const createPaymentConfig = async (data: Partial<PaymentConfigVO>): Promi
     await MockPayService.createPaymentConfigService(data)
   } else {
     // 调用真实API
-    const response = await request.post('/api/v1/pay/configs', data)
-    const apiResponse = response as unknown as { code: number; message: string; success: boolean }
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('创建支付配置失败')
-    }
+    await request.post('/api/v1/pay/configs', data)
   }
 }
 
@@ -148,11 +139,7 @@ export const updatePaymentConfig = async (id: number | string, data: Partial<Pay
   } else {
     // 调用真实API - ID包含在请求体中
     const requestData = { ...data, id }
-    const response = await request.put('/api/v1/pay/configs', requestData)
-    const apiResponse = response as unknown as { code: number; message: string; success: boolean }
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('更新支付配置失败')
-    }
+    await request.put('/api/v1/pay/configs', requestData)
   }
 }
 
@@ -165,13 +152,9 @@ export const deletePaymentConfigs = async (ids: (number | string)[]): Promise<vo
     await MockPayService.deletePaymentConfigsService(ids)
   } else {
     // 调用真实API - ID数组在请求体中
-    const response = await request.delete('/api/v1/pay/configs', {}, {
+    await request.delete('/api/v1/pay/configs', {}, {
       data: ids.map(Number)
     })
-    const apiResponse = response as unknown as { code: number; message: string; success: boolean }
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('删除支付配置失败')
-    }
   }
 }
 
@@ -191,11 +174,7 @@ export const updatePaymentConfigStatus = async (id: number | string, status: 'ac
     await MockPayService.updatePaymentConfigStatusService(id, status)
   } else {
     // 调用真实API - 专门的状态更新接口
-    const response = await request.put(`/api/v1/pay/configs/${id}/status?status=${status}`)
-    const apiResponse = response as unknown as { code: number; message: string; success: boolean }
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('更新支付配置状态失败')
-    }
+    await request.put(`/api/v1/pay/configs/${id}/status?status=${status}`)
   }
 }
 
@@ -215,12 +194,7 @@ export const getPayRecords = async (params: PayRecordQueryParams): Promise<PageR
     return apiResponse.data
   } else {
     // 调用真实API
-    const response = await request.get<PageResult<PayRecordVO>>('/api/v1/pay/records', params)
-    const apiResponse = response as unknown as { code: number; message: string; data: PageResult<PayRecordVO>; success: boolean }
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取支付记录列表响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<PageResult<PayRecordVO>>('/api/v1/pay/records', params)
   }
 }
 
@@ -238,12 +212,7 @@ export const getPayRecordDetail = async (id: number | string): Promise<PayRecord
     return apiResponse.data
   } else {
     // 调用真实API
-    const response = await request.get<PayRecordVO>(`/api/v1/pay/records/${id}`)
-    const apiResponse = response as unknown as { code: number; message: string; data: PayRecordVO; success: boolean }
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取支付记录详情响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<PayRecordVO>(`/api/v1/pay/records/${id}`)
   }
 }
 
@@ -261,26 +230,7 @@ export const createPayQrCode = async (configId: number | string): Promise<string
     return apiResponse.data
   } else {
     // 调用真实API
-    const response = await request.get<string>(`/api/v1/pay/create-qr/${configId}`)
-    const apiResponse = response as unknown as { success: boolean; code: number; message?: string; data?: string }
-
-    if (!apiResponse) {
-      throw new Error('服务器无响应')
-    }
-
-    if (!apiResponse.success || apiResponse.code !== 200) {
-      throw new Error('获取支付链接失败')
-    }
-
-    const payUrl = apiResponse.data
-
-    if (!payUrl || typeof payUrl !== 'string') {
-      console.error('支付链接无效:', payUrl)
-      console.error('完整响应对象:', apiResponse)
-      throw new Error('支付链接为空或格式错误')
-    }
-
-    return payUrl
+    return await request.get<string>(`/api/v1/pay/create-qr/${configId}`)
   }
 }
 
@@ -293,11 +243,7 @@ export const deletePayRecord = async (id: number | string): Promise<void> => {
     await MockPayService.deletePayRecordService(id)
   } else {
     // 调用真实API
-    const response = await request.delete(`/api/v1/pay/records/${id}`)
-    const apiResponse = response as unknown as { code: number; message: string; success: boolean }
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('删除支付记录失败')
-    }
+    await request.delete(`/api/v1/pay/records/${id}`)
   }
 }
 
@@ -310,12 +256,8 @@ export const deletePayRecords = async (ids: (number | string)[]): Promise<void> 
     await MockPayService.deletePayRecordsService(ids)
   } else {
     // 调用真实API
-    const response = await request.delete('/api/v1/pay/records/batch', {}, {
+    await request.delete('/api/v1/pay/records/batch', {}, {
       data: ids
     })
-    const apiResponse = response as unknown as { code: number; message: string; success: boolean }
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('批量删除支付记录失败')
-    }
   }
 }

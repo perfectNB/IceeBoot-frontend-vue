@@ -3,91 +3,37 @@
 import { request } from '@/utils/request'
 import { isMockEnabled } from '@/config/mock'
 import { MockDashboardService } from '@/mock/services/dashboard'
-import type { DashboardStats, VisitTrend, UserDistribution, ApiResponse } from '@/types'
+import type { DashboardStats, VisitTrend, UserDistribution } from '@/types'
 
 // 获取工作台统计数据
-export const getDashboardStats = async (): Promise<ApiResponse<DashboardStats>> => {
+export const getDashboardStats = async (): Promise<DashboardStats> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    const data = MockDashboardService.getDashboardStats()
-    return {
-      code: 200,
-      message: '获取成功',
-      data,
-      success: true,
-      timestamp: Date.now()
-    }
+    return MockDashboardService.getDashboardStats()
   } else {
     // 调用真实API
-    const response = await request.get<{data: DashboardStats}>('/api/v1/dashboard/stats')
-    const apiResponse = response as unknown as {code: number, message: string, data: DashboardStats, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取工作台统计数据响应格式错误')
-    }
-    return {
-      code: apiResponse.code,
-      message: apiResponse.message,
-      data: apiResponse.data,
-      success: apiResponse.success,
-      timestamp: Date.now()
-    }
+    return await request.get<DashboardStats>('/api/v1/dashboard/stats')
   }
 }
 
 // 获取访问趋势数据
-export const getVisitTrend = async (period: string): Promise<ApiResponse<VisitTrend[]>> => {
+export const getVisitTrend = async (period: string): Promise<VisitTrend[]> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    const data = MockDashboardService.getVisitTrend()
-    return {
-      code: 200,
-      message: '获取成功',
-      data,
-      success: true,
-      timestamp: Date.now()
-    }
+    return MockDashboardService.getVisitTrend()
   } else {
     // 调用真实API
-    const response = await request.get<{data: VisitTrend[]}>('/api/v1/dashboard/visit-trend', { period })
-    const apiResponse = response as unknown as {code: number, message: string, data: VisitTrend[], success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取访问趋势数据响应格式错误')
-    }
-    return {
-      code: apiResponse.code,
-      message: apiResponse.message,
-      data: apiResponse.data,
-      success: apiResponse.success,
-      timestamp: Date.now()
-    }
+    return await request.get<VisitTrend[]>('/api/v1/dashboard/visit-trend', { period })
   }
 }
 
 // 获取用户分布数据
-export const getUserDistribution = async (): Promise<ApiResponse<UserDistribution[]>> => {
+export const getUserDistribution = async (): Promise<UserDistribution[]> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    const data = MockDashboardService.getUserDistribution()
-    return {
-      code: 200,
-      message: '获取成功',
-      data,
-      success: true,
-      timestamp: Date.now()
-    }
+    return MockDashboardService.getUserDistribution()
   } else {
     // 调用真实API
-    const response = await request.get<{data: UserDistribution[]}>('/api/v1/dashboard/user-distribution')
-    const apiResponse = response as unknown as {code: number, message: string, data: UserDistribution[], success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取用户分布数据响应格式错误')
-    }
-    return {
-      code: apiResponse.code,
-      message: apiResponse.message,
-      data: apiResponse.data,
-      success: apiResponse.success,
-      timestamp: Date.now()
-    }
+    return await request.get<UserDistribution[]>('/api/v1/dashboard/user-distribution')
   }
 }

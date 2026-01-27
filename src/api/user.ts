@@ -16,12 +16,7 @@ export const getUserList = async (params: PageParams): Promise<PageResult<User>>
     return await MockUserService.getUserList(params)
   } else {
     // 调用真实API
-    const response = await request.get<PageResult<User>>('/api/v1/users', params)
-    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<User>, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取用户列表响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<PageResult<User>>('/api/v1/users', params)
   }
 }
 
@@ -32,12 +27,7 @@ export const getUserById = async (id: string | number): Promise<User> => {
     return await MockUserService.getUserInfo(Number(id))
   } else {
     // 调用真实API
-    const response = await request.get<User>(`/api/v1/users/${id}`)
-    const apiResponse = response as unknown as {code: number, message: string, data: User, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取用户详情响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<User>(`/api/v1/users/${id}`)
   }
 }
 
@@ -48,11 +38,7 @@ export const createUser = async (data: CreateUserData): Promise<void> => {
     await MockUserService.createUser(data)
   } else {
     // 调用真实API
-    const response = await request.post('/api/v1/users', data)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('创建用户失败')
-    }
+    await request.post('/api/v1/users', data)
   }
 }
 
@@ -64,11 +50,7 @@ export const updateUser = async (id: string | number, data: Partial<User>): Prom
   } else {
     // 调用真实API - 后端接口是PUT /api/v1/users，ID包含在请求体中
     const requestData = { ...data, id }
-    const response = await request.put('/api/v1/users', requestData)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('更新用户失败')
-    }
+    await request.put('/api/v1/users', requestData)
   }
 }
 
@@ -79,13 +61,9 @@ export const deleteUsers = async (ids: (string | number)[]): Promise<boolean> =>
     return await MockUserService.deleteUsers(ids.map(Number))
   } else {
     // 调用真实API
-    const response = await request.delete('/api/v1/users', {}, {
+    await request.delete('/api/v1/users', {}, {
       data: ids.map(Number)
     })
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('删除用户失败')
-    }
     return true
   }
 }
@@ -102,11 +80,7 @@ export const resetUserPassword = async (id: string | number, newPassword: string
     await MockUserService.resetPassword(Number(id), newPassword)
   } else {
     // 调用真实API
-    const response = await request.put(`/api/v1/users/${id}/password?newPassword=${encodeURIComponent(newPassword)}`)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('重置用户密码失败')
-    }
+    await request.put(`/api/v1/users/${id}/password?newPassword=${encodeURIComponent(newPassword)}`)
   }
 }
 
@@ -117,10 +91,6 @@ export const updateUserStatus = async (id: string | number, status: 'active' | '
     await MockUserService.updateUserStatus(Number(id), status)
   } else {
     // 调用真实API - PUT方法，状态作为查询参数
-    const response = await request.put(`/api/v1/users/${id}/status?status=${status}`)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('更新用户状态失败')
-    }
+    await request.put(`/api/v1/users/${id}/status?status=${status}`)
   }
 }

@@ -10,12 +10,7 @@ export const login = async (data: LoginForm, config?: AxiosRequestConfig & { ski
   if (isMockEnabled()) {
     return await MockAuthService.login(data)
   } else {
-    const response = await request.post<LoginResponse>('/api/v1/auth/login', data as unknown as Record<string, unknown>, config)
-    const apiResponse = response as unknown as {code: number, message: string, data: LoginResponse, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('登录响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.post<LoginResponse>('/api/v1/auth/login', data as unknown as Record<string, unknown>, config)
   }
 
 }
@@ -31,21 +26,15 @@ export const logout = () => {
 }
 
 // 获取用户信息
-export const getUserInfo = async () => {
+export const getUserInfo = async (): Promise<User> => {
   if (isMockEnabled()) {
     // Mock模式：获取当前登录用户信息
     // 从token中解析用户ID（简化处理，实际应该从token中解析）
     const userId = 1 // 默认管理员用户
     const userInfo = await MockUserService.getUserInfo(userId)
-    return { data: userInfo }
+    return userInfo
   } else {
-
-    const response = await request.get<User>('/api/v1/auth/user')
-    const apiResponse = response as unknown as {code: number, message: string, data: User, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取用户信息响应数据格式错误')
-    }
-    return { data: apiResponse.data }
+    return await request.get<User>('/api/v1/auth/user')
   }
 }
 

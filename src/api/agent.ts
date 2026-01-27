@@ -10,12 +10,7 @@ export const getAgents = async (params: PageParams): Promise<PageResult<Agent>> 
     return await MockAgentService.getAgents(params)
   } else {
     // 调用真实API
-    const response = await request.get<{data: PageResult<Agent>}>('/api/v1/agents',  params )
-    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<Agent>, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取Agent列表响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<PageResult<Agent>>('/api/v1/agents', params)
   }
 }
 
@@ -26,12 +21,7 @@ export const getAgent = async (id: string | number): Promise<Agent> => {
     return await MockAgentService.getAgent(id)
   } else {
     // 调用真实API
-    const response = await request.get<{data: Agent}>(`/api/v1/agent/${id}`)
-    const apiResponse = response as unknown as {code: number, message: string, data: Agent, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取Agent详情响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<Agent>(`/api/v1/agent/${id}`)
   }
 }
 
@@ -42,11 +32,7 @@ export const createAgent = async (data: Partial<Agent>): Promise<void> => {
     await MockAgentService.createAgent(data)
   } else {
     // 调用真实API
-    const response = await request.post('/api/v1/agents', data)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('创建Agent失败')
-    }
+    await request.post('/api/v1/agents', data)
   }
 }
 
@@ -58,11 +44,7 @@ export const updateAgent = async (id: string | number, data: Partial<Agent>): Pr
   } else {
     // 调用真实API - 后端接口是PUT /api/v1/agent，ID包含在请求体中
     const requestData = { ...data, id }
-    const response = await request.put('/api/v1/agents', requestData)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('更新Agent失败')
-    }
+    await request.put('/api/v1/agents', requestData)
   }
 }
 
@@ -76,13 +58,9 @@ export const deleteAgents = async (ids: (string | number)[]): Promise<boolean> =
     return true
   } else {
     // 调用真实API
-    const response = await request.delete('/api/v1/agents', {}, {
+    await request.delete('/api/v1/agents', {}, {
       data: ids.map(id => typeof id === 'string' ? parseInt(id) : id)
     })
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('删除Agent失败')
-    }
     return true
   }
 }
@@ -102,10 +80,6 @@ export const updateAgentStatus = async (
     await MockAgentService.updateAgentStatus(id, status)
   } else {
     // 调用真实API
-    const response = await request.put(`/api/v1/agent/${id}/status`, { status })
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('更新Agent状态失败')
-    }
+    await request.put(`/api/v1/agent/${id}/status`, { status })
   }
 }

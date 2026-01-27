@@ -77,12 +77,7 @@ export const getAiChatSessions = async (params: PageParams & { type?: number }):
     }
   } else {
     // 调用真实API
-    const response = await request.get<PageResult<AiChatSession>>('/api/v1/chat/sessions', params)
-    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<AiChatSession>, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取AI聊天会话列表响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<PageResult<AiChatSession>>('/api/v1/chat/sessions', params)
   }
 }
 
@@ -116,12 +111,7 @@ export const createAiChatSession = async (data: CreateSessionParams & { type?: n
     }
   } else {
     // 调用真实API
-    const response = await request.post<AiChatSession>('/api/v1/chat/sessions', data as unknown as Record<string, unknown>)
-    const apiResponse = response as unknown as {code: number, message: string, data: AiChatSession, success: boolean}
-    if (!apiResponse || !apiResponse.success || !apiResponse.data) {
-      throw new Error('创建AI聊天会话失败')
-    }
-    return apiResponse.data
+    return await request.post<AiChatSession>('/api/v1/chat/sessions', data as unknown as Record<string, unknown>)
   }
 }
 
@@ -135,13 +125,9 @@ export const deleteAiChatSession = async (ids: (string | number)[]): Promise<boo
     return true
   } else {
     // 调用真实API
-    const response = await request.delete('/api/v1/chat', {}, {
+    await request.delete('/api/v1/chat', {}, {
       data: ids.map(Number)
     })
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('删除AI聊天会话失败')
-    }
     return true
   }
 }
@@ -498,12 +484,7 @@ export const getAiChatMessages = async (sessionId: number, params: PageParams): 
       ...params,
       sessionId: sessionId
     }
-    const response = await request.get<PageResult<AiChatMessage>>(`/api/v1/chat/message`, requestParams)
-    const apiResponse = response as unknown as {code: number, message: string, data: PageResult<AiChatMessage>, success: boolean}
-    if (!apiResponse || !apiResponse.data) {
-      throw new Error('获取AI聊天消息列表响应数据格式错误')
-    }
-    return apiResponse.data
+    return await request.get<PageResult<AiChatMessage>>(`/api/v1/chat/message`, requestParams)
   }
 }
 
@@ -514,11 +495,7 @@ export const clearAiChatSession = async (sessionId: number): Promise<boolean> =>
     return true
   } else {
     // 调用真实API
-    const response = await request.delete(`/api/v1/chat/clear/${sessionId}`)
-    const apiResponse = response as unknown as {code: number, message: string, success: boolean}
-    if (!apiResponse || !apiResponse.success) {
-      throw new Error('清空对话会话消息失败')
-    }
+    await request.delete(`/api/v1/chat/clear/${sessionId}`)
     return true
   }
 }

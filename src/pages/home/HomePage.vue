@@ -16,7 +16,7 @@
             class="theme-btn"
           />
           <template v-if="isLoggedIn">
-            <el-button @click="router.push('/admin')">
+            <el-button @click="goToFirstMenu">
               进入管理后台
             </el-button>
             <el-button type="danger" @click="handleLogout">
@@ -257,6 +257,7 @@ import { isDark, toggleTheme } from '@/utils/theme'
 import LoginDialog from '../../components/common/LoginDialog.vue'
 import { useUserStore } from '@/stores/user'
 import { isMockEnabled } from '@/config/mock'
+import type { MenuItem } from '@/types'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -318,6 +319,36 @@ const socialPlatforms = [
     qrCode: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iIzA3QzE2MCIvPjx0ZXh0IHg9Ijc1IiB5PSI2NSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuW+ruS/oeS6pDwvdGV4dD48dGV4dCB4PSI3NSIgeT0iODUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7kuqTmtYE8L3RleHQ+PC9zdmc+'
   }
 ]
+
+const normalizeMenuPath = (path: string): string => {
+  return path.startsWith('/') ? path : `/${path}`
+}
+
+const resolveFirstMenuPath = (menus?: MenuItem[]): string | null => {
+  if (!menus || menus.length === 0) {
+    return null
+  }
+  for (const menu of menus) {
+    if (menu.type === 'link') {
+      continue
+    }
+    if (menu.children && menu.children.length > 0) {
+      const childPath = resolveFirstMenuPath(menu.children)
+      if (childPath) {
+        return childPath
+      }
+    }
+    if (menu.path) {
+      return normalizeMenuPath(menu.path)
+    }
+  }
+  return null
+}
+
+const goToFirstMenu = () => {
+  const target = resolveFirstMenuPath(userStore.user?.menus) || '/404'
+  router.push(target)
+}
 
 // 退出登录
 const handleLogout = async () => {
@@ -447,7 +478,7 @@ const scrollToFeatures = () => {
 const handleLoginSuccess = () => {
   showLoginDialog.value = false
   ElMessage.success('登录成功')
-  router.push('/admin')
+  goToFirstMenu()
 }
 
 // 处理立即体验按钮点击

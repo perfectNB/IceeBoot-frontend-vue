@@ -19,6 +19,7 @@ export class MockAuthService {
 
     const response: LoginResponse = {
       accessToken: `mock-token-${loginUser.user.id}-${Date.now()}`,
+      refreshToken: `mock-refresh-${loginUser.user.id}-${Date.now()}`,
       user: loginUser.user,
       tokenType:"Bearer",
       expires: Date.now() + 24 * 60 * 60 * 1000 // 24小时
@@ -35,11 +36,15 @@ export class MockAuthService {
   }
 
   // 刷新token
-  static async refreshToken(refreshToken: string): Promise<{ accessToken: string }> {
+  static async refreshToken(refreshToken: string): Promise<LoginResponse> {
     await mockDelay()
     mockLog('刷新token', { refreshToken })
     return {
-      accessToken: `mock-token-refresh-${Date.now()}`
+      accessToken: `mock-token-refresh-${Date.now()}`,
+      refreshToken: `mock-refresh-${Date.now()}`,
+      tokenType: 'Bearer',
+      expires: Date.now() + 24 * 60 * 60 * 1000,
+      user: mockLoginUsers[0].user
     }
   }
 }

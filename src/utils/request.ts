@@ -1,12 +1,20 @@
-import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse } from 'axios'
+import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse, type InternalAxiosRequestConfig, type AxiosRequestHeaders } from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getBaseURL } from './env'
 import { useUserStore } from '@/stores/user'
 import router from '@/router'
-import type { ApiResponse, ApiResponseLike } from '@/types'
+import type { ApiResponse, ApiResponseLike, LoginResponse } from '@/types'
 
 type RequestConfig = AxiosRequestConfig & {
   skipErrorMessage?: boolean
+  _retry?: boolean
+  _skipAuthRefresh?: boolean
+}
+
+type InternalRequestConfig = InternalAxiosRequestConfig & {
+  skipErrorMessage?: boolean
+  _retry?: boolean
+  _skipAuthRefresh?: boolean
 }
 
 export const normalizeApiResponse = <T = Record<string, unknown>>(payload: ApiResponseLike<T>): ApiResponseLike<T> => {
@@ -33,18 +41,134 @@ const service: AxiosInstance = axios.create({
   }
 })
 
+const refreshService: AxiosInstance = axios.create({
+  baseURL: getBaseURL(),
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json;charset=UTF-8'
+  }
+})
+
+const refreshThresholdMs = 60 * 1000
+let refreshPromise: Promise<LoginResponse | null> | null = null
+let logoutInProgress = false
+
+const isAuthInvalidCode = (code?: number): boolean => {
+  return code === 401 || code === 40101 || code === 40102
+}
+
+const isRefreshInvalidCode = (code?: number): boolean => {
+  return code === 40101 || code === 40102
+}
+
+const triggerLogout = (message?: string) => {
+  if (logoutInProgress) return
+  logoutInProgress = true
+  const userStore = useUserStore()
+  userStore.logout()
+  const finalize = () => {
+    logoutInProgress = false
+    router.push('/')
+  }
+  if (message) {
+    ElMessageBox.alert(message, '提示', {
+      confirmButtonText: '确定',
+      type: 'warning'
+    }).then(finalize).catch(finalize)
+  } else {
+    finalize()
+  }
+}
+
+const refreshTokens = async (): Promise<LoginResponse | null> => {
+  const userStore = useUserStore()
+  const currentRefreshToken = userStore.getRefreshToken()
+  if (!currentRefreshToken) {
+    triggerLogout('登录已过期，请重新登录')
+    return null
+  }
+
+  try {
+    const response = await refreshService.post<ApiResponse<LoginResponse>>(
+      '/api/v1/auth/refresh',
+      { refreshToken: currentRefreshToken }
+    )
+    const normalized = normalizeApiResponse<LoginResponse>(response.data)
+    const { code, success, data, message } = normalized
+    if (success || code === 200 || code === 0) {
+      if (data) {
+        userStore.setAuthTokens(data)
+        return data
+      }
+      return null
+    }
+    if (isRefreshInvalidCode(code)) {
+      triggerLogout('登录已过期，请重新登录')
+      return null
+    }
+    throw new Error(message || '刷新失败')
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status
+      const responseData = error.response?.data as ApiResponseLike<LoginResponse> | undefined
+      const normalized = responseData ? normalizeApiResponse<LoginResponse>(responseData) : undefined
+      if (status === 401 || isRefreshInvalidCode(normalized?.code)) {
+        triggerLogout('登录已过期，请重新登录')
+        return null
+      }
+    }
+    throw error
+  }
+}
+
+const ensureFreshToken = async (): Promise<string | null> => {
+  if (refreshPromise) {
+    const result = await refreshPromise
+    return result?.accessToken || null
+  }
+  refreshPromise = refreshTokens()
+  try {
+    const result = await refreshPromise
+    return result?.accessToken || null
+  } finally {
+    refreshPromise = null
+  }
+}
+
 // 请求拦截器
 service.interceptors.request.use(
-  (config) => {
+  async (config) => {
+    const requestConfig = config as InternalRequestConfig
     const userStore = useUserStore()
     const token = userStore.getToken()
+    const tokenType = userStore.getTokenType() || 'Bearer'
 
     // 添加token到请求头
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`
+      const headers = (requestConfig.headers || {}) as AxiosRequestHeaders
+      headers.Authorization = `${tokenType} ${token}`
+      requestConfig.headers = headers
     }
 
-    return config
+    if (!requestConfig._skipAuthRefresh) {
+      const expires = userStore.getTokenExpires()
+      const refreshToken = userStore.getRefreshToken()
+      if (expires && expires - Date.now() <= refreshThresholdMs) {
+        if (!refreshToken) {
+          triggerLogout('登录已过期，请重新登录')
+        } else {
+          const newToken = await ensureFreshToken()
+          if (newToken) {
+            const nextTokenType = userStore.getTokenType() || 'Bearer'
+            const headers = (requestConfig.headers || {}) as AxiosRequestHeaders
+            headers.Authorization = `${nextTokenType} ${newToken}`
+            requestConfig.headers = headers
+          }
+        }
+      }
+    }
+
+    return requestConfig
   },
   (error) => {
     console.error('请求错误:', error)
@@ -54,26 +178,30 @@ service.interceptors.request.use(
 
 // 响应拦截器
 service.interceptors.response.use(
-  (response: AxiosResponse<ApiResponse<unknown>>) => {
+  async (response: AxiosResponse<ApiResponse<unknown>>) => {
     response.data = normalizeApiResponse(response.data) as ApiResponse<unknown>
     const { data } = response
     const { code, message, success } = data
+    const config = response.config as InternalRequestConfig
 
     // 请求成功
     if (success || code === 200 || code === 0) {
       return response
     }
 
-    // 登录过期
-    if (code === 401) {
-      const userStore = useUserStore()
-      userStore.logout()
-      ElMessageBox.alert('登录已过期，请重新登录', '提示', {
-        confirmButtonText: '确定',
-        type: 'warning'
-      }).then(() => {
-        router.push('/')
-      })
+    if (!config._skipAuthRefresh && isAuthInvalidCode(code)) {
+      if (!config._retry) {
+        config._retry = true
+        const newToken = await ensureFreshToken()
+        if (newToken) {
+          const userStore = useUserStore()
+          const nextTokenType = userStore.getTokenType() || 'Bearer'
+          const headers = (config.headers || {}) as AxiosRequestHeaders
+          headers.Authorization = `${nextTokenType} ${newToken}`
+          config.headers = headers
+          return service.request(config)
+        }
+      }
       return Promise.reject(new Error(message || '登录已过期'))
     }
 
@@ -98,6 +226,22 @@ service.interceptors.response.use(
 
     if (error.response) {
       const { status } = error.response
+      const config = error.config as InternalRequestConfig | undefined
+      if (status === 401 && config && !config._skipAuthRefresh && !config._retry) {
+        config._retry = true
+        return ensureFreshToken().then((newToken) => {
+          if (newToken) {
+            const userStore = useUserStore()
+            const nextTokenType = userStore.getTokenType() || 'Bearer'
+            const headers = (config.headers || {}) as AxiosRequestHeaders
+            headers.Authorization = `${nextTokenType} ${newToken}`
+            config.headers = headers
+            return service.request(config)
+          }
+          triggerLogout('登录已过期，请重新登录')
+          return Promise.reject(error)
+        })
+      }
       switch (status) {
         case 400:
           message = '请求参数错误'
@@ -128,6 +272,11 @@ service.interceptors.response.use(
           break
         default:
           message = `连接错误${status}`
+      }
+      const responseData = error.response?.data as ApiResponseLike<Record<string, unknown>> | undefined
+      const normalized = responseData ? normalizeApiResponse(responseData) : undefined
+      if (isRefreshInvalidCode(normalized?.code)) {
+        triggerLogout('登录已过期，请重新登录')
       }
     } else if (error.request) {
       message = '网络连接异常'

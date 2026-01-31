@@ -10,13 +10,22 @@ export const useUserStore = defineStore('user', () => {
   const user = ref<User | null>(null)
   const permissions = ref<string[]>([])
   const roles = ref<string[]>([])
+  const refreshToken = ref<string>('')
+  const tokenType = ref<string>('Bearer')
+  const expires = ref<number | null>(null)
 
   type TokenStorage = 'local' | 'session' | 'memory'
   const TOKEN_KEY = 'accessToken'
+  const REFRESH_TOKEN_KEY = 'refreshToken'
+  const TOKEN_TYPE_KEY = 'tokenType'
+  const EXPIRES_KEY = 'tokenExpires'
   const rawStorageType = import.meta.env.VITE_TOKEN_STORAGE as string | undefined
   const tokenStorageType: TokenStorage =
     rawStorageType === 'session' || rawStorageType === 'memory' ? rawStorageType : 'local'
   let memoryToken = ''
+  let memoryRefreshToken = ''
+  let memoryTokenType = 'Bearer'
+  let memoryExpires: number | null = null
 
   const getStorage = (): Storage | null => {
     if (tokenStorageType === 'session') return sessionStorage
@@ -73,6 +82,85 @@ export const useUserStore = defineStore('user', () => {
     }
   }
 
+  const getRefreshToken = (): string => {
+    if (!refreshToken.value) {
+      if (tokenStorageType === 'memory') {
+        refreshToken.value = memoryRefreshToken
+      } else {
+        refreshToken.value = safeGet(getStorage(), REFRESH_TOKEN_KEY)
+      }
+    }
+    return refreshToken.value
+  }
+
+  const setRefreshToken = (newToken: string): void => {
+    refreshToken.value = newToken
+    if (tokenStorageType === 'memory') {
+      memoryRefreshToken = newToken
+    } else {
+      safeSet(getStorage(), REFRESH_TOKEN_KEY, newToken)
+    }
+  }
+
+  const getTokenType = (): string => {
+    if (!tokenType.value) {
+      if (tokenStorageType === 'memory') {
+        tokenType.value = memoryTokenType
+      } else {
+        tokenType.value = safeGet(getStorage(), TOKEN_TYPE_KEY) || 'Bearer'
+      }
+    }
+    return tokenType.value
+  }
+
+  const setTokenType = (newType: string): void => {
+    tokenType.value = newType || 'Bearer'
+    if (tokenStorageType === 'memory') {
+      memoryTokenType = tokenType.value
+    } else {
+      safeSet(getStorage(), TOKEN_TYPE_KEY, tokenType.value)
+    }
+  }
+
+  const getTokenExpires = (): number | null => {
+    if (expires.value === null) {
+      if (tokenStorageType === 'memory') {
+        expires.value = memoryExpires
+      } else {
+        const raw = safeGet(getStorage(), EXPIRES_KEY)
+        const parsed = Number(raw)
+        expires.value = Number.isFinite(parsed) && parsed > 0 ? parsed : null
+      }
+    }
+    return expires.value
+  }
+
+  const setTokenExpires = (value: number | null): void => {
+    expires.value = value
+    if (tokenStorageType === 'memory') {
+      memoryExpires = value
+    } else if (value === null) {
+      safeRemove(getStorage(), EXPIRES_KEY)
+    } else {
+      safeSet(getStorage(), EXPIRES_KEY, String(value))
+    }
+  }
+
+  const setAuthTokens = (payload: LoginResponse): void => {
+    if (payload.accessToken) {
+      setToken(payload.accessToken)
+    }
+    if (payload.refreshToken) {
+      setRefreshToken(payload.refreshToken)
+    }
+    if (payload.tokenType) {
+      setTokenType(payload.tokenType)
+    }
+    if (payload.expires) {
+      setTokenExpires(payload.expires)
+    }
+  }
+
   // 清除token
   const clearToken = (): void => {
     token.value = ''
@@ -80,6 +168,22 @@ export const useUserStore = defineStore('user', () => {
       memoryToken = ''
     } else {
       safeRemove(getStorage(), TOKEN_KEY)
+    }
+  }
+
+  const clearAuthTokens = (): void => {
+    clearToken()
+    refreshToken.value = ''
+    tokenType.value = 'Bearer'
+    expires.value = null
+    if (tokenStorageType === 'memory') {
+      memoryRefreshToken = ''
+      memoryTokenType = 'Bearer'
+      memoryExpires = null
+    } else {
+      safeRemove(getStorage(), REFRESH_TOKEN_KEY)
+      safeRemove(getStorage(), TOKEN_TYPE_KEY)
+      safeRemove(getStorage(), EXPIRES_KEY)
     }
   }
 
@@ -103,7 +207,7 @@ export const useUserStore = defineStore('user', () => {
       // 统一使用 auth.ts 中的登录接口
       const response = await apiLogin(loginForm, { skipErrorMessage: true })
 
-      setToken(response.accessToken)
+      setAuthTokens(response)
       // 登录成功后，获取用户可见菜单并同步到用户信息中，供侧边栏使用
       const menus = await getUserMenus(undefined, { skipErrorMessage: true })
       setUser({ ...(response.user as User), menus } as User)
@@ -116,7 +220,7 @@ export const useUserStore = defineStore('user', () => {
 
   // 登出
   const logout = (): void => {
-    clearToken()
+    clearAuthTokens()
     clearUser()
     // 重置动态路由状态
     resetDynamicRoutes()
@@ -152,15 +256,29 @@ export const useUserStore = defineStore('user', () => {
 
   // 初始化时获取token
   token.value = getToken()
+  refreshToken.value = getRefreshToken()
+  tokenType.value = getTokenType()
+  expires.value = getTokenExpires()
 
   return {
     token,
+    refreshToken,
+    tokenType,
+    expires,
     user,
     permissions,
     roles,
     getToken,
     setToken,
     clearToken,
+    getRefreshToken,
+    setRefreshToken,
+    getTokenType,
+    setTokenType,
+    getTokenExpires,
+    setTokenExpires,
+    setAuthTokens,
+    clearAuthTokens,
     setUser,
     clearUser,
     login,

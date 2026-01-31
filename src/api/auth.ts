@@ -39,8 +39,8 @@ export const getUserInfo = async (): Promise<User> => {
 }
 
 // 刷新token
-export const refreshToken = (refreshToken: string) => {
-  return request.post<{ accessToken: string }>('/api/v1/auth/refresh', { refreshToken })
+export const refreshToken = (refreshToken: string, config?: AxiosRequestConfig & { skipErrorMessage?: boolean }) => {
+  return request.post<LoginResponse>('/api/v1/auth/refresh', { refreshToken }, config)
 }
 
 // 微信登录二维码

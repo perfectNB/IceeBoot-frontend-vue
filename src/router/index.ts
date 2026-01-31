@@ -301,8 +301,15 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
-  if (token && to.path === '/' && firstMenuPath) {
-    next(firstMenuPath)
+  if (token && to.path === '/') {
+    if (!firstMenuPath && userStore.user?.menus) {
+      firstMenuPath = resolveFirstMenuPath(userStore.user.menus)
+    }
+    if (firstMenuPath) {
+      next(firstMenuPath)
+      return
+    }
+    next('/404')
     return
   }
 

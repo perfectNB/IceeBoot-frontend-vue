@@ -12,52 +12,54 @@ const AdminLayout = () => import('@/layouts/AdminLayout.vue')
 // 导入页面组件
 const HomePage = () => import('@/pages/home/HomePage.vue')
 
-// 组件映射表 - 根据组件名称动态导入组件
-const componentMap: Record<string, () => Promise<{ default: unknown }>> = {
-  Dashboard: () => import('@/pages/admin/AdminDashboard.vue'),
-  UserManagement: () => import('@/pages/admin/system/UserManagement.vue'),
-  RoleManagement: () => import('@/pages/admin/system/RoleManagement.vue'),
-  PermissionManagement: () => import('@/pages/admin/system/PermissionManagement.vue'),
-  MenuManagement: () => import('@/pages/admin/system/MenuManagement.vue'),
-  EmailManagement: () => import('@/pages/admin/system/EmailManagement.vue'),
-  FileManagement: () => import('@/pages/admin/system/FileManagement.vue'),
-  SmsManagement: () => import('@/pages/admin/system/SmsManagement.vue'),
-  RedisManagement: () => import('@/pages/admin/monitor/RedisManagement.vue'),
-  TaskManagement: () => import('@/pages/admin/monitor/TaskManagement.vue'),
-  LogManagement: () => import('@/pages/admin/monitor/LogManagement.vue'),
-  ApiDocumentation: () => import('@/pages/admin/monitor/ApiDocumentation.vue'),
-  LLMManagement: () => import('@/pages/admin/ai/LLMManagement.vue'),
-  AgentManagement: () => import('@/pages/admin/ai/AgentManagement.vue'),
-  ChatInterface: () => import('@/pages/admin/ai/ChatInterface.vue'),
-  AIChat: () => import('@/pages/admin/ai/ChatInterface.vue'),
-  RagChat: () => import('@/pages/admin/ai/RagChat.vue'),
-  FrontendCodegen: () => import('@/pages/admin/codegen/FrontendCodegen.vue'),
-  BackendCodegen: () => import('@/pages/admin/codegen/BackendCodegen.vue'),
-  FrontendCrud: () => import('@/pages/admin/codegen/FrontendCodegen.vue'),
-  BackendCrud: () => import('@/pages/admin/codegen/BackendCodegen.vue'),
-  ApiDoc: () => import('@/pages/admin/monitor/ApiDocumentation.vue'),
-  ScheduledTask: () => import('@/pages/admin/monitor/TaskManagement.vue'),
-  OSS: () => import('@/pages/admin/third/OSS.vue'),
-  Email: () => import('@/pages/admin/third/Email.vue'),
-  SMS: () => import('@/pages/admin/third/SMS.vue'),
-  ProfileCenter: () => import('@/pages/self/ProfileCenter.vue'),
-  MessageCenter: () => import('@/pages/self/MessageCenter.vue'),
-  FrontendTest: () => import('@/pages/admin/codegen/FrontendTest.vue'),
-  PayConfig: () => import('@/pages/admin/pay/PayConfig.vue'),
-  PayRecord: () => import('@/pages/admin/pay/PayRecord.vue'),
+// 自动导入 pages 目录下所有 vue 文件
+const modules = import.meta.glob('../pages/**/*.vue')
+
+
+
+
+function getComponentLoader(componentName: string) {
+  // 1. 检查别名映射
+  const targetName =  componentName
+
+  const pathKeys = Object.keys(modules)
+
+  // 2. 优先尝试匹配文件名 (兼容旧的 PascalCase 命名，如 UserManagement)
+  // 这是最精准的匹配方式，可以避免 "User" 匹配到 "UserDetail" 的问题
+  for (const key of pathKeys) {
+    const fileName = key.split('/').pop()?.replace(/\.\w+$/, '')
+    if (fileName === targetName) {
+      return modules[key]
+    }
+  }
+
+  // 3. 如果文件名没匹配上，且 targetName 包含 /，尝试作为路径后缀匹配
+  // 比如 targetName 是 "admin/system/UserManagement"
+  if (targetName.includes('/')) {
+    for (const key of pathKeys) {
+      // 移除 .vue 后缀后比较
+      // key: ../pages/admin/system/User.vue -> ../pages/admin/system/User
+      const keyWithoutExt = key.replace(/\.\w+$/, '')
+      if (keyWithoutExt.endsWith(targetName)) {
+        return modules[key]
+      }
+    }
+  }
+
+  console.warn(`未找到组件: ${componentName} (尝试查找: ${targetName})`)
+  return null
 }
 
 // 将菜单数据转换为路由配置
-function menuToRoute(menu: MenuItem, isChild = false): RouteRecordRaw {
-  // 处理路径：如果是子菜单，需要提取相对路径
-  let routePath = menu.path
-  if (isChild && menu.path.startsWith('/admin/')) {
-    // 对于子菜单，提取最后一段作为相对路径
-    const pathParts = menu.path.split('/')
-    routePath = pathParts[pathParts.length - 1]
-  } else if (!isChild) {
-    // 对于顶级菜单，移除 /admin/ 前缀
-    routePath = menu.path.replace('/admin/', '')
+function menuToRoute(menu: MenuItem, parentPath = ''): RouteRecordRaw {
+  let fullPath = menu.path
+  if (!fullPath.startsWith('/')) {
+    fullPath = parentPath ? `${parentPath}/${menu.path}`.replace(/\/+/g, '/') : `/${menu.path}`
+  }
+
+  let routePath = fullPath
+  if (parentPath && fullPath.startsWith(parentPath)) {
+    routePath = fullPath.slice(parentPath.length).replace(/^\/+/, '')
   }
 
   const route: Partial<RouteRecordRaw> = {
@@ -75,14 +77,18 @@ function menuToRoute(menu: MenuItem, isChild = false): RouteRecordRaw {
   // 如果是外部链接，不设置组件
   if (menu.type === 'link') {
     route.meta!.link = menu.link
-  } else if (menu.component && componentMap[menu.component]) {
+  } else if (menu.component) {
     // 设置组件
-    route.component = componentMap[menu.component]
+    const loader = getComponentLoader(menu.component)
+    if (loader) {
+      // @ts-ignore
+      route.component = loader
+    }
   }
 
   // 处理子菜单
   if (menu.children && menu.children.length > 0) {
-    route.children = menu.children.map(child => menuToRoute(child, true))
+    route.children = menu.children.map(child => menuToRoute(child, fullPath))
 
     // 如果有子菜单但没有组件，设置重定向到第一个子菜单
     if (!route.component && route.children.length > 0) {
@@ -107,11 +113,7 @@ export function resetDynamicRoutes(): void {
 }
 
 function normalizeMenuPath(path: string): string {
-  if (path.startsWith('/admin')) {
-    return path
-  }
-  const normalized = path.replace(/^\/+/, '')
-  return normalized ? `/admin/${normalized}` : '/admin'
+  return path.startsWith('/') ? path : `/${path}`
 }
 
 function resolveFirstMenuPath(menus: MenuItem[]): string | null {
@@ -139,38 +141,52 @@ async function loadDynamicRoutes(): Promise<void> {
 
   try {
     const menus = await getUserMenus()
-    const dynamicRoutes = menus.map(menu => menuToRoute(menu))
     firstMenuPath = resolveFirstMenuPath(menus)
 
-    // 找到admin路由并添加子路由
-    const adminRoute = router.getRoutes().find(route => route.path === '/admin')
-    if (adminRoute) {
-      // 只清空动态路由，保留静态路由（如个人中心、消息中心）
-      const staticRouteNames = ['ProfileCenter', 'MessageCenter'] // 需要保留的静态路由名称
-      adminRoute.children?.forEach(child => {
-        if (child.name && !staticRouteNames.includes(child.name as string)) {
-          router.removeRoute(child.name)
-        }
-      })
-
-      // 添加动态路由
-      dynamicRoutes.forEach(route => {
-        router.addRoute('admin', route)
-      })
-
-      // 设置默认重定向到第一个菜单
-      if (dynamicRoutes.length > 0) {
-        const firstRoute = dynamicRoutes[0]
-        const redirectPath = firstRoute.path.startsWith('/') ? `/admin${firstRoute.path}` : `/admin/${firstRoute.path}`
-        router.addRoute('admin', {
-          path: '',
-          redirect: redirectPath
-        })
-        if (!firstMenuPath) {
-          firstMenuPath = redirectPath
-        }
-      }
+    const getRootPath = (path: string): string => {
+      const normalized = normalizeMenuPath(path).replace(/^\/+/, '')
+      const segment = normalized.split('/')[0] || ''
+      return segment ? `/${segment}` : '/'
     }
+
+    const ensureLayoutRoute = (rootPath: string): string | null => {
+      if (rootPath === '/') {
+        return null
+      }
+      const existing = router.getRoutes().find(route => route.path === rootPath)
+      if (existing?.name) {
+        return String(existing.name)
+      }
+      const segment = rootPath.replace(/^\/+/, '')
+      const layoutName = `layout-${segment}`
+      router.addRoute({
+        path: rootPath,
+        name: layoutName,
+        component: AdminLayout,
+        meta: {
+          title: segment,
+          requiresAuth: true
+        }
+      })
+      return layoutName
+    }
+
+    menus.forEach(menu => {
+      const fullPath = normalizeMenuPath(menu.path)
+      const rootPath = getRootPath(fullPath)
+      const layoutName = ensureLayoutRoute(rootPath)
+      if (!layoutName) {
+        router.addRoute(menuToRoute(menu))
+        return
+      }
+      if (fullPath === rootPath && menu.children && menu.children.length > 0) {
+        menu.children.forEach(child => {
+          router.addRoute(layoutName, menuToRoute(child, rootPath))
+        })
+      } else {
+        router.addRoute(layoutName, menuToRoute(menu, rootPath))
+      }
+    })
 
     dynamicRoutesLoaded = true
   } catch (error) {
@@ -283,16 +299,7 @@ router.beforeEach(async (to, from, next) => {
     }
   }
 
-  if (token && to.path === '/') {
-    if (firstMenuPath) {
-      next(firstMenuPath)
-    } else {
-      next('/admin')
-    }
-    return
-  }
-
-  if (to.path === '/admin' && firstMenuPath) {
+  if (token && to.path === '/' && firstMenuPath) {
     next(firstMenuPath)
     return
   }
@@ -332,7 +339,11 @@ router.beforeEach(async (to, from, next) => {
 
       if (!hasPermission) {
         ElMessage.error('您没有访问该页面的权限')
-        next('/admin')
+        if (firstMenuPath) {
+          next(firstMenuPath)
+        } else {
+          next('/')
+        }
         return
       }
     }

@@ -117,6 +117,8 @@
 </template>
 
 <script setup lang="ts">
+defineOptions({ name: 'AdminDashboard' })
+
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'

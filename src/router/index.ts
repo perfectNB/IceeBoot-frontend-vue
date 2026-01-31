@@ -81,8 +81,7 @@ function menuToRoute(menu: MenuItem, parentPath = ''): RouteRecordRaw {
     // 设置组件
     const loader = getComponentLoader(menu.component)
     if (loader) {
-      // @ts-ignore
-      route.component = loader
+      route.component = loader as RouteRecordRaw['component']
     }
   }
 
@@ -149,13 +148,45 @@ async function loadDynamicRoutes(): Promise<void> {
       return segment ? `/${segment}` : '/'
     }
 
+    const ensureCommonRoutes = (layoutName: string) => {
+      const profileName = `${layoutName}-profile-center`
+      if (!router.getRoutes().some(route => route.name === profileName)) {
+        router.addRoute(layoutName, {
+          path: 'profile-center',
+          name: profileName,
+          component: () => import('@/pages/self/ProfileCenter.vue'),
+          meta: {
+            title: '个人中心',
+            requiresAuth: true,
+            hideInMenu: true
+          }
+        })
+      }
+
+      const messageName = `${layoutName}-message-center`
+      if (!router.getRoutes().some(route => route.name === messageName)) {
+        router.addRoute(layoutName, {
+          path: 'message-center',
+          name: messageName,
+          component: () => import('@/pages/self/MessageCenter.vue'),
+          meta: {
+            title: '消息中心',
+            requiresAuth: true,
+            hideInMenu: true
+          }
+        })
+      }
+    }
+
     const ensureLayoutRoute = (rootPath: string): string | null => {
       if (rootPath === '/') {
         return null
       }
       const existing = router.getRoutes().find(route => route.path === rootPath)
       if (existing?.name) {
-        return String(existing.name)
+        const existingName = String(existing.name)
+        ensureCommonRoutes(existingName)
+        return existingName
       }
       const segment = rootPath.replace(/^\/+/, '')
       const layoutName = `layout-${segment}`
@@ -165,9 +196,11 @@ async function loadDynamicRoutes(): Promise<void> {
         component: AdminLayout,
         meta: {
           title: segment,
-          requiresAuth: true
+          requiresAuth: true,
+          layout: true
         }
       })
+      ensureCommonRoutes(layoutName)
       return layoutName
     }
 
@@ -218,40 +251,9 @@ const baseRoutes: RouteRecordRaw[] = [
   }
 ]
 
-// 初始路由（包含基础路由和空的admin路由）
+// 初始路由（仅包含基础路由）
 const routes: RouteRecordRaw[] = [
-  ...baseRoutes,
-  {
-    path: '/admin',
-    name: 'admin',
-    component: AdminLayout,
-    meta: {
-      title: '管理后台',
-      requiresAuth: true
-    },
-    children: [
-      {
-        path: 'profile-center',
-        name: 'ProfileCenter',
-        component: () => import('@/pages/self/ProfileCenter.vue'),
-        meta: {
-          title: '个人中心',
-          requiresAuth: true,
-          hideInMenu: true
-        }
-      },
-      {
-        path: 'message-center',
-        name: 'MessageCenter',
-        component: () => import('@/pages/self/MessageCenter.vue'),
-        meta: {
-          title: '消息中心',
-          requiresAuth: true,
-          hideInMenu: true
-        }
-      }
-    ]
-  }
+  ...baseRoutes
 ]
 
 // 创建路由实例

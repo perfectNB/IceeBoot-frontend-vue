@@ -162,12 +162,19 @@ const menus = computed(() => userStore.user?.menus || [])
 
 // 面包屑导航
 const breadcrumbs = computed(() => {
-  const matched = route.matched.filter(item => item.meta?.title)
+  const matched = route.matched.filter(item => item.meta?.title && !item.meta?.layout)
   return matched.map(item => ({
     title: item.meta?.title as string,
     path: item.path
   }))
 })
+
+const getLayoutPath = (suffix: string) => {
+  const basePath = route.matched[0]?.path || '/'
+  const normalizedBase = basePath === '/' ? '' : basePath.replace(/\/+$/, '')
+  const normalizedSuffix = suffix.replace(/^\/+/, '')
+  return `${normalizedBase}/${normalizedSuffix}`.replace(/\/+/g, '/')
+}
 
 // 切换侧边栏
 const toggleSidebar = () => {
@@ -178,10 +185,10 @@ const toggleSidebar = () => {
 const handleUserCommand = (command: string) => {
   switch (command) {
     case 'profile':
-      router.push('/admin/profile-center')
+      router.push(getLayoutPath('profile-center'))
       break
     case 'settings':
-      router.push('/admin/settings')
+      router.push(getLayoutPath('settings'))
       break
     case 'logout':
       handleLogout()
@@ -193,7 +200,7 @@ const handleUserCommand = (command: string) => {
 const handleMessageCommand = async (command: string) => {
   switch (command) {
     case 'center':
-      router.push('/admin/message-center')
+      router.push(getLayoutPath('message-center'))
       break
     case 'markAllRead':
       try {

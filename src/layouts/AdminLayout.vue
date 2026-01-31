@@ -194,6 +194,7 @@ const handleUserCommand = (command: string) => {
     case 'logout':
       handleLogout()
       break
+
   }
 }
 

@@ -125,7 +125,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -156,6 +156,7 @@ const isCollapsed = ref(false)
 
 // 未读消息数量
 const unreadCount = ref(0)
+let unreadTimer: number | undefined
 
 // 菜单数据 - 从user store中获取
 const menus = computed(() => userStore.user?.menus || [])
@@ -259,7 +260,14 @@ onMounted(() => {
   loadUnreadCount()
 
   // 定期刷新未读消息数量（每5分钟）
-  setInterval(loadUnreadCount, 5 * 60 * 1000)
+  unreadTimer = window.setInterval(loadUnreadCount, 5 * 60 * 1000)
+})
+
+onBeforeUnmount(() => {
+  if (unreadTimer !== undefined) {
+    window.clearInterval(unreadTimer)
+    unreadTimer = undefined
+  }
 })
 </script>
 

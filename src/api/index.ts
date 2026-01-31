@@ -112,7 +112,10 @@ export {
   addSMSKey,
   updateSMSKey,
   deleteSMSKey,
-  updateSMSKeyStatus
+  updateSMSKeyStatus,
+  sendSms,
+  querySmsStatus,
+  querySmsBalance
 } from './sms'
 
 // Email相关接口
@@ -121,7 +124,9 @@ export {
   addEmailKey,
   updateEmailKey,
   deleteEmailKey,
-  updateEmailKeyStatus
+  updateEmailKeyStatus,
+  sendEmail,
+  queryEmailStatus
 } from './email'
 
 // 消息相关接口
@@ -158,12 +163,21 @@ export type {
 
 export type {
   SMSKey,
-  SMSProvider
+  SMSProvider,
+  SmsSendDTO,
+  SmsStatusQuery,
+  SmsBalanceQuery,
+  SmsResponse
 } from './sms'
 
 export type {
   EmailKey,
-  EmailProvider
+  EmailProvider,
+  EmailSendDTO,
+  EmailStatusQuery,
+  EmailResponse,
+  EmailSendResult,
+  EmailAttachment
 } from './email'
 
 export type {
@@ -205,5 +219,4 @@ export {
   type PayRecordVO,
   type PayRecordQueryParams
 } from './pay'
-
 

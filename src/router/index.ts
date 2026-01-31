@@ -3,7 +3,6 @@ import type { RouteRecordRaw } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 import type { MenuItem } from '@/types'
-import { getUserMenus } from '@/api/menu'
 import { setSEO, getSEOConfigByPath, getFullUrl } from '@/utils/seo'
 
 // 导入布局组件
@@ -139,7 +138,12 @@ async function loadDynamicRoutes(): Promise<void> {
   if (dynamicRoutesLoaded) return
 
   try {
-    const menus = await getUserMenus()
+    const userStore = useUserStore()
+    let menus = userStore.user?.menus
+    if (!menus || menus.length === 0) {
+      const userInfo = await userStore.getUserInfo()
+      menus = userInfo.menus || []
+    }
     firstMenuPath = resolveFirstMenuPath(menus)
 
     const getRootPath = (path: string): string => {

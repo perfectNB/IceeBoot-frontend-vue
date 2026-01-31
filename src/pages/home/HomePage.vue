@@ -516,7 +516,34 @@ onMounted(() => {
 <style scoped lang="scss">
 .home-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--bg-color) 0%, var(--bg-color-page) 100%);
+  background: linear-gradient(135deg, var(--bg-color) 0%, var(--bg-color-page) 45%, rgba(64, 158, 255, 0.12) 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.home-page::before {
+  content: '';
+  position: absolute;
+  inset: -40% -30% auto -30%;
+  height: 60vh;
+  background: radial-gradient(circle at 20% 20%, rgba(64, 158, 255, 0.18), transparent 55%),
+    radial-gradient(circle at 80% 0%, rgba(103, 194, 58, 0.18), transparent 50%),
+    radial-gradient(circle at 60% 80%, rgba(144, 147, 153, 0.15), transparent 60%);
+  animation: auroraFlow 12s ease-in-out infinite;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.home-page::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(rgba(64, 158, 255, 0.15) 1px, transparent 1px);
+  background-size: 120px 120px;
+  opacity: 0.2;
+  animation: starDrift 30s linear infinite;
+  pointer-events: none;
+  z-index: 0;
 }
 
 .navbar {
@@ -574,6 +601,8 @@ onMounted(() => {
 
 .main-content {
   padding-top: 60px;
+  position: relative;
+  z-index: 1;
 }
 
 .hero-section {
@@ -582,6 +611,31 @@ onMounted(() => {
   align-items: center;
   position: relative;
   overflow: hidden;
+  isolation: isolate;
+}
+
+.hero-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% 30%, rgba(64, 158, 255, 0.2), transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(103, 194, 58, 0.18), transparent 45%),
+    radial-gradient(circle at 50% 80%, rgba(144, 147, 153, 0.12), transparent 60%);
+  filter: blur(10px);
+  z-index: -1;
+  animation: heroGlow 10s ease-in-out infinite;
+}
+
+.hero-section::after {
+  content: '';
+  position: absolute;
+  inset: 20% 10% 10% 10%;
+  border-radius: 40px;
+  border: 1px solid rgba(64, 158, 255, 0.2);
+  background: linear-gradient(135deg, rgba(64, 158, 255, 0.05), rgba(103, 194, 58, 0.04));
+  box-shadow: 0 0 60px rgba(64, 158, 255, 0.12);
+  z-index: -1;
+  animation: framePulse 8s ease-in-out infinite;
 }
 
 .hero-container {
@@ -605,6 +659,8 @@ onMounted(() => {
   line-height: 1.2;
   margin-bottom: 24px;
   color: var(--text-primary);
+  text-shadow: 0 10px 30px rgba(64, 158, 255, 0.15);
+  animation: titleFloat 6s ease-in-out infinite;
 }
 
 .gradient-text {
@@ -619,11 +675,41 @@ onMounted(() => {
   line-height: 1.6;
   color: var(--text-regular);
   margin-bottom: 32px;
+  opacity: 0.9;
 }
 
 .hero-actions {
   display: flex;
   gap: 16px;
+}
+
+:deep(.hero-actions .el-button) {
+  position: relative;
+  overflow: hidden;
+  border-radius: 14px;
+  transition: all 0.35s ease;
+  box-shadow: 0 8px 20px rgba(64, 158, 255, 0.18);
+}
+
+:deep(.hero-actions .el-button::after) {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -40%;
+  width: 60%;
+  height: 200%;
+  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: rotate(20deg);
+  transition: transform 0.6s ease;
+}
+
+:deep(.hero-actions .el-button:hover) {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 30px rgba(64, 158, 255, 0.28);
+}
+
+:deep(.hero-actions .el-button:hover::after) {
+  transform: translateX(220%) rotate(20deg);
 }
 
 .hero-image {
@@ -697,6 +783,7 @@ onMounted(() => {
     padding: 8px;
     background: var(--primary-extra-light);
     border-radius: 50%;
+    box-shadow: 0 0 16px rgba(64, 158, 255, 0.35);
   }
 
   &.card-1 {
@@ -771,6 +858,7 @@ onMounted(() => {
   text-align: center;
   margin-bottom: 60px;
   color: var(--text-primary);
+  text-shadow: 0 10px 25px rgba(64, 158, 255, 0.15);
 }
 
 .features-grid {
@@ -1007,6 +1095,55 @@ onMounted(() => {
   }
   100% {
     background-position: 200% 0;
+  }
+}
+
+@keyframes auroraFlow {
+  0%, 100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: translate3d(6%, -4%, 0) scale(1.05);
+    opacity: 1;
+  }
+}
+
+@keyframes starDrift {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-3%, 2%, 0);
+  }
+}
+
+@keyframes heroGlow {
+  0%, 100% {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes framePulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes titleFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
   }
 }
 

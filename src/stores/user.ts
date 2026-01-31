@@ -232,7 +232,8 @@ export const useUserStore = defineStore('user', () => {
       // 统一使用 auth.ts 中的获取用户信息接口
       const userInfo = await apiGetUserInfo()
       // 获取并合并菜单到用户信息
-      const menus = await getUserMenus()
+      const existingMenus = user.value?.menus
+      const menus = existingMenus && existingMenus.length > 0 ? existingMenus : await getUserMenus()
       const mergedUser = { ...(userInfo as User), menus } as User
       setUser(mergedUser)
       return mergedUser

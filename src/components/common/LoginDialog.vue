@@ -286,8 +286,8 @@ watch(dialogVisible, (visible) => {
   :deep(.el-dialog) {
     max-width: 480px;
     border-radius: 20px;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
-    background: var(--bg-color);
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.18), 0 0 40px rgba(64, 158, 255, 0.15);
+    background: radial-gradient(circle at top, rgba(64, 158, 255, 0.08), transparent 45%), var(--bg-color);
     backdrop-filter: blur(20px);
     border: 1px solid var(--border-extra-light);
     overflow: hidden;
@@ -302,6 +302,19 @@ watch(dialogVisible, (visible) => {
       right: 0;
       height: 4px;
       background: linear-gradient(90deg, var(--primary-color), var(--success-color), var(--info-color));
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 22px;
+      padding: 2px;
+      background: linear-gradient(135deg, rgba(64, 158, 255, 0.35), rgba(103, 194, 58, 0.25), rgba(144, 147, 153, 0.15));
+      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      mask-composite: xor;
+      pointer-events: none;
+      opacity: 0.6;
     }
   }
 
@@ -484,8 +497,7 @@ watch(dialogVisible, (visible) => {
 
       &:hover {
         border-color: var(--primary-light);
-        box-shadow: 0 6px 16px rgba(64, 158, 255, 0.15);
-        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(64, 158, 255, 0.18), 0 0 0 1px rgba(64, 158, 255, 0.12);
 
         &::before {
           left: 100%;
@@ -494,8 +506,7 @@ watch(dialogVisible, (visible) => {
 
       &.is-focus {
         border-color: var(--primary-color);
-        box-shadow: 0 8px 20px rgba(64, 158, 255, 0.25);
-        transform: translateY(-2px);
+        box-shadow: 0 10px 22px rgba(64, 158, 255, 0.3), 0 0 0 2px rgba(64, 158, 255, 0.18);
       }
 
       .el-input__inner {
@@ -523,7 +534,7 @@ watch(dialogVisible, (visible) => {
     font-size: 16px;
     font-weight: 700;
     border-radius: 14px;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light), rgba(64, 158, 255, 0.6));
     border: none;
     box-shadow: 0 6px 16px rgba(64, 158, 255, 0.3);
     transition: all var(--transition-duration);
@@ -543,7 +554,7 @@ watch(dialogVisible, (visible) => {
 
     &:hover {
       transform: translateY(-3px);
-      box-shadow: 0 12px 24px rgba(64, 158, 255, 0.4);
+      box-shadow: 0 14px 28px rgba(64, 158, 255, 0.45), 0 0 18px rgba(64, 158, 255, 0.35);
 
       &::before {
         left: 100%;
@@ -564,6 +575,8 @@ watch(dialogVisible, (visible) => {
 .login-tips {
   text-align: center;
   margin-top: 20px;
+  opacity: 0.8;
+  letter-spacing: 0.3px;
 
   p {
     color: var(--text-secondary);
@@ -620,8 +633,8 @@ watch(dialogVisible, (visible) => {
 }
 
 :deep(.custom-modal) {
-  backdrop-filter: blur(10px);
-  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(16px);
+  background: rgba(12, 17, 28, 0.55);
 }
 
 @keyframes dialog-pop {

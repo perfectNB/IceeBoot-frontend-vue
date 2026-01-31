@@ -31,6 +31,56 @@ export interface SMSProvider {
   keys?: SMSKey[]
 }
 
+ export interface SmsSendDTO {
+  keyId?: number
+  provider?: string
+  phoneNumber?: string
+  phoneNumbers?: string[]
+  content?: string
+  templateId?: string
+  templateParams?: Record<string, string>
+  signName?: string
+  smsType?: string
+  countryCode?: string
+  scheduleTime?: number
+  validityPeriod?: number
+  callbackUrl?: string
+  userData?: string
+  sendType?: string
+}
+
+export interface SmsStatusQuery {
+  messageId?: string
+  keyId?: number
+  provider?: string
+}
+
+export interface SmsBalanceQuery {
+  keyId?: number
+  provider?: string
+}
+
+export interface SmsResponse {
+  success?: boolean
+  errorMessage?: string
+  errorCode?: string
+  messageId?: string
+  messageIds?: string[]
+  phoneNumber?: string
+  phoneNumbers?: string[]
+  content?: string
+  status?: string
+  sendTime?: string
+  provider?: string
+  responseTime?: number
+  cost?: string
+  smsCount?: number
+  extraData?: Record<string, unknown>
+  rawResponse?: string
+  requestId?: string
+  serialNumber?: string
+}
+
 // 获取SMS服务商列表
 export const getSMSProviders = async (): Promise<SMSProvider[]> => {
   if (isMockEnabled()) {
@@ -166,4 +216,46 @@ export const updateSMSKeyStatus = async (providerName: string, keyId: number, st
   } else {
     await disableSMSKey(keyId)
   }
+}
+
+export const sendSms = async (data: SmsSendDTO): Promise<SmsResponse> => {
+  if (isMockEnabled()) {
+    return {
+      success: true,
+      messageId: data.phoneNumber ? `mock-${Date.now()}` : undefined,
+      messageIds: data.phoneNumbers?.map((_, index) => `mock-${Date.now()}-${index}`),
+      phoneNumber: data.phoneNumber,
+      phoneNumbers: data.phoneNumbers,
+      content: data.content,
+      status: 'mock',
+      provider: data.provider,
+      sendTime: new Date().toLocaleString()
+    }
+  }
+  return await request.post<SmsResponse>('/api/v1/sms/send', data as Record<string, unknown>)
+}
+
+export const querySmsStatus = async (data: SmsStatusQuery): Promise<SmsResponse> => {
+  if (isMockEnabled()) {
+    return {
+      success: true,
+      messageId: data.messageId || `mock-${Date.now()}`,
+      provider: data.provider,
+      status: 'mock',
+      sendTime: new Date().toLocaleString()
+    }
+  }
+  return await request.post<SmsResponse>('/api/v1/sms/status', data as Record<string, unknown>)
+}
+
+export const querySmsBalance = async (data: SmsBalanceQuery): Promise<SmsResponse> => {
+  if (isMockEnabled()) {
+    return {
+      success: true,
+      provider: data.provider,
+      responseTime: 1,
+      extraData: { balance: 'mock' }
+    }
+  }
+  return await request.post<SmsResponse>('/api/v1/sms/balance', data as Record<string, unknown>)
 }

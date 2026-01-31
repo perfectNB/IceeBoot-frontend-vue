@@ -34,6 +34,79 @@ export interface EmailProvider {
   keys?: EmailKey[]
 }
 
+export interface EmailAttachment {
+  fileName?: string
+  filePath?: string
+  mimeType?: string
+  fileSize?: number
+  inline?: boolean
+  contentId?: string
+}
+
+export interface EmailSendDTO {
+  keyId?: number
+  provider?: string
+  toEmail?: string
+  toEmails?: string[]
+  ccEmails?: string[]
+  bccEmails?: string[]
+  subject?: string
+  textContent?: string
+  htmlContent?: string
+  templateId?: string
+  templateParams?: Record<string, unknown>
+  fromName?: string
+  emailType?: string
+  priority?: number
+  needReceipt?: boolean
+  replyTo?: string
+  charset?: string
+  customHeaders?: Record<string, string>
+  async?: boolean
+  attachments?: EmailAttachment[]
+}
+
+export interface EmailStatusQuery {
+  messageId?: string
+  keyId?: number
+  provider?: string
+}
+
+export interface EmailSendResult {
+  toEmail?: string
+  success?: boolean
+  messageId?: string
+  errorMessage?: string
+  errorCode?: string
+  status?: string
+  sendTime?: string
+}
+
+export interface EmailResponse {
+  success?: boolean
+  errorMessage?: string
+  errorCode?: string
+  messageId?: string
+  messageIds?: string[]
+  fromEmail?: string
+  toEmail?: string
+  toEmails?: string[]
+  subject?: string
+  status?: string
+  sendTime?: string
+  provider?: string
+  responseTime?: number
+  emailSize?: number
+  attachmentCount?: number
+  extraData?: Record<string, unknown>
+  rawResponse?: string
+  requestId?: string
+  responseCode?: number
+  responseMessage?: string
+  retryCount?: number
+  sendResults?: EmailSendResult[]
+}
+
 // 获取Email服务商列表
 export const getEmailProviders = async (): Promise<EmailProvider[]> => {
   if (isMockEnabled()) {
@@ -169,4 +242,34 @@ export const updateEmailKeyStatus = async (providerName: string, keyId: number, 
   } else {
     await disableEmailKey(keyId)
   }
+}
+
+export const sendEmail = async (data: EmailSendDTO): Promise<EmailResponse> => {
+  if (isMockEnabled()) {
+    return {
+      success: true,
+      messageId: data.toEmail ? `mock-${Date.now()}` : undefined,
+      messageIds: data.toEmails?.map((_, index) => `mock-${Date.now()}-${index}`),
+      toEmail: data.toEmail,
+      toEmails: data.toEmails,
+      subject: data.subject,
+      provider: data.provider,
+      status: 'mock',
+      sendTime: new Date().toLocaleString()
+    }
+  }
+  return await request.post<EmailResponse>('/api/v1/emails/send', data as Record<string, unknown>)
+}
+
+export const queryEmailStatus = async (data: EmailStatusQuery): Promise<EmailResponse> => {
+  if (isMockEnabled()) {
+    return {
+      success: true,
+      messageId: data.messageId || `mock-${Date.now()}`,
+      provider: data.provider,
+      status: 'mock',
+      sendTime: new Date().toLocaleString()
+    }
+  }
+  return await request.post<EmailResponse>('/api/v1/emails/status', data as Record<string, unknown>)
 }

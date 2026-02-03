@@ -1,0 +1,173 @@
+import { request } from '@/utils/request'
+
+export interface WorkflowDefinition {
+  id?: string
+  key?: string
+  name?: string
+  version?: number
+  category?: string
+  deploymentId?: string
+  tenantId?: string
+  resourceName?: string
+  diagramResourceName?: string
+  description?: string
+  [key: string]: unknown
+}
+
+export interface WorkflowNode {
+  id?: string
+  activityId?: string
+  name?: string
+  type?: string
+  x?: number
+  y?: number
+  width?: number
+  height?: number
+  status?: string
+  [key: string]: unknown
+}
+
+export interface ProcessInstance {
+  id?: string
+  processInstanceId?: string
+  processDefinitionId?: string
+  processDefinitionKey?: string
+  processDefinitionName?: string
+  processDefinitionVersion?: number
+  deploymentId?: string
+  businessKey?: string
+  name?: string
+  description?: string
+  startTime?: string
+  startUserId?: string
+  activityId?: string
+  suspended?: boolean
+  ended?: boolean
+  tenantId?: string
+  processVariables?: Record<string, unknown>
+  [key: string]: unknown
+}
+
+export interface ProcessStartDTO {
+  processDefinitionKey: string
+  businessKey?: string
+  variables?: Record<string, unknown>
+}
+
+export interface ProcessInstanceDeleteDTO {
+  processInstanceId: string
+  deleteReason?: string
+}
+
+export interface TaskItem {
+  id?: string
+  name?: string
+  description?: string
+  priority?: number
+  owner?: string
+  assignee?: string
+  processInstanceId?: string
+  executionId?: string
+  processDefinitionId?: string
+  createTime?: string
+  taskDefinitionKey?: string
+  dueDate?: string
+  category?: string
+  parentTaskId?: string
+  tenantId?: string
+  formKey?: string
+  taskLocalVariables?: Record<string, unknown>
+  processVariables?: Record<string, unknown>
+  claimTime?: string
+  businessKey?: string
+  localizedName?: string
+  localizedDescription?: string
+  delegationState?: string
+  suspended?: boolean
+  appVersion?: number
+  [key: string]: unknown
+}
+
+export interface TaskCompleteDTO {
+  taskId?: string
+  variables?: Record<string, unknown>
+}
+
+export interface TaskJumpDTO {
+  taskId?: string
+  targetActivityId: string
+}
+
+export const getWorkflowDefinitions = async (params?: { latestOnly?: boolean }): Promise<WorkflowDefinition[]> => {
+  return await request.get<WorkflowDefinition[]>('/api/v1/workflow/definitions', params)
+}
+
+export const deployWorkflowDefinition = async (payload: {
+  file: File
+  name?: string
+  category?: string
+  tenantId?: string
+}): Promise<Record<string, unknown>> => {
+  const formData = new FormData()
+  formData.append('file', payload.file)
+  if (payload.name) formData.append('name', payload.name)
+  if (payload.category) formData.append('category', payload.category)
+  if (payload.tenantId) formData.append('tenantId', payload.tenantId)
+  return await request.post<Record<string, unknown>>('/api/v1/workflow/deploy', formData as unknown as Record<string, unknown>, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+export const getWorkflowDefinitionXml = async (definitionId: string): Promise<string> => {
+  return await request.get<string>(`/api/v1/workflow/definitions/${definitionId}/xml`)
+}
+
+export const getWorkflowDefinitionDiagram = async (definitionId: string): Promise<Record<string, unknown>> => {
+  return await request.get<Record<string, unknown>>(`/api/v1/workflow/definitions/${definitionId}/diagram`)
+}
+
+export const getWorkflowDefinitionNodes = async (definitionId: string): Promise<WorkflowNode[]> => {
+  return await request.get<WorkflowNode[]>(`/api/v1/workflow/definitions/${definitionId}/nodes`)
+}
+
+export const startWorkflowProcess = async (data: ProcessStartDTO): Promise<ProcessInstance> => {
+  return await request.post<ProcessInstance>('/api/v1/workflow/start', data as unknown as Record<string, unknown>)
+}
+
+export const getWorkflowProcess = async (processInstanceId: string): Promise<ProcessInstance> => {
+  return await request.get<ProcessInstance>(`/api/v1/workflow/process/${processInstanceId}`)
+}
+
+export const deleteWorkflowProcess = async (processInstanceId: string, data?: ProcessInstanceDeleteDTO): Promise<void> => {
+  await request.delete(`/api/v1/workflow/process/${processInstanceId}`, {}, { data })
+}
+
+export const getWorkflowProcessNodes = async (processInstanceId: string): Promise<WorkflowNode[]> => {
+  return await request.get<WorkflowNode[]>(`/api/v1/workflow/process/${processInstanceId}/nodes`)
+}
+
+export const checkWorkflowProcessEnded = async (processInstanceId: string): Promise<boolean> => {
+  return await request.get<boolean>(`/api/v1/workflow/process/${processInstanceId}/ended`)
+}
+
+export const endWorkflowProcess = async (processInstanceId: string): Promise<void> => {
+  await request.post(`/api/v1/workflow/process/${processInstanceId}/end`, {})
+}
+
+export const getUserTasks = async (assignee: string): Promise<TaskItem[]> => {
+  return await request.get<TaskItem[]>(`/api/v1/workflow/tasks/user/${assignee}`)
+}
+
+export const getCandidateTasks = async (candidateUser: string): Promise<TaskItem[]> => {
+  return await request.get<TaskItem[]>(`/api/v1/workflow/tasks/candidate/${candidateUser}`)
+}
+
+export const completeTask = async (taskId: string, data?: TaskCompleteDTO): Promise<void> => {
+  await request.post(`/api/v1/workflow/task/${taskId}/complete`, data as unknown as Record<string, unknown>)
+}
+
+export const jumpTask = async (taskId: string, data: TaskJumpDTO): Promise<void> => {
+  await request.post(`/api/v1/workflow/task/${taskId}/jump`, data as unknown as Record<string, unknown>)
+}

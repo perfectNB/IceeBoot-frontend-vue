@@ -135,14 +135,27 @@ export const useUserStore = defineStore('user', () => {
     return expires.value
   }
 
+  const normalizeExpires = (value: number | null): number | null => {
+    if (value === null) return null
+    if (!Number.isFinite(value) || value <= 0) return null
+    if (value < 1e10) {
+      if (value < 1e9) {
+        return Date.now() + value * 1000
+      }
+      return value * 1000
+    }
+    return value
+  }
+
   const setTokenExpires = (value: number | null): void => {
-    expires.value = value
+    const normalized = normalizeExpires(value)
+    expires.value = normalized
     if (tokenStorageType === 'memory') {
-      memoryExpires = value
-    } else if (value === null) {
+      memoryExpires = normalized
+    } else if (normalized === null) {
       safeRemove(getStorage(), EXPIRES_KEY)
     } else {
-      safeSet(getStorage(), EXPIRES_KEY, String(value))
+      safeSet(getStorage(), EXPIRES_KEY, String(normalized))
     }
   }
 

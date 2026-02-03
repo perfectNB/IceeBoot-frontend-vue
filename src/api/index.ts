@@ -129,6 +129,25 @@ export {
   queryEmailStatus
 } from './email'
 
+// 工作流相关接口
+export {
+  getWorkflowDefinitions,
+  deployWorkflowDefinition,
+  getWorkflowDefinitionXml,
+  getWorkflowDefinitionDiagram,
+  getWorkflowDefinitionNodes,
+  startWorkflowProcess,
+  getWorkflowProcess,
+  deleteWorkflowProcess,
+  getWorkflowProcessNodes,
+  checkWorkflowProcessEnded,
+  endWorkflowProcess,
+  getUserTasks,
+  getCandidateTasks,
+  completeTask,
+  jumpTask
+} from './workflow'
+
 // 消息相关接口
 export {
   getMessages,
@@ -181,6 +200,17 @@ export type {
 } from './email'
 
 export type {
+  WorkflowDefinition,
+  WorkflowNode,
+  ProcessInstance,
+  ProcessStartDTO,
+  ProcessInstanceDeleteDTO,
+  TaskItem,
+  TaskCompleteDTO,
+  TaskJumpDTO
+} from './workflow'
+
+export type {
   MessageItem,
   MessageType,
   MessageQueryParams
@@ -219,4 +249,3 @@ export {
   type PayRecordVO,
   type PayRecordQueryParams
 } from './pay'
-

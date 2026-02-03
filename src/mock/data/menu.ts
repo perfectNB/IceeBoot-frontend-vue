@@ -93,6 +93,19 @@ export const mockMenus: MenuItem[] = [
         sort: 5,
         requiresAuth: true,
         permissions: []
+      },
+      {
+        id: 30,
+        title: '工作流管理',
+        name: 'WorkflowManagement',
+        path: '/admin/system/workflow',
+        component: 'WorkflowManagement',
+        icon: 'Operation',
+        parentId: 2,
+        type: 'menu',
+        sort: 6,
+        requiresAuth: true,
+        permissions: []
       }
     ]
   },

@@ -237,7 +237,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
   Moon,
@@ -257,9 +257,11 @@ import { isDark, toggleTheme } from '@/utils/theme'
 import LoginDialog from '../../components/common/LoginDialog.vue'
 import { useUserStore } from '@/stores/user'
 import { isMockEnabled } from '@/config/mock'
+import { exchangeWechatTicket } from '@/api'
 import type { MenuItem } from '@/types'
 
 const router = useRouter()
+const route = useRoute()
 const userStore = useUserStore()
 
 // 登录对话框状态
@@ -507,9 +509,44 @@ const checkMockMode = () => {
   }
 }
 
+const resolveSingleQueryValue = (value: unknown): string => {
+  if (!value) return ''
+  if (Array.isArray(value)) {
+    const first = value[0]
+    return typeof first === 'string' ? first : ''
+  }
+  return typeof value === 'string' ? value : ''
+}
+
+const handleWechatCallback = async () => {
+  const errorMessage = resolveSingleQueryValue(route.query.error)
+  if (errorMessage) {
+    ElMessage.error(errorMessage)
+    showLoginDialog.value = true
+    await router.replace({ path: '/', query: {} })
+    return
+  }
+  const ticket = resolveSingleQueryValue(route.query.ticket)
+  if (!ticket) {
+    return
+  }
+  try {
+    const response = await exchangeWechatTicket(ticket)
+    userStore.setAuthTokens(response)
+    userStore.setUser(response.user)
+    await router.replace({ path: '/', query: {} })
+    goToFirstMenu()
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '登录失败')
+    showLoginDialog.value = true
+    await router.replace({ path: '/', query: {} })
+  }
+}
+
 // 组件挂载时检查Mock模式
 onMounted(() => {
   checkMockMode()
+  handleWechatCallback()
 })
 </script>
 

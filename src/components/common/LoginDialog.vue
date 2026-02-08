@@ -77,7 +77,15 @@
               </div>
 
               <div v-else-if="qrCode" class="qrcode">
-                <img :src="qrCode" alt="微信登录二维码"/>
+                <div class="qrcode-media">
+                  <img v-if="qrCodeMode === 'image'" :src="qrCode" alt="微信登录二维码"/>
+                  <iframe
+                    v-else
+                    :src="qrCode"
+                    class="qrcode-iframe"
+                    title="微信登录二维码"
+                  />
+                </div>
                 <p class="qrcode-tip">请使用微信扫描二维码登录</p>
                 <el-button @click="refreshQrCode" text>
                   <el-icon>
@@ -109,8 +117,7 @@ import {ref, computed, watch} from 'vue'
 import {ElMessage, type FormInstance, type FormRules} from 'element-plus'
 import {User, Lock, Loading, Refresh, Warning} from '@element-plus/icons-vue'
 import {useUserStore} from '@/stores/user'
-import {getWechatQrCode, checkWechatLogin} from '@/api'
-import {isMockEnabled} from '@/config/mock'
+import {getWechatAuthUrl} from '@/api'
 import type {LoginForm} from '@/types'
 
 interface Props {
@@ -161,7 +168,49 @@ const loading = ref(false)
 // 微信登录相关
 const qrCode = ref('')
 const qrCodeLoading = ref(false)
-const scene = ref('')
+const qrCodeMode = ref<'image' | 'iframe'>('image')
+
+const normalizeAuthUrl = (value?: string): string => {
+  if (!value) return ''
+  let cleaned = value.trim()
+  cleaned = cleaned.replace(/^`+|`+$/g, '')
+  cleaned = cleaned.replace(/^"+|"+$/g, '')
+  cleaned = cleaned.replace(/^'+|'+$/g, '')
+  return cleaned.trim()
+}
+
+const resolveAuthUrl = (payload: unknown): string => {
+  if (typeof payload === 'string') {
+    return normalizeAuthUrl(payload)
+  }
+  if (!payload || typeof payload !== 'object') {
+    return ''
+  }
+  const root = payload as Record<string, unknown>
+  const candidates: Record<string, unknown>[] = [root]
+  const directData = root.data
+  const directResult = root.result
+  if (directData && typeof directData === 'object') {
+    candidates.push(directData as Record<string, unknown>)
+  } else if (typeof directData === 'string') {
+    candidates.push({ url: directData })
+  }
+  if (directResult && typeof directResult === 'object') {
+    candidates.push(directResult as Record<string, unknown>)
+  } else if (typeof directResult === 'string') {
+    candidates.push({ url: directResult })
+  }
+  const keys = ['authUrl', 'auth_url', 'url', 'link']
+  for (const item of candidates) {
+    for (const key of keys) {
+      const value = item[key]
+      if (typeof value === 'string' && value.trim()) {
+        return normalizeAuthUrl(value)
+      }
+    }
+  }
+  return ''
+}
 
 // 账号密码登录
 const handleLogin = async () => {
@@ -182,25 +231,17 @@ const handleLogin = async () => {
   }
 }
 
-// 生成微信登录二维码
 const generateQrCode = async () => {
   try {
     qrCodeLoading.value = true
-
-    if (isMockEnabled()) {
-      // Mock模式：模拟生成二维码
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      qrCode.value = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2Y1ZjVmNSIvPjx0ZXh0IHg9IjUwJSIgeT0iNTAlIiBmb250LXNpemU9IjE0IiBmaWxsPSIjOTk5IiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjNlbSI+5b6u5L+h5LqM57u05LiB</text></svg>'
-      scene.value = 'mock-scene-' + Date.now()
-    } else {
-      // 真实API模式
-      const response = await getWechatQrCode()
-      qrCode.value = response.qrCode
-      scene.value = response.scene
+    const response = await getWechatAuthUrl()
+    const authUrl = resolveAuthUrl(response)
+    if (!authUrl) {
+      throw new Error('登录链接为空')
     }
-
-    // 开始轮询检查登录状态
-    startPolling()
+    qrCode.value = authUrl
+    qrCodeMode.value = 'iframe'
+    window.location.href = authUrl
   } catch (error) {
     console.error('生成二维码失败:', error)
     ElMessage.error('生成二维码失败')
@@ -212,47 +253,12 @@ const generateQrCode = async () => {
 // 刷新二维码
 const refreshQrCode = () => {
   qrCode.value = ''
+  qrCodeMode.value = 'image'
   generateQrCode()
-}
-
-// 轮询检查微信登录状态
-let pollingTimer: number | null = null
-
-const startPolling = () => {
-  if (pollingTimer) {
-    clearInterval(pollingTimer)
-  }
-
-  pollingTimer = setInterval(async () => {
-    try {
-      if (isMockEnabled()) {
-        // 真实API模式：检查微信登录状态
-        const response = await checkWechatLogin(scene.value)
-        if (response.accessToken) {
-          userStore.setToken(response.accessToken)
-          userStore.setUser(response.user)
-          // 移除重复的登录成功提示，由父组件统一处理
-          emit('success')
-          stopPolling()
-        }
-      }
-      // Mock模式下不进行轮询检查
-    } catch {
-      // 忽略轮询错误
-    }
-  }, 2000)
-}
-
-const stopPolling = () => {
-  if (pollingTimer) {
-    clearInterval(pollingTimer)
-    pollingTimer = null
-  }
 }
 
 // 关闭对话框
 const handleClose = () => {
-  stopPolling()
   dialogVisible.value = false
 
   // 重置表单
@@ -261,6 +267,7 @@ const handleClose = () => {
     password: ''
   }
   qrCode.value = ''
+  qrCodeMode.value = 'image'
   activeTab.value = 'account'
 }
 
@@ -269,15 +276,13 @@ watch(activeTab, (newTab) => {
   if (newTab === 'wechat' && !qrCode.value) {
     generateQrCode()
   } else if (newTab === 'account') {
-    stopPolling()
+    // no-op
   }
 })
 
 // 监听对话框关闭
 watch(dialogVisible, (visible) => {
-  if (!visible) {
-    stopPolling()
-  }
+  if (!visible) return
 })
 </script>
 
@@ -616,17 +621,37 @@ watch(dialogVisible, (visible) => {
 }
 
 .qrcode {
-  img {
-    width: 200px;
-    height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  .qrcode-media {
+    width: 180px;
+    height: 180px;
     border: 1px solid var(--border-lighter);
     border-radius: 8px;
     box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
+    overflow: hidden;
+    background: #ffffff;
+  }
+
+  img {
+    width: 100%;
+    height: 100%;
+    display: block;
     animation: qrcode-float 4s ease-in-out infinite;
   }
 
+  .qrcode-iframe {
+    width: 240px;
+    height: 240px;
+    border: none;
+    transform: scale(0.75);
+    transform-origin: top left;
+  }
+
   .qrcode-tip {
-    margin: 16px 0 8px;
+    margin: 12px 0 6px;
     color: var(--text-secondary);
     font-size: 14px;
   }

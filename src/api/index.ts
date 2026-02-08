@@ -10,6 +10,8 @@ export {
   getUserInfo,
   refreshToken,
   getWechatQrCode,
+  getWechatAuthUrl,
+  exchangeWechatTicket,
   checkWechatLogin
 } from './auth'
 

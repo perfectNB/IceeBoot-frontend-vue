@@ -45,7 +45,15 @@ export const refreshToken = (refreshToken: string, config?: AxiosRequestConfig &
 
 // 微信登录二维码
 export const getWechatQrCode = () => {
-  return request.get<{ qrCode: string; scene: string }>('/api/v1/auth/wechat/qrcode')
+  return request.get<{ qrCode: string; scene: string }>('/api/v1/auth/wechat/innerQrCodeInfo-url')
+}
+
+export const getWechatAuthUrl = () => {
+  return request.get<{ url?: string; authUrl?: string; link?: string; data?: string; result?: string }>('/api/v1/auth/wechat/auth-url')
+}
+
+export const exchangeWechatTicket = (ticket: string) => {
+  return request.post<LoginResponse>(`/api/v1/auth/wechat/exchange-ticket?ticket=${encodeURIComponent(ticket)}`)
 }
 
 // 检查微信登录状态

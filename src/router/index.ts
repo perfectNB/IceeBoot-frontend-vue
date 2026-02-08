@@ -277,6 +277,12 @@ const router = createRouter({
 router.beforeEach(async (to, from, next) => {
   const userStore = useUserStore()
 
+  if (to.path.startsWith('/error=')) {
+    const errorMessage = decodeURIComponent(to.path.slice('/error='.length))
+    next({ path: '/', query: { error: errorMessage } })
+    return
+  }
+
   // 设置页面标题
   if (to.meta.title) {
     document.title = `${to.meta.title} - IceeBoot Admin`

@@ -277,14 +277,20 @@ onBeforeUnmount(() => {
   display: flex;
   height: 100vh;
   background: var(--bg-color-page);
+  color: var(--text-primary);
 }
 
 .sidebar {
   width: var(--sidebar-width);
-  background: var(--bg-color);
-  border-right: 1px solid var(--border-lighter);
-  transition: width var(--transition-duration) var(--transition-function);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-right: 1px solid var(--border-extra-light);
+  transition: all var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
   overflow: hidden;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
 
   &.sidebar-collapsed {
     width: var(--sidebar-collapsed-width);
@@ -295,32 +301,56 @@ onBeforeUnmount(() => {
   height: var(--header-height);
   display: flex;
   align-items: center;
-  padding: 0 20px;
-  border-bottom: 1px solid var(--border-lighter);
-}
+  justify-content: center;
+  padding: 0;
+  border-bottom: 1px solid var(--border-extra-light);
+  background: transparent;
 
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 16px;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    transition: all 0.3s;
+    
+    .logo-img {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+    }
 
-  .logo-img {
-    width: 32px;
-    height: 32px;
-    flex-shrink: 0;
-  }
-
-  .logo-text {
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--primary-color);
-    transition: opacity var(--transition-duration);
+    .logo-text {
+      font-size: 18px;
+      font-weight: 700;
+      background: linear-gradient(120deg, var(--primary-color), var(--secondary-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      white-space: nowrap;
+      letter-spacing: -0.5px;
+      opacity: 1;
+      transition: opacity 0.3s;
+    }
   }
 }
 
 .sidebar-content {
-  height: calc(100% - var(--header-height));
+  flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px 0;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-light);
+    border-radius: 4px;
+  }
 }
 
 .main-container {
@@ -328,40 +358,58 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
+  background: var(--bg-color-page);
 }
 
 .header {
   height: var(--header-height);
-  background: var(--bg-color);
-  border-bottom: 1px solid var(--border-lighter);
+  background: var(--glass-bg);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border-extra-light);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
-  box-shadow: var(--box-shadow-light);
+  padding: 0 24px;
+  z-index: 40;
+  transition: all 0.3s;
 }
 
 .header-left {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
 }
 
 .collapse-btn {
-  font-size: 18px;
+  font-size: 20px;
+  color: var(--text-secondary);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  cursor: pointer;
 
   &:hover {
-    background: var(--primary-extra-light);
+    background: var(--bg-color-soft);
+    color: var(--primary-color);
   }
 }
 
 .breadcrumb {
   :deep(.el-breadcrumb__item) {
     .el-breadcrumb__inner {
-      color: var(--text-regular);
+      color: var(--text-tertiary);
+      font-weight: 400;
+      transition: color 0.2s;
 
       &:hover {
         color: var(--primary-color);
+        cursor: pointer;
       }
     }
 
@@ -375,81 +423,79 @@ onBeforeUnmount(() => {
 .header-right {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
 }
 
-.theme-btn {
+.theme-btn, .message-btn {
   font-size: 18px;
-
+  color: var(--text-secondary);
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  
   &:hover {
-    background: var(--primary-extra-light);
-  }
-}
-
-.message-dropdown {
-  .message-info {
-    display: flex;
-    align-items: center;
-    cursor: pointer;
-  }
-
-  .message-btn {
-    font-size: 18px;
-
-    &:hover {
-      background: var(--primary-extra-light);
-    }
-  }
-
-  :deep(.el-dropdown-menu__item) {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    .unread-tag {
-      margin-left: auto;
-    }
+    background: var(--bg-color-soft);
+    color: var(--primary-color);
   }
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  border-radius: 6px;
+  gap: 10px;
+  padding: 4px 8px 4px 4px;
+  border-radius: 50px;
   cursor: pointer;
-  transition: background var(--transition-duration);
+  transition: all 0.2s;
+  border: 1px solid transparent;
+  margin-left: 12px;
 
   &:hover {
-    background: var(--bg-color-page);
+    background: var(--bg-color-soft);
+    border-color: var(--border-extra-light);
   }
 }
 
 .user-avatar {
-  flex-shrink: 0;
+  border: 2px solid var(--bg-color);
+  box-shadow: 0 0 0 1px var(--border-extra-light);
 }
 
 .user-name {
   font-size: 14px;
+  font-weight: 500;
   color: var(--text-primary);
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: 120px;
 }
 
 .arrow-down {
   font-size: 12px;
-  color: var(--text-secondary);
-  transition: transform var(--transition-duration);
+  color: var(--text-tertiary);
 }
 
 .content {
   flex: 1;
-  padding: var(--content-padding);
+  padding: 24px;
   overflow-y: auto;
-  background: var(--bg-color-page);
+  overflow-x: hidden;
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: var(--border-light);
+    border-radius: 3px;
+  }
+  
+  // Card effect for router view wrapper if needed, 
+  // but better to let pages define their own cards.
+  // We just ensure the scroll container is nice.
 }
 
 // 响应式设计
@@ -458,11 +504,12 @@ onBeforeUnmount(() => {
     position: fixed;
     top: 0;
     left: 0;
-    z-index: 1000;
     height: 100vh;
-
+    box-shadow: 20px 0 50px rgba(0,0,0,0.1);
+    
     &.sidebar-collapsed {
       transform: translateX(-100%);
+      width: var(--sidebar-width); // Keep width when "collapsed" (hidden) on mobile
     }
   }
 
@@ -470,8 +517,8 @@ onBeforeUnmount(() => {
     margin-left: 0;
   }
 
-  .header-left {
-    gap: 10px;
+  .header {
+    padding: 0 16px;
   }
 
   .breadcrumb {

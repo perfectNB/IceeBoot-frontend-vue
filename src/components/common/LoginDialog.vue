@@ -2,11 +2,12 @@
   <el-dialog
     v-model="dialogVisible"
     title="用户登录"
-    width="500px"
+    width="480px"
     :before-close="handleClose"
     class="login-dialog"
-    center
+    align-center
     :modal-class="'custom-modal'"
+    :show-close="true"
   >
     <div class="login-content">
       <div class="login-hero">
@@ -289,418 +290,261 @@ watch(dialogVisible, (visible) => {
 <style scoped lang="scss">
 .login-dialog {
   :deep(.el-dialog) {
-    max-width: 480px;
-    border-radius: 20px;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.18), 0 0 40px rgba(64, 158, 255, 0.15);
-    background: radial-gradient(circle at top, rgba(64, 158, 255, 0.08), transparent 45%), var(--bg-color);
-    backdrop-filter: blur(20px);
-    border: 1px solid var(--border-extra-light);
+    border-radius: 24px;
+    box-shadow:
+      0 25px 50px -12px rgba(0, 0, 0, 0.25),
+      0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(24px) saturate(180%);
+    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     overflow: hidden;
     position: relative;
-    animation: dialog-pop 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    animation: dialog-pop 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, var(--primary-color), var(--success-color), var(--info-color));
-    }
-
-    &::after {
-      content: '';
-      position: absolute;
-      inset: -2px;
-      border-radius: 22px;
-      padding: 2px;
-      background: linear-gradient(135deg, rgba(64, 158, 255, 0.35), rgba(103, 194, 58, 0.25), rgba(144, 147, 153, 0.15));
-      mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-      mask-composite: xor;
-      pointer-events: none;
-      opacity: 0.6;
+    .dark & {
+      background: rgba(30, 30, 30, 0.7);
+      border-color: rgba(255, 255, 255, 0.05);
+      box-shadow:
+        0 25px 50px -12px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(255, 255, 255, 0.05) inset;
     }
   }
 
   :deep(.el-dialog__header) {
+    padding: 0;
+    margin-right: 0;
     text-align: center;
-    padding: 35px 30px 25px;
-    border-bottom: 1px solid var(--border-extra-light);
-    background: linear-gradient(135deg, var(--bg-color) 0%, var(--bg-color-page) 100%);
-    position: relative;
-
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: -1px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 60px;
-      height: 2px;
-      background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
-      border-radius: 1px;
-    }
+    background: transparent;
 
     .el-dialog__title {
-      font-size: 26px;
-      font-weight: 700;
-      color: var(--text-primary);
-      background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 8px;
+      display: none;
     }
   }
 
   :deep(.el-dialog__body) {
-    padding: 30px;
-    background: var(--bg-color);
+    padding: 40px 48px 48px;
   }
 
   :deep(.el-dialog__headerbtn) {
-    top: 20px;
-    right: 20px;
+    top: 24px;
+    right: 24px;
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: var(--bg-color-page);
-    transition: all var(--transition-duration);
-    border: 1px solid var(--border-extra-light);
+    background: rgba(0, 0, 0, 0.05);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .dark & {
+      background: rgba(255, 255, 255, 0.1);
+    }
 
     &:hover {
-      background: var(--danger-color);
+      background: var(--primary-color);
       transform: rotate(90deg) scale(1.1);
-      border-color: var(--danger-color);
-      box-shadow: 0 4px 12px rgba(245, 108, 108, 0.3);
+      box-shadow: 0 4px 12px rgba(var(--primary-color-rgb), 0.3);
 
       .el-dialog__close {
-        color: #ffffff;
+        color: white;
       }
+    }
+
+    .el-dialog__close {
+      color: var(--text-secondary);
+      font-size: 18px;
+      transition: color 0.3s;
     }
   }
 }
 
 .login-content {
-  animation: content-fade 0.5s ease;
-
   .login-hero {
+    text-align: center;
+    margin-bottom: 40px;
     position: relative;
-    padding: 18px 16px 24px;
-    border-radius: 16px;
-    background: linear-gradient(135deg, rgba(64, 158, 255, 0.08), rgba(103, 194, 58, 0.08));
-    border: 1px solid var(--border-extra-light);
-    margin-bottom: 22px;
-    overflow: hidden;
-  }
 
-  .hero-glow {
-    position: absolute;
-    top: -60px;
-    right: -40px;
-    width: 140px;
-    height: 140px;
-    background: radial-gradient(circle, rgba(64, 158, 255, 0.35), transparent 70%);
-    filter: blur(2px);
-    animation: glow-float 6s ease-in-out infinite;
-  }
+    .hero-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 120px;
+      height: 120px;
+      background: var(--primary-color);
+      opacity: 0.15;
+      filter: blur(40px);
+      border-radius: 50%;
+      z-index: -1;
+    }
 
-  .hero-title {
-    font-size: 20px;
-    font-weight: 700;
-    color: var(--text-primary);
-    letter-spacing: 0.5px;
-  }
+    .hero-title {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.5px;
+    }
 
-  .hero-subtitle {
-    margin-top: 6px;
-    font-size: 13px;
-    color: var(--text-secondary);
+    .hero-subtitle {
+      font-size: 16px;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
   }
 
   .login-tabs {
     :deep(.el-tabs__header) {
-      margin-bottom: 35px;
-      background: var(--bg-color-page);
-      border-radius: 16px;
-      padding: 6px;
-      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+      margin-bottom: 32px;
     }
 
     :deep(.el-tabs__nav-wrap::after) {
-      display: none;
+      height: 1px;
+      background-color: var(--border-light);
+      opacity: 0.5;
     }
 
     :deep(.el-tabs__item) {
       font-size: 16px;
-      font-weight: 600;
-      border-radius: 12px;
-      margin: 0 3px;
-      padding: 12px 20px;
-      transition: all var(--transition-duration);
-      position: relative;
-      overflow: hidden;
-
-      &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-        transition: left 0.6s;
-      }
-
-      &:hover::before {
-        left: 100%;
-      }
+      font-weight: 500;
+      color: var(--text-secondary);
+      padding: 0 24px;
+      transition: all 0.3s;
+      height: 48px;
+      line-height: 48px;
 
       &.is-active {
-        background: linear-gradient(135deg, var(--bg-color), var(--border-extra-light));
         color: var(--primary-color);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-        border: 1px solid var(--border-lighter);
-        transform: translateY(-1px);
+        font-weight: 700;
+      }
+
+      &:hover {
+        color: var(--primary-color);
       }
     }
 
     :deep(.el-tabs__active-bar) {
-      display: none;
+      background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+      height: 3px;
+      border-radius: 3px;
+      box-shadow: 0 2px 8px rgba(var(--primary-color-rgb), 0.3);
     }
   }
-}
 
-.login-form {
-  .el-form-item {
-    margin-bottom: 28px;
-    position: relative;
-  }
+  .login-form {
+    :deep(.el-input__wrapper) {
+      box-shadow: none;
+      background: var(--bg-color-soft);
+      border: 1px solid transparent;
+      border-radius: 12px;
+      padding: 8px 16px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
-  :deep(.el-input) {
-    .el-input__wrapper {
-      border-radius: 14px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-      border: 2px solid var(--border-lighter);
-      transition: all var(--transition-duration);
-      padding: 4px 16px;
-      background: var(--bg-color);
-      position: relative;
-      overflow: hidden;
-
-      &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(90deg, transparent, rgba(64, 158, 255, 0.05), transparent);
-        transition: left 0.6s;
+      &.is-focus {
+        background: var(--bg-surface);
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 4px rgba(var(--primary-color-rgb), 0.1);
       }
 
-      &:hover {
-        border-color: var(--primary-light);
-        box-shadow: 0 8px 18px rgba(64, 158, 255, 0.18), 0 0 0 1px rgba(64, 158, 255, 0.12);
+      &:hover:not(.is-focus) {
+        background: var(--bg-surface);
+        border-color: var(--border-light);
+      }
+    }
 
-        &::before {
-          left: 100%;
+    :deep(.el-input__inner) {
+      height: 32px;
+      font-size: 16px;
+    }
+
+    .login-btn {
+      width: 100%;
+      height: 52px;
+      font-size: 18px;
+      font-weight: 600;
+      border-radius: 12px;
+      margin-top: 12px;
+      background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+      border: none;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 8px 20px -6px rgba(var(--primary-color-rgb), 0.4);
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 24px -8px rgba(var(--primary-color-rgb), 0.5);
+      }
+
+      &:active {
+        transform: translateY(0);
+      }
+    }
+  }
+
+  .login-tips {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 14px;
+    color: var(--text-tertiary);
+    background: var(--bg-color-soft);
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px dashed var(--border-light);
+  }
+
+  .wechat-login {
+    display: flex;
+    justify-content: center;
+    padding: 20px 0;
+
+    .qrcode-container {
+      width: 280px;
+      height: 280px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--border-extra-light);
+
+      .qrcode-media {
+        width: 200px;
+        height: 200px;
+        margin-bottom: 16px;
+
+        img, iframe {
+          width: 100%;
+          height: 100%;
+          border: none;
         }
       }
 
-      &.is-focus {
-        border-color: var(--primary-color);
-        box-shadow: 0 10px 22px rgba(64, 158, 255, 0.3), 0 0 0 2px rgba(64, 158, 255, 0.18);
-      }
-
-      .el-input__inner {
-        font-size: 15px;
-        font-weight: 500;
-      }
-    }
-
-    .el-input__prefix {
-      .el-icon {
-        font-size: 18px;
+      .qrcode-tip {
+        font-size: 14px;
         color: var(--text-secondary);
-        transition: color var(--transition-duration);
+        margin-bottom: 8px;
       }
     }
-
-    &:hover .el-input__prefix .el-icon {
-      color: var(--primary-color);
-    }
   }
-
-  .login-btn {
-    width: 100%;
-    height: 52px;
-    font-size: 16px;
-    font-weight: 700;
-    border-radius: 14px;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-light), rgba(64, 158, 255, 0.6));
-    border: none;
-    box-shadow: 0 6px 16px rgba(64, 158, 255, 0.3);
-    transition: all var(--transition-duration);
-    position: relative;
-    overflow: hidden;
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
-      transition: left 0.6s;
-    }
-
-    &:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 14px 28px rgba(64, 158, 255, 0.45), 0 0 18px rgba(64, 158, 255, 0.35);
-
-      &::before {
-        left: 100%;
-      }
-    }
-
-    &:active {
-      transform: translateY(-1px);
-      box-shadow: 0 6px 16px rgba(64, 158, 255, 0.3);
-    }
-
-    &.is-loading {
-      transform: none;
-    }
-  }
-}
-
-.login-tips {
-  text-align: center;
-  margin-top: 20px;
-  opacity: 0.8;
-  letter-spacing: 0.3px;
-
-  p {
-    color: var(--text-secondary);
-    font-size: 14px;
-    margin: 0;
-  }
-}
-
-.wechat-login {
-  display: flex;
-  justify-content: center;
-  padding: 20px 0;
-}
-
-.qrcode-container {
-  text-align: center;
-  width: 200px;
-}
-
-.qrcode-loading,
-.qrcode-error {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 16px;
-  padding: 40px 0;
-
-  .el-icon {
-    font-size: 32px;
-    color: var(--text-secondary);
-  }
-
-  p {
-    color: var(--text-secondary);
-    margin: 0;
-  }
-}
-
-.qrcode {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  .qrcode-media {
-    width: 180px;
-    height: 180px;
-    border: 1px solid var(--border-lighter);
-    border-radius: 8px;
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
-    overflow: hidden;
-    background: #ffffff;
-  }
-
-  img {
-    width: 100%;
-    height: 100%;
-    display: block;
-    animation: qrcode-float 4s ease-in-out infinite;
-  }
-
-  .qrcode-iframe {
-    width: 240px;
-    height: 240px;
-    border: none;
-    transform: scale(0.75);
-    transform-origin: top left;
-  }
-
-  .qrcode-tip {
-    margin: 12px 0 6px;
-    color: var(--text-secondary);
-    font-size: 14px;
-  }
-}
-
-:deep(.custom-modal) {
-  backdrop-filter: blur(16px);
-  background: rgba(12, 17, 28, 0.55);
 }
 
 @keyframes dialog-pop {
   0% {
-    transform: translateY(20px) scale(0.98);
     opacity: 0;
-  }
-  100% {
-    transform: translateY(0) scale(1);
-    opacity: 1;
-  }
-}
-
-@keyframes content-fade {
-  0% {
-    opacity: 0;
-    transform: translateY(10px);
+    transform: scale(0.9) translateY(20px);
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes glow-float {
-  0%, 100% {
-    transform: translateY(0);
-    opacity: 0.7;
-  }
-  50% {
-    transform: translateY(10px);
-    opacity: 1;
-  }
-}
-
-@keyframes qrcode-float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
+    transform: scale(1) translateY(0);
   }
 }
 </style>

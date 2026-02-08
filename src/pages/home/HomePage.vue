@@ -5,7 +5,7 @@
       <div class="navbar-container">
         <div class="navbar-brand">
           <img src="@/assets/logo.svg" alt="IceeBoot" class="logo" />
-          <span class="brand-text">IceeBoot超级脚手架</span>
+          <span class="brand-text">IceeBoot</span>
         </div>
 
         <div class="navbar-actions">
@@ -13,18 +13,19 @@
             :icon="isDark ? Sunny : Moon"
             @click="toggleTheme"
             text
+            circle
             class="theme-btn"
           />
           <template v-if="isLoggedIn">
-            <el-button @click="goToFirstMenu">
-              进入管理后台
+            <el-button class="nav-btn" @click="goToFirstMenu">
+              控制台
             </el-button>
-            <el-button type="danger" @click="handleLogout">
-              退出登录
+            <el-button class="nav-btn logout" text @click="handleLogout">
+              退出
             </el-button>
           </template>
           <template v-else>
-            <el-button type="primary" @click="showLoginDialog = true">
+            <el-button class="nav-btn primary" @click="showLoginDialog = true">
               登录
             </el-button>
           </template>
@@ -36,58 +37,92 @@
     <main class="main-content">
       <!-- Hero Section -->
       <section class="hero-section">
+        <div class="hero-background">
+          <div class="glow-orb orb-1"></div>
+          <div class="glow-orb orb-2"></div>
+          <div class="grid-overlay"></div>
+        </div>
+
         <div class="hero-container">
           <div class="hero-content">
+            <div class="hero-badge">
+              <span class="pulse-dot"></span>
+              AI 原生企业级脚手架
+            </div>
             <h1 class="hero-title">
-              <span class="gradient-text">IceeBoot</span>
-              <br>
-              AI化超级脚手架
+              构建未来的
+              <span class="gradient-text">智能应用</span>
             </h1>
             <p class="hero-description">
-              基于 Vue 3 + TypeScript + Element Plus 构建的企业级前端脚手架，
-              提供完整的开发解决方案，让您专注于业务逻辑的实现。
+              IceeBoot 是基于 Vue 3 + TypeScript + Element Plus 的下一代企业级开发平台。
+              深度集成 AI 能力，提供从设计到部署的全链路解决方案。
             </p>
             <div class="hero-actions">
-              <el-button type="primary" size="large" @click="handleExperience">
+              <el-button class="cta-btn primary" size="large" @click="handleExperience">
                 立即体验
+                <el-icon class="el-icon--right"><ArrowRight /></el-icon>
               </el-button>
-              <el-button size="large" @click="scrollToFeatures">
-                了解更多
+              <el-button class="cta-btn secondary" size="large" @click="openOfficialDocs">
+                文档中心
               </el-button>
-              <el-button size="large" @click="openOfficialDocs">
-                官方文档
-              </el-button>
+            </div>
+
+            <div class="hero-stats">
+              <div class="stat-item">
+                <span class="stat-value">30+</span>
+                <span class="stat-label">开箱模块</span>
+              </div>
+              <div class="stat-divider"></div>
+              <div class="stat-item">
+                <span class="stat-value">50+</span>
+                <span class="stat-label">企业方案</span>
+              </div>
+              <div class="stat-divider"></div>
+              <div class="stat-item">
+                <span class="stat-value">10x</span>
+                <span class="stat-label">开发提效</span>
+              </div>
             </div>
           </div>
 
-          <div class="hero-image">
-            <div class="floating-card card-1">
-              <el-icon><ChatDotRound /></el-icon>
-              <span>AI大模型集成</span>
-            </div>
-            <div class="floating-card card-2">
-              <el-icon><Lightning /></el-icon>
-              <span>智能Agent</span>
-            </div>
-            <div class="floating-card card-3">
-              <el-icon><User /></el-icon>
-              <span>第三方登录</span>
-            </div>
-            <div class="floating-card card-4">
-              <el-icon><Cellphone /></el-icon>
-              <span>小程序端</span>
-            </div>
-            <div class="floating-card card-5">
-              <el-icon><Monitor /></el-icon>
-              <span>PC端</span>
-            </div>
-            <div class="floating-card card-6">
-              <el-icon><Iphone /></el-icon>
-              <span>iOS端</span>
-            </div>
-            <div class="floating-card card-7">
-              <el-icon><Platform /></el-icon>
-              <span>安卓鸿蒙端</span>
+          <!-- Orbit System -->
+          <div class="orbit-container">
+            <div class="orbit-system">
+              <!-- Central Core -->
+              <div class="core-wrapper">
+                <div class="core-glow"></div>
+                <div class="core-content">
+                  <div class="core-icon">
+                    <el-icon><Cpu /></el-icon>
+                  </div>
+                  <span class="core-title">AI Core</span>
+                  <span class="core-subtitle">Workflow • Auth • Data</span>
+                </div>
+              </div>
+
+              <!-- Orbital Rings -->
+              <div class="orbit-ring ring-1"></div>
+              <div class="orbit-ring ring-2"></div>
+              <div class="orbit-ring ring-3"></div>
+
+              <!-- Orbiting Items -->
+              <div class="orbit-rotator">
+                <div
+                  v-for="(item, index) in orbitItems"
+                  :key="index"
+                  class="orbit-item-wrapper"
+                  :style="{ '--angle': `${index * (360 / orbitItems.length)}deg` }"
+                >
+                  <div class="orbit-item">
+                    <div class="orbit-content-fix">
+                      <div class="item-icon">
+                        <el-icon><component :is="item.icon" /></el-icon>
+                      </div>
+                      <span class="item-label">{{ item.label }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -96,21 +131,23 @@
       <!-- Features Section -->
       <section id="features" class="features-section">
         <div class="container">
-          <h2 class="section-title">核心特性</h2>
+          <div class="section-header">
+            <h2 class="section-title">核心特性</h2>
+            <p class="section-subtitle">不仅仅是模板，更是生产力工具</p>
+          </div>
           <div class="features-grid">
             <div
               class="feature-card"
-              :class="{ 'feature-highlight': feature.highlight }"
               v-for="(feature, index) in features"
               :key="feature.title"
-              :style="{ animationDelay: `${index * 0.1}s` }"
+              :style="{ '--delay': `${index * 0.1}s` }"
+              @mousemove="handleMouseMove"
             >
-              <div class="feature-icon" :class="{ 'icon-highlight': feature.highlight }">
+              <div class="feature-icon-box">
                 <el-icon><component :is="feature.icon" /></el-icon>
               </div>
               <h3 class="feature-title">{{ feature.title }}</h3>
-              <p class="feature-description">{{ feature.description }}</p>
-              <div v-if="feature.highlight" class="highlight-badge">NEW</div>
+              <p class="feature-desc">{{ feature.description }}</p>
             </div>
           </div>
         </div>
@@ -119,118 +156,76 @@
       <!-- Tech Stack Section -->
       <section class="tech-section">
         <div class="container">
-          <h2 class="section-title">技术栈</h2>
+          <div class="section-header">
+            <h2 class="section-title">技术栈</h2>
+            <p class="section-subtitle">采用行业前沿技术构建，确保项目的长期生命力</p>
+          </div>
           <div class="tech-grid">
             <div class="tech-item" v-for="tech in techStack" :key="tech.name">
-              <div class="tech-logo">
-                <img :src="tech.logo" :alt="tech.name" />
+              <div class="tech-logo-wrapper">
+                <img :src="tech.logo" :alt="tech.name" class="tech-logo" />
               </div>
               <h4 class="tech-name">{{ tech.name }}</h4>
-              <p class="tech-description">{{ tech.description }}</p>
             </div>
           </div>
         </div>
       </section>
     </main>
 
-    <!-- 页脚 -->
+    <!-- Footer -->
     <footer class="footer">
-      <div class="footer-container">
-        <div class="footer-content">
-          <div class="footer-links">
-            <a href="https://gitee.com/woshinibaba438cnmlgb/zboot-backend-java" target="_blank" class="footer-link">
-              项目地址
-            </a>
-            <span class="footer-divider">|</span>
-            <a href="https://www.baidu.com" target="_blank" class="footer-link">
-              官方文档
-            </a>
-            <span class="footer-divider">|</span>
-            <a href="#" @click.prevent="showContactDialog = true" class="footer-link">
-              联系我们
-            </a>
-          </div>
-          <div class="footer-copyright">
-            <p>© 2024 IceeBoot. All rights reserved.</p>
-            <p>
-              <a href="https://beian.miit.gov.cn/" target="_blank" class="beian-link">
-                京ICP备2024086986号-2
-              </a>
-            </p>
-          </div>
+      <div class="footer-content">
+        <div class="footer-brand">
+          <img src="@/assets/logo.svg" alt="IceeBoot" class="footer-logo" />
+          <p>© 2024 IceeBoot. All rights reserved.</p>
+        </div>
+        <div class="footer-links">
+          <a href="https://gitee.com/woshinibaba438cnmlgb/zboot-backend-java" target="_blank">Gitee</a>
+          <a href="https://doc.iceeboot.yxycompany.com" target="_blank">文档</a>
+          <a href="#" @click.prevent="showContactDialog = true">联系我们</a>
+          <a href="https://beian.miit.gov.cn/" target="_blank">京ICP备2024086986号-2</a>
         </div>
       </div>
     </footer>
 
-    <!-- 登录对话框 -->
+    <!-- Dialogs -->
     <LoginDialog v-model="showLoginDialog" @success="handleLoginSuccess" />
 
-    <!-- Mock模式提示对话框 -->
     <el-dialog
       v-model="showMockDialog"
-      title="系统提示"
-      width="90%"
-      :close-on-click-modal="false"
-      class="mock-dialog"
-      center
-      :style="{ maxWidth: '500px' }"
+      title="Mock 模式提示"
+      width="400px"
+      class="custom-dialog"
+      align-center
     >
-      <div class="mock-dialog-content">
-        <div class="mock-icon">
-          <el-icon size="48" color="#E6A23C"><Warning /></el-icon>
-        </div>
-        <div class="mock-text">
-          <h3>当前处于Mock模式</h3>
-          <p>系统正在使用模拟数据进行演示，所有数据均为测试数据，不代表真实业务数据。</p>
-          <p>如需体验完整功能，请访问我们的
-            <a href="https://gitee.com/woshinibaba438cnmlgb/zboot-backend-java" target="_blank" class="gitee-link">
-              Gitee仓库
-            </a>
-            获取完整项目代码。
-          </p>
-        </div>
+      <div class="mock-content">
+        <el-icon class="warning-icon"><Warning /></el-icon>
+        <p>当前处于演示模式，数据仅供参考。</p>
       </div>
       <template #footer>
-        <div class="dialog-footer">
-          <el-button @click="showMockDialog = false">我知道了</el-button>
-          <el-button type="primary" @click="openGitee">访问Gitee</el-button>
-        </div>
+        <el-button @click="showMockDialog = false">我知道了</el-button>
+        <el-button type="primary" @click="openGitee">获取源码</el-button>
       </template>
     </el-dialog>
 
-    <!-- 联系我们对话框 -->
     <el-dialog
       v-model="showContactDialog"
       title="联系我们"
-      width="90%"
-      :close-on-click-modal="false"
-      class="contact-dialog"
-      center
-      :style="{ maxWidth: '800px' }"
+      width="600px"
+      class="custom-dialog"
+      align-center
     >
-      <div class="contact-dialog-content">
-        <div class="contact-intro">
-          <h3>多种方式联系我们</h3>
-          <p>扫描下方二维码，关注我们的官方账号，获取最新资讯和技术支持</p>
-        </div>
-        <div class="qr-codes-grid">
-          <div class="qr-code-item" v-for="platform in socialPlatforms" :key="platform.name">
-            <div class="qr-code-image">
-              <img :src="platform.qrCode" :alt="platform.name + '二维码'" />
-            </div>
-            <div class="platform-info">
-              <div class="platform-icon" :style="{ backgroundColor: platform.color }">
-                <i :class="platform.icon"></i>
-              </div>
-              <div class="platform-details">
-                <h4>{{ platform.name }}</h4>
-                <p>{{ platform.description }}</p>
-              </div>
-            </div>
+      <div class="contact-grid">
+        <div class="contact-item" v-for="platform in socialPlatforms" :key="platform.name">
+          <div class="qr-wrapper">
+            <img :src="platform.qrCode" :alt="platform.name" />
+          </div>
+          <div class="platform-info">
+            <i :class="platform.icon" :style="{ color: platform.color }"></i>
+            <span>{{ platform.name }}</span>
           </div>
         </div>
       </div>
-
     </el-dialog>
   </div>
 </template>
@@ -251,7 +246,14 @@ import {
   Search, // eslint-disable-line
   Iphone,
   Platform,
-  Warning
+  Warning,
+  Cpu,
+  ArrowRight,
+  Setting,
+  Lock,
+  DataAnalysis,
+  Tools,
+  Connection
 } from '@element-plus/icons-vue'
 import { isDark, toggleTheme } from '@/utils/theme'
 import LoginDialog from '../../components/common/LoginDialog.vue'
@@ -264,19 +266,23 @@ const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
-// 登录对话框状态
 const showLoginDialog = ref(false)
-
-// 用户登录状态
 const isLoggedIn = computed(() => !!userStore.getToken())
-
-// Mock模式提示弹窗状态
 const showMockDialog = ref(false)
-
-// 联系我们弹窗状态
 const showContactDialog = ref(false)
 
-// 社交平台数据
+// Orbit Items Configuration
+const orbitItems = [
+  { icon: ChatDotRound, label: 'AI大模型' },
+  { icon: Lightning, label: '智能Agent' },
+  { icon: User, label: '第三方登录' },
+  { icon: Cellphone, label: '小程序端' },
+  { icon: Monitor, label: 'PC端' },
+  { icon: Iphone, label: 'iOS端' },
+  { icon: Platform, label: '安卓鸿蒙' }
+]
+
+// Social Platforms
 const socialPlatforms = [
   {
     name: '哔哩哔哩',
@@ -327,22 +333,14 @@ const normalizeMenuPath = (path: string): string => {
 }
 
 const resolveFirstMenuPath = (menus?: MenuItem[]): string | null => {
-  if (!menus || menus.length === 0) {
-    return null
-  }
+  if (!menus || menus.length === 0) return null
   for (const menu of menus) {
-    if (menu.type === 'link') {
-      continue
-    }
+    if (menu.type === 'link') continue
     if (menu.children && menu.children.length > 0) {
       const childPath = resolveFirstMenuPath(menu.children)
-      if (childPath) {
-        return childPath
-      }
+      if (childPath) return childPath
     }
-    if (menu.path) {
-      return normalizeMenuPath(menu.path)
-    }
+    if (menu.path) return normalizeMenuPath(menu.path)
   }
   return null
 }
@@ -352,160 +350,66 @@ const goToFirstMenu = () => {
   router.push(target)
 }
 
-// 退出登录
 const handleLogout = async () => {
   try {
-    await ElMessageBox.confirm(
-      '确定要退出登录吗？',
-      '提示',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-      }
-    )
-
+    await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
     userStore.logout()
     ElMessage.success('已退出登录')
-  } catch {
-    // 用户取消退出
-  }
+  } catch { /* cancelled */ }
 }
 
-// 特性列表
+const handleMouseMove = (e: MouseEvent) => {
+  const target = e.currentTarget as HTMLElement
+  const rect = target.getBoundingClientRect()
+  const x = e.clientX - rect.left
+  const y = e.clientY - rect.top
+  target.style.setProperty('--mouse-x', `${x}px`)
+  target.style.setProperty('--mouse-y', `${y}px`)
+}
+
 const features = [
-  {
-    icon: 'Setting',
-    title: '开箱即用',
-    description: '完整的项目结构和配置，二次开发超级简单',
-    highlight: true
-  },
-  {
-    icon: 'ChatDotRound',
-    title: 'AI大模型集成',
-    description: '接入DeepSeek、ChatGPT、Kimi、Claude等主流大模型',
-    highlight: true
-  },
-  {
-    icon: 'User',
-    title: '第三方登录',
-    description: '集成微信登录等多种第三方登录方式'
-  },
-  {
-    icon: 'Upload',
-    title: '云存储支持',
-    description: '支持阿里云、华为云、腾讯云、MinIO等多种OSS存储'
-  },
-  {
-    icon: 'Cellphone',
-    title: '全平台适配',
-    description: '小程序、iOS、安卓、鸿蒙、Web、Mac、Win全平台支持',
-    highlight: true
-  },
-  {
-    icon: 'Search',
-    title: 'SEO优化',
-    description: 'SEO自动优化，快速检索到网站内容'
-  },
-  {
-    icon: 'Lock',
-    title: '权限管理',
-    description: '完善的用户权限和路由拦截机制'
-  },
-  {
-    icon: 'DataAnalysis',
-    title: '数据可视化',
-    description: '集成图表组件，轻松实现数据展示'
-  },
-  {
-    icon: 'Tools',
-    title: '工具丰富',
-    description: '内置常用工具函数和组件库'
-  },
-  {
-    icon: 'Cpu',
-    title: '性能优化',
-    description: '代码分割、懒加载等性能优化方案'
-  },
-  {
-    icon: 'Connection',
-    title: 'API集成',
-    description: '统一的HTTP请求封装和错误处理'
-  }
+  { icon: Setting, title: '开箱即用', description: '完整的项目结构和配置，二次开发超级简单', highlight: true },
+  { icon: ChatDotRound, title: 'AI大模型集成', description: '接入DeepSeek、ChatGPT、Kimi、Claude等主流大模型', highlight: true },
+  { icon: User, title: '第三方登录', description: '集成微信登录等多种第三方登录方式' },
+  { icon: Upload, title: '云存储支持', description: '支持阿里云、华为云、腾讯云、MinIO等多种OSS存储' },
+  { icon: Cellphone, title: '全平台适配', description: '小程序、iOS、安卓、鸿蒙、Web、Mac、Win全平台支持', highlight: true },
+  { icon: Search, title: 'SEO优化', description: 'SEO自动优化，快速检索到网站内容' },
+  { icon: Lock, title: '权限管理', description: '完善的用户权限和路由拦截机制' },
+  { icon: DataAnalysis, title: '数据可视化', description: '集成图表组件，轻松实现数据展示' },
+  { icon: Tools, title: '工具丰富', description: '内置常用工具函数和组件库' },
+  { icon: Cpu, title: '性能优化', description: '代码分割、懒加载等性能优化方案' },
+  { icon: Connection, title: 'API集成', description: '统一的HTTP请求封装和错误处理' }
 ]
 
-// 技术栈
 const techStack = [
-  {
-    name: 'Vue 3',
-    description: '渐进式JavaScript框架',
-    logo: 'https://vuejs.org/logo.svg'
-  },
-  {
-    name: 'TypeScript',
-    description: 'JavaScript的超集',
-    logo: 'https://www.typescriptlang.org/favicon-32x32.png'
-  },
-  {
-    name: 'Element Plus',
-    description: 'Vue 3组件库',
-    logo: 'https://element-plus.org/images/element-plus-logo-small.svg'
-  },
-  {
-    name: 'Vite',
-    description: '下一代前端构建工具',
-    logo: 'https://vitejs.dev/logo.svg'
-  },
-  {
-    name: 'Pinia',
-    description: 'Vue状态管理',
-    logo: 'https://pinia.vuejs.org/logo.svg'
-  },
-  {
-    name: 'Vue Router',
-    description: 'Vue官方路由',
-    logo: 'https://router.vuejs.org/logo.svg'
-  }
+  { name: 'Vue 3', logo: 'https://vuejs.org/logo.svg' },
+  { name: 'TypeScript', logo: 'https://www.typescriptlang.org/favicon-32x32.png' },
+  { name: 'Element Plus', logo: 'https://element-plus.org/images/element-plus-logo-small.svg' },
+  { name: 'Vite', logo: 'https://vitejs.dev/logo.svg' },
+  { name: 'Pinia', logo: 'https://pinia.vuejs.org/logo.svg' },
+  { name: 'Vue Router', logo: 'https://router.vuejs.org/logo.svg' }
 ]
 
-// 滚动到特性部分
-const scrollToFeatures = () => {
-  const element = document.getElementById('features')
-  if (element) {
-    element.scrollIntoView({ behavior: 'smooth' })
-  }
-}
-
-// 登录成功处理
-const handleLoginSuccess = () => {
-  showLoginDialog.value = false
-  ElMessage.success('登录成功')
-  goToFirstMenu()
-}
-
-// 处理立即体验按钮点击
 const handleExperience = () => {
   window.open('https://gitee.com/woshinibaba438cnmlgb/zboot-backend-java', '_blank')
 }
 
-// 打开官方文档
 const openOfficialDocs = () => {
   window.open('https://doc.iceeboot.yxycompany.com', '_blank')
 }
 
-// 打开Gitee
 const openGitee = () => {
   window.open('https://gitee.com/woshinibaba438cnmlgb/zboot-backend-java', '_blank')
   showMockDialog.value = false
 }
 
-// 检查Mock模式并显示提示
 const checkMockMode = () => {
   if (isMockEnabled()) {
-    // 延迟显示，让页面先加载完成
-    setTimeout(() => {
-      showMockDialog.value = true
-    }, 2000)
+    setTimeout(() => { showMockDialog.value = true }, 2000)
   }
 }
 
@@ -518,6 +422,11 @@ const resolveSingleQueryValue = (value: unknown): string => {
   return typeof value === 'string' ? value : ''
 }
 
+const handleLoginSuccess = () => {
+  showLoginDialog.value = false
+  goToFirstMenu()
+}
+
 const handleWechatCallback = async () => {
   const errorMessage = resolveSingleQueryValue(route.query.error)
   if (errorMessage) {
@@ -527,9 +436,7 @@ const handleWechatCallback = async () => {
     return
   }
   const ticket = resolveSingleQueryValue(route.query.ticket)
-  if (!ticket) {
-    return
-  }
+  if (!ticket) return
   try {
     const response = await exchangeWechatTicket(ticket)
     userStore.setAuthTokens(response)
@@ -543,7 +450,6 @@ const handleWechatCallback = async () => {
   }
 }
 
-// 组件挂载时检查Mock模式
 onMounted(() => {
   checkMockMode()
   handleWechatCallback()
@@ -553,60 +459,35 @@ onMounted(() => {
 <style scoped lang="scss">
 .home-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--bg-color) 0%, var(--bg-color-page) 45%, rgba(64, 158, 255, 0.12) 100%);
+  background: var(--bg-color);
+  color: var(--text-primary);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  overflow-x: hidden;
   position: relative;
-  overflow: hidden;
+  transition: background-color 0.3s, color 0.3s;
 }
 
-.home-page::before {
-  content: '';
-  position: absolute;
-  inset: -40% -30% auto -30%;
-  height: 60vh;
-  background: radial-gradient(circle at 20% 20%, rgba(64, 158, 255, 0.18), transparent 55%),
-    radial-gradient(circle at 80% 0%, rgba(103, 194, 58, 0.18), transparent 50%),
-    radial-gradient(circle at 60% 80%, rgba(144, 147, 153, 0.15), transparent 60%);
-  animation: auroraFlow 12s ease-in-out infinite;
-  z-index: 0;
-  pointer-events: none;
-}
-
-.home-page::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgba(64, 158, 255, 0.15) 1px, transparent 1px);
-  background-size: 120px 120px;
-  opacity: 0.2;
-  animation: starDrift 30s linear infinite;
-  pointer-events: none;
-  z-index: 0;
-}
-
+// Navbar
 .navbar {
   position: fixed;
   top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  background: rgba(255, 255, 255, 0.8);
-  backdrop-filter: blur(10px);
+  width: 100%;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+  background: rgba(var(--bg-color), 0.7); // This won't work directly with hex var, need workaround or RGB vars.
+  // Let's use --glass-bg instead or simple background with opacity
+  background: var(--glass-bg);
   border-bottom: 1px solid var(--border-extra-light);
-  transition: all var(--transition-duration);
-
-  [data-theme='dark'] & {
-    background: rgba(29, 30, 31, 0.8);
-  }
 }
 
 .navbar-container {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 0 20px;
-  height: 60px;
+  height: 70px;
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
+  padding: 0 24px;
 }
 
 .navbar-brand {
@@ -615,14 +496,15 @@ onMounted(() => {
   gap: 12px;
 
   .logo {
-    width: 32px;
-    height: 32px;
+    height: 36px;
+    width: 36px;
   }
 
   .brand-text {
     font-size: 20px;
-    font-weight: 600;
-    color: var(--primary-color);
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: var(--text-primary);
   }
 }
 
@@ -630,918 +512,646 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: 16px;
+
+  .nav-btn {
+    &.primary {
+      background: var(--primary-color);
+      border: none;
+      color: white;
+
+      &:hover {
+        background: var(--primary-light);
+      }
+    }
+  }
 }
 
-.theme-btn {
-  font-size: 18px;
-}
-
-.main-content {
-  padding-top: 60px;
-  position: relative;
-  z-index: 1;
-}
-
+// Hero Section
 .hero-section {
-  min-height: 80vh;
+  position: relative;
+  min-height: 100vh;
   display: flex;
   align-items: center;
-  position: relative;
+  padding-top: 70px;
   overflow: hidden;
-  isolation: isolate;
 }
 
-.hero-section::before {
-  content: '';
+.hero-background {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 20% 30%, rgba(64, 158, 255, 0.2), transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(103, 194, 58, 0.18), transparent 45%),
-    radial-gradient(circle at 50% 80%, rgba(144, 147, 153, 0.12), transparent 60%);
-  filter: blur(10px);
-  z-index: -1;
-  animation: heroGlow 10s ease-in-out infinite;
-}
+  z-index: 0;
 
-.hero-section::after {
-  content: '';
-  position: absolute;
-  inset: 20% 10% 10% 10%;
-  border-radius: 40px;
-  border: 1px solid rgba(64, 158, 255, 0.2);
-  background: linear-gradient(135deg, rgba(64, 158, 255, 0.05), rgba(103, 194, 58, 0.04));
-  box-shadow: 0 0 60px rgba(64, 158, 255, 0.12);
-  z-index: -1;
-  animation: framePulse 8s ease-in-out infinite;
+  .glow-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(100px);
+    opacity: 0.4;
+
+    &.orb-1 {
+      width: 500px;
+      height: 500px;
+      background: var(--primary-color);
+      top: -100px;
+      left: -100px;
+    }
+
+    &.orb-2 {
+      width: 400px;
+      height: 400px;
+      background: var(--secondary-color);
+      bottom: -50px;
+      right: -50px;
+    }
+  }
+
+  .grid-overlay {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(var(--border-extra-light) 1px, transparent 1px),
+      linear-gradient(90deg, var(--border-extra-light) 1px, transparent 1px);
+    background-size: 50px 50px;
+    mask-image: radial-gradient(circle at center, black 40%, transparent 80%);
+  }
 }
 
 .hero-container {
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 0 20px;
+  padding: 0 24px;
+  width: 100%;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 60px;
+  position: relative;
+  z-index: 1;
   align-items: center;
-  margin-bottom: 30px;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+    text-align: center;
+    gap: 80px;
+  }
 }
 
 .hero-content {
-  animation: slideInLeft 1s ease-out;
-}
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 16px;
+    background: var(--glass-border);
+    border: 1px solid var(--border-extra-light);
+    border-radius: 100px;
+    font-size: 14px;
+    color: var(--primary-light);
+    margin-bottom: 24px;
 
-.hero-title {
-  font-size: 3.5rem;
-  font-weight: 700;
-  line-height: 1.2;
-  margin-bottom: 24px;
-  color: var(--text-primary);
-  text-shadow: 0 10px 30px rgba(64, 158, 255, 0.15);
-  animation: titleFloat 6s ease-in-out infinite;
-}
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background: var(--primary-light);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--primary-light);
+      animation: pulse 2s infinite;
+    }
+  }
 
-.gradient-text {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
+  .hero-title {
+    font-size: 56px;
+    line-height: 1.1;
+    font-weight: 800;
+    margin-bottom: 24px;
+    letter-spacing: -1px;
+    color: var(--text-primary);
 
-.hero-description {
-  font-size: 1.2rem;
-  line-height: 1.6;
-  color: var(--text-regular);
-  margin-bottom: 32px;
-  opacity: 0.9;
+    .gradient-text {
+      background: linear-gradient(135deg, var(--primary-light), var(--secondary-color));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    @media (max-width: 768px) {
+      font-size: 40px;
+    }
+
+    @media (max-width: 480px) {
+      font-size: 32px;
+    }
+  }
+
+  .hero-description {
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    margin-bottom: 40px;
+    max-width: 540px;
+
+    @media (max-width: 1024px) {
+      margin-left: auto;
+      margin-right: auto;
+    }
+  }
 }
 
 .hero-actions {
   display: flex;
   gap: 16px;
-}
+  margin-bottom: 48px;
 
-:deep(.hero-actions .el-button) {
-  position: relative;
-  overflow: hidden;
-  border-radius: 14px;
-  transition: all 0.35s ease;
-  box-shadow: 0 8px 20px rgba(64, 158, 255, 0.18);
-}
+  @media (max-width: 1024px) {
+    justify-content: center;
+  }
 
-:deep(.hero-actions .el-button::after) {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -40%;
-  width: 60%;
-  height: 200%;
-  background: linear-gradient(120deg, transparent, rgba(255, 255, 255, 0.35), transparent);
-  transform: rotate(20deg);
-  transition: transform 0.6s ease;
-}
+  .cta-btn {
+    border-radius: 12px;
+    font-weight: 600;
+    padding: 20px 32px;
 
-:deep(.hero-actions .el-button:hover) {
-  transform: translateY(-3px);
-  box-shadow: 0 14px 30px rgba(64, 158, 255, 0.28);
-}
+    &.primary {
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+      border: none;
+      box-shadow: 0 4px 20px rgba(59, 130, 246, 0.4);
+      color: white;
 
-:deep(.hero-actions .el-button:hover::after) {
-  transform: translateX(220%) rotate(20deg);
-}
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 30px rgba(59, 130, 246, 0.5);
+      }
+    }
 
-.hero-image {
-  position: relative;
-  height: 500px;
-  animation: slideInRight 1s ease-out;
+    &.secondary {
+      background: var(--glass-border);
+      border: 1px solid var(--border-extra-light);
+      color: var(--text-primary);
 
-  @media (max-width: 768px) {
-    height: 300px;
-
-    .floating-card {
-      padding: 16px;
-      font-size: 0.9rem;
-
-      .el-icon {
-        font-size: 20px;
-        padding: 6px;
+      &:hover {
+        background: var(--border-light);
       }
     }
   }
 }
 
-.floating-card {
-  position: absolute;
-  background: var(--bg-color);
-  border: 1px solid var(--border-lighter);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 500;
-  color: var(--text-primary);
-  animation: float 3s ease-in-out infinite;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-  cursor: pointer;
+.hero-stats {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    padding-top: 32px;
+    border-top: 1px solid var(--border-extra-light);
+    flex-wrap: wrap;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
-    opacity: 0;
-    border-radius: 16px;
-    transition: opacity 0.3s ease;
-    z-index: -1;
-  }
-
-  &:hover {
-    transform: translateY(-5px) scale(1.05);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-
-    &::before {
-      opacity: 0.1;
+    @media (max-width: 1024px) {
+      justify-content: center;
     }
 
-    .el-icon {
-      transform: scale(1.2) rotate(10deg);
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--text-primary);
     }
-  }
 
-  .el-icon {
-    font-size: 28px;
-    color: var(--primary-color);
-    transition: all 0.3s ease;
-    padding: 8px;
-    background: var(--primary-extra-light);
-    border-radius: 50%;
-    box-shadow: 0 0 16px rgba(64, 158, 255, 0.35);
-  }
-
-  &.card-1 {
-    top: 8%;
-    left: 2%;
-    animation-delay: 0s;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
-  }
-
-  &.card-2 {
-    top: 25%;
-    right: 8%;
-    animation-delay: 0.5s;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
-  }
-
-  &.card-3 {
-    top: 45%;
-    left: 8%;
-    animation-delay: 1s;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
-  }
-
-  &.card-4 {
-    top: 65%;
-    right: 2%;
-    animation-delay: 1.5s;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
-  }
-
-  &.card-5 {
-    bottom: 25%;
-    left: 25%;
-    animation-delay: 2s;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
-  }
-
-  &.card-6 {
-    bottom: 8%;
-    right: 25%;
-    animation-delay: 2.5s;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
-  }
-
-  &.card-7 {
-    bottom: 45%;
-    left: 45%;
-    animation-delay: 3s;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.7) 100%);
-  }
-
-  [data-theme='dark'] & {
-    background: linear-gradient(135deg, rgba(29, 30, 31, 0.9) 0%, rgba(29, 30, 31, 0.7) 100%);
-    border-color: var(--border-dark);
+    .stat-label {
+    font-size: 14px;
+    color: var(--text-secondary);
   }
 }
 
-.features-section,
-.tech-section {
-  padding: 80px 0;
+.stat-divider {
+  width: 1px;
+  height: 40px;
+  background: var(--border-extra-light);
+}
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-
-.section-title {
-  font-size: 2.5rem;
-  font-weight: 600;
+// Common Section Header
+.section-header {
   text-align: center;
   margin-bottom: 60px;
-  color: var(--text-primary);
-  text-shadow: 0 10px 25px rgba(64, 158, 255, 0.15);
-}
-
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 40px;
-}
-
-.feature-card {
-  position: relative;
-  text-align: center;
-  padding: 40px 20px;
-  border-radius: 16px;
-  background: var(--bg-color);
-  border: 1px solid var(--border-lighter);
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 0;
-  transform: translateY(30px);
-  animation: fadeInUp 0.8s ease-out forwards;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-    transition: left 0.6s;
-  }
-
-  &:hover {
-    transform: translateY(-12px) scale(1.02);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-
-    &::before {
-      left: 100%;
-    }
-
-    .feature-icon {
-      transform: scale(1.1) rotate(5deg);
-    }
-  }
-
-  &.feature-highlight {
-    background: linear-gradient(135deg, var(--primary-extra-light) 0%, var(--bg-color) 100%);
-    border: 2px solid var(--primary-color);
-    box-shadow: 0 8px 25px rgba(64, 158, 255, 0.15);
-
-    &:hover {
-      box-shadow: 0 25px 50px rgba(64, 158, 255, 0.25);
-    }
-  }
-}
-
-.feature-icon {
-  width: 80px;
-  height: 80px;
-  margin: 0 auto 24px;
-  background: var(--primary-extra-light);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    width: 0;
-    height: 0;
-    background: radial-gradient(circle, var(--primary-color) 0%, transparent 70%);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    transition: all 0.4s ease;
-    opacity: 0.2;
-  }
-
-  &:hover::before {
-    width: 100%;
-    height: 100%;
-  }
-
-  &.icon-highlight {
-    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
-    box-shadow: 0 8px 20px rgba(64, 158, 255, 0.3);
-
-    .el-icon {
-      color: white;
-    }
-  }
-
-  .el-icon {
-    font-size: 32px;
-    color: var(--primary-color);
-    z-index: 1;
-    transition: all 0.3s ease;
-  }
-}
-
-.highlight-badge {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  animation: pulse 2s infinite;
-  box-shadow: 0 2px 8px rgba(255, 107, 107, 0.3);
-}
-
-.feature-title {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 16px;
-  color: var(--text-primary);
-}
-
-.feature-description {
-  color: var(--text-regular);
-  line-height: 1.6;
-}
-
-.tech-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 30px;
-}
-
-.tech-item {
-  text-align: center;
-  padding: 30px 20px;
-  border-radius: 12px;
-  background: var(--bg-color);
-  border: 1px solid var(--border-lighter);
-  transition: all var(--transition-duration);
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--box-shadow-light);
-  }
-}
-
-.tech-logo {
-  width: 60px;
-  height: 60px;
-  margin: 0 auto 16px;
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-  }
-}
-
-.tech-name {
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: var(--text-primary);
-}
-
-.tech-description {
-  color: var(--text-secondary);
-  font-size: 0.9rem;
-}
-
-// 动画
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(50px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-15px);
-  }
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 1;
-  }
-  50% {
-    transform: scale(1.05);
-    opacity: 0.8;
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
-  }
-}
-
-@keyframes auroraFlow {
-  0%, 100% {
-    transform: translate3d(0, 0, 0) scale(1);
-    opacity: 0.9;
-  }
-  50% {
-    transform: translate3d(6%, -4%, 0) scale(1.05);
-    opacity: 1;
-  }
-}
-
-@keyframes starDrift {
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-  100% {
-    transform: translate3d(-3%, 2%, 0);
-  }
-}
-
-@keyframes heroGlow {
-  0%, 100% {
-    opacity: 0.7;
-    transform: scale(1);
-  }
-  50% {
-    opacity: 1;
-    transform: scale(1.04);
-  }
-}
-
-@keyframes framePulse {
-  0%, 100% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-@keyframes titleFloat {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
-}
-
-// 页脚样式
-.footer {
-  background: var(--bg-color);
-  border-top: 1px solid var(--border-lighter);
-  padding: 40px 0 20px;
-  margin-top: 80px;
-}
-
-.footer-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 20px;
-}
-
-.footer-content {
-  text-align: center;
-}
-
-.footer-links {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-
-.footer-link {
-  color: var(--text-regular);
-  text-decoration: none;
-  font-size: 14px;
-  transition: color var(--transition-duration);
-
-  &:hover {
-    color: var(--primary-color);
-  }
-}
-
-.footer-divider {
-  color: var(--text-disabled);
-  font-size: 12px;
-}
-
-.footer-copyright {
-  color: var(--text-secondary);
-  font-size: 12px;
-  line-height: 1.6;
-
-  p {
-    margin: 4px 0;
-  }
-}
-
-.beian-link {
-  color: var(--text-secondary);
-  text-decoration: none;
-  transition: color var(--transition-duration);
-
-  &:hover {
-    color: var(--primary-color);
-  }
-}
-
-// Mock对话框样式
-.mock-dialog {
-  :deep(.el-dialog) {
-    margin: 0 auto;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-
-    @media (max-width: 768px) {
-      width: 95% !important;
-      margin: 0;
-    }
-  }
-
-  .el-dialog__header {
-    text-align: center;
-    padding-bottom: 10px;
-  }
-
-  .el-dialog__body {
-    padding: 20px 30px;
-
-    @media (max-width: 768px) {
-      padding: 15px 20px;
-    }
-  }
-}
-
-.mock-dialog-content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.mock-icon {
-  margin-bottom: 20px;
-}
-
-.mock-text {
-  h3 {
-    color: var(--text-primary);
-    font-size: 18px;
-    font-weight: 600;
-    margin-bottom: 16px;
-  }
-
-  p {
-    color: var(--text-regular);
-    line-height: 1.6;
-    margin-bottom: 12px;
-    font-size: 14px;
-  }
-}
-
-.gitee-link {
-  color: var(--primary-color);
-  text-decoration: none;
-  font-weight: 500;
-  transition: color var(--transition-duration);
-
-  &:hover {
-    color: var(--primary-light);
-    text-decoration: underline;
-  }
-}
-
-.dialog-footer {
-    display: flex;
-    justify-content: center;
-    gap: 16px;
-
-    @media (max-width: 768px) {
-      flex-wrap: wrap;
-      gap: 12px;
-    }
-  }
-
-  // 联系我们对话框样式
-  .contact-dialog {
-    :deep(.el-dialog) {
-      margin: 0 auto;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-
-      @media (max-width: 768px) {
-        width: 95% !important;
-        margin: 0;
-      }
-    }
-
-    .el-dialog__header {
-      text-align: center;
-      padding-bottom: 10px;
-      border-bottom: 1px solid var(--border-lighter);
-    }
-
-    .el-dialog__body {
-      padding: 30px;
-
-      @media (max-width: 768px) {
-        padding: 20px 15px;
-      }
-    }
-  }
-
-  .contact-dialog-content {
-    .contact-intro {
-      text-align: center;
-      margin-bottom: 0px;
-
-      h3 {
-        color: var(--text-primary);
-        font-size: 20px;
-        font-weight: 600;
-        margin-bottom: 12px;
-      }
-
-      p {
-        color: var(--text-regular);
-        font-size: 14px;
-        line-height: 1.6;
-      }
-    }
-  }
-
-  .qr-codes-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 20px;
-    max-height: 400px;
-    overflow-y: auto;
-    padding: 10px;
-
-    @media (max-width: 768px) {
-      grid-template-columns: 1fr;
-      gap: 15px;
-      max-height: 350px;
-      padding: 5px;
-    }
-  }
-
-  .qr-code-item {
-    background: var(--bg-color);
-    border: 1px solid var(--border-lighter);
-    border-radius: 12px;
-    padding: 20px;
-    text-align: center;
-    transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
-
-    @media (max-width: 768px) {
-      padding: 15px;
-    }
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
-      transition: left 0.6s;
-    }
-
-    &:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-      border-color: var(--primary-color);
-
-      &::before {
-        left: 100%;
-      }
-
-      .qr-code-image img {
-        transform: scale(1.05);
-      }
-
-      .platform-icon {
-        transform: scale(1.1) rotate(5deg);
-      }
-    }
-  }
-
-  .qr-code-image {
-    margin-bottom: 15px;
-
-    img {
-      width: 120px;
-      height: 120px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-      transition: transform 0.3s ease;
-
-      @media (max-width: 768px) {
-        width: 100px;
-        height: 100px;
-      }
-    }
-  }
-
-  .platform-info {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-
-    @media (max-width: 768px) {
-      gap: 8px;
-    }
-  }
-
-  .platform-icon {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 18px;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-
-    @media (max-width: 768px) {
-      width: 35px;
-      height: 35px;
-      font-size: 16px;
-    }
-  }
-
-  .platform-details {
-    text-align: left;
-
-    h4 {
-      color: var(--text-primary);
-      font-size: 16px;
-      font-weight: 600;
-      margin: 0 0 4px 0;
-
-      @media (max-width: 768px) {
-        font-size: 14px;
-      }
-    }
-
-    p {
-      color: var(--text-regular);
-      font-size: 12px;
-      margin: 0;
-      line-height: 1.4;
-
-      @media (max-width: 768px) {
-        font-size: 11px;
-      }
-    }
-  }
-
-  // 响应式设计
-@media (max-width: 768px) {
-  .hero-container {
-    grid-template-columns: 1fr;
-    gap: 40px;
-    text-align: center;
-  }
-
-  .hero-title {
-    font-size: 2.5rem;
-  }
-
-  .hero-actions {
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-
-  .features-grid,
-  .tech-grid {
-    grid-template-columns: 1fr;
-  }
 
   .section-title {
-    font-size: 2rem;
+    font-size: 36px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    color: var(--text-primary);
+  }
+
+  .section-subtitle {
+    color: var(--text-secondary);
+    font-size: 18px;
+  }
+}
+
+// Orbit Animation System
+.orbit-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 600px;
+  perspective: 1000px;
+
+  @media (max-width: 768px) {
+    height: 400px;
+    transform: scale(0.7);
+  }
+}
+
+.orbit-system {
+  position: relative;
+  width: 500px;
+  height: 500px;
+  transform-style: preserve-3d;
+}
+
+.core-wrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 140px;
+  height: 140px;
+  z-index: 10;
+
+  .core-glow {
+    position: absolute;
+    inset: -20px;
+    background: radial-gradient(circle, var(--glow-color), transparent 70%);
+    filter: blur(20px);
+    animation: pulse-glow 4s infinite alternate;
+  }
+
+  .core-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 50px rgba(59, 130, 246, 0.2);
+
+    .core-icon {
+      font-size: 32px;
+      color: var(--primary-light);
+      margin-bottom: 4px;
+    }
+
+    .core-title {
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: 1px;
+      color: var(--text-primary);
+    }
+
+    .core-subtitle {
+      font-size: 10px;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+  }
+}
+
+.orbit-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 1px solid var(--border-extra-light);
+
+  &.ring-1 { width: 250px; height: 250px; opacity: 0.5; }
+  &.ring-2 { width: 380px; height: 380px; border-style: dashed; opacity: 0.3; }
+  &.ring-3 { width: 500px; height: 500px; opacity: 0.2; }
+}
+
+.orbit-rotator {
+  position: absolute;
+  inset: 0;
+  animation: rotate 30s linear infinite;
+}
+
+.orbit-item-wrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform: rotate(var(--angle)) translate(190px); // Radius of 190px
+
+  .orbit-item {
+    animation: counter-rotate 30s linear infinite;
+
+    .orbit-content-fix {
+      transform: rotate(calc(var(--angle) * -1));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      width: 100px;
+    }
+
+    .item-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-extra-light);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: var(--primary-light);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s;
+    }
+
+    .item-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    &:hover .item-icon {
+      transform: scale(1.1);
+      background: var(--primary-color);
+      color: white;
+      box-shadow: 0 0 20px var(--glow-color);
+    }
+  }
+}
+
+// Features Section
+.features-section {
+  padding: 100px 0;
+  background: var(--bg-surface);
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 32px;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px;
+
+    .feature-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-light);
+      padding: 36px 32px;
+      border-radius: 24px;
+      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      position: relative;
+      overflow: hidden;
+
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(800px circle at var(--mouse-x) var(--mouse-y), var(--border-light), transparent 40%);
+        opacity: 0;
+        transition: opacity 0.5s;
+        pointer-events: none;
+      }
+
+      &:hover {
+        background: var(--bg-color-soft);
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        border-color: rgba(59, 130, 246, 0.3);
+
+        &::before {
+          opacity: 1;
+        }
+
+        .feature-icon-box {
+          background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+          color: white;
+          transform: scale(1.1) rotate(5deg);
+          box-shadow: 0 10px 20px rgba(59, 130, 246, 0.3);
+        }
+      }
+
+      .feature-icon-box {
+        width: 56px;
+        height: 56px;
+        background: var(--bg-color-page);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 28px;
+        color: var(--primary-light);
+        margin-bottom: 24px;
+        transition: all 0.4s ease;
+      }
+
+      .feature-title {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 12px;
+        color: var(--text-primary);
+      }
+
+      .feature-desc {
+        color: var(--text-secondary);
+        line-height: 1.6;
+        font-size: 15px;
+      }
+    }
+  }
+}
+
+// Tech Stack
+.tech-section {
+  padding: 100px 0;
+  border-top: 1px solid var(--border-extra-light);
+  background: linear-gradient(to bottom, var(--bg-surface), var(--bg-color));
+
+  .tech-grid {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 50px;
+    margin-top: 60px;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 20px;
+
+    .tech-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      transition: transform 0.3s;
+
+      &:hover {
+        transform: translateY(-5px);
+
+        .tech-logo-wrapper {
+          box-shadow: 0 0 30px var(--glow-color);
+          border-color: var(--primary-light);
+        }
+
+        .tech-name {
+          color: var(--primary-light);
+        }
+      }
+
+      .tech-logo-wrapper {
+        width: 88px;
+        height: 88px;
+        background: white; /* Keep white for logos that need it */
+        border-radius: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s;
+        border: 2px solid transparent;
+        padding: 12px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+
+        .tech-logo {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+      }
+
+      .tech-name {
+        font-weight: 600;
+        font-size: 16px;
+        color: var(--text-secondary);
+        transition: color 0.3s;
+      }
+    }
+  }
+}
+
+// Footer
+.footer {
+  padding: 60px 0 30px;
+  border-top: 1px solid var(--border-extra-light);
+  background: var(--bg-color);
+
+  .footer-content {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    @media (max-width: 768px) {
+      flex-direction: column;
+      gap: 24px;
+    }
+  }
+
+  .footer-brand {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    color: var(--text-secondary);
+
+    .footer-logo {
+      height: 32px;
+      filter: grayscale(1);
+      opacity: 0.6;
+    }
   }
 
   .footer-links {
-    flex-direction: column;
-    gap: 8px;
+    display: flex;
+    gap: 24px;
 
-    .footer-divider {
-      display: none;
+    a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 14px;
+      transition: color 0.2s;
+
+      &:hover {
+        color: var(--primary-light);
+      }
     }
   }
+}
+
+// Dialogs
+.custom-dialog {
+  :deep(.el-dialog__body) {
+    padding: 20px 30px;
   }
+
+  .contact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 20px;
+
+    .contact-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: #f8fafc;
+      border-radius: 12px;
+
+      .qr-wrapper {
+        width: 100px;
+        height: 100px;
+
+        img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+        }
+      }
+
+      .platform-info {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 600;
+        color: #334155;
+      }
+    }
+  }
+}
+
+// Animations
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.5); opacity: 0.5; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes pulse-glow {
+  0% { opacity: 0.3; transform: scale(0.95); }
+  100% { opacity: 0.6; transform: scale(1.05); }
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes counter-rotate {
+  from { transform: rotate(360deg); } // Counter acts the rotation
+  to { transform: rotate(0deg); }
+}
 </style>

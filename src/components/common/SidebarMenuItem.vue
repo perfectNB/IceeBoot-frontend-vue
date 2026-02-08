@@ -50,34 +50,61 @@ const handleMenuClick = () => {
 <style lang="scss">
 // 折叠状态下的弹出菜单样式
 .sidebar-popper {
+  &.el-popper {
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
   .el-menu {
-    border: 1px solid var(--border-lighter);
-    border-radius: 6px;
-    box-shadow: var(--box-shadow-base);
+    border: 1px solid var(--border-extra-light);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.15);
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 6px;
+    overflow: hidden;
+
+    .dark & {
+      background: rgba(30, 30, 30, 0.85);
+      border-color: var(--border-light);
+    }
     
     .el-menu-item {
-      margin: 2px 4px;
-      border-radius: 4px;
+      margin: 4px 0;
+      border-radius: 8px;
+      height: 40px;
+      line-height: 40px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       
       &:hover {
-        background: var(--primary-extra-light);
-        color: var(--primary-color);
+        background: var(--bg-color-soft);
+        color: var(--text-primary);
+        transform: translateX(4px);
       }
       
       &.is-active {
-        background: var(--primary-color);
-        color: #ffffff;
+        background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+        color: #ffffff !important;
+        font-weight: 500;
+        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        transform: translateX(4px);
       }
     }
     
     .el-sub-menu {
       .el-sub-menu__title {
-        margin: 2px 4px;
-        border-radius: 4px;
+        margin: 4px 0;
+        border-radius: 8px;
+        height: 40px;
+        line-height: 40px;
+        transition: all 0.2s;
         
         &:hover {
-          background: var(--primary-extra-light);
-          color: var(--primary-color);
+          background: var(--bg-color-soft);
+          color: var(--text-primary);
+          transform: translateX(4px);
         }
       }
     }

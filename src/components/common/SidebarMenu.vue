@@ -43,23 +43,30 @@ const activeMenu = computed(() => {
 .menu {
   border: none;
   background: transparent;
+  padding: 0 8px;
   
   :deep(.el-menu-item) {
-    height: 48px;
-    line-height: 48px;
-    margin: 4px 8px;
-    border-radius: 6px;
-    color: var(--text-primary);
-    transition: all var(--transition-duration) var(--transition-function);
+    height: 44px;
+    line-height: 44px;
+    margin: 4px 0;
+    border-radius: 8px;
+    color: var(--text-secondary);
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
     
     &:hover {
-      background: var(--primary-extra-light);
-      color: var(--primary-color);
+      background: var(--bg-color-soft);
+      color: var(--text-primary);
+      transform: translateX(4px);
     }
     
     &.is-active {
-      background: var(--primary-color);
+      background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
       color: #ffffff !important;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+      transform: translateX(4px);
       
       &::before {
         display: none;
@@ -67,78 +74,76 @@ const activeMenu = computed(() => {
     }
     
     .el-icon {
-      margin-right: 8px;
-      font-size: 16px;
+      margin-right: 12px;
+      font-size: 18px;
+      vertical-align: middle;
+      transition: all 0.3s;
     }
   }
   
   :deep(.el-sub-menu) {
     .el-sub-menu__title {
-      height: 48px;
-      line-height: 48px;
-      margin: 4px 8px;
-      border-radius: 6px;
-      color: var(--text-primary);
-      transition: all var(--transition-duration) var(--transition-function);
+      height: 44px;
+      line-height: 44px;
+      margin: 4px 0;
+      border-radius: 8px;
+      color: var(--text-secondary);
+      transition: all 0.2s;
       
       &:hover {
-        background: var(--primary-extra-light);
-        color: var(--primary-color);
+        background: var(--bg-color-soft);
+        color: var(--text-primary);
+        transform: translateX(4px);
       }
       
       .el-icon {
-        margin-right: 8px;
-        font-size: 16px;
+        margin-right: 12px;
+        font-size: 18px;
+        vertical-align: middle;
       }
     }
     
     &.is-active > .el-sub-menu__title {
       color: var(--primary-color);
+      font-weight: 500;
     }
     
     .el-menu {
       background: transparent;
+      padding: 4px 0;
       
       .el-menu-item {
-        margin: 2px 16px;
-        padding-left: 40px !important;
-        color: var(--text-primary);
+        margin: 2px 0 2px 0;
+        height: 40px;
+        line-height: 40px;
+        color: var(--text-secondary);
+        
+        // Indentation logic handled by Element Plus padding-left usually,
+        // but we can enforce some if needed.
+        // Element Plus adds padding inline style.
         
         &:hover {
-          background: var(--primary-extra-light);
-          color: var(--primary-color);
+          background: var(--bg-color-soft);
+          color: var(--text-primary);
+          transform: translateX(4px);
         }
         
         &.is-active {
-          background: var(--primary-color);
-          color: #ffffff !important;
-        }
-      }
-      
-      .el-sub-menu {
-        .el-sub-menu__title {
-          margin: 2px 16px;
-          padding-left: 40px !important;
-          color: var(--text-primary);
+          background: rgba(59, 130, 246, 0.1); // softer active for subitems
+          color: var(--primary-color) !important;
+          box-shadow: none;
+          font-weight: 600;
           
-          &:hover {
-            background: var(--primary-extra-light);
-            color: var(--primary-color);
-          }
-        }
-        
-        .el-menu-item {
-          padding-left: 60px !important;
-          color: var(--text-primary);
-          
-          &:hover {
-            background: var(--primary-extra-light);
-            color: var(--primary-color);
-          }
-          
-          &.is-active {
+          &::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 3px;
+            height: 16px;
             background: var(--primary-color);
-            color: #ffffff !important;
+            border-radius: 0 4px 4px 0;
           }
         }
       }
@@ -147,21 +152,36 @@ const activeMenu = computed(() => {
   
   // 折叠状态样式
   &.el-menu--collapse {
+    padding: 0 4px;
+
     :deep(.el-menu-item),
     :deep(.el-sub-menu__title) {
-      margin: 4px;
+      margin: 4px 0;
       text-align: center;
+      padding: 0 !important;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       
       .el-icon {
         margin-right: 0;
+        font-size: 20px;
+      }
+      
+      &:hover {
+        transform: none;
+        background: var(--bg-color-soft);
+      }
+
+      &.is-active {
+        transform: none;
       }
     }
     
     :deep(.el-sub-menu) {
-      .el-menu {
-        .el-menu-item {
-          padding-left: 20px !important;
-        }
+      &.is-active > .el-sub-menu__title {
+        background: var(--bg-color-soft);
+        color: var(--primary-color);
       }
     }
   }

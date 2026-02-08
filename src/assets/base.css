@@ -23,30 +23,105 @@
 
 /* semantic color variables for this project */
 :root {
-  --color-background: var(--vt-c-white);
-  --color-background-soft: var(--vt-c-white-soft);
-  --color-background-mute: var(--vt-c-white-mute);
+  /* Brand Colors */
+  --primary-color: #3b82f6;
+  --primary-color-rgb: 59, 130, 246;
+  --primary-light: #60a5fa;
+  --secondary-color: #8b5cf6;
 
-  --color-border: var(--vt-c-divider-light-2);
-  --color-border-hover: var(--vt-c-divider-light-1);
+  /* Light Theme Defaults */
+  --bg-color: #ffffff;
+  --bg-color-page: #f8fafc;
+  --bg-color-soft: #f1f5f9;
+  --bg-surface: #ffffff;
 
-  --color-heading: var(--vt-c-text-light-1);
-  --color-text: var(--vt-c-text-light-1);
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #94a3b8;
+
+  --border-color: #e2e8f0;
+  --border-light: #f1f5f9;
+  --border-extra-light: #f8fafc;
+
+  --glow-color: rgba(59, 130, 246, 0.5);
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.5);
+
+  /* Original variables mapped to new ones or kept for compatibility */
+  --color-background: var(--bg-color);
+  --color-background-soft: var(--bg-color-soft);
+  --color-background-mute: var(--bg-color-page);
+
+  --color-border: var(--border-color);
+  --color-border-hover: var(--border-light);
+
+  --color-heading: var(--text-primary);
+  --color-text: var(--text-secondary);
 
   --section-gap: 160px;
 }
 
+/* Dark Theme Overrides */
+:root.dark {
+  /* Dark Theme Colors */
+  --bg-color: #0f172a;
+  --bg-color-page: #020617;
+  --bg-color-soft: #1e293b;
+  --bg-surface: #1e293b;
+
+  --text-primary: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #64748b;
+
+  --border-color: #1e293b;
+  --border-light: #334155;
+  --border-extra-light: rgba(255, 255, 255, 0.05);
+
+  --card-bg: rgba(30, 41, 59, 0.7);
+  --glass-bg: rgba(15, 23, 42, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.05);
+
+  --color-background: var(--bg-color);
+  --color-background-soft: var(--bg-color-soft);
+  --color-background-mute: var(--bg-color-page);
+
+  --color-border: var(--border-color);
+  --color-border-hover: var(--border-light);
+
+  --color-heading: var(--text-primary);
+  --color-text: var(--text-secondary);
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: var(--vt-c-black);
-    --color-background-soft: var(--vt-c-black-soft);
-    --color-background-mute: var(--vt-c-black-mute);
+  /* Only apply if no theme class is present (fallback) */
+  :root:not([class*="dark"]):not([data-theme="light"]) {
+    --bg-color: #0f172a;
+    --bg-color-page: #020617;
+    --bg-color-soft: #1e293b;
+    --bg-surface: #1e293b;
 
-    --color-border: var(--vt-c-divider-dark-2);
-    --color-border-hover: var(--vt-c-divider-dark-1);
+    --text-primary: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --text-tertiary: #64748b;
 
-    --color-heading: var(--vt-c-text-dark-1);
-    --color-text: var(--vt-c-text-dark-2);
+    --border-color: #1e293b;
+    --border-light: #334155;
+    --border-extra-light: rgba(255, 255, 255, 0.05);
+
+    --card-bg: rgba(30, 41, 59, 0.7);
+    --glass-bg: rgba(15, 23, 42, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.05);
+
+    --color-background: var(--bg-color);
+    --color-background-soft: var(--bg-color-soft);
+    --color-background-mute: var(--bg-color-page);
+
+    --color-border: var(--border-color);
+    --color-border-hover: var(--border-light);
+
+    --color-heading: var(--text-primary);
+    --color-text: var(--text-secondary);
   }
 }
 
@@ -58,6 +133,7 @@
   font-weight: normal;
 }
 
+html,
 body {
   min-height: 100vh;
   color: var(--color-text);
@@ -83,4 +159,9 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior: none;
+}
+
+html {
+  height: 100%;
 }

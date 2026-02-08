@@ -68,10 +68,11 @@ const goBack = () => {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(circle at top, #1e293b 0%, #0f172a 45%, #0b1120 100%);
+  background: var(--bg-color-page);
   position: relative;
   overflow: hidden;
   padding: 40px 20px;
+  transition: background-color 0.5s;
 }
 
 .error-glow {
@@ -81,9 +82,9 @@ const goBack = () => {
   width: 540px;
   height: 540px;
   transform: translateX(-50%);
-  background: radial-gradient(circle, rgba(56, 189, 248, 0.25), transparent 70%);
-  filter: blur(10px);
-  opacity: 0.8;
+  background: radial-gradient(circle, var(--primary-light), transparent 70%);
+  filter: blur(80px);
+  opacity: 0.15;
   z-index: 0;
 }
 
@@ -91,21 +92,29 @@ const goBack = () => {
   position: relative;
   z-index: 2;
   width: min(960px, 92vw);
-  padding: 40px;
-  border-radius: 28px;
-  background: rgba(15, 23, 42, 0.7);
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  backdrop-filter: blur(18px);
+  padding: 60px 40px;
+  border-radius: 32px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-light);
+  backdrop-filter: blur(20px);
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) minmax(260px, 1fr);
-  gap: 32px;
-  box-shadow: 0 30px 60px rgba(15, 23, 42, 0.45);
-  animation: card-rise 0.6s ease;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 60px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.05);
+  animation: card-rise 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 40px;
+    padding: 40px 24px;
+    text-align: center;
+  }
 }
 
 .error-visual {
   position: relative;
-  min-height: 260px;
+  height: 300px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -114,53 +123,54 @@ const goBack = () => {
 
 .orbit {
   position: absolute;
-  width: 220px;
-  height: 220px;
+  width: 260px;
+  height: 260px;
   border-radius: 50%;
-  border: 1px dashed rgba(148, 163, 184, 0.35);
-  animation: spin 12s linear infinite;
+  border: 1px dashed var(--border-light);
+  animation: spin 20s linear infinite;
 }
 
 .planet {
   position: absolute;
-  width: 36px;
-  height: 36px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #38bdf8, #6366f1);
-  top: -18px;
+  background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+  top: -24px;
   left: 50%;
   transform: translateX(-50%);
-  box-shadow: 0 0 16px rgba(56, 189, 248, 0.6);
+  box-shadow: 0 0 20px var(--glow-color);
 }
 
 .satellite {
   position: absolute;
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   border-radius: 50%;
-  background: #f8fafc;
-  bottom: 10px;
-  right: 10px;
-  box-shadow: 0 0 10px rgba(248, 250, 252, 0.6);
+  background: var(--text-secondary);
+  bottom: 20px;
+  right: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .error-code {
-  font-size: 120px;
+  font-size: 140px;
   font-weight: 900;
   color: transparent;
-  background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+  background: linear-gradient(135deg, var(--primary-light), var(--secondary-color));
   -webkit-background-clip: text;
   background-clip: text;
-  text-shadow: 0 10px 30px rgba(56, 189, 248, 0.25);
   line-height: 1;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
+  opacity: 0.9;
 }
 
 .error-icon {
-  margin-top: 6px;
+  margin-top: -20px;
   .el-icon {
-    font-size: 56px;
-    color: rgba(248, 250, 252, 0.9);
+    font-size: 64px;
+    color: var(--text-tertiary);
+    opacity: 0.5;
   }
 }
 
@@ -168,53 +178,62 @@ const goBack = () => {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  gap: 16px;
+  gap: 24px;
+  
+  @media (max-width: 768px) {
+    align-items: center;
+  }
 }
 
 .error-title {
-  font-size: 30px;
-  font-weight: 700;
-  color: #f8fafc;
+  font-size: 36px;
+  font-weight: 800;
+  color: var(--text-primary);
   margin: 0;
+  letter-spacing: -1px;
 }
 
 .error-description {
-  font-size: 15px;
-  color: rgba(226, 232, 240, 0.85);
-  margin: 0 0 8px 0;
-  line-height: 1.7;
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin: 0;
+  line-height: 1.6;
+  max-width: 400px;
 }
 
 .error-actions {
   display: flex;
   gap: 16px;
   flex-wrap: wrap;
+  margin-top: 8px;
   
   .el-button {
-    padding: 12px 28px;
-    font-size: 14px;
-    border-radius: 999px;
+    padding: 12px 32px;
+    height: auto;
+    font-size: 15px;
+    border-radius: 12px;
     
     &.el-button--primary {
-      background: linear-gradient(135deg, #38bdf8, #6366f1);
+      background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
       border: none;
-      color: #f8fafc;
-      box-shadow: 0 10px 24px rgba(56, 189, 248, 0.35);
+      box-shadow: 0 8px 20px rgba(59, 130, 246, 0.25);
+      transition: all 0.3s;
       
       &:hover {
         transform: translateY(-2px);
-        box-shadow: 0 14px 30px rgba(99, 102, 241, 0.4);
+        box-shadow: 0 12px 28px rgba(59, 130, 246, 0.35);
       }
     }
     
     &:not(.el-button--primary) {
-      background: rgba(148, 163, 184, 0.1);
-      border: 1px solid rgba(148, 163, 184, 0.3);
-      color: rgba(248, 250, 252, 0.9);
+      background: var(--bg-surface);
+      border-color: var(--border-light);
+      color: var(--text-secondary);
       
       &:hover {
-        background: rgba(148, 163, 184, 0.2);
-        transform: translateY(-2px);
+        background: var(--bg-color-soft);
+        color: var(--primary-color);
+        border-color: var(--primary-color);
       }
     }
   }
@@ -222,102 +241,56 @@ const goBack = () => {
 
 .background-decoration {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
   pointer-events: none;
+  overflow: hidden;
   z-index: 1;
 }
 
 .floating-shape {
   position: absolute;
-  background: rgba(56, 189, 248, 0.12);
+  background: var(--primary-light);
   border-radius: 50%;
-  animation: float 6s ease-in-out infinite;
+  filter: blur(60px);
+  opacity: 0.1;
+  animation: float 20s infinite ease-in-out;
   
   &.shape-1 {
-    width: 120px;
-    height: 120px;
-    top: 15%;
-    left: 8%;
+    width: 300px;
+    height: 300px;
+    top: -50px;
+    left: -50px;
     animation-delay: 0s;
   }
   
   &.shape-2 {
-    width: 180px;
-    height: 180px;
-    top: 70%;
-    right: 10%;
-    animation-delay: 2s;
-  }
-  
-  &.shape-3 {
-    width: 90px;
-    height: 90px;
-    bottom: 16%;
-    left: 22%;
-    animation-delay: 4s;
-  }
-
-  &.shape-4 {
-    width: 140px;
-    height: 140px;
-    top: 30%;
-    right: 25%;
-    animation-delay: 1s;
-  }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translateY(0px) rotate(0deg);
-    opacity: 0.7;
-  }
-  50% {
-    transform: translateY(-20px) rotate(180deg);
-    opacity: 1;
+    width: 400px;
+    height: 400px;
+    bottom: -100px;
+    right: -100px;
+    background: var(--secondary-color);
+    animation-delay: -5s;
   }
 }
 
 @keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @keyframes card-rise {
-  0% {
+  from {
     opacity: 0;
-    transform: translateY(20px) scale(0.98);
+    transform: translateY(40px);
   }
-  100% {
+  to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0);
   }
 }
 
-// 响应式设计
-@media (max-width: 768px) {
-  .error-card {
-    grid-template-columns: 1fr;
-    padding: 28px;
-  }
-
-  .error-code {
-    font-size: 86px;
-  }
-
-  .error-actions {
-    flex-direction: column;
-    align-items: flex-start;
-
-    .el-button {
-      width: 200px;
-    }
-  }
+@keyframes float {
+  0%, 100% { transform: translate(0, 0); }
+  50% { transform: translate(20px, 20px); }
 }
 </style>

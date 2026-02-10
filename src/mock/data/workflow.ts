@@ -179,8 +179,6 @@ export const mockTasks: TaskItem[] = [
     name: 'HR审批',
     description: '候选任务 - 需要认领',
     priority: 30,
-    owner: null,
-    assignee: null,
     processInstanceId: 'process-1',
     executionId: 'exec-3',
     processDefinitionId: 'workflow-def-1',

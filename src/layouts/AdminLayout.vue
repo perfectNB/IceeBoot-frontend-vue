@@ -343,13 +343,12 @@ onBeforeUnmount(() => {
   overflow-x: hidden;
   padding: 16px 0;
 
+  // 隐藏滚动条但保持滚动功能
+  scrollbar-width: none; // Firefox
+  -ms-overflow-style: none; // IE/Edge
+
   &::-webkit-scrollbar {
-    width: 4px;
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: var(--border-light);
-    border-radius: 4px;
+    display: none; // Chrome/Safari/Edge
   }
 }
 

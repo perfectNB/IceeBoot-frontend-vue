@@ -177,7 +177,7 @@
       <div class="footer-content">
         <div class="footer-brand">
           <img src="@/assets/logo.svg" alt="IceeBoot" class="footer-logo" />
-          <p>© 2024 IceeBoot. All rights reserved.</p>
+          <p>© 2025 IceeBoot. All rights reserved.</p>
         </div>
         <div class="footer-links">
           <a href="https://gitee.com/woshinibaba438cnmlgb/zboot-backend-java" target="_blank">Gitee</a>

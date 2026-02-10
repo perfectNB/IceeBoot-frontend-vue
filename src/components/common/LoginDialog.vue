@@ -69,7 +69,20 @@
         <!-- 微信扫码登录 -->
         <el-tab-pane label="微信登录" name="wechat">
           <div class="wechat-login">
-            <div class="qrcode-container">
+            <!-- Mock模式提示 -->
+            <div v-if="isMockEnabled()" class="mock-notice">
+              <el-icon class="notice-icon">
+                <Warning/>
+              </el-icon>
+              <div class="notice-content">
+                <p class="notice-title">Mock模式已启用</p>
+                <p class="notice-text">当前处于Mock开发模式，微信扫码登录不可用</p>
+                <p class="notice-text">请使用账号密码登录或在配置中关闭Mock模式</p>
+              </div>
+            </div>
+
+            <!-- 二维码容器 -->
+            <div v-else class="qrcode-container">
               <div v-if="qrCodeLoading" class="qrcode-loading">
                 <el-icon class="is-loading">
                   <Loading/>
@@ -119,6 +132,7 @@ import {ElMessage, type FormInstance, type FormRules} from 'element-plus'
 import {User, Lock, Loading, Refresh, Warning} from '@element-plus/icons-vue'
 import {useUserStore} from '@/stores/user'
 import {getWechatAuthUrl} from '@/api'
+import {isMockEnabled} from '@/config/mock'
 import type {LoginForm} from '@/types'
 
 interface Props {
@@ -233,6 +247,13 @@ const handleLogin = async () => {
 }
 
 const generateQrCode = async () => {
+  // 检查是否为Mock模式
+  if (isMockEnabled()) {
+    ElMessage.warning('Mock状态不可微信扫码登录，请使用账号密码登录或关闭Mock模式')
+    qrCode.value = ''
+    return
+  }
+
   try {
     qrCodeLoading.value = true
     const response = await getWechatAuthUrl()
@@ -502,6 +523,61 @@ watch(dialogVisible, (visible) => {
     display: flex;
     justify-content: center;
     padding: 20px 0;
+
+    .mock-notice {
+      width: 100%;
+      max-width: 360px;
+      background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+      border: 2px solid #ffb74d;
+      border-radius: 16px;
+      padding: 24px;
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      box-shadow: 0 4px 12px rgba(255, 152, 0, 0.15);
+
+      .dark & {
+        background: linear-gradient(135deg, rgba(255, 152, 0, 0.15) 0%, rgba(255, 152, 0, 0.1) 100%);
+        border-color: rgba(255, 152, 0, 0.3);
+      }
+
+      .notice-icon {
+        font-size: 28px;
+        color: #f57c00;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .notice-content {
+        flex: 1;
+
+        .notice-title {
+          font-size: 16px;
+          font-weight: 600;
+          color: #e65100;
+          margin-bottom: 8px;
+
+          .dark & {
+            color: #ffb74d;
+          }
+        }
+
+        .notice-text {
+          font-size: 14px;
+          color: #f57c00;
+          line-height: 1.6;
+          margin-bottom: 4px;
+
+          .dark & {
+            color: #ffcc80;
+          }
+
+          &:last-child {
+            margin-bottom: 0;
+          }
+        }
+      }
+    }
 
     .qrcode-container {
       width: 280px;

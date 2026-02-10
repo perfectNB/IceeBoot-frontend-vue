@@ -1,48 +1,143 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
-  <!-- 外圈齿轮 -->
-  <g transform="translate(60,60)">
-    <!-- 齿轮齿 -->
-    <g fill="#409EFF">
-      <rect x="-3" y="-55" width="6" height="10" rx="2"/>
-      <rect x="-3" y="45" width="6" height="10" rx="2"/>
-      <rect x="-55" y="-3" width="10" height="6" rx="2"/>
-      <rect x="45" y="-3" width="10" height="6" rx="2"/>
-      
-      <!-- 斜向齿 -->
-      <rect x="-2.1" y="-2.1" width="6" height="10" rx="2" transform="rotate(45) translate(0,-50)"/>
-      <rect x="-2.1" y="-2.1" width="6" height="10" rx="2" transform="rotate(135) translate(0,-50)"/>
-      <rect x="-2.1" y="-2.1" width="6" height="10" rx="2" transform="rotate(225) translate(0,-50)"/>
-      <rect x="-2.1" y="-2.1" width="6" height="10" rx="2" transform="rotate(315) translate(0,-50)"/>
-    </g>
-    
-    <!-- 主体圆环 -->
-    <circle cx="0" cy="0" r="45" fill="#409EFF" stroke="#79BBFF" stroke-width="2"/>
-    <circle cx="0" cy="0" r="35" fill="#FFFFFF"/>
-    
-    <!-- Z字母设计 -->
-    <g fill="#409EFF">
-      <!-- Z的上横线 -->
-      <rect x="-18" y="-15" width="36" height="6" rx="3"/>
-      <!-- Z的下横线 -->
-      <rect x="-18" y="9" width="36" height="6" rx="3"/>
-      <!-- Z的斜线 -->
-      <rect x="-2" y="-12" width="4" height="24" rx="2" transform="rotate(-25)"/>
-      
-      <!-- 装饰性小齿轮 -->
-      <circle cx="20" cy="-20" r="8" fill="#79BBFF" opacity="0.8"/>
-      <circle cx="20" cy="-20" r="5" fill="#FFFFFF"/>
-      <rect x="18" y="-22" width="4" height="1.5" rx="0.5" fill="#79BBFF"/>
-      <rect x="18" y="-19.5" width="4" height="1.5" rx="0.5" fill="#79BBFF"/>
-      <rect x="18" y="-17" width="4" height="1.5" rx="0.5" fill="#79BBFF"/>
-      <rect x="19" y="-23" width="1.5" height="4" rx="0.5" fill="#79BBFF"/>
-      <rect x="20.5" y="-23" width="1.5" height="4" rx="0.5" fill="#79BBFF"/>
-    </g>
-    
-    <!-- 内圈装饰 -->
-    <circle cx="0" cy="0" r="12" fill="none" stroke="#A0CFFF" stroke-width="1" opacity="0.6"/>
-    <circle cx="0" cy="0" r="8" fill="none" stroke="#D9ECFF" stroke-width="1" opacity="0.4"/>
-    
+  <defs>
+    <!-- 渐变定义 -->
+    <linearGradient id="primaryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563EB;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#3B82F6;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="secondaryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#60A5FA;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#93C5FD;stop-opacity:1" />
+    </linearGradient>
+
+    <linearGradient id="accentGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#DBEAFE;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#BFDBFE;stop-opacity:1" />
+    </linearGradient>
+
     <!-- 光泽效果 -->
-    <ellipse cx="-15" cy="-15" rx="8" ry="12" fill="#FFFFFF" opacity="0.3" transform="rotate(-30)"/>
+    <radialGradient id="glowGradient" cx="50%" cy="50%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#FFFFFF;stop-opacity:0" />
+    </radialGradient>
+
+    <!-- 阴影滤镜 -->
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+      <feOffset dx="0" dy="2" result="offsetblur"/>
+      <feComponentTransfer>
+        <feFuncA type="linear" slope="0.3"/>
+      </feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- 背景圆环 -->
+  <circle cx="60" cy="60" r="56" fill="url(#accentGradient)" opacity="0.15"/>
+
+  <!-- 主体设计 - 六边形科技感 -->
+  <g transform="translate(60,60)" filter="url(#shadow)">
+    <!-- 外层六边形 -->
+    <path d="M 0,-50 L 43.3,-25 L 43.3,25 L 0,50 L -43.3,25 L -43.3,-25 Z"
+          fill="url(#primaryGradient)"
+          stroke="#1E40AF"
+          stroke-width="1.5"
+          opacity="0.95"/>
+
+    <!-- 中层六边形 -->
+    <path d="M 0,-40 L 34.64,-20 L 34.64,20 L 0,40 L -34.64,20 L -34.64,-20 Z"
+          fill="#FFFFFF"
+          opacity="0.98"/>
+
+    <!-- 内层装饰六边形 -->
+    <path d="M 0,-30 L 25.98,-15 L 25.98,15 L 0,30 L -25.98,15 L -25.98,-15 Z"
+          fill="none"
+          stroke="url(#secondaryGradient)"
+          stroke-width="1.5"
+          opacity="0.6"/>
+
+    <!-- 中心 "I" 字母设计 (代表 IceeBoot) -->
+    <g fill="url(#primaryGradient)">
+      <!-- I 的主体 -->
+      <rect x="-3" y="-20" width="6" height="40" rx="3"/>
+
+      <!-- I 的上装饰 -->
+      <rect x="-8" y="-22" width="16" height="4" rx="2"/>
+
+      <!-- I 的下装饰 -->
+      <rect x="-8" y="18" width="16" height="4" rx="2"/>
+
+      <!-- 科技感装饰线条 -->
+      <rect x="-1" y="-12" width="2" height="8" rx="1" opacity="0.6"/>
+      <rect x="-1" y="4" width="2" height="8" rx="1" opacity="0.6"/>
+    </g>
+
+    <!-- 动态装饰元素 - 左侧 -->
+    <g opacity="0.7">
+      <circle cx="-25" cy="-15" r="3" fill="url(#secondaryGradient)"/>
+      <circle cx="-28" cy="0" r="2" fill="url(#secondaryGradient)"/>
+      <circle cx="-25" cy="15" r="3" fill="url(#secondaryGradient)"/>
+      <line x1="-25" y1="-12" x2="-28" y2="-2" stroke="url(#secondaryGradient)" stroke-width="1"/>
+      <line x1="-28" y1="2" x2="-25" y2="12" stroke="url(#secondaryGradient)" stroke-width="1"/>
+    </g>
+
+    <!-- 动态装饰元素 - 右侧 -->
+    <g opacity="0.7">
+      <circle cx="25" cy="-15" r="3" fill="url(#secondaryGradient)"/>
+      <circle cx="28" cy="0" r="2" fill="url(#secondaryGradient)"/>
+      <circle cx="25" cy="15" r="3" fill="url(#secondaryGradient)"/>
+      <line x1="25" y1="-12" x2="28" y2="-2" stroke="url(#secondaryGradient)" stroke-width="1"/>
+      <line x1="28" y1="2" x2="25" y2="12" stroke="url(#secondaryGradient)" stroke-width="1"/>
+    </g>
+
+    <!-- 顶部装饰 -->
+    <g opacity="0.6">
+      <path d="M -8,-28 L 0,-35 L 8,-28"
+            fill="none"
+            stroke="url(#secondaryGradient)"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"/>
+    </g>
+
+    <!-- 底部装饰 -->
+    <g opacity="0.6">
+      <path d="M -8,28 L 0,35 L 8,28"
+            fill="none"
+            stroke="url(#secondaryGradient)"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"/>
+    </g>
+
+    <!-- 光泽效果 -->
+    <ellipse cx="-12" cy="-18" rx="10" ry="15"
+             fill="url(#glowGradient)"
+             opacity="0.4"
+             transform="rotate(-25)"/>
+
+    <!-- 微小装饰点 -->
+    <circle cx="0" cy="-25" r="1.5" fill="#3B82F6" opacity="0.8"/>
+    <circle cx="0" cy="25" r="1.5" fill="#3B82F6" opacity="0.8"/>
+    <circle cx="-22" cy="0" r="1.5" fill="#3B82F6" opacity="0.8"/>
+    <circle cx="22" cy="0" r="1.5" fill="#3B82F6" opacity="0.8"/>
   </g>
+
+  <!-- 外圈装饰环 -->
+  <circle cx="60" cy="60" r="54"
+          fill="none"
+          stroke="url(#secondaryGradient)"
+          stroke-width="0.5"
+          opacity="0.3"/>
+
+  <!-- 最外层光晕 -->
+  <circle cx="60" cy="60" r="58"
+          fill="none"
+          stroke="#DBEAFE"
+          stroke-width="0.5"
+          opacity="0.2"/>
 </svg>

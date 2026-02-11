@@ -1,7 +1,7 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title="用户登录"
+    title=""
     width="480px"
     :before-close="handleClose"
     class="login-dialog"
@@ -12,12 +12,12 @@
     <div class="login-content">
       <div class="login-hero">
         <div class="hero-glow"></div>
-        <div class="hero-title">欢迎回来</div>
-        <div class="hero-subtitle">登录后继续使用系统</div>
+        <div class="hero-title">{{ t('login.welcomeBack') }}</div>
+        <div class="hero-subtitle">{{ t('login.subtitle') }}</div>
       </div>
       <el-tabs v-model="activeTab" class="login-tabs">
         <!-- 账号密码登录 -->
-        <el-tab-pane label="账号登录" name="account">
+        <el-tab-pane :label="t('login.accountTab')" name="account">
           <el-form
             ref="loginFormRef"
             :model="loginForm"
@@ -28,7 +28,7 @@
             <el-form-item prop="username">
               <el-input
                 v-model="loginForm.username"
-                placeholder="请输入用户名"
+                :placeholder="t('login.usernamePlaceholder')"
                 size="large"
                 :prefix-icon="User"
                 clearable
@@ -39,7 +39,7 @@
               <el-input
                 v-model="loginForm.password"
                 type="password"
-                placeholder="请输入密码"
+                :placeholder="t('login.passwordPlaceholder')"
                 size="large"
                 :prefix-icon="Lock"
                 show-password
@@ -56,18 +56,18 @@
                 @click="handleLogin"
                 class="login-btn"
               >
-                登录
+                {{ t('login.loginBtn') }}
               </el-button>
             </el-form-item>
           </el-form>
 
           <div class="login-tips">
-            <p>测试账号：admin / 111111</p>
+            <p>{{ t('login.testAccount') }}</p>
           </div>
         </el-tab-pane>
 
         <!-- 微信扫码登录 -->
-        <el-tab-pane label="微信登录" name="wechat">
+        <el-tab-pane :label="t('login.wechatTab')" name="wechat">
           <div class="wechat-login">
             <!-- Mock模式提示 -->
             <div v-if="isMockEnabled()" class="mock-notice">
@@ -75,9 +75,9 @@
                 <Warning/>
               </el-icon>
               <div class="notice-content">
-                <p class="notice-title">Mock模式已启用</p>
-                <p class="notice-text">当前处于Mock开发模式，微信扫码登录不可用</p>
-                <p class="notice-text">请使用账号密码登录或在配置中关闭Mock模式</p>
+                <p class="notice-title">{{ t('login.mockEnabled') }}</p>
+                <p class="notice-text">{{ t('login.mockWechatUnavailable') }}</p>
+                <p class="notice-text">{{ t('login.mockSwitchAccount') }}</p>
               </div>
             </div>
 
@@ -87,7 +87,7 @@
                 <el-icon class="is-loading">
                   <Loading/>
                 </el-icon>
-                <p>二维码生成中...</p>
+                <p>{{ t('login.qrCodeLoading') }}</p>
               </div>
 
               <div v-else-if="qrCode" class="qrcode">
@@ -100,12 +100,12 @@
                     title="微信登录二维码"
                   />
                 </div>
-                <p class="qrcode-tip">请使用微信扫描二维码登录</p>
+                <p class="qrcode-tip">{{ t('login.qrCodeTip') }}</p>
                 <el-button @click="refreshQrCode" text>
                   <el-icon>
                     <Refresh/>
                   </el-icon>
-                  刷新二维码
+                  {{ t('login.refreshQrCode') }}
                 </el-button>
               </div>
 
@@ -113,9 +113,9 @@
                 <el-icon>
                   <Warning/>
                 </el-icon>
-                <p>二维码生成失败</p>
+                <p>{{ t('login.qrCodeFailed') }}</p>
                 <el-button @click="generateQrCode" type="primary">
-                  重新生成
+                  {{ t('login.regenerate') }}
                 </el-button>
               </div>
             </div>
@@ -134,6 +134,7 @@ import {useUserStore} from '@/stores/user'
 import {getWechatAuthUrl} from '@/api'
 import {isMockEnabled} from '@/config/mock'
 import type {LoginForm} from '@/types'
+import { useI18n } from 'vue-i18n'
 
 interface Props {
   modelValue: boolean
@@ -149,6 +150,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const userStore = useUserStore()
+const { t } = useI18n()
 
 // 对话框显示状态
 const dialogVisible = computed({
@@ -167,15 +169,15 @@ const loginForm = ref<LoginForm>({
 })
 
 // 表单验证规则
-const loginRules: FormRules = {
+const loginRules = computed<FormRules>(() => ({
   username: [
-    {required: true, message: '请输入用户名', trigger: 'blur'}
+    {required: true, message: t('login.usernameRequired'), trigger: 'blur'}
   ],
   password: [
-    {required: true, message: '请输入密码', trigger: 'blur'},
-    {min: 6, message: '密码长度不能少于6位', trigger: 'blur'}
+    {required: true, message: t('login.passwordRequired'), trigger: 'blur'},
+    {min: 6, message: t('login.passwordMinLength'), trigger: 'blur'}
   ]
-}
+}))
 
 // 登录状态
 const loading = ref(false)
@@ -240,7 +242,7 @@ const handleLogin = async () => {
     emit('success')
   } catch (error) {
     console.error('登录失败:', error)
-    ElMessage.error(error instanceof Error ? error.message : '登录失败')
+    ElMessage.error(error instanceof Error ? error.message : t('login.loginFailed'))
   } finally {
     loading.value = false
   }
@@ -249,7 +251,7 @@ const handleLogin = async () => {
 const generateQrCode = async () => {
   // 检查是否为Mock模式
   if (isMockEnabled()) {
-    ElMessage.warning('Mock状态不可微信扫码登录，请使用账号密码登录或关闭Mock模式')
+    ElMessage.warning(t('login.mockWechatWarning'))
     qrCode.value = ''
     return
   }
@@ -259,14 +261,14 @@ const generateQrCode = async () => {
     const response = await getWechatAuthUrl()
     const authUrl = resolveAuthUrl(response)
     if (!authUrl) {
-      throw new Error('登录链接为空')
+      throw new Error(t('login.authUrlEmpty'))
     }
     qrCode.value = authUrl
     qrCodeMode.value = 'iframe'
     window.location.href = authUrl
   } catch (error) {
     console.error('生成二维码失败:', error)
-    ElMessage.error('生成二维码失败')
+    ElMessage.error(t('login.generateQrCodeFailed'))
   } finally {
     qrCodeLoading.value = false
   }

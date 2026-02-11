@@ -49,6 +49,9 @@
             class="theme-btn"
           />
 
+          <!-- 语言切换 -->
+          <LanguageSwitcher />
+
           <!-- 消息中心 -->
           <el-dropdown @command="handleMessageCommand" class="message-dropdown">
             <div class="message-info">
@@ -65,14 +68,14 @@
               <el-dropdown-menu>
                 <el-dropdown-item command="center">
                   <el-icon><Message /></el-icon>
-                  消息中心
+                  {{ t('layout.messageCenter') }}
                   <el-tag v-if="unreadCount > 0" type="danger" size="small" class="unread-tag">
                     {{ unreadCount }}
                   </el-tag>
                 </el-dropdown-item>
                 <el-dropdown-item command="markAllRead" :disabled="unreadCount === 0">
                   <el-icon><Check /></el-icon>
-                  全部已读
+                  {{ t('layout.markAllRead') }}
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -96,7 +99,7 @@
               <el-dropdown-menu>
                 <el-dropdown-item command="profile">
                   <el-icon><User /></el-icon>
-                  个人中心
+                  {{ t('layout.profileCenter') }}
                 </el-dropdown-item>
 <!--                <el-dropdown-item command="settings">-->
 <!--                  <el-icon><Setting /></el-icon>-->
@@ -104,7 +107,7 @@
 <!--                </el-dropdown-item>-->
                 <el-dropdown-item divided command="logout">
                   <el-icon><SwitchButton /></el-icon>
-                  退出登录
+                  {{ t('layout.logout') }}
                 </el-dropdown-item>
               </el-dropdown-menu>
             </template>
@@ -128,6 +131,7 @@
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import {
   Fold,
   Expand,
@@ -146,6 +150,9 @@ import { isMockEnabled } from '@/config/mock'
 import { isDark, toggleTheme } from '@/utils/theme'
 import { getMessageStats, allRead } from '@/api/message'
 import SidebarMenu from '@/components/common/SidebarMenu.vue'
+import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
+
+const { t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -208,10 +215,10 @@ const handleMessageCommand = async (command: string) => {
       try {
         await allRead()
         unreadCount.value = 0
-        ElMessage.success('所有消息已标记为已读')
+        ElMessage.success(t('layout.allMessagesRead'))
       } catch (error) {
         console.error('标记所有消息已读失败:', error)
-        ElMessage.error('操作失败，请重试')
+        ElMessage.error(t('layout.operationFailed'))
       }
       break
   }
@@ -229,9 +236,9 @@ const loadUnreadCount = async () => {
 
 // 退出登录
 const handleLogout = () => {
-  ElMessageBox.confirm('确定要退出登录吗？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
+  ElMessageBox.confirm(t('layout.logoutConfirm'), t('common.tip'), {
+    confirmButtonText: t('common.confirm'),
+    cancelButtonText: t('common.cancel'),
     type: 'warning'
   }).then(async () => {
     try {
@@ -243,13 +250,13 @@ const handleLogout = () => {
       // 清除本地状态
       userStore.logout()
       router.push('/')
-      ElMessage.success('退出登录成功')
+      ElMessage.success(t('layout.logoutSuccess'))
     } catch (error) {
       console.error('退出登录失败:', error)
       // 即使API调用失败，也要清除本地状态
       userStore.logout()
       router.push('/')
-      ElMessage.success('退出登录成功')
+      ElMessage.success(t('layout.logoutSuccess'))
     }
   })
 }

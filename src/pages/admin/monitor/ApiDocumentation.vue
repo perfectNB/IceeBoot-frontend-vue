@@ -1,19 +1,19 @@
 <template>
   <div class="api-documentation">
     <div class="page-header">
-      <h2>接口文档</h2>
-      <p>系统API接口文档</p>
+      <h2>{{ t('apiDocumentation.pageTitle') }}</h2>
+      <p>{{ t('apiDocumentation.pageDescription') }}</p>
     </div>
 
     <div class="redirect-section">
       <el-card class="redirect-card">
         <div class="redirect-content">
           <el-icon class="redirect-icon"><Link /></el-icon>
-          <h3>正在跳转到接口文档...</h3>
-          <p>如果没有自动跳转，请点击下方按钮手动跳转</p>
+          <h3>{{ t('apiDocumentation.redirect.redirecting') }}</h3>
+          <p>{{ t('apiDocumentation.redirect.manualRedirect') }}</p>
           <el-button type="primary" size="large" @click="redirectToDoc">
             <el-icon><TopRight /></el-icon>
-            访问接口文档
+            {{ t('apiDocumentation.redirect.visitDoc') }}
           </el-button>
         </div>
       </el-card>
@@ -24,6 +24,9 @@
 <script setup lang="ts">
 import { onMounted } from 'vue'
 import { Link, TopRight } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // 文档链接
 const DOC_URL = 'https://www.baidu.com'

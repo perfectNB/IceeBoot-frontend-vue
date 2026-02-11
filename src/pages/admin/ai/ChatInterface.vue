@@ -1,18 +1,18 @@
 <template>
   <div class="chat-interface">
     <div class="page-header">
-      <h1 class="page-title">AI对话</h1>
-      <p class="page-description">与AI模型进行智能对话交流</p>
+      <h1 class="page-title">{{ t('chatInterface.pageTitle') }}</h1>
+      <p class="page-description">{{ t('chatInterface.pageDescription') }}</p>
     </div>
 
     <div class="chat-container">
       <!-- 左侧会话列表 -->
       <div class="session-sidebar">
         <div class="sidebar-header">
-          <h3>会话记录</h3>
+          <h3>{{ t('chatInterface.sessionHistory') }}</h3>
           <el-button type="primary" size="small" @click="handleCreateSession">
             <el-icon><Plus /></el-icon>
-            新建对话
+            {{ t('chatInterface.newChat') }}
           </el-button>
         </div>
 
@@ -41,7 +41,7 @@
             <!-- 会话加载提示 -->
             <div v-if="sessionLoading" class="session-loading">
               <el-icon class="loading-icon"><Loading /></el-icon>
-              <span>加载更多会话...</span>
+              <span>{{ t('chatInterface.loadMoreSessions') }}</span>
             </div>
           </div>
         </div>
@@ -49,7 +49,7 @@
       <!-- 右侧对话区域 -->
       <div class="chat-main">
         <div v-if="!currentSession" class="empty-state">
-          <el-empty description="请选择或创建一个对话会话" />
+          <el-empty :description="t('chatInterface.selectOrCreateSession')" />
         </div>
 
         <template v-else>
@@ -61,7 +61,7 @@
             </div>
             <div class="header-actions">
               <div class="mcp-switch">
-                <span class="switch-label">开启MCP</span>
+                <span class="switch-label">{{ t('chatInterface.enableMcp') }}</span>
                 <el-switch
                   v-model="mcpEnabled"
                   size="small"
@@ -70,7 +70,7 @@
               </div>
               <el-button size="small" @click="handleClearMessages">
                 <el-icon><Delete /></el-icon>
-                清空对话
+                {{ t('chatInterface.clearChat') }}
               </el-button>
             </div>
           </div>
@@ -80,7 +80,7 @@
             <!-- 历史消息加载提示 -->
             <div v-if="messageLoading && messagePage > 1" class="loading-more">
               <el-icon class="loading-icon"><Loading /></el-icon>
-              <span>加载更多消息...</span>
+              <span>{{ t('chatInterface.loadMoreMessages') }}</span>
             </div>
 
             <div
@@ -126,7 +126,7 @@
                     <span class="dot"></span>
                     <span class="dot"></span>
                   </div>
-                  <span class="thinking-text">AI正在思考中...</span>
+                  <span class="thinking-text">{{ t('chatInterface.aiThinking') }}</span>
                 </div>
               </div>
             </div>
@@ -139,19 +139,19 @@
                 v-model="inputMessage"
                 type="textarea"
                 :rows="3"
-                placeholder="输入您的问题..."
+                :placeholder="t('chatInterface.enterYourQuestion')"
                 :disabled="isLoading"
                 @keydown.ctrl.enter="handleSendMessage"
               />
               <div class="input-actions">
-                <span class="input-tip">Ctrl + Enter 发送</span>
+                <span class="input-tip">{{ t('chatInterface.ctrlEnterToSend') }}</span>
                 <el-button
                   type="primary"
                   :disabled="!inputMessage.trim() || isLoading"
                   @click="handleSendMessage"
                 >
                   <el-icon><Promotion /></el-icon>
-                  发送
+                  {{ t('chatInterface.send') }}
                 </el-button>
               </div>
             </div>
@@ -163,7 +163,7 @@
     <!-- 新建会话对话框 -->
     <el-dialog
       v-model="sessionDialogVisible"
-      title="新建对话"
+      :title="t('chatInterface.newChatDialog')"
       width="500px"
       :close-on-click-modal="false"
     >
@@ -173,13 +173,13 @@
         :rules="sessionFormRules"
         label-width="100px"
       >
-        <el-form-item label="对话标题" prop="title">
-          <el-input v-model="sessionForm.title" placeholder="请输入对话标题" />
+        <el-form-item :label="t('chatInterface.chatTitle')" prop="title">
+          <el-input v-model="sessionForm.title" :placeholder="t('chatInterface.pleaseEnterChatTitle')" />
         </el-form-item>
-        <el-form-item label="选择厂商" prop="provider">
+        <el-form-item :label="t('chatInterface.selectProvider')" prop="provider">
           <el-select
             v-model="sessionForm.provider"
-            placeholder="请选择厂商"
+            :placeholder="t('chatInterface.pleaseSelectProvider')"
             @change="handleProviderChange"
             style="width: 100%"
           >
@@ -192,10 +192,10 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="选择模型" prop="modelName">
+        <el-form-item :label="t('chatInterface.selectModel')" prop="modelName">
           <el-select
             v-model="sessionForm.modelName"
-            placeholder="请选择模型"
+            :placeholder="t('chatInterface.pleaseSelectModel')"
             style="width: 100%"
             :disabled="!sessionForm.provider"
           >
@@ -207,10 +207,10 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="选择密钥" prop="keyId">
+        <el-form-item :label="t('chatInterface.selectKey')" prop="keyId">
           <el-select
             v-model="sessionForm.keyId"
-            placeholder="请选择密钥"
+            :placeholder="t('chatInterface.pleaseSelectKey')"
             style="width: 100%"
             :disabled="!sessionForm.provider"
           >
@@ -226,9 +226,9 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="sessionDialogVisible = false">取消</el-button>
+          <el-button @click="sessionDialogVisible = false">{{ t('chatInterface.cancel') }}</el-button>
           <el-button type="primary" @click="handleCreateSessionSubmit" :loading="submitting">
-            创建
+            {{ t('chatInterface.create') }}
           </el-button>
         </div>
       </template>
@@ -239,6 +239,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css'
@@ -255,6 +256,8 @@ import {
 import { getAiChatSessions, getAiChatMessages, streamAiChat, streamIntelligentAiChat, deleteAiChatSession,createAiChatSession, clearAiChatSession } from '@/api/aiChat'
 import type { LLMModel } from '@/types'
 import type { AiChatSession, AiChatMessage, StreamChatRequest } from '@/api/aiChat'
+
+const { t } = useI18n()
 
 // 响应式数据
 const isLoading = ref(false)
@@ -355,10 +358,10 @@ const sessionForm = reactive({
 
 // 表单验证规则
 const sessionFormRules = {
-  title: [{ required: true, message: '请输入对话标题', trigger: 'blur' }],
-  provider: [{ required: true, message: '请选择厂商', trigger: 'change' }],
-  modelName: [{ required: true, message: '请选择模型', trigger: 'change' }],
-  keyId: [{ required: true, message: '请选择密钥', trigger: 'change' }]
+  title: [{ required: true, message: t('chatInterface.pleaseEnterChatTitle'), trigger: 'blur' }],
+  provider: [{ required: true, message: t('chatInterface.pleaseSelectProvider'), trigger: 'change' }],
+  modelName: [{ required: true, message: t('chatInterface.pleaseSelectModel'), trigger: 'change' }],
+  keyId: [{ required: true, message: t('chatInterface.pleaseSelectKey'), trigger: 'change' }]
 }
 
 // 计算属性
@@ -421,7 +424,7 @@ const loadMessages = async (sessionId: number, reset = false) => {
     }
   } catch (error) {
     console.error('加载消息列表失败:', error)
-    ElMessage.error('加载消息列表失败')
+    ElMessage.error(t('chatInterface.loadMessagesFailed'))
   } finally {
     messageLoading.value = false
   }
@@ -489,11 +492,11 @@ const formatTime = (timestamp: string) => {
   const diff = now.getTime() - date.getTime()
 
   if (diff < 60000) { // 1分钟内
-    return '刚刚'
+    return t('chatInterface.justNow')
   } else if (diff < 3600000) { // 1小时内
-    return `${Math.floor(diff / 60000)}分钟前`
+    return t('chatInterface.minutesAgo', { minutes: Math.floor(diff / 60000) })
   } else if (diff < 86400000) { // 1天内
-    return `${Math.floor(diff / 3600000)}小时前`
+    return t('chatInterface.hoursAgo', { hours: Math.floor(diff / 3600000) })
   } else {
     return date.toLocaleDateString()
   }
@@ -536,7 +539,7 @@ const loadSessions = async (reset = false) => {
     }
   } catch (error) {
     console.error('加载会话列表失败:', error)
-    ElMessage.error('加载会话列表失败')
+    ElMessage.error(t('chatInterface.loadSessionsFailed'))
   } finally {
     sessionLoading.value = false
   }
@@ -596,7 +599,7 @@ const handleCreateSessionSubmit = async () => {
     submitting.value = true
 
     if (!sessionForm.keyId) {
-      ElMessage.error('请选择密钥')
+      ElMessage.error(t('chatInterface.pleaseSelectKeyValidation'))
       return
     }
 
@@ -607,7 +610,7 @@ const handleCreateSessionSubmit = async () => {
       modelName: sessionForm.modelName
     })
 
-    ElMessage.success('对话创建成功')
+    ElMessage.success(t('chatInterface.chatCreateSuccess'))
     sessionDialogVisible.value = false
     await loadSessions(true)
 
@@ -619,7 +622,7 @@ const handleCreateSessionSubmit = async () => {
     }
   } catch (error) {
     console.error('创建对话失败:', error)
-    ElMessage.error('创建对话失败')
+    ElMessage.error(t('chatInterface.chatCreateFailed'))
   } finally {
     submitting.value = false
   }
@@ -629,17 +632,17 @@ const handleCreateSessionSubmit = async () => {
 const handleDeleteSession = async (session: AiChatSession) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除会话 "${session.title}" 吗？`,
-      '删除确认',
+      t('chatInterface.confirmDeleteSession', { title: session.title }),
+      t('chatInterface.deleteConfirm'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('chatInterface.confirm'),
+        cancelButtonText: t('chatInterface.cancel'),
         type: 'warning'
       }
     )
 
     await deleteAiChatSession([session.id])
-    ElMessage.success('会话删除成功')
+    ElMessage.success(t('chatInterface.sessionDeleteSuccess'))
 
     // 如果删除的是当前会话，清空选择
     if (currentSessionId.value === session.id) {
@@ -652,7 +655,7 @@ const handleDeleteSession = async (session: AiChatSession) => {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除会话失败:', error)
-      ElMessage.error('删除会话失败')
+      ElMessage.error(t('chatInterface.sessionDeleteFailed'))
     }
   }
 }
@@ -660,17 +663,17 @@ const handleDeleteSession = async (session: AiChatSession) => {
 // 清空对话
 const handleClearMessages = async () => {
   if (!currentSession.value) {
-    ElMessage.error('请先选择一个对话会话')
+    ElMessage.error(t('chatInterface.pleaseSelectSession'))
     return
   }
 
   try {
     await ElMessageBox.confirm(
-      '确定要清空当前对话的所有消息吗？',
-      '清空确认',
+      t('chatInterface.confirmClearMessages'),
+      t('chatInterface.clearConfirm'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('chatInterface.confirm'),
+        cancelButtonText: t('chatInterface.cancel'),
         type: 'warning'
       }
     )
@@ -680,11 +683,11 @@ const handleClearMessages = async () => {
 
     // 清空本地消息列表
     currentMessages.value = []
-    ElMessage.success('对话已清空')
+    ElMessage.success(t('chatInterface.chatCleared'))
   } catch (error) {
     if (error !== 'cancel') {
       console.error('清空对话失败:', error)
-      ElMessage.error('清空对话失败')
+      ElMessage.error(t('chatInterface.clearChatFailed'))
     }
   }
 }
@@ -756,7 +759,7 @@ const handleSendMessage = async () => {
       // onError: 错误处理
       (error: Error) => {
         console.error(mcpEnabled.value ? '智能流式对话失败:' : '流式对话失败:', error)
-        ElMessage.error('发送消息失败')
+        ElMessage.error(t('chatInterface.sendMessageFailed'))
         isLoading.value = false
         // 移除失败的消息
         if (messageIndex < currentMessages.value.length) {
@@ -766,7 +769,7 @@ const handleSendMessage = async () => {
     )
   } catch (error) {
     console.error('发送消息失败:', error)
-    ElMessage.error('发送消息失败')
+    ElMessage.error(t('chatInterface.sendMessageFailed'))
     isLoading.value = false
     // 移除失败的消息
     if (messageIndex < currentMessages.value.length) {

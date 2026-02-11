@@ -4,6 +4,7 @@ import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 import type { MenuItem } from '@/types'
 import { setSEO, getSEOConfigByPath, getFullUrl } from '@/utils/seo'
+import { t } from '@/locales/useAppI18n'
 
 // 导入布局组件
 const AdminLayout = () => import('@/layouts/AdminLayout.vue')
@@ -160,7 +161,7 @@ async function loadDynamicRoutes(): Promise<void> {
           name: profileName,
           component: () => import('@/pages/self/ProfileCenter.vue'),
           meta: {
-            title: '个人中心',
+            title: 'router.profileCenter',
             requiresAuth: true,
             hideInMenu: true
           }
@@ -174,7 +175,7 @@ async function loadDynamicRoutes(): Promise<void> {
           name: messageName,
           component: () => import('@/pages/self/MessageCenter.vue'),
           meta: {
-            title: '消息中心',
+            title: 'router.messageCenter',
             requiresAuth: true,
             hideInMenu: true
           }
@@ -238,7 +239,7 @@ const baseRoutes: RouteRecordRaw[] = [
     name: 'Home',
     component: HomePage,
     meta: {
-      title: '首页',
+      title: 'router.home',
       requiresAuth: false
     }
   },
@@ -248,7 +249,7 @@ const baseRoutes: RouteRecordRaw[] = [
     name: 'NotFound',
     component: () => import('@/pages/error/NotFound.vue'),
     meta: {
-      title: '页面不存在',
+      title: 'router.notFound',
       requiresAuth: false,
       hideInMenu: true
     }
@@ -285,7 +286,10 @@ router.beforeEach(async (to, from, next) => {
 
   // 设置页面标题
   if (to.meta.title) {
-    document.title = `${to.meta.title} - IceeBoot Admin`
+    const title = typeof to.meta.title === 'string' && to.meta.title.includes('.')
+      ? t(to.meta.title)
+      : to.meta.title
+    document.title = `${title} - IceeBoot Admin`
   }
 
 
@@ -305,7 +309,7 @@ router.beforeEach(async (to, from, next) => {
       }
     } catch (error) {
       console.error('加载动态路由失败:', error)
-      ElMessage.error('加载页面失败')
+      ElMessage.error(t('router.loadFailed'))
       next('/')
       return
     }
@@ -330,7 +334,7 @@ router.beforeEach(async (to, from, next) => {
   // 检查是否需要认证
   if (to.meta.requiresAuth) {
     if (!token) {
-      ElMessage.warning('请先登录')
+      ElMessage.warning(t('router.loginFirst'))
       next('/')
       return
     }
@@ -357,7 +361,7 @@ router.beforeEach(async (to, from, next) => {
       )
 
       if (!hasPermission) {
-        ElMessage.error('您没有访问该页面的权限')
+        ElMessage.error(t('router.noPermission'))
         if (firstMenuPath) {
           next(firstMenuPath)
         } else {
@@ -397,7 +401,7 @@ router.afterEach((to) => {
 // 路由错误处理
 router.onError((error) => {
   console.error('路由错误:', error)
-  ElMessage.error('页面加载失败')
+  ElMessage.error(t('router.routeError'))
 })
 
 export default router

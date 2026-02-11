@@ -1,8 +1,8 @@
 <template>
   <div class="permission-management">
     <div class="page-header">
-      <h2>权限管理</h2>
-      <p>管理系统权限结构和访问控制</p>
+      <h2>{{ t('permissionManagement.pageTitle') }}</h2>
+      <p>{{ t('permissionManagement.pageDescription') }}</p>
     </div>
 
     <!-- 操作区域 -->
@@ -13,7 +13,7 @@
         @click="handleCreate"
         v-if="hasPermission('system:permission:create')"
       >
-        新增权限
+        {{ t('permissionManagement.createPermission') }}
       </el-button>
       <el-button
         type="danger"
@@ -22,64 +22,64 @@
         v-if="hasPermission('system:permission:delete')"
       >
         <el-icon><Delete /></el-icon>
-        批量删除
+        {{ t('permissionManagement.batchDelete') }}
       </el-button>
       <el-button
         :icon="Refresh"
         @click="loadPermissions"
       >
-        刷新
+        {{ t('permissionManagement.refresh') }}
       </el-button>
       <el-button @click="expandAll">
         <el-icon><Sort /></el-icon>
-        展开全部
+        {{ t('permissionManagement.expandAll') }}
       </el-button>
       <el-button @click="collapseAll">
         <el-icon><Sort /></el-icon>
-        收起全部
+        {{ t('permissionManagement.collapseAll') }}
       </el-button>
     </div>
 
     <!-- 搜索区域 -->
     <div class="search-section">
       <el-form :model="searchForm" :inline="true">
-        <el-form-item label="权限名称">
+        <el-form-item :label="t('permissionManagement.permissionName')">
           <el-input
             v-model="searchForm.name"
-            placeholder="请输入权限名称"
+            :placeholder="t('permissionManagement.placeholderPermissionName')"
             clearable
             style="width: 200px"
           />
         </el-form-item>
-        <el-form-item label="类型">
+        <el-form-item :label="t('permissionManagement.type')">
           <el-select
             v-model="searchForm.type"
-            placeholder="请选择类型"
+            :placeholder="t('permissionManagement.placeholderType')"
             clearable
             style="width: 150px"
           >
-            <el-option label="菜单" value="menu" />
-            <el-option label="按钮" value="button" />
-            <el-option label="接口" value="api" />
+            <el-option :label="t('permissionManagement.typeMenu')" value="menu" />
+            <el-option :label="t('permissionManagement.typeButton')" value="button" />
+            <el-option :label="t('permissionManagement.typeApi')" value="api" />
           </el-select>
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item :label="t('permissionManagement.status')">
           <el-select
             v-model="searchForm.status"
-            placeholder="请选择状态"
+            :placeholder="t('permissionManagement.placeholderStatus')"
             clearable
             style="width: 120px"
           >
-            <el-option label="启用" value="active" />
-            <el-option label="禁用" value="inactive" />
+            <el-option :label="t('permissionManagement.active')" value="active" />
+            <el-option :label="t('permissionManagement.inactive')" value="inactive" />
           </el-select>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleSearch">
-            搜索
+            {{ t('permissionManagement.search') }}
           </el-button>
           <el-button :icon="Refresh" @click="handleReset">
-            重置
+            {{ t('permissionManagement.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -99,7 +99,7 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="40" />
-        <el-table-column prop="name" label="权限名称" min-width="275">
+        <el-table-column prop="name" :label="t('permissionManagement.permissionName')" min-width="275">
           <template #default="{ row }">
             <el-icon v-if="getPermissionIcon(row.type)" class="permission-icon">
               <component :is="getPermissionIcon(row.type)" />
@@ -107,21 +107,21 @@
             {{ row.name }}
           </template>
         </el-table-column>
-        <el-table-column prop="code" label="权限编码" min-width="200" />
-        <el-table-column prop="type" label="类型" width="100">
+        <el-table-column prop="code" :label="t('permissionManagement.permissionCode')" min-width="200" />
+        <el-table-column prop="type" :label="t('permissionManagement.type')" width="100">
           <template #default="{ row }">
             <el-tag :type="getPermissionTypeTag(row.type)">
               {{ getPermissionTypeText(row.type) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="path" label="接口路径" min-width="255">
+        <el-table-column prop="path" :label="t('permissionManagement.apiPath')" min-width="255">
           <template #default="{ row }">
             <span v-if="row.path">{{ row.path }}</span>
             <span v-else class="text-gray-400">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="method" label="请求方法" width="100">
+        <el-table-column prop="method" :label="t('permissionManagement.requestMethod')" width="100">
           <template #default="{ row }">
             <el-tag v-if="row.method" :type="getMethodTagType(row.method)" size="small">
               {{ row.method }}
@@ -129,8 +129,8 @@
             <span v-else class="text-gray-400">-</span>
           </template>
         </el-table-column>
-        <el-table-column prop="sort" label="排序" width="80" />
-        <el-table-column label="状态" width="80">
+        <el-table-column prop="sort" :label="t('permissionManagement.sort')" width="80" />
+        <el-table-column :label="t('permissionManagement.status')" width="80">
           <template #default="{ row }">
             <el-switch
               v-model="row.status"
@@ -140,13 +140,13 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="description" label="描述" min-width="150">
+        <el-table-column prop="description" :label="t('permissionManagement.description')" min-width="150">
           <template #default="{ row }">
             <span v-if="row.description">{{ row.description }}</span>
             <span v-else class="text-gray-400">-</span>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column :label="t('permissionManagement.operation')" width="280" fixed="right">
           <template #default="{ row }">
             <el-button
               type="success"
@@ -155,7 +155,7 @@
               @click="handleCreateChild(row)"
               v-if="hasPermission('system:permission:create') && row.type === 'menu'"
             >
-              添加子权限
+              {{ t('permissionManagement.addChildPermission') }}
             </el-button>
             <el-button
               type="primary"
@@ -164,7 +164,7 @@
               @click="handleEdit(row)"
               v-if="hasPermission('system:permission:edit')"
             >
-              编辑
+              {{ t('permissionManagement.edit') }}
             </el-button>
             <el-button
               type="danger"
@@ -173,7 +173,7 @@
               @click="handleDelete(row)"
               v-if="hasPermission('system:permission:delete')"
             >
-              删除
+              {{ t('permissionManagement.delete') }}
             </el-button>
           </template>
         </el-table-column>
@@ -193,11 +193,11 @@
         :rules="formRules"
         label-width="100px"
       >
-        <el-form-item label="父级权限">
+        <el-form-item :label="t('permissionManagement.parentPermission')">
           <el-tree-select
             v-model="formData.parentId"
             :data="parentPermissionOptions"
-            placeholder="请选择父级权限（不选择则为顶级权限）"
+            :placeholder="t('permissionManagement.placeholderParentPermission')"
             clearable
             check-strictly
             :render-after-expand="false"
@@ -206,24 +206,24 @@
             :props="treeSelectProps"
           />
         </el-form-item>
-        <el-form-item label="权限名称" prop="name">
-          <el-input v-model="formData.name" placeholder="请输入权限名称" />
+        <el-form-item :label="t('permissionManagement.permissionName')" prop="name">
+          <el-input v-model="formData.name" :placeholder="t('permissionManagement.placeholderPermissionName')" />
         </el-form-item>
-        <el-form-item label="权限编码" prop="code">
-          <el-input v-model="formData.code" placeholder="请输入权限编码" />
+        <el-form-item :label="t('permissionManagement.permissionCode')" prop="code">
+          <el-input v-model="formData.code" :placeholder="t('permissionManagement.placeholderPermissionCode')" />
         </el-form-item>
-        <el-form-item label="权限类型" prop="type">
-          <el-select v-model="formData.type" placeholder="请选择类型" @change="handleTypeChange">
-            <el-option label="菜单" value="menu" />
-            <el-option label="按钮" value="button" />
-            <el-option label="接口" value="api" />
+        <el-form-item :label="t('permissionManagement.type')" prop="type">
+          <el-select v-model="formData.type" :placeholder="t('permissionManagement.placeholderType')" @change="handleTypeChange">
+            <el-option :label="t('permissionManagement.typeMenu')" value="menu" />
+            <el-option :label="t('permissionManagement.typeButton')" value="button" />
+            <el-option :label="t('permissionManagement.typeApi')" value="api" />
           </el-select>
         </el-form-item>
-        <el-form-item label="接口路径" prop="path" v-if="formData.type === 'api'">
-          <el-input v-model="formData.path" placeholder="请输入接口路径" />
+        <el-form-item :label="t('permissionManagement.apiPath')" prop="path" v-if="formData.type === 'api'">
+          <el-input v-model="formData.path" :placeholder="t('permissionManagement.placeholderApiPath')" />
         </el-form-item>
-        <el-form-item label="请求方法" prop="method" v-if="formData.type === 'api'">
-          <el-select v-model="formData.method" placeholder="请选择请求方法">
+        <el-form-item :label="t('permissionManagement.requestMethod')" prop="method" v-if="formData.type === 'api'">
+          <el-select v-model="formData.method" :placeholder="t('permissionManagement.placeholderRequestMethod')">
             <el-option label="GET" value="GET" />
             <el-option label="POST" value="POST" />
             <el-option label="PUT" value="PUT" />
@@ -231,30 +231,30 @@
             <el-option label="PATCH" value="PATCH" />
           </el-select>
         </el-form-item>
-        <el-form-item label="排序" prop="sort">
+        <el-form-item :label="t('permissionManagement.sort')" prop="sort">
           <el-input-number v-model="formData.sort" :min="0" />
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item :label="t('permissionManagement.status')">
           <el-switch
             v-model="formData.status"
             :active-value="'active'"
             :inactive-value="'inactive'"
           />
         </el-form-item>
-        <el-form-item label="描述" prop="description">
+        <el-form-item :label="t('permissionManagement.description')" prop="description">
           <el-input
             v-model="formData.description"
             type="textarea"
             :rows="3"
-            placeholder="请输入权限描述"
+            :placeholder="t('permissionManagement.placeholderDescription')"
             style="width: 100%"
           />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button @click="dialogVisible = false">{{ t('permissionManagement.cancel') }}</el-button>
         <el-button type="primary" @click="handleSubmit" :loading="submitting">
-          确定
+          {{ t('permissionManagement.confirm') }}
         </el-button>
       </template>
     </el-dialog>
@@ -263,6 +263,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import {
   Plus,
@@ -279,6 +280,7 @@ import { getAllPermissions, createPermission, updatePermission, deletePermission
 import type { Permission } from '@/types'
 import { useUserStore } from '@/stores/user'
 
+const { t } = useI18n()
 const userStore = useUserStore()
 
 // 响应式数据
@@ -318,9 +320,9 @@ const formData = ref<Partial<Permission>>({
 // 计算属性
 const dialogTitle = computed(() => {
   if (isCreateChild.value) {
-    return `为 "${parentPermission.value?.name}" 添加子权限`
+    return t('permissionManagement.addChildPermissionTitle', { name: parentPermission.value?.name })
   }
-  return isEdit.value ? '编辑权限' : '新增权限'
+  return isEdit.value ? t('permissionManagement.editPermissionTitle') : t('permissionManagement.createPermissionTitle')
 })
 
 const filteredPermissions = computed(() => {
@@ -398,24 +400,24 @@ const treeSelectProps = {
 // 表单验证规则
 const formRules: FormRules = {
   name: [
-    { required: true, message: '请输入权限名称', trigger: 'blur' },
-    { min: 2, max: 50, message: '权限名称长度在 2 到 50 个字符', trigger: 'blur' }
+    { required: true, message: t('permissionManagement.validationPermissionName'), trigger: 'blur' },
+    { min: 2, max: 50, message: t('permissionManagement.validationPermissionNameLength'), trigger: 'blur' }
   ],
   code: [
-    { required: true, message: '请输入权限编码', trigger: 'blur' },
-    { pattern: /^[a-zA-Z][a-zA-Z0-9:_-]*$/, message: '权限编码只能包含字母、数字、冒号、下划线和连字符，且必须以字母开头', trigger: 'blur' }
+    { required: true, message: t('permissionManagement.validationPermissionCode'), trigger: 'blur' },
+    { pattern: /^[a-zA-Z][a-zA-Z0-9:_-]*$/, message: t('permissionManagement.validationPermissionCodeFormat'), trigger: 'blur' }
   ],
   type: [
-    { required: true, message: '请选择权限类型', trigger: 'change' }
+    { required: true, message: t('permissionManagement.validationType'), trigger: 'change' }
   ],
   path: [
-    { required: true, message: '请输入接口路径', trigger: 'blur' }
+    { required: true, message: t('permissionManagement.validationApiPath'), trigger: 'blur' }
   ],
   method: [
-    { required: true, message: '请选择请求方法', trigger: 'change' }
+    { required: true, message: t('permissionManagement.validationRequestMethod'), trigger: 'change' }
   ],
   description: [
-    { max: 200, message: '描述不能超过 200 个字符', trigger: 'blur' }
+    { max: 200, message: t('permissionManagement.validationDescriptionLength'), trigger: 'blur' }
   ]
 }
 
@@ -425,7 +427,7 @@ const loadPermissions = async () => {
     loading.value = true
     permissions.value = await getAllPermissions()
   } catch {
-    ElMessage.error('获取权限列表失败')
+    ElMessage.error(t('permissionManagement.loadPermissionsFailed'))
   } finally {
     loading.value = false
   }
@@ -457,11 +459,11 @@ const handleSelectionChange = (selection: Permission[]) => {
 const handleBatchDelete = async () => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedPermissions.value.length} 个权限吗？`,
-      '批量删除确认',
+      t('permissionManagement.batchDeleteConfirm', { count: selectedPermissions.value.length }),
+      t('permissionManagement.batchDeleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('permissionManagement.confirm'),
+        cancelButtonText: t('permissionManagement.cancel'),
         type: 'warning'
       }
     )
@@ -470,12 +472,12 @@ const handleBatchDelete = async () => {
     const permissionIds = selectedPermissions.value.map(permission => permission.id)
     await deletePermissions(permissionIds)
 
-    ElMessage.success(`成功删除 ${selectedPermissions.value.length} 个权限`)
+    ElMessage.success(t('permissionManagement.batchDeleteSuccess', { count: selectedPermissions.value.length }))
     selectedPermissions.value = []
     await loadPermissions()
   } catch (error) {
       if (error !== 'cancel') {
-        ElMessage.error('批量删除权限失败')
+        ElMessage.error(t('permissionManagement.batchDeleteFailed'))
       }
     }
 }
@@ -593,10 +595,10 @@ const handleSubmit = async () => {
 
     if (isEdit.value) {
       await updatePermission(formData.value.id!, formData.value)
-      ElMessage.success('更新权限成功')
+      ElMessage.success(t('permissionManagement.updateSuccess'))
     } else {
       await createPermission(formData.value)
-      ElMessage.success('创建权限成功')
+      ElMessage.success(t('permissionManagement.createSuccess'))
     }
 
     dialogVisible.value = false
@@ -609,7 +611,7 @@ const handleSubmit = async () => {
       })
     }
   } catch {
-    ElMessage.error(isEdit.value ? '更新权限失败' : '创建权限失败')
+    ElMessage.error(isEdit.value ? t('permissionManagement.updateFailed') : t('permissionManagement.createFailed'))
   } finally {
     submitting.value = false
   }
@@ -618,21 +620,21 @@ const handleSubmit = async () => {
 const handleDelete = async (permission: Permission) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除权限 "${permission.name}" 吗？`,
-      '确认删除',
+      t('permissionManagement.deleteConfirm', { name: permission.name }),
+      t('permissionManagement.deleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('permissionManagement.confirm'),
+        cancelButtonText: t('permissionManagement.cancel'),
         type: 'warning'
       }
     )
 
     await deletePermission(permission.id)
-    ElMessage.success('删除权限成功')
+    ElMessage.success(t('permissionManagement.deleteSuccess'))
     await loadPermissions()
   } catch (error: unknown) {
     if (error !== 'cancel') {
-      ElMessage.error('删除权限失败')
+      ElMessage.error(t('permissionManagement.deleteFailed'))
     }
   }
 }
@@ -640,9 +642,9 @@ const handleDelete = async (permission: Permission) => {
 const handleStatusChange = async (permission: Permission) => {
   try {
     await updatePermission(permission.id, { status: permission.status })
-    ElMessage.success('状态更新成功')
+    ElMessage.success(t('permissionManagement.statusUpdateSuccess'))
   } catch {
-    ElMessage.error('状态更新失败')
+    ElMessage.error(t('permissionManagement.statusUpdateFailed'))
     // 恢复原状态
     permission.status = permission.status === 'active' ? 'inactive' : 'active'
   }
@@ -677,13 +679,13 @@ const getPermissionTypeTag = (type: string) => {
 const getPermissionTypeText = (type: string) => {
   switch (type) {
     case 'menu':
-      return '菜单'
+      return t('permissionManagement.typeMenu')
     case 'button':
-      return '按钮'
+      return t('permissionManagement.typeButton')
     case 'api':
-      return '接口'
+      return t('permissionManagement.typeApi')
     default:
-      return '未知'
+      return t('permissionManagement.typeUnknown')
   }
 }
 

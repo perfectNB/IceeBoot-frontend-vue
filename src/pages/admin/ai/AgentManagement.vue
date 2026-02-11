@@ -1,15 +1,15 @@
 <template>
   <div class="agent-management">
     <div class="page-header">
-      <h1 class="page-title">Agent管理</h1>
-      <p class="page-description">管理Coze和Dify平台的AI工作流</p>
+      <h1 class="page-title">{{ t('agentManagement.pageTitle') }}</h1>
+      <p class="page-description">{{ t('agentManagement.pageDescription') }}</p>
     </div>
     
     <!-- 操作区域 -->
     <div class="action-section">
       <el-button type="primary" @click="handleCreate" v-if="hasPermission('ai:agent:create')">
         <el-icon><Plus /></el-icon>
-        新建Agent
+        {{ t('agentManagement.newAgent') }}
       </el-button>
       <el-button
         type="danger"
@@ -18,41 +18,41 @@
         v-if="hasPermission('ai:agent:delete')"
       >
         <el-icon><Delete /></el-icon>
-        批量删除
+        {{ t('agentManagement.batchDelete') }}
       </el-button>
       <el-button @click="handleExport">
         <el-icon><Download /></el-icon>
-        导出
+        {{ t('agentManagement.export') }}
       </el-button>
     </div>
     
     <!-- 搜索区域 -->
     <div class="search-section">
       <el-form :model="searchForm" :inline="true">
-        <el-form-item label="名称">
+        <el-form-item :label="t('agentManagement.name')">
           <el-input
             v-model="searchForm.name"
-            placeholder="请输入名称"
+            :placeholder="t('agentManagement.pleaseEnterName')"
             clearable
             style="width: 200px"
             @keyup.enter="handleSearch"
           />
         </el-form-item>
-        <el-form-item label="类型">
+        <el-form-item :label="t('agentManagement.type')">
           <el-select
             v-model="searchForm.type"
-            placeholder="请选择类型"
+            :placeholder="t('agentManagement.pleaseSelectType')"
             clearable
             style="width: 120px"
           >
-            <el-option label="工作流" value="workflow" />
-            <el-option label="智能体" value="agent" />
+            <el-option :label="t('agentManagement.workflow')" value="workflow" />
+            <el-option :label="t('agentManagement.agent')" value="agent" />
           </el-select>
         </el-form-item>
-        <el-form-item label="平台">
+        <el-form-item :label="t('agentManagement.platform')">
           <el-select
             v-model="searchForm.platform"
-            placeholder="请选择平台"
+            :placeholder="t('agentManagement.pleaseSelectPlatform')"
             clearable
             style="width: 120px"
           >
@@ -62,10 +62,10 @@
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :icon="Search" @click="handleSearch">
-            搜索
+            {{ t('agentManagement.search') }}
           </el-button>
           <el-button :icon="Refresh" @click="handleReset">
-            重置
+            {{ t('agentManagement.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -82,36 +82,36 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="name" label="名称" min-width="150" />
-        <el-table-column label="平台" width="100">
+        <el-table-column prop="id" :label="t('agentManagement.id')" width="80" />
+        <el-table-column prop="name" :label="t('agentManagement.name')" min-width="150" />
+        <el-table-column :label="t('agentManagement.platform')" width="100">
           <template #default="{ row }">
             <el-tag :type="getPlatformType(row.platform)" size="small">
               {{ getPlatformLabel(row.platform) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="remark" label="备注" min-width="200" show-overflow-tooltip />
-        <el-table-column label="配置信息" min-width="300">
+        <el-table-column prop="remark" :label="t('agentManagement.remark')" min-width="200" show-overflow-tooltip />
+        <el-table-column :label="t('agentManagement.configInfo')" min-width="300">
           <template #default="{ row }">
             <div v-if="row.platform === 'coze'">
-              <div><strong>Token:</strong> <span class="key-display">{{ maskKey(row.token) }}</span></div>
-              <div><strong>BotId:</strong> {{ row.botId }}</div>
-              <div><strong>WorkFlowId:</strong> {{ row.workFlowId }}</div>
+              <div><strong>{{ t('agentManagement.token') }}:</strong> <span class="key-display">{{ maskKey(row.token) }}</span></div>
+              <div><strong>{{ t('agentManagement.botId') }}:</strong> {{ row.botId }}</div>
+              <div><strong>{{ t('agentManagement.workFlowId') }}:</strong> {{ row.workFlowId }}</div>
             </div>
             <div v-else-if="row.platform === 'dify'">
-              <div><strong>Key:</strong> <span class="key-display">{{ maskKey(row.key) }}</span></div>
+              <div><strong>{{ t('agentManagement.key') }}:</strong> <span class="key-display">{{ maskKey(row.key) }}</span></div>
             </div>
           </template>
         </el-table-column>
-        <el-table-column label="类型" width="100">
+        <el-table-column :label="t('agentManagement.type')" width="100">
           <template #default="{ row }">
             <el-tag :type="getTypeColor(row.type)" size="small">
               {{ getTypeLabel(row.type) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="80">
+        <el-table-column :label="t('agentManagement.status')" width="80">
           <template #default="{ row }">
             <el-switch
               v-model="row.status"
@@ -121,9 +121,9 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="160" />
-        <el-table-column prop="updateTime" label="更新时间" width="160" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column prop="createTime" :label="t('agentManagement.createTime')" width="160" />
+        <el-table-column prop="updateTime" :label="t('agentManagement.updateTime')" width="160" />
+        <el-table-column :label="t('agentManagement.operation')" width="200" fixed="right">
           <template #default="{ row }">
             <el-button
               type="primary"
@@ -132,7 +132,7 @@
               @click="handleEdit(row)"
               v-if="hasPermission('ai:agent:edit')"
             >
-              编辑
+              {{ t('agentManagement.edit') }}
             </el-button>
             <el-button
               type="danger"
@@ -141,7 +141,7 @@
               @click="handleDelete(row)"
               v-if="hasPermission('ai:agent:delete')"
             >
-              删除
+              {{ t('agentManagement.delete') }}
             </el-button>
           </template>
         </el-table-column>
@@ -174,78 +174,78 @@
         :rules="formRules"
         label-width="100px"
       >
-        <el-form-item label="名称" prop="name">
-          <el-input v-model="agentForm.name" placeholder="请输入名称" />
+        <el-form-item :label="t('agentManagement.name')" prop="name">
+          <el-input v-model="agentForm.name" :placeholder="t('agentManagement.pleaseEnterName')" />
         </el-form-item>
-        <el-form-item label="类型" prop="type">
-          <el-select v-model="agentForm.type" placeholder="请选择类型" style="width: 100%">
-            <el-option label="工作流" value="workflow" />
-            <el-option label="智能体" value="agent" />
+        <el-form-item :label="t('agentManagement.type')" prop="type">
+          <el-select v-model="agentForm.type" :placeholder="t('agentManagement.pleaseSelectType')" style="width: 100%">
+            <el-option :label="t('agentManagement.workflow')" value="workflow" />
+            <el-option :label="t('agentManagement.agent')" value="agent" />
           </el-select>
         </el-form-item>
-        <el-form-item label="平台类型" prop="platform">
-          <el-select v-model="agentForm.platform" placeholder="请选择平台" style="width: 100%">
+        <el-form-item :label="t('agentManagement.platformType')" prop="platform">
+          <el-select v-model="agentForm.platform" :placeholder="t('agentManagement.pleaseSelectPlatform')" style="width: 100%">
             <el-option label="Coze" value="coze" />
             <el-option label="Dify" value="dify" />
           </el-select>
         </el-form-item>
-        
+
         <!-- Coze平台字段 -->
         <template v-if="agentForm.platform === 'coze'">
-          <el-form-item label="Token" prop="token">
+          <el-form-item :label="t('agentManagement.token')" prop="token">
             <el-input
               v-model="agentForm.token"
               type="textarea"
               :rows="3"
-              placeholder="请输入Token"
+              :placeholder="t('agentManagement.pleaseEnterToken')"
             />
           </el-form-item>
-          <el-form-item label="BotId" prop="botId" v-if="agentForm.type === 'agent'">
+          <el-form-item :label="t('agentManagement.botId')" prop="botId" v-if="agentForm.type === 'agent'">
             <el-input
               v-model="agentForm.botId"
-              placeholder="请输入BotId（智能体必填）"
+              :placeholder="t('agentManagement.pleaseEnterBotId')"
             />
           </el-form-item>
-          <el-form-item label="WorkFlowId" prop="workFlowId">
+          <el-form-item :label="t('agentManagement.workFlowId')" prop="workFlowId">
             <el-input
               v-model="agentForm.workFlowId"
-              placeholder="请输入WorkFlowId"
+              :placeholder="t('agentManagement.pleaseEnterWorkFlowId')"
             />
           </el-form-item>
         </template>
-        
+
         <!-- Dify平台字段 -->
         <template v-else-if="agentForm.platform === 'dify'">
-          <el-form-item label="API密钥" prop="key">
+          <el-form-item :label="t('agentManagement.apiKey')" prop="key">
             <el-input
               v-model="agentForm.key"
               type="textarea"
               :rows="3"
-              placeholder="请输入API密钥"
+              :placeholder="t('agentManagement.pleaseEnterApiKey')"
             />
           </el-form-item>
         </template>
-        <el-form-item label="备注" prop="remark">
+        <el-form-item :label="t('agentManagement.remark')" prop="remark">
           <el-input
             v-model="agentForm.remark"
             type="textarea"
             :rows="3"
-            placeholder="请输入备注信息"
+            :placeholder="t('agentManagement.pleaseEnterRemark')"
           />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item :label="t('agentManagement.status')" prop="status">
           <el-radio-group v-model="agentForm.status">
-            <el-radio value="active">启用</el-radio>
-            <el-radio value="inactive">禁用</el-radio>
+            <el-radio value="active">{{ t('agentManagement.active') }}</el-radio>
+            <el-radio value="inactive">{{ t('agentManagement.inactive') }}</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
-      
+
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button @click="dialogVisible = false">{{ t('agentManagement.cancel') }}</el-button>
           <el-button type="primary" @click="handleSubmit" :loading="submitting">
-            {{ isEdit ? '更新' : '创建' }}
+            {{ isEdit ? t('agentManagement.update') : t('agentManagement.create') }}
           </el-button>
         </div>
       </template>
@@ -256,6 +256,7 @@
 <script setup lang="ts">
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import {
   Search,
   Refresh,
@@ -273,6 +274,8 @@ import {
 } from '@/api'
 import { hasPermission } from '@/utils/permission'
 import type { Agent } from '@/types'
+
+const { t } = useI18n()
 
 // 响应式数据
 const loading = ref(false)
@@ -321,29 +324,29 @@ const agentForm = reactive({
 
 // 表单验证规则
 const formRules = {
-  name: [{ required: true, message: '请输入名称', trigger: 'blur' }],
-  type: [{ required: true, message: '请选择类型', trigger: 'change' }],
-  platform: [{ required: true, message: '请选择平台', trigger: 'change' }],
-  token: [{ required: true, message: '请输入Token', trigger: 'blur' }],
-  botId: [{ 
+  name: [{ required: true, message: t('agentManagement.pleaseEnterNameValidation'), trigger: 'blur' }],
+  type: [{ required: true, message: t('agentManagement.pleaseSelectTypeValidation'), trigger: 'change' }],
+  platform: [{ required: true, message: t('agentManagement.pleaseSelectPlatformValidation'), trigger: 'change' }],
+  token: [{ required: true, message: t('agentManagement.pleaseEnterTokenValidation'), trigger: 'blur' }],
+  botId: [{
     validator: (rule: unknown, value: string, callback: (error?: Error) => void) => {
       if (agentForm.type === 'agent' && !value) {
-        callback(new Error('智能体必须填写BotId'))
+        callback(new Error(t('agentManagement.agentMustFillBotId')))
       } else {
         callback()
       }
-    }, 
-    trigger: 'blur' 
+    },
+    trigger: 'blur'
   }],
-  workFlowId: [{ required: true, message: '请输入WorkFlowId', trigger: 'blur' }],
-  key: [{ required: true, message: '请输入API密钥', trigger: 'blur' }]
+  workFlowId: [{ required: true, message: t('agentManagement.pleaseEnterWorkFlowIdValidation'), trigger: 'blur' }],
+  key: [{ required: true, message: t('agentManagement.pleaseEnterApiKeyValidation'), trigger: 'blur' }]
 }
 
 const tableData = ref<Agent[]>([])
 const selectedRows = ref<Agent[]>([])
 
 // 计算属性
-const dialogTitle = computed(() => isEdit.value ? '编辑Agent' : '新建Agent')
+const dialogTitle = computed(() => isEdit.value ? t('agentManagement.editAgent') : t('agentManagement.newAgent'))
 
 // 获取平台类型
 const getPlatformType = (platform: string) => {
@@ -360,7 +363,7 @@ const getPlatformLabel = (platform: string) => {
     coze: 'Coze',
     dify: 'Dify'
   }
-  return labelMap[platform] || '未知'
+  return labelMap[platform] || t('agentManagement.unknown')
 }
 
 // 获取类型颜色
@@ -375,10 +378,10 @@ const getTypeColor = (type: string) => {
 // 获取类型标签
 const getTypeLabel = (type: string) => {
   const labelMap: Record<string, string> = {
-    workflow: '工作流',
-    agent: '智能体'
+    workflow: t('agentManagement.workflow'),
+    agent: t('agentManagement.agent')
   }
-  return labelMap[type] || '未知'
+  return labelMap[type] || t('agentManagement.unknown')
 }
 
 // 掩码显示密钥
@@ -405,7 +408,7 @@ const loadAgents = async () => {
     pagination.pages = result.pages
   } catch (error) {
     console.error('加载Agent数据失败:', error)
-    ElMessage.error('加载Agent数据失败')
+    ElMessage.error(t('agentManagement.loadAgentDataFailed'))
   } finally {
     loading.value = false
   }
@@ -458,22 +461,22 @@ const handleEdit = (row: Agent) => {
 const handleDelete = async (row: Agent) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除Agent "${row.name}" 吗？`,
-      '删除确认',
+      t('agentManagement.confirmDeleteAgent', { name: row.name }),
+      t('agentManagement.deleteConfirm'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('agentManagement.confirm'),
+        cancelButtonText: t('agentManagement.cancel'),
         type: 'warning'
       }
     )
-    
+
     await deleteAgent(row.id)
-    ElMessage.success('Agent删除成功')
+    ElMessage.success(t('agentManagement.agentDeleteSuccess'))
     await loadAgents()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除Agent失败:', error)
-      ElMessage.error('删除Agent失败')
+      ElMessage.error(t('agentManagement.agentDeleteFailed'))
     }
   }
 }
@@ -482,10 +485,10 @@ const handleDelete = async (row: Agent) => {
 const handleStatusChange = async (row: Agent) => {
   try {
     await updateAgentStatus(row.id, row.status)
-    ElMessage.success('状态更新成功')
+    ElMessage.success(t('agentManagement.statusUpdateSuccess'))
   } catch (error) {
     console.error('状态更新失败:', error)
-    ElMessage.error('状态更新失败')
+    ElMessage.error(t('agentManagement.statusUpdateFailed'))
     // 恢复原状态
     row.status = row.status === 'active' ? 'inactive' : 'active'
   }
@@ -494,24 +497,24 @@ const handleStatusChange = async (row: Agent) => {
 // 提交表单
 const handleSubmit = async () => {
   if (!formRef.value) return
-  
+
   try {
     await formRef.value.validate()
     submitting.value = true
-    
+
     if (isEdit.value) {
       await updateAgent(agentForm.id, agentForm)
-      ElMessage.success('Agent更新成功')
+      ElMessage.success(t('agentManagement.agentUpdateSuccess'))
     } else {
       await createAgent(agentForm)
-      ElMessage.success('Agent创建成功')
+      ElMessage.success(t('agentManagement.agentCreateSuccess'))
     }
-    
+
     dialogVisible.value = false
     await loadAgents()
   } catch (error) {
     console.error('提交失败:', error)
-    ElMessage.error('操作失败')
+    ElMessage.error(t('agentManagement.operationFailed'))
   } finally {
     submitting.value = false
   }
@@ -545,27 +548,27 @@ const handleSelectionChange = (selection: Agent[]) => {
 const handleBatchDelete = async () => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedRows.value.length} 个Agent吗？`,
-      '批量删除确认',
+      t('agentManagement.confirmBatchDelete', { count: selectedRows.value.length }),
+      t('agentManagement.batchDeleteConfirm'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('agentManagement.confirm'),
+        cancelButtonText: t('agentManagement.cancel'),
         type: 'warning'
       }
     )
-    
+
     // 批量删除Agent
     for (const agent of selectedRows.value) {
       await deleteAgent(agent.id)
     }
-    
-    ElMessage.success(`成功删除 ${selectedRows.value.length} 个Agent`)
+
+    ElMessage.success(t('agentManagement.batchDeleteSuccess', { count: selectedRows.value.length }))
     selectedRows.value = []
     await loadAgents()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('批量删除Agent失败:', error)
-      ElMessage.error('批量删除Agent失败')
+      ElMessage.error(t('agentManagement.batchDeleteFailed'))
     }
   }
 }
@@ -584,7 +587,7 @@ const handleCurrentChange = (page: number) => {
 
 // 导出
 const handleExport = () => {
-  ElMessage.info('导出功能开发中')
+  ElMessage.info(t('agentManagement.exportInDevelopment'))
 }
 
 // 初始化

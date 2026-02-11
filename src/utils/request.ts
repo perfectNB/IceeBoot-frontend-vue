@@ -4,6 +4,7 @@ import { getBaseURL } from './env'
 import { useUserStore } from '@/stores/user'
 import router from '@/router'
 import type { ApiResponse, ApiResponseLike, LoginResponse } from '@/types'
+import { t } from '@/locales/useAppI18n'
 
 type RequestConfig = AxiosRequestConfig & {
   skipErrorMessage?: boolean
@@ -71,8 +72,8 @@ const triggerLogout = (message?: string) => {
     router.push('/')
   }
   if (message) {
-    ElMessageBox.alert(message, '提示', {
-      confirmButtonText: '确定',
+    ElMessageBox.alert(message, t('common.tip'), {
+      confirmButtonText: t('common.confirm'),
       type: 'warning'
     }).then(finalize).catch(finalize)
   } else {
@@ -84,7 +85,7 @@ const refreshTokens = async (): Promise<LoginResponse | null> => {
   const userStore = useUserStore()
   const currentRefreshToken = userStore.getRefreshToken()
   if (!currentRefreshToken) {
-    triggerLogout('登录已过期，请重新登录')
+    triggerLogout(t('request.loginExpired'))
     return null
   }
 
@@ -103,17 +104,17 @@ const refreshTokens = async (): Promise<LoginResponse | null> => {
       return null
     }
     if (isRefreshInvalidCode(code)) {
-      triggerLogout('登录已过期，请重新登录')
+      triggerLogout(t('request.loginExpired'))
       return null
     }
-    throw new Error(message || '刷新失败')
+    throw new Error(message || t('request.refreshFailed'))
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const status = error.response?.status
       const responseData = error.response?.data as ApiResponseLike<LoginResponse> | undefined
       const normalized = responseData ? normalizeApiResponse<LoginResponse>(responseData) : undefined
       if (status === 401 || isRefreshInvalidCode(normalized?.code)) {
-        triggerLogout('登录已过期，请重新登录')
+        triggerLogout(t('request.loginExpired'))
         return null
       }
     }
@@ -155,7 +156,7 @@ service.interceptors.request.use(
       const refreshToken = userStore.getRefreshToken()
       if (expires && expires - Date.now() <= refreshThresholdMs) {
         if (!refreshToken) {
-          triggerLogout('登录已过期，请重新登录')
+          triggerLogout(t('request.loginExpired'))
         } else {
           const newToken = await ensureFreshToken()
           if (newToken) {
@@ -202,12 +203,12 @@ service.interceptors.response.use(
           return service.request(config)
         }
       }
-      return Promise.reject(new Error(message || '登录已过期'))
+      return Promise.reject(new Error(message || t('request.loginExpiredShort')))
     }
 
     // 权限不足
     if (code === 403) {
-      const normalizedMessage = message || '权限不足'
+      const normalizedMessage = message || t('request.forbidden')
       const skipErrorMessage = Boolean((response.config as RequestConfig | undefined)?.skipErrorMessage)
       if (!skipErrorMessage) {
         ElMessage.error(normalizedMessage)
@@ -216,13 +217,13 @@ service.interceptors.response.use(
     }
 
     // 其他错误
-    ElMessage.error(message || '请求失败')
-    return Promise.reject(new Error(message || '请求失败'))
+    ElMessage.error(message || t('request.requestFailed'))
+    return Promise.reject(new Error(message || t('request.requestFailed')))
   },
   (error) => {
     console.error('响应错误:', error)
 
-    let message = '网络错误'
+    let message = t('request.networkError')
 
     if (error.response) {
       const { status } = error.response
@@ -238,50 +239,50 @@ service.interceptors.response.use(
             config.headers = headers
             return service.request(config)
           }
-          triggerLogout('登录已过期，请重新登录')
+          triggerLogout(t('request.loginExpired'))
           return Promise.reject(error)
         })
       }
       switch (status) {
         case 400:
-          message = '请求参数错误'
+          message = t('request.badRequest')
           break
         case 401:
-          message = '未授权，请重新登录'
+          message = t('request.unauthorized')
           const userStore = useUserStore()
           userStore.logout()
           router.push('/')
           break
         case 403:
-          message = '权限不足'
+          message = t('request.forbidden')
           break
         case 404:
-          message = '请求的资源不存在'
+          message = t('request.notFound')
           break
         case 500:
-          message = '服务器内部错误'
+          message = t('request.serverError')
           break
         case 502:
-          message = '网关错误'
+          message = t('request.badGateway')
           break
         case 503:
-          message = '服务不可用'
+          message = t('request.serviceUnavailable')
           break
         case 504:
-          message = '网关超时'
+          message = t('request.gatewayTimeout')
           break
         default:
-          message = `连接错误${status}`
+          message = t('request.connectionError', { status })
       }
       const responseData = error.response?.data as ApiResponseLike<Record<string, unknown>> | undefined
       const normalized = responseData ? normalizeApiResponse(responseData) : undefined
       if (isRefreshInvalidCode(normalized?.code)) {
-        triggerLogout('登录已过期，请重新登录')
+        triggerLogout(t('request.loginExpired'))
       }
     } else if (error.request) {
-      message = '网络连接异常'
+      message = t('request.networkException')
     } else {
-      message = error.message || '请求失败'
+      message = error.message || t('request.requestFailed')
     }
 
     if (error && typeof error === 'object') {

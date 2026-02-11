@@ -1,26 +1,26 @@
 <template>
   <div class="backend-codegen">
     <div class="page-header">
-      <h1 class="page-title">后端代码生成</h1>
-      <p class="page-description">生成后端增删改查代码</p>
+      <h1 class="page-title">{{ t('backendCodegen.pageTitle') }}</h1>
+      <p class="page-description">{{ t('backendCodegen.pageDescription') }}</p>
     </div>
 
     <!-- 基础配置 -->
     <div class="config-section">
       <el-card>
         <template #header>
-          <span>基础配置</span>
+          <span>{{ t('backendCodegen.basicConfig') }}</span>
         </template>
 
         <el-form :model="config" label-width="120px">
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="模块名称">
-                <el-input v-model="config.moduleName" placeholder="请输入模块名称" />
+              <el-form-item :label="t('backendCodegen.moduleName')">
+                <el-input v-model="config.moduleName" :placeholder="t('backendCodegen.moduleNamePlaceholder')" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="包名">
+              <el-form-item :label="t('backendCodegen.packageName')">
                 <el-input v-model="config.packageName" placeholder="com.example.demo" />
               </el-form-item>
             </el-col>
@@ -28,18 +28,18 @@
 
           <el-row :gutter="20">
             <el-col :span="12">
-              <el-form-item label="作者">
-                <el-input v-model="config.author" placeholder="请输入作者" />
+              <el-form-item :label="t('backendCodegen.author')">
+                <el-input v-model="config.author" :placeholder="t('backendCodegen.authorPlaceholder')" />
               </el-form-item>
             </el-col>
             <el-col :span="12">
-              <el-form-item label="表名">
-                <el-input v-model="config.tableName" placeholder="请输入数据库表名" />
+              <el-form-item :label="t('backendCodegen.tableName')">
+                <el-input v-model="config.tableName" :placeholder="t('backendCodegen.tableNamePlaceholder')" />
               </el-form-item>
             </el-col>
           </el-row>
 
-          <el-form-item label="框架选择">
+          <el-form-item :label="t('backendCodegen.frameworkSelect')">
             <el-radio-group v-model="config.framework">
               <el-radio label="spring-boot">Spring Boot</el-radio>
               <el-radio label="mybatis-plus">MyBatis Plus</el-radio>
@@ -55,23 +55,23 @@
       <el-card>
         <template #header>
           <div class="card-header">
-            <span>字段配置</span>
+            <span>{{ t('backendCodegen.fieldConfig') }}</span>
             <el-button type="primary" @click="handleAddField">
               <el-icon><Plus /></el-icon>
-              添加字段
+              {{ t('backendCodegen.addField') }}
             </el-button>
           </div>
         </template>
 
         <el-table :data="fieldList" border>
-          <el-table-column prop="fieldName" label="字段名" width="150">
+          <el-table-column prop="fieldName" :label="t('backendCodegen.fieldName')" width="150">
             <template #default="{ row }">
-              <el-input v-model="row.fieldName" placeholder="字段名" size="small" />
+              <el-input v-model="row.fieldName" :placeholder="t('backendCodegen.fieldNamePlaceholder')" size="small" />
             </template>
           </el-table-column>
-          <el-table-column prop="fieldType" label="字段类型" width="120">
+          <el-table-column prop="fieldType" :label="t('backendCodegen.fieldType')" width="120">
             <template #default="{ row }">
-              <el-select v-model="row.fieldType" placeholder="类型" size="small">
+              <el-select v-model="row.fieldType" :placeholder="t('backendCodegen.typePlaceholder')" size="small">
                 <el-option label="String" value="String" />
                 <el-option label="Integer" value="Integer" />
                 <el-option label="Long" value="Long" />
@@ -82,25 +82,25 @@
               </el-select>
             </template>
           </el-table-column>
-          <el-table-column prop="comment" label="注释" width="150">
+          <el-table-column prop="comment" :label="t('backendCodegen.comment')" width="150">
             <template #default="{ row }">
-              <el-input v-model="row.comment" placeholder="字段注释" size="small" />
+              <el-input v-model="row.comment" :placeholder="t('backendCodegen.commentPlaceholder')" size="small" />
             </template>
           </el-table-column>
-          <el-table-column prop="nullable" label="可为空" width="80">
+          <el-table-column prop="nullable" :label="t('backendCodegen.nullable')" width="80">
             <template #default="{ row }">
               <el-checkbox v-model="row.nullable" />
             </template>
           </el-table-column>
-          <el-table-column prop="primaryKey" label="主键" width="80">
+          <el-table-column prop="primaryKey" :label="t('backendCodegen.primaryKey')" width="80">
             <template #default="{ row }">
               <el-checkbox v-model="row.primaryKey" />
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="100">
+          <el-table-column :label="t('backendCodegen.operation')" width="100">
             <template #default="{ $index }">
               <el-button type="danger" size="small" @click="handleDeleteField($index)">
-                删除
+                {{ t('backendCodegen.delete') }}
               </el-button>
             </template>
           </el-table-column>
@@ -112,16 +112,16 @@
     <div class="generate-options">
       <el-card>
         <template #header>
-          <span>生成选项</span>
+          <span>{{ t('backendCodegen.generateOptions') }}</span>
         </template>
 
         <el-checkbox-group v-model="generateOptions">
-          <el-checkbox label="entity">实体类 (Entity)</el-checkbox>
-          <el-checkbox label="mapper">数据访问层 (Mapper)</el-checkbox>
-          <el-checkbox label="service">业务逻辑层 (Service)</el-checkbox>
-          <el-checkbox label="controller">控制器 (Controller)</el-checkbox>
-          <el-checkbox label="dto">数据传输对象 (DTO)</el-checkbox>
-          <el-checkbox label="vo">视图对象 (VO)</el-checkbox>
+          <el-checkbox label="entity">{{ t('backendCodegen.entity') }}</el-checkbox>
+          <el-checkbox label="mapper">{{ t('backendCodegen.mapper') }}</el-checkbox>
+          <el-checkbox label="service">{{ t('backendCodegen.service') }}</el-checkbox>
+          <el-checkbox label="controller">{{ t('backendCodegen.controller') }}</el-checkbox>
+          <el-checkbox label="dto">{{ t('backendCodegen.dto') }}</el-checkbox>
+          <el-checkbox label="vo">{{ t('backendCodegen.vo') }}</el-checkbox>
         </el-checkbox-group>
       </el-card>
     </div>
@@ -130,16 +130,16 @@
     <div class="action-section">
       <el-button type="primary" size="large" @click="handleGenerate" :loading="generating">
         <el-icon><Setting /></el-icon>
-        生成代码
+        {{ t('backendCodegen.generateCode') }}
       </el-button>
       <el-button size="large" @click="handlePreview">
         <el-icon><View /></el-icon>
-        预览代码
+        {{ t('backendCodegen.previewCode') }}
       </el-button>
     </div>
 
     <!-- 代码预览对话框 -->
-    <el-dialog v-model="previewVisible" title="代码预览" width="80%" top="5vh">
+    <el-dialog v-model="previewVisible" :title="t('backendCodegen.codePreview')" width="80%" top="5vh">
       <el-tabs v-model="activeTab">
         <el-tab-pane label="Entity" name="entity" v-if="generateOptions.includes('entity')">
           <pre><code>{{ previewCode.entity }}</code></pre>
@@ -162,6 +162,9 @@
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus, Setting, View } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // 字段接口
 interface Field {
@@ -417,7 +420,7 @@ public class ${className}Controller {
 // 预览代码
 const handlePreview = () => {
   if (!config.moduleName || fieldList.value.length === 0) {
-    ElMessage.warning('请完善配置信息和字段信息')
+    ElMessage.warning(t('backendCodegen.completeConfigWarning'))
     return
   }
 
@@ -440,7 +443,7 @@ const handlePreview = () => {
 // 生成代码
 const handleGenerate = async () => {
   if (!config.moduleName || fieldList.value.length === 0) {
-    ElMessage.warning('请完善配置信息和字段信息')
+    ElMessage.warning(t('backendCodegen.completeConfigWarning'))
     return
   }
 
@@ -450,9 +453,9 @@ const handleGenerate = async () => {
     // 模拟生成过程
     await new Promise(resolve => setTimeout(resolve, 2000))
 
-    ElMessage.success('后端代码生成成功！')
+    ElMessage.success(t('backendCodegen.generateSuccess'))
   } catch {
-    ElMessage.error('生成失败')
+    ElMessage.error(t('backendCodegen.generateFailed'))
   } finally {
     generating.value = false
   }

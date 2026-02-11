@@ -1,62 +1,62 @@
 <template>
   <div class="workflow-page">
     <div class="page-header">
-      <h2>流程实例</h2>
-      <p>启动流程实例、查询状态、结束或删除实例</p>
+      <h2>{{ t('workflowInstances.title') }}</h2>
+      <p>{{ t('workflowInstances.description') }}</p>
     </div>
 
     <el-row :gutter="16">
       <el-col :span="12">
         <div class="table-section">
-          <div class="section-title">启动流程</div>
+          <div class="section-title">{{ t('workflowInstances.startProcess') }}</div>
           <el-form :model="startForm" label-width="90px">
-            <el-form-item label="流程定义">
-              <el-select v-model="startForm.processDefinitionKey" placeholder="请选择流程定义">
+            <el-form-item :label="t('workflowInstances.processDefinition')">
+              <el-select v-model="startForm.processDefinitionKey" :placeholder="t('workflowInstances.selectProcessDefinition')">
                 <el-option v-for="item in definitionKeyOptions" :key="item.value" :label="item.label" :value="item.value" />
               </el-select>
             </el-form-item>
-            <el-form-item label="业务Key">
-              <el-input v-model="startForm.businessKey" placeholder="可选" />
+            <el-form-item :label="t('workflowInstances.businessKey')">
+              <el-input v-model="startForm.businessKey" :placeholder="t('workflowInstances.optional')" />
             </el-form-item>
-            <el-form-item label="流程变量">
-              <el-input v-model="startForm.variablesJson" type="textarea" :rows="6" placeholder="JSON对象" />
+            <el-form-item :label="t('workflowInstances.processVariables')">
+              <el-input v-model="startForm.variablesJson" type="textarea" :rows="6" :placeholder="t('workflowInstances.jsonObject')" />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" :loading="startingProcess" @click="handleStartProcess">启动流程</el-button>
-              <el-button @click="resetStartForm">重置</el-button>
+              <el-button type="primary" :loading="startingProcess" @click="handleStartProcess">{{ t('workflowInstances.startProcessBtn') }}</el-button>
+              <el-button @click="resetStartForm">{{ t('workflowInstances.reset') }}</el-button>
             </el-form-item>
           </el-form>
         </div>
       </el-col>
       <el-col :span="12">
         <div class="table-section">
-          <div class="section-title">流程实例操作</div>
+          <div class="section-title">{{ t('workflowInstances.processInstanceOperation') }}</div>
           <el-form :model="instanceForm" label-width="100px">
-            <el-form-item label="实例ID">
-              <el-input v-model="instanceForm.processInstanceId" placeholder="请输入流程实例ID" />
+            <el-form-item :label="t('workflowInstances.instanceId')">
+              <el-input v-model="instanceForm.processInstanceId" :placeholder="t('workflowInstances.inputProcessInstanceId')" />
             </el-form-item>
-            <el-form-item label="删除原因">
-              <el-input v-model="instanceForm.deleteReason" placeholder="可选" />
+            <el-form-item :label="t('workflowInstances.deleteReason')">
+              <el-input v-model="instanceForm.deleteReason" :placeholder="t('workflowInstances.optional')" />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" :loading="loadingInstance" @click="handleLoadInstance">查询</el-button>
-              <el-button type="warning" :loading="endingInstance" @click="handleEndInstance">结束</el-button>
-              <el-button type="danger" :loading="deletingInstance" @click="handleDeleteInstance">删除</el-button>
-              <el-button type="info" :loading="checkingEnded" @click="handleCheckEnded">是否结束</el-button>
+              <el-button type="primary" :loading="loadingInstance" @click="handleLoadInstance">{{ t('workflowInstances.query') }}</el-button>
+              <el-button type="warning" :loading="endingInstance" @click="handleEndInstance">{{ t('workflowInstances.end') }}</el-button>
+              <el-button type="danger" :loading="deletingInstance" @click="handleDeleteInstance">{{ t('workflowInstances.delete') }}</el-button>
+              <el-button type="info" :loading="checkingEnded" @click="handleCheckEnded">{{ t('workflowInstances.isEnded') }}</el-button>
             </el-form-item>
           </el-form>
           <el-descriptions v-if="instanceResult" :column="2" border>
-            <el-descriptions-item label="实例ID">{{ instanceResult.processInstanceId || instanceResult.id }}</el-descriptions-item>
-            <el-descriptions-item label="流程Key">{{ instanceResult.processDefinitionKey }}</el-descriptions-item>
-            <el-descriptions-item label="流程名称">{{ instanceResult.processDefinitionName || instanceResult.name }}</el-descriptions-item>
-            <el-descriptions-item label="版本">{{ instanceResult.processDefinitionVersion }}</el-descriptions-item>
-            <el-descriptions-item label="开始时间">{{ instanceResult.startTime }}</el-descriptions-item>
-            <el-descriptions-item label="发起人">{{ instanceResult.startUserId }}</el-descriptions-item>
-            <el-descriptions-item label="当前节点">{{ instanceResult.activityId }}</el-descriptions-item>
-            <el-descriptions-item label="结束状态">{{ instanceResult.ended ? '已结束' : '运行中' }}</el-descriptions-item>
+            <el-descriptions-item :label="t('workflowInstances.instanceId')">{{ instanceResult.processInstanceId || instanceResult.id }}</el-descriptions-item>
+            <el-descriptions-item :label="t('workflowInstances.processKey')">{{ instanceResult.processDefinitionKey }}</el-descriptions-item>
+            <el-descriptions-item :label="t('workflowInstances.processName')">{{ instanceResult.processDefinitionName || instanceResult.name }}</el-descriptions-item>
+            <el-descriptions-item :label="t('workflowInstances.version')">{{ instanceResult.processDefinitionVersion }}</el-descriptions-item>
+            <el-descriptions-item :label="t('workflowInstances.startTime')">{{ instanceResult.startTime }}</el-descriptions-item>
+            <el-descriptions-item :label="t('workflowInstances.initiator')">{{ instanceResult.startUserId }}</el-descriptions-item>
+            <el-descriptions-item :label="t('workflowInstances.currentNode')">{{ instanceResult.activityId }}</el-descriptions-item>
+            <el-descriptions-item :label="t('workflowInstances.endStatus')">{{ instanceResult.ended ? t('workflowInstances.ended') : t('workflowInstances.running') }}</el-descriptions-item>
           </el-descriptions>
           <div v-if="instanceEnded !== null" class="ended-tip">
-            结束状态：{{ instanceEnded ? '已结束' : '未结束' }}
+            {{ t('workflowInstances.endStatusLabel') }}{{ instanceEnded ? t('workflowInstances.ended') : t('workflowInstances.notEnded') }}
           </div>
         </div>
       </el-col>
@@ -67,6 +67,7 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import {
   checkWorkflowProcessEnded,
   deleteWorkflowProcess,
@@ -81,6 +82,8 @@ import {
 defineOptions({
   name: 'WorkflowInstances'
 })
+
+const { t } = useI18n()
 
 const definitions = ref<WorkflowDefinition[]>([])
 
@@ -115,13 +118,13 @@ const loadDefinitions = async () => {
   try {
     definitions.value = await getWorkflowDefinitions({ latestOnly: true })
   } catch {
-    ElMessage.error('加载流程定义失败')
+    ElMessage.error(t('workflowInstances.loadDefinitionsFailed'))
   }
 }
 
 const handleStartProcess = async () => {
   if (!startForm.processDefinitionKey) {
-    ElMessage.warning('请选择流程定义')
+    ElMessage.warning(t('workflowInstances.selectProcessDefinitionRequired'))
     return
   }
   const variables = parseJson(startForm.variablesJson)
@@ -135,10 +138,10 @@ const handleStartProcess = async () => {
     }
     instanceResult.value = await startWorkflowProcess(payload)
     instanceForm.processInstanceId = instanceResult.value.processInstanceId || instanceResult.value.id || ''
-    ElMessage.success('流程已启动')
+    ElMessage.success(t('workflowInstances.processStarted'))
     resetStartForm()
   } catch {
-    ElMessage.error('启动失败')
+    ElMessage.error(t('workflowInstances.startFailed'))
   } finally {
     startingProcess.value = false
   }
@@ -152,15 +155,15 @@ const resetStartForm = () => {
 
 const handleLoadInstance = async () => {
   if (!instanceForm.processInstanceId) {
-    ElMessage.warning('请输入流程实例ID')
+    ElMessage.warning(t('workflowInstances.inputProcessInstanceIdRequired'))
     return
   }
   loadingInstance.value = true
   try {
     instanceResult.value = await getWorkflowProcess(instanceForm.processInstanceId)
-    ElMessage.success('查询完成')
+    ElMessage.success(t('workflowInstances.queryCompleted'))
   } catch {
-    ElMessage.error('查询失败')
+    ElMessage.error(t('workflowInstances.queryFailed'))
   } finally {
     loadingInstance.value = false
   }
@@ -168,15 +171,15 @@ const handleLoadInstance = async () => {
 
 const handleEndInstance = async () => {
   if (!instanceForm.processInstanceId) {
-    ElMessage.warning('请输入流程实例ID')
+    ElMessage.warning(t('workflowInstances.inputProcessInstanceIdRequired'))
     return
   }
   endingInstance.value = true
   try {
     await endWorkflowProcess(instanceForm.processInstanceId)
-    ElMessage.success('流程已结束')
+    ElMessage.success(t('workflowInstances.processEnded'))
   } catch {
-    ElMessage.error('结束失败')
+    ElMessage.error(t('workflowInstances.endFailed'))
   } finally {
     endingInstance.value = false
   }
@@ -184,7 +187,7 @@ const handleEndInstance = async () => {
 
 const handleDeleteInstance = async () => {
   if (!instanceForm.processInstanceId) {
-    ElMessage.warning('请输入流程实例ID')
+    ElMessage.warning(t('workflowInstances.inputProcessInstanceIdRequired'))
     return
   }
   deletingInstance.value = true
@@ -195,9 +198,9 @@ const handleDeleteInstance = async () => {
     })
     instanceResult.value = null
     instanceEnded.value = null
-    ElMessage.success('流程已删除')
+    ElMessage.success(t('workflowInstances.processDeleted'))
   } catch {
-    ElMessage.error('删除失败')
+    ElMessage.error(t('workflowInstances.deleteFailed'))
   } finally {
     deletingInstance.value = false
   }
@@ -205,14 +208,14 @@ const handleDeleteInstance = async () => {
 
 const handleCheckEnded = async () => {
   if (!instanceForm.processInstanceId) {
-    ElMessage.warning('请输入流程实例ID')
+    ElMessage.warning(t('workflowInstances.inputProcessInstanceIdRequired'))
     return
   }
   checkingEnded.value = true
   try {
     instanceEnded.value = await checkWorkflowProcessEnded(instanceForm.processInstanceId)
   } catch {
-    ElMessage.error('查询失败')
+    ElMessage.error(t('workflowInstances.queryFailed'))
   } finally {
     checkingEnded.value = false
   }
@@ -223,12 +226,12 @@ const parseJson = (value: string): Record<string, unknown> | undefined | null =>
   try {
     const parsed = JSON.parse(value) as Record<string, unknown>
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      ElMessage.error('变量需要是JSON对象')
+      ElMessage.error(t('workflowInstances.variablesMustBeJsonObject'))
       return null
     }
     return parsed
   } catch {
-    ElMessage.error('JSON格式不正确')
+    ElMessage.error(t('workflowInstances.jsonFormatIncorrect'))
     return null
   }
 }

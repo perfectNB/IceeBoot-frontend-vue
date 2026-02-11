@@ -1,15 +1,15 @@
 <template>
   <div class="pay-config-management">
     <div class="page-header">
-      <h1 class="page-title">支付配置管理</h1>
-      <p class="page-description">管理系统支付套餐配置</p>
+      <h1 class="page-title">{{ t('payConfig.title') }}</h1>
+      <p class="page-description">{{ t('payConfig.description') }}</p>
     </div>
 
     <!-- 操作区域 -->
     <div class="action-section">
       <el-button type="primary" @click="handleCreate">
         <el-icon><Plus /></el-icon>
-        新建配置
+        {{ t('payConfig.create') }}
       </el-button>
       <el-button
         type="danger"
@@ -17,42 +17,42 @@
         :disabled="selectedConfigs.length === 0"
       >
         <el-icon><Delete /></el-icon>
-        批量删除
+        {{ t('payConfig.batchDelete') }}
       </el-button>
     </div>
 
     <!-- 搜索区域 -->
     <div class="search-section">
       <el-form :model="searchForm" :inline="true">
-        <el-form-item label="配置名称">
+        <el-form-item :label="t('payConfig.search.configName')">
           <el-input
             v-model="searchForm.configName"
-            placeholder="请输入配置名称"
+            :placeholder="t('payConfig.search.configNamePlaceholder')"
             clearable
             style="width: 200px"
             @keyup.enter="handleSearch"
           />
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item :label="t('payConfig.search.status')">
           <el-select
             v-model="searchForm.status"
-            placeholder="请选择状态"
+            :placeholder="t('payConfig.search.statusPlaceholder')"
             clearable
             style="width: 120px"
           >
-            <el-option label="启用" value="active" />
-            <el-option label="禁用" value="inactive" />
+            <el-option :label="t('payConfig.statusActive')" value="active" />
+            <el-option :label="t('payConfig.statusInactive')" value="inactive" />
           </el-select>
         </el-form-item>
 
         <el-form-item>
           <el-button type="primary" @click="handleSearch" :loading="loading">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('payConfig.search.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon><Refresh /></el-icon>
-            重置
+            {{ t('payConfig.search.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -69,16 +69,16 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="configName" label="配置名称" min-width="150" />
-        <el-table-column prop="payCode" label="支付策略编码" min-width="150" />
-        <el-table-column label="金额" width="120">
+        <el-table-column prop="id" :label="t('payConfig.table.id')" width="80" />
+        <el-table-column prop="configName" :label="t('payConfig.table.configName')" min-width="150" />
+        <el-table-column prop="payCode" :label="t('payConfig.table.payCode')" min-width="150" />
+        <el-table-column :label="t('payConfig.table.amount')" width="120">
           <template #default="{ row }">
             <span class="price-text">¥{{ row.amountYuan }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
-        <el-table-column label="状态" width="100">
+        <el-table-column prop="description" :label="t('payConfig.table.description')" min-width="200" show-overflow-tooltip />
+        <el-table-column :label="t('payConfig.table.status')" width="100">
           <template #default="{ row }">
             <el-switch
               v-model="row.status"
@@ -88,9 +88,9 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="createBy" label="创建者" width="120" />
-        <el-table-column prop="createTime" label="创建时间" width="160" />
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column prop="createBy" :label="t('payConfig.table.createBy')" width="120" />
+        <el-table-column prop="createTime" :label="t('payConfig.table.createTime')" width="160" />
+        <el-table-column :label="t('payConfig.table.actions')" width="280" fixed="right">
           <template #default="{ row }">
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
               <el-button
@@ -99,7 +99,7 @@
                 :icon="Edit"
                 @click="handleEdit(row)"
               >
-                编辑
+                {{ t('payConfig.edit') }}
               </el-button>
               <el-button
                 type="success"
@@ -107,7 +107,7 @@
                 :icon="QrCode"
                 @click="handleShowQrCode(row)"
               >
-                去支付
+                {{ t('payConfig.goPay') }}
               </el-button>
               <el-button
                 type="danger"
@@ -115,7 +115,7 @@
                 :icon="Delete"
                 @click="handleDelete(row)"
               >
-                删除
+                {{ t('payConfig.delete') }}
               </el-button>
             </div>
           </template>
@@ -149,30 +149,30 @@
         :rules="formRules"
         label-width="100px"
       >
-        <el-form-item label="配置名称" prop="configName">
-          <el-input v-model="configForm.configName" placeholder="请输入配置名称" />
+        <el-form-item :label="t('payConfig.form.configName')" prop="configName">
+          <el-input v-model="configForm.configName" :placeholder="t('payConfig.form.configNamePlaceholder')" />
         </el-form-item>
-        <el-form-item label="支付策略编码" prop="payCode">
-          <el-input v-model="configForm.payCode" placeholder="请输入支付策略编码" />
+        <el-form-item :label="t('payConfig.form.payCode')" prop="payCode">
+          <el-input v-model="configForm.payCode" :placeholder="t('payConfig.form.payCodePlaceholder')" />
         </el-form-item>
-        <el-form-item label="金额(元)" prop="amountYuan">
+        <el-form-item :label="t('payConfig.form.amount')" prop="amountYuan">
           <el-input
             v-model="configForm.amountYuan"
-            placeholder="请输入金额"
+            :placeholder="t('payConfig.form.amountPlaceholder')"
             @input="handleAmountChange"
           >
             <template #prepend>¥</template>
           </el-input>
         </el-form-item>
-        <el-form-item label="描述" prop="description">
+        <el-form-item :label="t('payConfig.form.description')" prop="description">
           <el-input
             v-model="configForm.description"
             type="textarea"
             :rows="4"
-            placeholder="请输入配置描述"
+            :placeholder="t('payConfig.form.descriptionPlaceholder')"
           />
         </el-form-item>
-        <el-form-item label="排序" prop="sort">
+        <el-form-item :label="t('payConfig.form.sort')" prop="sort">
           <el-input-number
             v-model="configForm.sort"
             :min="0"
@@ -180,23 +180,23 @@
             style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item :label="t('payConfig.form.status')" prop="status">
           <el-select
             v-model="configForm.status"
-            placeholder="请选择状态"
+            :placeholder="t('payConfig.form.statusPlaceholder')"
             style="width: 100%"
           >
-            <el-option label="启用" value="active" />
-            <el-option label="禁用" value="inactive" />
+            <el-option :label="t('payConfig.statusActive')" value="active" />
+            <el-option :label="t('payConfig.statusInactive')" value="inactive" />
           </el-select>
         </el-form-item>
       </el-form>
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button @click="dialogVisible = false">{{ t('payConfig.cancel') }}</el-button>
           <el-button type="primary" @click="handleSubmit" :loading="submitting">
-            确定
+            {{ t('payConfig.confirm') }}
           </el-button>
         </div>
       </template>
@@ -215,6 +215,7 @@ import {
   Delete,
   Link as QrCode
 } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import type { PaymentConfigVO, PaymentConfigQueryParams } from '@/api/pay'
 import {
   getPaymentConfigs,
@@ -224,6 +225,8 @@ import {
   deletePaymentConfigs,
   createPayQrCode
 } from '@/api'
+
+const { t } = useI18n()
 
 interface SearchForm {
   configName: string
@@ -277,36 +280,36 @@ const configForm = reactive<ConfigForm>({
 // 表单验证规则
 const formRules = {
   configName: [
-    { required: true, message: '请输入配置名称', trigger: 'blur' },
-    { min: 2, max: 50, message: '配置名称长度在 2 到 50 个字符', trigger: 'blur' }
+    { required: true, message: () => t('payConfig.form.configNameRequired'), trigger: 'blur' },
+    { min: 2, max: 50, message: () => t('payConfig.form.configNameLength'), trigger: 'blur' }
   ],
   payCode: [
-    { required: true, message: '请输入支付策略编码', trigger: 'blur' },
-    { min: 2, max: 50, message: '支付策略编码长度在 2 到 50 个字符', trigger: 'blur' }
+    { required: true, message: () => t('payConfig.form.payCodeRequired'), trigger: 'blur' },
+    { min: 2, max: 50, message: () => t('payConfig.form.payCodeLength'), trigger: 'blur' }
   ],
   amountYuan: [
-    { required: true, message: '请输入金额', trigger: 'blur' },
+    { required: true, message: () => t('payConfig.form.amountRequired'), trigger: 'blur' },
     {
       pattern: /^\d+(\.\d{1,2})?$/,
-      message: '请输入正确的金额格式',
+      message: () => t('payConfig.form.amountFormat'),
       trigger: 'blur'
     }
   ],
   description: [
-    { required: true, message: '请输入描述', trigger: 'blur' }
+    { required: true, message: () => t('payConfig.form.descriptionRequired'), trigger: 'blur' }
   ],
   sort: [
-    { required: true, message: '请输入排序', trigger: 'blur' }
+    { required: true, message: () => t('payConfig.form.sortRequired'), trigger: 'blur' }
   ],
   status: [
-    { required: true, message: '请选择状态', trigger: 'change' }
+    { required: true, message: () => t('payConfig.form.statusRequired'), trigger: 'change' }
   ]
 }
 
 const tableData = ref<PaymentConfigVO[]>([])
 
 // 计算属性
-const dialogTitle = computed(() => isEdit.value ? '编辑配置' : '新建配置')
+const dialogTitle = computed(() => isEdit.value ? t('payConfig.editTitle') : t('payConfig.createTitle'))
 
 // 金额输入变化处理
 const handleAmountChange = (value: string) => {
@@ -331,13 +334,13 @@ const loadConfigs = async () => {
     }
 
     const result = await getPaymentConfigs(params)
-    
+
     // 根据状态筛选（前端过滤）
     let filteredConfigs = result.records
     if (searchForm.status) {
       filteredConfigs = filteredConfigs.filter(c => c.status === searchForm.status)
     }
-    
+
     tableData.value = filteredConfigs
     pagination.total = result.total
     pagination.pages = result.pages
@@ -345,7 +348,7 @@ const loadConfigs = async () => {
     pagination.size = result.size
   } catch (error) {
     console.error('加载配置数据失败:', error)
-    ElMessage.error('加载配置数据失败')
+    ElMessage.error(t('payConfig.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -393,22 +396,22 @@ const handleEdit = (row: PaymentConfigVO) => {
 const handleDelete = async (row: PaymentConfigVO) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除配置 "${row.configName}" 吗？`,
-      '删除确认',
+      t('payConfig.deleteConfirm', { name: row.configName }),
+      t('payConfig.deleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('payConfig.confirm'),
+        cancelButtonText: t('payConfig.cancel'),
         type: 'warning'
       }
     )
 
     await deletePaymentConfig(row.id)
-    ElMessage.success('配置删除成功')
+    ElMessage.success(t('payConfig.deleteSuccess'))
     await loadConfigs()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除配置失败:', error)
-      ElMessage.error('删除配置失败')
+      ElMessage.error(t('payConfig.deleteFailed'))
     }
   }
 }
@@ -417,24 +420,24 @@ const handleDelete = async (row: PaymentConfigVO) => {
 const handleBatchDelete = async () => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedConfigs.value.length} 个配置吗？`,
-      '批量删除确认',
+      t('payConfig.batchDeleteConfirm', { count: selectedConfigs.value.length }),
+      t('payConfig.batchDeleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('payConfig.confirm'),
+        cancelButtonText: t('payConfig.cancel'),
         type: 'warning'
       }
     )
 
     const configIds = selectedConfigs.value.map(config => config.id)
     await deletePaymentConfigs(configIds)
-    ElMessage.success(`成功删除 ${selectedConfigs.value.length} 个配置`)
+    ElMessage.success(t('payConfig.batchDeleteSuccess', { count: selectedConfigs.value.length }))
     selectedConfigs.value = []
     await loadConfigs()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('批量删除配置失败:', error)
-      ElMessage.error('批量删除配置失败')
+      ElMessage.error(t('payConfig.batchDeleteFailed'))
     }
   }
 }
@@ -442,15 +445,15 @@ const handleBatchDelete = async () => {
 // 状态变更前的确认
 const handleBeforeStatusChange = async (row: PaymentConfigVO): Promise<boolean> => {
   const newStatus = row.status === 'active' ? 'inactive' : 'active'
-  const statusText = newStatus === 'active' ? '启用' : '禁用'
-  
+  const statusText = newStatus === 'active' ? t('payConfig.enable') : t('payConfig.disable')
+
   try {
     await ElMessageBox.confirm(
-      `确定要${statusText}配置 "${row.configName}" 吗？`,
-      '状态变更确认',
+      t('payConfig.statusChangeConfirm', { status: statusText, name: row.configName }),
+      t('payConfig.statusChangeTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('payConfig.confirm'),
+        cancelButtonText: t('payConfig.cancel'),
         type: 'warning'
       }
     )
@@ -464,12 +467,12 @@ const handleBeforeStatusChange = async (row: PaymentConfigVO): Promise<boolean> 
       sort: row.sort,
       status: newStatus
     })
-    ElMessage.success(`配置状态已${statusText}`)
+    ElMessage.success(t('payConfig.statusChangeSuccess', { status: statusText }))
     return true
   } catch (error) {
     if (error !== 'cancel') {
       console.error('状态更新失败:', error)
-      ElMessage.error('状态更新失败')
+      ElMessage.error(t('payConfig.statusChangeFailed'))
     }
     return false
   }
@@ -478,25 +481,25 @@ const handleBeforeStatusChange = async (row: PaymentConfigVO): Promise<boolean> 
 // 打开支付链接
 const handleShowQrCode = async (row: PaymentConfigVO) => {
   const loadingMessage = ElMessage({
-    message: '正在生成支付链接...',
+    message: t('payConfig.generatingPayLink'),
     type: 'info',
     duration: 0
   })
-  
+
   try {
     // 调用接口获取支付链接
     const url = await createPayQrCode(row.id)
-    
+
     loadingMessage.close()
-    
+
     // 直接在新窗口打开支付链接
     window.open(url, '_blank')
-    
-    ElMessage.success('支付页面已打开，请在新窗口中完成支付')
+
+    ElMessage.success(t('payConfig.payLinkOpened'))
   } catch (error) {
     loadingMessage.close()
     console.error('获取支付链接失败:', error)
-    ElMessage.error('获取支付链接失败')
+    ElMessage.error(t('payConfig.payLinkFailed'))
   }
 }
 
@@ -537,7 +540,7 @@ const handleSubmit = async () => {
         status: configForm.status,
         sort: configForm.sort
       })
-      ElMessage.success('配置更新成功')
+      ElMessage.success(t('payConfig.updateSuccess'))
     } else {
       // 创建配置
       await createPaymentConfig({
@@ -548,7 +551,7 @@ const handleSubmit = async () => {
         status: configForm.status,
         sort: configForm.sort
       })
-      ElMessage.success('配置创建成功')
+      ElMessage.success(t('payConfig.createSuccess'))
     }
 
     // 重新加载配置列表

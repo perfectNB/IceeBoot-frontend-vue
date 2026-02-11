@@ -1,8 +1,8 @@
 <template>
   <div class="role-management">
     <div class="page-header">
-      <h2>角色管理</h2>
-      <p>管理系统角色，配置角色权限</p>
+      <h2>{{ t('roleManagement.pageTitle') }}</h2>
+      <p>{{ t('roleManagement.pageDescription') }}</p>
     </div>
 
     <!-- 操作栏 -->
@@ -13,7 +13,7 @@
         v-if="hasPermission('system:role:create')"
       >
         <el-icon><Plus /></el-icon>
-        新增角色
+        {{ t('roleManagement.createRole') }}
       </el-button>
       <el-button
         type="danger"
@@ -22,40 +22,40 @@
         v-if="hasPermission('system:role:delete')"
       >
         <el-icon><Delete /></el-icon>
-        批量删除
+        {{ t('roleManagement.batchDelete') }}
       </el-button>
     </div>
 
     <!-- 搜索区域 -->
     <div class="search-section">
       <el-form :model="searchForm" inline>
-        <el-form-item label="角色名称">
+        <el-form-item :label="t('roleManagement.roleName')">
           <el-input
             v-model="searchForm.name"
-            placeholder="请输入角色名称"
+            :placeholder="t('roleManagement.placeholderRoleName')"
             clearable
             style="width: 200px"
           />
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item :label="t('roleManagement.status')">
           <el-select
             v-model="searchForm.status"
-            placeholder="请选择状态"
+            :placeholder="t('roleManagement.placeholderStatus')"
             clearable
             style="width: 150px"
           >
-            <el-option label="启用" value="active" />
-            <el-option label="禁用" value="inactive" />
+            <el-option :label="t('roleManagement.active')" value="active" />
+            <el-option :label="t('roleManagement.inactive')" value="inactive" />
           </el-select>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch" :loading="loading">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('roleManagement.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon><Refresh /></el-icon>
-            重置
+            {{ t('roleManagement.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -73,16 +73,16 @@
       >
         <el-table-column type="selection" width="55" />
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="name" label="角色名称" min-width="120">
+        <el-table-column prop="name" :label="t('roleManagement.roleName')" min-width="120">
           <template #default="{ row }">
             <el-tag :type="getRoleTagType(row.name)" effect="light">
               {{ row.name }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="code" label="角色编码" min-width="120" />
-        <el-table-column prop="description" label="描述" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="code" :label="t('roleManagement.roleCode')" min-width="120" />
+        <el-table-column prop="description" :label="t('roleManagement.description')" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="status" :label="t('roleManagement.status')" width="100">
           <template #default="{ row }">
             <el-switch
               v-model="row.status"
@@ -92,12 +92,12 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="createTime" label="创建时间" width="180">
+        <el-table-column prop="createTime" :label="t('roleManagement.createTime')" width="180">
           <template #default="{ row }">
             {{ formatDate(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="350" fixed="right">
+        <el-table-column :label="t('roleManagement.operation')" width="350" fixed="right">
           <template #default="{ row }">
             <el-button
               type="primary"
@@ -106,7 +106,7 @@
               @click="handlePermissions(row)"
               v-if="hasPermission('system:role:permission:view')"
             >
-              权限
+              {{ t('roleManagement.permissions') }}
             </el-button>
             <el-button
               type="info"
@@ -115,7 +115,7 @@
               @click="handleMenus(row)"
               v-if="hasPermission('system:role:menu:view')"
             >
-              菜单
+              {{ t('roleManagement.menus') }}
             </el-button>
             <el-button
               type="warning"
@@ -124,7 +124,7 @@
               @click="handleEdit(row)"
               v-if="hasPermission('system:role:edit')"
             >
-              编辑
+              {{ t('roleManagement.edit') }}
             </el-button>
             <el-button
               type="danger"
@@ -134,7 +134,7 @@
               :disabled="row.name === 'admin'"
               v-if="hasPermission('system:role:delete')"
             >
-              删除
+              {{ t('roleManagement.delete') }}
             </el-button>
           </template>
         </el-table-column>
@@ -167,40 +167,40 @@
         :rules="formRules"
         label-width="80px"
       >
-        <el-form-item label="角色名称" prop="name">
+        <el-form-item :label="t('roleManagement.roleName')" prop="name">
           <el-input
             v-model="formData.name"
-            placeholder="请输入角色名称"
+            :placeholder="t('roleManagement.placeholderRoleName')"
             :disabled="isEdit && formData.name === 'admin'"
           />
         </el-form-item>
-        <el-form-item label="角色编码" prop="code">
+        <el-form-item :label="t('roleManagement.roleCode')" prop="code">
           <el-input
             v-model="formData.code"
-            placeholder="请输入角色编码，如：admin、user等"
+            :placeholder="t('roleManagement.placeholderRoleCode')"
             :disabled="isEdit"
           />
         </el-form-item>
-        <el-form-item label="描述" prop="description">
+        <el-form-item :label="t('roleManagement.description')" prop="description">
           <el-input
             v-model="formData.description"
             type="textarea"
             :rows="3"
-            placeholder="请输入角色描述"
+            :placeholder="t('roleManagement.placeholderDescription')"
           />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item :label="t('roleManagement.status')" prop="status">
           <el-radio-group v-model="formData.status">
-            <el-radio label="active">启用</el-radio>
-            <el-radio label="inactive">禁用</el-radio>
+            <el-radio label="active">{{ t('roleManagement.active') }}</el-radio>
+            <el-radio label="inactive">{{ t('roleManagement.inactive') }}</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button @click="dialogVisible = false">{{ t('roleManagement.cancel') }}</el-button>
           <el-button type="primary" @click="handleSubmit" :loading="submitting">
-            确定
+            {{ t('roleManagement.confirm') }}
           </el-button>
         </div>
       </template>
@@ -209,15 +209,15 @@
     <!-- 权限配置对话框 -->
     <el-dialog
       v-model="permissionDialogVisible"
-      title="权限配置"
+      :title="t('roleManagement.permissionConfigTitle')"
       width="800px"
       :close-on-click-modal="false"
     >
       <div class="permission-content">
         <div class="permission-header">
-          <span class="role-name">角色：{{ currentRole?.name }}</span>
+          <span class="role-name">{{ t('roleManagement.roleLabel') }}{{ currentRole?.name }}</span>
           <el-button type="primary" size="small" @click="handleSavePermissions">
-            保存权限
+            {{ t('roleManagement.savePermissions') }}
           </el-button>
         </div>
         <el-tree
@@ -235,15 +235,15 @@
     <!-- 菜单配置对话框 -->
     <el-dialog
       v-model="menuDialogVisible"
-      title="菜单配置"
+      :title="t('roleManagement.menuConfigTitle')"
       width="800px"
       :close-on-click-modal="false"
     >
       <div class="permission-content">
         <div class="permission-header">
-          <span class="role-name">角色：{{ currentRole?.name }}</span>
+          <span class="role-name">{{ t('roleManagement.roleLabel') }}{{ currentRole?.name }}</span>
           <el-button type="primary" size="small" @click="handleSaveMenus">
-            保存菜单
+            {{ t('roleManagement.saveMenus') }}
           </el-button>
         </div>
         <el-tree
@@ -262,6 +262,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import {
   Plus,
@@ -277,6 +278,8 @@ import { getAllPermissions } from '@/api/permission'
 import { getAllMenus } from '@/api/menu'
 import { hasPermission } from '@/utils/permission'
 import type { Role, Permission, MenuItem as MenuType } from '@/types'
+
+const { t } = useI18n()
 
 // 响应式数据
 const loading = ref(false)
@@ -321,7 +324,7 @@ const checkedPermissions = ref<string[]>([])
 const checkedMenus = ref<string[]>([])
 
 // 计算属性
-const dialogTitle = computed(() => isEdit.value ? '编辑角色' : '新增角色')
+const dialogTitle = computed(() => isEdit.value ? t('roleManagement.editRoleTitle') : t('roleManagement.createRoleTitle'))
 
 // 注意：搜索和过滤现在由后端处理，通过loadRoles中的keyword参数实现
 
@@ -371,16 +374,16 @@ const treeProps = {
 // 表单验证规则
 const formRules: FormRules = {
   name: [
-    { required: true, message: '请输入角色名称', trigger: 'blur' },
-    { min: 2, max: 20, message: '角色名称长度在 2 到 20 个字符', trigger: 'blur' }
+    { required: true, message: t('roleManagement.validationRoleName'), trigger: 'blur' },
+    { min: 2, max: 20, message: t('roleManagement.validationRoleNameLength'), trigger: 'blur' }
   ],
   code: [
-    { required: true, message: '请输入角色编码', trigger: 'blur' },
-    { min: 2, max: 50, message: '角色编码长度在 2 到 50 个字符', trigger: 'blur' },
-    { pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/, message: '角色编码必须以字母开头，只能包含字母、数字和下划线', trigger: 'blur' }
+    { required: true, message: t('roleManagement.validationRoleCode'), trigger: 'blur' },
+    { min: 2, max: 50, message: t('roleManagement.validationRoleCodeLength'), trigger: 'blur' },
+    { pattern: /^[a-zA-Z][a-zA-Z0-9_]*$/, message: t('roleManagement.validationRoleCodeFormat'), trigger: 'blur' }
   ],
   description: [
-    { max: 200, message: '描述不能超过 200 个字符', trigger: 'blur' }
+    { max: 200, message: t('roleManagement.validationDescriptionLength'), trigger: 'blur' }
   ]
 }
 
@@ -408,7 +411,7 @@ const loadRoles = async () => {
     pageSize.value = result.size
   } catch (error) {
     console.error('获取角色列表失败:', error)
-    ElMessage.error('获取角色列表失败')
+    ElMessage.error(t('roleManagement.loadRolesFailed'))
   } finally {
     loading.value = false
   }
@@ -419,7 +422,7 @@ const loadPermissions = async () => {
     permissions.value = await getAllPermissions()
   } catch (error) {
     console.error('获取权限列表失败:', error)
-    ElMessage.error('获取权限列表失败')
+    ElMessage.error(t('roleManagement.loadPermissionsFailed'))
   }
 }
 
@@ -428,7 +431,7 @@ const loadMenus = async () => {
     menus.value = await getAllMenus()
   } catch (error) {
     console.error('获取菜单列表失败:', error)
-    ElMessage.error('获取菜单列表失败')
+    ElMessage.error(t('roleManagement.loadMenusFailed'))
   }
 }
 
@@ -480,17 +483,17 @@ const handleSubmit = async () => {
 
     if (isEdit.value) {
       await updateRole(formData.value.id!, formData.value)
-      ElMessage.success('更新角色成功')
+      ElMessage.success(t('roleManagement.updateSuccess'))
     } else {
       await createRole(formData.value)
-      ElMessage.success('创建角色成功')
+      ElMessage.success(t('roleManagement.createSuccess'))
     }
 
     dialogVisible.value = false
     await loadRoles()
   } catch (error) {
     console.error('保存角色失败:', error)
-    ElMessage.error('保存角色失败')
+    ElMessage.error(t('roleManagement.saveFailed'))
   } finally {
     submitting.value = false
   }
@@ -498,21 +501,21 @@ const handleSubmit = async () => {
 
 const handleDelete = (role: Role) => {
   ElMessageBox.confirm(
-    `确定要删除角色 "${role.name}" 吗？`,
-    '确认删除',
+    t('roleManagement.deleteConfirm', { name: role.name }),
+    t('roleManagement.deleteTitle'),
     {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+      confirmButtonText: t('roleManagement.confirm'),
+      cancelButtonText: t('roleManagement.cancel'),
       type: 'warning'
     }
   ).then(async () => {
     try {
       await deleteRole(role.id)
-      ElMessage.success('删除角色成功')
+      ElMessage.success(t('roleManagement.deleteSuccess'))
       await loadRoles()
     } catch (error) {
       console.error('删除角色失败:', error)
-      ElMessage.error('删除角色失败')
+      ElMessage.error(t('roleManagement.deleteFailed'))
     }
   })
 }
@@ -521,11 +524,11 @@ const handleDelete = (role: Role) => {
 const handleBatchDelete = async () => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedRoles.value.length} 个角色吗？`,
-      '批量删除确认',
+      t('roleManagement.batchDeleteConfirm', { count: selectedRoles.value.length }),
+      t('roleManagement.batchDeleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('roleManagement.confirm'),
+        cancelButtonText: t('roleManagement.cancel'),
         type: 'warning'
       }
     )
@@ -534,13 +537,13 @@ const handleBatchDelete = async () => {
     const roleIds = selectedRoles.value.map(role => role.id)
     await deleteRoles(roleIds)
 
-    ElMessage.success(`成功删除 ${selectedRoles.value.length} 个角色`)
+    ElMessage.success(t('roleManagement.batchDeleteSuccess', { count: selectedRoles.value.length }))
     selectedRoles.value = []
     await loadRoles()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('批量删除角色失败:', error)
-      ElMessage.error('批量删除角色失败')
+      ElMessage.error(t('roleManagement.batchDeleteFailed'))
     }
   }
 }
@@ -548,12 +551,13 @@ const handleBatchDelete = async () => {
 const handleStatusChange = async (role: Role) => {
   try {
     await updateRoleStatus(role.id, role.status!)
-    ElMessage.success(`角色状态已${role.status === 'active' ? '启用' : '禁用'}`)
+    const statusText = role.status === 'active' ? t('roleManagement.active') : t('roleManagement.inactive')
+    ElMessage.success(t('roleManagement.statusUpdateSuccess', { status: statusText }))
   } catch (error) {
     // 恢复原状态
     role.status = role.status === 'active' ? 'inactive' : 'active'
     console.error('状态更新失败:', error)
-    ElMessage.error('状态更新失败')
+    ElMessage.error(t('roleManagement.statusUpdateFailed'))
   }
 }
 
@@ -588,7 +592,7 @@ const handlePermissions = async (role: Role) => {
     permissionDialogVisible.value = true
   } catch (error) {
     console.error('获取角色权限失败:', error)
-    ElMessage.error('获取角色权限失败')
+    ElMessage.error(t('roleManagement.getRolePermissionsFailed'))
   }
 }
 
@@ -623,7 +627,7 @@ const handleMenus = async (role: Role) => {
     menuDialogVisible.value = true
   } catch (error) {
     console.error('获取角色菜单失败:', error)
-    ElMessage.error('获取角色菜单失败')
+    ElMessage.error(t('roleManagement.getRoleMenusFailed'))
   }
 }
 
@@ -637,13 +641,13 @@ const handleSavePermissions = async () => {
   try {
     // 调用API保存角色权限
     await saveRolePermissions(currentRole.value.id, allCheckedKeys.map(String))
-    ElMessage.success('权限保存成功')
+    ElMessage.success(t('roleManagement.permissionSaveSuccess'))
     permissionDialogVisible.value = false
     // 重新加载角色列表以更新权限信息
     await loadRoles()
   } catch (error) {
     console.error('保存权限失败:', error)
-    ElMessage.error('保存权限失败')
+    ElMessage.error(t('roleManagement.permissionSaveFailed'))
   }
 }
 
@@ -657,13 +661,13 @@ const handleSaveMenus = async () => {
   try {
     // 调用API保存角色菜单
     await saveRoleMenus(currentRole.value.id, allCheckedKeys.map(String))
-    ElMessage.success('菜单保存成功')
+    ElMessage.success(t('roleManagement.menuSaveSuccess'))
     menuDialogVisible.value = false
     // 重新加载角色列表以更新菜单信息
     await loadRoles()
   } catch (error) {
     console.error('保存菜单失败:', error)
-    ElMessage.error('保存菜单失败')
+    ElMessage.error(t('roleManagement.menuSaveFailed'))
   }
 }
 

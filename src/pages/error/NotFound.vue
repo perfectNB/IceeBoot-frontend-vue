@@ -14,19 +14,19 @@
       </div>
 
       <div class="error-content">
-        <h1 class="error-title">页面迷路了</h1>
+        <h1 class="error-title">{{ t('error.title') }}</h1>
         <p class="error-description">
-          你访问的页面可能被移走、改名，或暂时不可用。
+          {{ t('error.description') }}
         </p>
 
         <div class="error-actions">
           <el-button type="primary" @click="goHome">
             <el-icon><HomeFilled /></el-icon>
-            返回首页
+            {{ t('error.goHome') }}
           </el-button>
           <el-button @click="goBack">
             <el-icon><Back /></el-icon>
-            返回上页
+            {{ t('error.goBack') }}
           </el-button>
         </div>
       </div>
@@ -44,8 +44,10 @@
 <script setup lang="ts">
 import { useRouter } from 'vue-router'
 import { DocumentDelete, HomeFilled, Back } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
+const { t } = useI18n()
 
 // 返回首页
 const goHome = () => {

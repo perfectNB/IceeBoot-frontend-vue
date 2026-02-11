@@ -4,25 +4,25 @@
     <el-card class="config-card" shadow="hover">
       <template #header>
         <div class="card-header">
-          <span>基础配置</span>
+          <span>{{ t('frontendCodegen.basicConfig') }}</span>
         </div>
       </template>
 
       <el-form :model="configForm" label-width="120px">
         <el-row :gutter="20">
           <el-col :span="8">
-            <el-form-item label="文件名">
-              <el-input v-model="configForm.fileName" placeholder="请输入文件名（如：User）" />
+            <el-form-item :label="t('frontendCodegen.fileName')">
+              <el-input v-model="configForm.fileName" :placeholder="t('frontendCodegen.fileNamePlaceholder')" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="页面标题">
-              <el-input v-model="configForm.pageTitle" placeholder="请输入页面标题" />
+            <el-form-item :label="t('frontendCodegen.pageTitle')">
+              <el-input v-model="configForm.pageTitle" :placeholder="t('frontendCodegen.pageTitlePlaceholder')" />
             </el-form-item>
           </el-col>
           <el-col :span="8">
-            <el-form-item label="页面描述">
-              <el-input v-model="configForm.pageDescription" placeholder="请输入页面描述" />
+            <el-form-item :label="t('frontendCodegen.pageDescription')">
+              <el-input v-model="configForm.pageDescription" :placeholder="t('frontendCodegen.pageDescriptionPlaceholder')" />
             </el-form-item>
           </el-col>
         </el-row>
@@ -33,85 +33,85 @@
     <el-card class="config-card" shadow="hover">
       <template #header>
         <div class="card-header">
-          <span>字段配置</span>
+          <span>{{ t('frontendCodegen.fieldConfig') }}</span>
           <div class="header-actions">
-            <el-button type="primary" size="small" @click="addField">添加字段</el-button>
-            <el-button type="success" size="small" @click="importFromJson">从JSON导入</el-button>
-            <el-button type="info" size="small" @click="exportToJson">获取JSON格式</el-button>
+            <el-button type="primary" size="small" @click="addField">{{ t('frontendCodegen.addField') }}</el-button>
+            <el-button type="success" size="small" @click="importFromJson">{{ t('frontendCodegen.importFromJson') }}</el-button>
+            <el-button type="info" size="small" @click="exportToJson">{{ t('frontendCodegen.exportToJson') }}</el-button>
           </div>
         </div>
       </template>
 
       <div class="fields-container">
         <el-table :data="fields" border stripe class="fields-table">
-          <el-table-column label="中文名" width="130">
+          <el-table-column :label="t('frontendCodegen.chineseName')" width="130">
             <template #default="{ row }">
-              <el-input v-model="row.chineseName" placeholder="中文名" size="small" />
+              <el-input v-model="row.chineseName" :placeholder="t('frontendCodegen.chineseNamePlaceholder')" size="small" />
             </template>
           </el-table-column>
-          <el-table-column label="英文名" width="130">
+          <el-table-column :label="t('frontendCodegen.englishName')" width="130">
             <template #default="{ row }">
-              <el-input v-model="row.englishName" placeholder="英文名" size="small" />
+              <el-input v-model="row.englishName" :placeholder="t('frontendCodegen.englishNamePlaceholder')" size="small" />
             </template>
           </el-table-column>
-          <el-table-column label="可搜索" width="100">
+          <el-table-column :label="t('frontendCodegen.searchable')" width="100">
             <template #default="{ row }">
-              <el-select v-model="row.searchable" placeholder="可搜索" size="small">
-                <el-option label="是" :value="true" />
-                <el-option label="否" :value="false" />
+              <el-select v-model="row.searchable" :placeholder="t('frontendCodegen.searchable')" size="small">
+                <el-option :label="t('frontendCodegen.yes')" :value="true" />
+                <el-option :label="t('frontendCodegen.no')" :value="false" />
               </el-select>
             </template>
           </el-table-column>
-          <el-table-column label="必填" width="80">
+          <el-table-column :label="t('frontendCodegen.required')" width="80">
             <template #default="{ row }">
-              <el-select v-model="row.required" placeholder="必填" size="small">
-                <el-option label="是" :value="true" />
-                <el-option label="否" :value="false" />
+              <el-select v-model="row.required" :placeholder="t('frontendCodegen.required')" size="small">
+                <el-option :label="t('frontendCodegen.yes')" :value="true" />
+                <el-option :label="t('frontendCodegen.no')" :value="false" />
               </el-select>
             </template>
           </el-table-column>
-          <el-table-column label="可编辑" width="80">
+          <el-table-column :label="t('frontendCodegen.canEdit')" width="80">
             <template #default="{ row }">
-              <el-select v-model="row.canAddEdit" placeholder="可编辑" size="small">
-                <el-option label="是" :value="true" />
-                <el-option label="否" :value="false" />
+              <el-select v-model="row.canAddEdit" :placeholder="t('frontendCodegen.canEdit')" size="small">
+                <el-option :label="t('frontendCodegen.yes')" :value="true" />
+                <el-option :label="t('frontendCodegen.no')" :value="false" />
               </el-select>
             </template>
           </el-table-column>
-          <el-table-column label="表格显示" width="90">
+          <el-table-column :label="t('frontendCodegen.showInTable')" width="90">
             <template #default="{ row }">
-              <el-select v-model="row.showInTable" placeholder="表格显示" size="small">
-                <el-option label="是" :value="true" />
-                <el-option label="否" :value="false" />
+              <el-select v-model="row.showInTable" :placeholder="t('frontendCodegen.showInTable')" size="small">
+                <el-option :label="t('frontendCodegen.yes')" :value="true" />
+                <el-option :label="t('frontendCodegen.no')" :value="false" />
               </el-select>
             </template>
           </el-table-column>
-          <el-table-column label="表单类型" width="120">
+          <el-table-column :label="t('frontendCodegen.formType')" width="120">
             <template #default="{ row }">
-              <el-select v-model="row.formType" placeholder="表单类型" size="small">
-                <el-option label="输入框" value="input" />
-                <el-option label="数字" value="number" />
-                <el-option label="文本域" value="textarea" />
-                <el-option label="选择器" value="select" />
-                <el-option label="开关" value="switch" />
-                <el-option label="日期" value="date" />
-                <el-option label="日期时间" value="datetime" />
+              <el-select v-model="row.formType" :placeholder="t('frontendCodegen.formTypePlaceholder')" size="small">
+                <el-option :label="t('frontendCodegen.input')" value="input" />
+                <el-option :label="t('frontendCodegen.number')" value="number" />
+                <el-option :label="t('frontendCodegen.textarea')" value="textarea" />
+                <el-option :label="t('frontendCodegen.select')" value="select" />
+                <el-option :label="t('frontendCodegen.switch')" value="switch" />
+                <el-option :label="t('frontendCodegen.date')" value="date" />
+                <el-option :label="t('frontendCodegen.datetime')" value="datetime" />
               </el-select>
             </template>
           </el-table-column>
-          <el-table-column label="例值" width="120">
+          <el-table-column :label="t('frontendCodegen.exampleValue')" width="120">
             <template #default="{ row }">
-              <el-input v-model="row.exampleValue" placeholder="例值" size="small" />
+              <el-input v-model="row.exampleValue" :placeholder="t('frontendCodegen.exampleValuePlaceholder')" size="small" />
             </template>
           </el-table-column>
-          <el-table-column label="排序" width="150">
+          <el-table-column :label="t('frontendCodegen.sort')" width="150">
             <template #default="{ row }">
-              <el-input-number v-model="row.sortValue" :min="0" placeholder="排序" size="small" />
+              <el-input-number v-model="row.sortValue" :min="0" :placeholder="t('frontendCodegen.sortPlaceholder')" size="small" />
             </template>
           </el-table-column>
-          <el-table-column label="操作" width="80" fixed="right">
+          <el-table-column :label="t('frontendCodegen.operation')" width="80" fixed="right">
             <template #default="{ $index }">
-              <el-button type="danger" size="small" @click="removeField($index)">删除</el-button>
+              <el-button type="danger" size="small" @click="removeField($index)">{{ t('frontendCodegen.delete') }}</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -122,37 +122,37 @@
     <el-card class="config-card" shadow="hover">
       <template #header>
         <div class="card-header">
-          <span>API配置</span>
+          <span>{{ t('frontendCodegen.apiConfig') }}</span>
         </div>
       </template>
 
       <el-form label-width="120px">
-        <el-form-item label="选择接口">
+        <el-form-item :label="t('frontendCodegen.selectApi')">
           <el-checkbox-group v-model="selectedApis">
-            <el-checkbox label="list">查询列表</el-checkbox>
-            <el-checkbox label="create">新增</el-checkbox>
-            <el-checkbox label="update">更新</el-checkbox>
-            <el-checkbox label="delete">删除</el-checkbox>
-            <el-checkbox label="detail">详情</el-checkbox>
+            <el-checkbox label="list">{{ t('frontendCodegen.list') }}</el-checkbox>
+            <el-checkbox label="create">{{ t('frontendCodegen.create') }}</el-checkbox>
+            <el-checkbox label="update">{{ t('frontendCodegen.update') }}</el-checkbox>
+            <el-checkbox label="delete">{{ t('frontendCodegen.delete') }}</el-checkbox>
+            <el-checkbox label="detail">{{ t('frontendCodegen.detail') }}</el-checkbox>
           </el-checkbox-group>
         </el-form-item>
-        <el-form-item label="API前缀">
-          <el-input v-model="apiPrefix" placeholder="自动生成" readonly />
+        <el-form-item :label="t('frontendCodegen.apiPrefix')">
+          <el-input v-model="apiPrefix" :placeholder="t('frontendCodegen.apiPrefixPlaceholder')" readonly />
         </el-form-item>
       </el-form>
     </el-card>
 
     <!-- 操作按钮 -->
     <div class="action-buttons">
-      <el-button type="primary" size="large" @click="generateCode">生成代码</el-button>
-      <el-button size="large" @click="resetConfig">重置配置</el-button>
+      <el-button type="primary" size="large" @click="generateCode">{{ t('frontendCodegen.generateCode') }}</el-button>
+      <el-button size="large" @click="resetConfig">{{ t('frontendCodegen.resetConfig') }}</el-button>
     </div>
 
     <!-- 代码显示区域 -->
     <el-card v-if="generatedCode.vue" class="code-card" shadow="hover">
       <template #header>
         <div class="card-header">
-          <span>生成的代码</span>
+          <span>{{ t('frontendCodegen.generatedCode') }}</span>
         </div>
       </template>
 
@@ -170,23 +170,23 @@
       <div class="code-display">
         <div class="code-header">
           <span>{{ getCurrentCodeLabel() }}</span>
-          <el-button type="primary" size="small" @click="copyCode">复制代码</el-button>
+          <el-button type="primary" size="small" @click="copyCode">{{ t('frontendCodegen.copyCode') }}</el-button>
         </div>
         <pre class="code-content">{{ getCurrentCode() }}</pre>
       </div>
     </el-card>
 
     <!-- JSON导入对话框 -->
-    <el-dialog v-model="jsonDialogVisible" title="从JSON导入字段" width="600px">
+    <el-dialog v-model="jsonDialogVisible" :title="t('frontendCodegen.importJsonDialog')" width="600px">
       <el-input
         v-model="jsonInput"
         type="textarea"
         :rows="10"
-        placeholder="请输入JSON格式的字段配置"
+        :placeholder="t('frontendCodegen.importJsonPlaceholder')"
       />
       <template #footer>
-        <el-button @click="jsonDialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleJsonImport">导入</el-button>
+        <el-button @click="jsonDialogVisible = false">{{ t('frontendCodegen.cancel') }}</el-button>
+        <el-button type="primary" @click="handleJsonImport">{{ t('frontendCodegen.import') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -195,6 +195,9 @@
 <script setup lang="ts">
 import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // 接口定义
 interface FieldConfig {
@@ -250,11 +253,11 @@ const apiPrefix = computed(() => {
 })
 
 const codeTypes = [
-  { key: 'types', label: '类型定义' },
-  { key: 'mockData', label: 'Mock数据' },
-  { key: 'mockService', label: 'Mock服务' },
-  { key: 'api', label: 'API接口' },
-  { key: 'vue', label: 'Vue组件' }
+  { key: 'types', label: t('frontendCodegen.typeDefinition') },
+  { key: 'mockData', label: t('frontendCodegen.mockData') },
+  { key: 'mockService', label: t('frontendCodegen.mockService') },
+  { key: 'api', label: t('frontendCodegen.apiInterface') },
+  { key: 'vue', label: t('frontendCodegen.vueComponent') }
 ]
 
 // 方法
@@ -283,7 +286,7 @@ const importFromJson = () => {
 const exportToJson = () => {
   const jsonStr = JSON.stringify(fields.value, null, 2)
   navigator.clipboard.writeText(jsonStr)
-  ElMessage.success('JSON格式已复制到剪贴板')
+  ElMessage.success(t('frontendCodegen.jsonCopied'))
 }
 
 const handleJsonImport = () => {
@@ -291,24 +294,24 @@ const handleJsonImport = () => {
     const importedFields = JSON.parse(jsonInput.value)
     if (Array.isArray(importedFields)) {
       fields.value = importedFields
-      ElMessage.success('导入成功')
+      ElMessage.success(t('frontendCodegen.importSuccess'))
       jsonDialogVisible.value = false
       jsonInput.value = ''
     } else {
-      ElMessage.error('JSON格式不正确，应为数组格式')
+      ElMessage.error(t('frontendCodegen.jsonFormatError'))
     }
   } catch {
-    ElMessage.error('JSON格式错误')
+    ElMessage.error(t('frontendCodegen.jsonParseError'))
   }
 }
 
 const generateCode = () => {
   if (!configForm.fileName) {
-    ElMessage.error('请输入文件名')
+    ElMessage.error(t('frontendCodegen.fileNameRequired'))
     return
   }
   if (fields.value.length === 0) {
-    ElMessage.error('请至少添加一个字段')
+    ElMessage.error(t('frontendCodegen.fieldRequired'))
     return
   }
 
@@ -318,7 +321,7 @@ const generateCode = () => {
   generatedCode.api = generateApiCode()
   generatedCode.types = generateTypesCode()
 
-  ElMessage.success('代码生成成功')
+  ElMessage.success(t('frontendCodegen.generateSuccess'))
 }
 
 const resetConfig = () => {
@@ -355,33 +358,33 @@ const copyCode = () => {
     // 根据不同类型显示不同提示
     if (activeCodeType.value === 'api') {
       ElMessage({
-        message: '代码已复制到剪贴板，新建文件在/api下后，要在 /api/index.ts 暴露接口',
+        message: t('frontendCodegen.apiCopyTip'),
         type: 'success',
         duration: 3000
       })
     } else if (activeCodeType.value === 'mockService') {
       ElMessage({
-        message: '代码已复制到剪贴板，新建文件在/services，要在 /services/index.ts 暴露接口',
+        message: t('frontendCodegen.mockServiceCopyTip'),
         type: 'success',
         duration: 3000
       })
     } else if (activeCodeType.value === 'mockData') {
       ElMessage({
-        message: '代码已复制到剪贴板，新建文件在/data，要在 /data/index.ts 暴露接口',
+        message: t('frontendCodegen.mockDataCopyTip'),
         type: 'success',
         duration: 3000
       })
     }else if (activeCodeType.value === 'types') {
       ElMessage({
-        message: '代码已复制到剪贴板，要在 /types/index.ts 填写实体类',
+        message: t('frontendCodegen.typesCopyTip'),
         type: 'success',
         duration: 3000
       })
     } else {
-      ElMessage.success('代码已复制到剪贴板')
+      ElMessage.success(t('frontendCodegen.codeCopied'))
     }
   } else {
-    ElMessage.error('没有可复制的代码')
+    ElMessage.error(t('frontendCodegen.noCodeToCopy'))
   }
 }
 

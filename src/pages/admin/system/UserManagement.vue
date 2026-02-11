@@ -1,15 +1,15 @@
 <template>
   <div class="user-management">
     <div class="page-header">
-      <h1 class="page-title">用户管理</h1>
-      <p class="page-description">管理系统用户信息和权限</p>
+      <h1 class="page-title">{{ t('userManagement.pageTitle') }}</h1>
+      <p class="page-description">{{ t('userManagement.pageDescription') }}</p>
     </div>
 
     <!-- 操作区域 -->
     <div class="action-section">
       <el-button type="primary" @click="handleCreate" v-if="hasPermission('system:user:view')">
         <el-icon><Plus /></el-icon>
-        新建用户
+        {{ t('userManagement.createUser') }}
       </el-button>
       <el-button
         type="danger"
@@ -18,75 +18,75 @@
         v-if="hasPermission('system:user:delete')"
       >
         <el-icon><Delete /></el-icon>
-        批量删除
+        {{ t('userManagement.batchDelete') }}
       </el-button>
       <el-button @click="handleExport"
                  v-if="hasPermission('system:user:export')"
       >
         <el-icon><Download /></el-icon>
-        导出
+        {{ t('userManagement.export') }}
       </el-button>
     </div>
 
     <!-- 搜索区域 -->
     <div class="search-section">
       <el-form :model="searchForm" :inline="true">
-        <el-form-item label="用户名">
+        <el-form-item :label="t('userManagement.username')">
           <el-input
             v-model="searchForm.username"
-            placeholder="请输入用户名"
+            :placeholder="t('userManagement.placeholderUsername')"
             clearable
             style="width: 150px"
             @keyup.enter="handleSearch"
           />
         </el-form-item>
-        <el-form-item label="昵称">
+        <el-form-item :label="t('userManagement.nickname')">
           <el-input
             v-model="searchForm.nickname"
-            placeholder="请输入昵称"
+            :placeholder="t('userManagement.placeholderNickname')"
             clearable
             style="width: 150px"
             @keyup.enter="handleSearch"
           />
         </el-form-item>
-        <el-form-item label="邮箱">
+        <el-form-item :label="t('userManagement.email')">
           <el-input
             v-model="searchForm.email"
-            placeholder="请输入邮箱"
+            :placeholder="t('userManagement.placeholderEmail')"
             clearable
             style="width: 200px"
             @keyup.enter="handleSearch"
           />
         </el-form-item>
-        <el-form-item label="手机号">
+        <el-form-item :label="t('userManagement.phone')">
           <el-input
             v-model="searchForm.phone"
-            placeholder="请输入手机号"
+            :placeholder="t('userManagement.placeholderPhone')"
             clearable
             style="width: 150px"
             @keyup.enter="handleSearch"
           />
         </el-form-item>
-        <el-form-item label="状态">
+        <el-form-item :label="t('userManagement.status')">
           <el-select
             v-model="searchForm.status"
-            placeholder="请选择状态"
+            :placeholder="t('userManagement.placeholderStatus')"
             clearable
             style="width: 120px"
           >
-            <el-option label="启用" value="active" />
-            <el-option label="禁用" value="inactive" />
+            <el-option :label="t('userManagement.active')" value="active" />
+            <el-option :label="t('userManagement.inactive')" value="inactive" />
           </el-select>
         </el-form-item>
 
         <el-form-item>
           <el-button type="primary" @click="handleSearch" :loading="loading">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('userManagement.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon><Refresh /></el-icon>
-            重置
+            {{ t('userManagement.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -104,18 +104,18 @@
       >
         <el-table-column type="selection" width="55" />
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column label="头像" width="80">
+        <el-table-column :label="t('userManagement.avatar')" width="80">
           <template #default="{ row }">
             <el-avatar :size="40" :src="row.avatar">
               {{ row.username.charAt(0).toUpperCase() }}
             </el-avatar>
           </template>
         </el-table-column>
-        <el-table-column prop="username" label="用户名" min-width="120" />
-        <el-table-column prop="nickname" label="昵称" min-width="120" />
-        <el-table-column prop="email" label="邮箱" min-width="180" />
-        <el-table-column prop="phone" label="手机号" width="130" />
-        <el-table-column label="角色" width="150">
+        <el-table-column prop="username" :label="t('userManagement.username')" min-width="120" />
+        <el-table-column prop="nickname" :label="t('userManagement.nickname')" min-width="120" />
+        <el-table-column prop="email" :label="t('userManagement.email')" min-width="180" />
+        <el-table-column prop="phone" :label="t('userManagement.phone')" width="130" />
+        <el-table-column :label="t('userManagement.role')" width="150">
           <template #default="{ row }">
             <div v-if="row.roleList && row.roleList.length > 0">
               <el-tag
@@ -128,10 +128,10 @@
                 {{ role.name }}
               </el-tag>
             </div>
-            <span v-else class="text-gray-400">无角色</span>
+            <span v-else class="text-gray-400">{{ t('userManagement.noRole') }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="状态" width="80">
+        <el-table-column :label="t('userManagement.status')" width="80">
           <template #default="{ row }">
             <el-switch
               v-model="row.status"
@@ -141,9 +141,9 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="lastLoginTime" label="最后登录" width="160" />
-        <el-table-column prop="createTime" label="创建时间" width="160" />
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column prop="lastLoginTime" :label="t('userManagement.lastLogin')" width="160" />
+        <el-table-column prop="createTime" :label="t('userManagement.createTime')" width="160" />
+        <el-table-column :label="t('userManagement.operation')" width="280" fixed="right">
           <template #default="{ row }">
             <el-button
               type="primary"
@@ -151,7 +151,7 @@
               :icon="Edit"
               @click="handleEdit(row)"
             >
-              编辑
+              {{ t('userManagement.edit') }}
             </el-button>
             <el-button
               type="warning"
@@ -159,7 +159,7 @@
               :icon="Key"
               @click="handleResetPassword(row)"
             >
-              重置密码
+              {{ t('userManagement.resetPassword') }}
             </el-button>
             <el-button
               type="danger"
@@ -169,7 +169,7 @@
               :disabled="row.username === 'admin'"
               v-if="hasPermission('system:user:delete')"
             >
-              删除
+              {{ t('userManagement.delete') }}
             </el-button>
           </template>
         </el-table-column>
@@ -202,22 +202,22 @@
         :rules="formRules"
         label-width="80px"
       >
-        <el-form-item label="用户名" prop="username">
-          <el-input v-model="userForm.username" placeholder="请输入用户名" />
+        <el-form-item :label="t('userManagement.username')" prop="username">
+          <el-input v-model="userForm.username" :placeholder="t('userManagement.placeholderUsername')" />
         </el-form-item>
-        <el-form-item label="昵称" prop="nickname">
-          <el-input v-model="userForm.nickname" placeholder="请输入昵称" />
+        <el-form-item :label="t('userManagement.nickname')" prop="nickname">
+          <el-input v-model="userForm.nickname" :placeholder="t('userManagement.placeholderNickname')" />
         </el-form-item>
-        <el-form-item label="邮箱" prop="email">
-          <el-input v-model="userForm.email" placeholder="请输入邮箱" />
+        <el-form-item :label="t('userManagement.email')" prop="email">
+          <el-input v-model="userForm.email" :placeholder="t('userManagement.placeholderEmail')" />
         </el-form-item>
-        <el-form-item label="手机号" prop="phone">
-          <el-input v-model="userForm.phone" placeholder="请输入手机号" />
+        <el-form-item :label="t('userManagement.phone')" prop="phone">
+          <el-input v-model="userForm.phone" :placeholder="t('userManagement.placeholderPhone')" />
         </el-form-item>
-        <el-form-item label="角色" prop="roles">
+        <el-form-item :label="t('userManagement.roles')" prop="roles">
           <el-select
             v-model="userForm.roles"
-            placeholder="请选择角色"
+            :placeholder="t('userManagement.placeholderRoles')"
             multiple
             filterable
             style="width: 100%"
@@ -230,22 +230,22 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item :label="t('userManagement.status')" prop="status">
           <el-select
             v-model="userForm.status"
-            placeholder="请选择状态"
+            :placeholder="t('userManagement.placeholderStatus')"
             clearable
             style="width: 150px"
           >
-            <el-option label="启用" value="active" />
-            <el-option label="禁用" value="inactive" />
+            <el-option :label="t('userManagement.active')" value="active" />
+            <el-option :label="t('userManagement.inactive')" value="inactive" />
           </el-select>
         </el-form-item>
-        <el-form-item v-if="!isEdit" label="密码" prop="password">
+        <el-form-item v-if="!isEdit" :label="t('userManagement.password')" prop="password">
           <el-input
             v-model="userForm.password"
             type="password"
-            placeholder="请输入密码"
+            :placeholder="t('userManagement.placeholderPassword')"
             show-password
           />
         </el-form-item>
@@ -253,9 +253,9 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button @click="dialogVisible = false">{{ t('userManagement.cancel') }}</el-button>
           <el-button type="primary" @click="handleSubmit" :loading="submitting">
-            确定
+            {{ t('userManagement.confirm') }}
           </el-button>
         </div>
       </template>
@@ -265,6 +265,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import {
   Search,
@@ -287,6 +288,8 @@ import {
 import { deleteUsers } from '@/api/user'
 import { getAllRoles } from '@/api/role'
 import {hasPermission} from "@/utils/permission.ts";
+
+const { t } = useI18n()
 
 interface SearchForm {
   username: string
@@ -346,27 +349,27 @@ const userForm = reactive<UserForm>({
 // 表单验证规则
 const formRules = {
   username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' },
-    { min: 3, max: 20, message: '用户名长度在 3 到 20 个字符', trigger: 'blur' }
+    { required: true, message: t('userManagement.validationUsername'), trigger: 'blur' },
+    { min: 3, max: 20, message: t('userManagement.validationUsernameLength'), trigger: 'blur' }
   ],
   nickname: [
-    { required: true, message: '请输入昵称', trigger: 'blur' },
-    { min: 2, max: 20, message: '昵称长度在 2 到 20 个字符', trigger: 'blur' }
+    { required: true, message: t('userManagement.validationNickname'), trigger: 'blur' },
+    { min: 2, max: 20, message: t('userManagement.validationNicknameLength'), trigger: 'blur' }
   ],
   email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+    { required: true, message: t('userManagement.validationEmail'), trigger: 'blur' },
+    { type: 'email', message: t('userManagement.validationEmailFormat'), trigger: 'blur' }
   ],
   phone: [
-    { required: true, message: '请输入手机号', trigger: 'blur' },
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号格式', trigger: 'blur' }
+    { required: true, message: t('userManagement.validationPhone'), trigger: 'blur' },
+    { pattern: /^1[3-9]\d{9}$/, message: t('userManagement.validationPhoneFormat'), trigger: 'blur' }
   ],
   roles: [
-    { required: true, message: '请选择角色', trigger: 'change' }
+    { required: true, message: t('userManagement.validationRoles'), trigger: 'change' }
   ],
   password: [
-    { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, max: 20, message: '密码长度在 6 到 20 个字符', trigger: 'blur' }
+    { required: true, message: t('userManagement.validationPassword'), trigger: 'blur' },
+    { min: 6, max: 20, message: t('userManagement.validationPasswordLength'), trigger: 'blur' }
   ]
 }
 
@@ -376,7 +379,7 @@ const tableData = ref<User[]>([])
 const roleOptions = ref<{label: string, value: string, id: string | number}[]>([])
 
 // 计算属性
-const dialogTitle = computed(() => isEdit.value ? '编辑用户' : '新建用户')
+const dialogTitle = computed(() => isEdit.value ? t('userManagement.editUserTitle') : t('userManagement.createUserTitle'))
 
 // 获取角色类型
 const getRoleType = (role: string) => {
@@ -420,7 +423,7 @@ const loadUsers = async () => {
     pagination.size = result.size
   } catch (error) {
     console.error('加载用户数据失败:', error)
-    ElMessage.error('加载用户数据失败')
+    ElMessage.error(t('userManagement.loadUsersFailed'))
   } finally {
     loading.value = false
   }
@@ -468,7 +471,7 @@ const loadRoles = async () => {
     }))
   } catch (error) {
     console.error('加载角色数据失败:', error)
-    ElMessage.error('加载角色数据失败')
+    ElMessage.error(t('userManagement.loadRolesFailed'))
   }
 }
 
@@ -510,22 +513,22 @@ const handleEdit = async (row: User) => {
 const handleDelete = async (row: User) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除用户 "${row.username}" 吗？`,
-      '删除确认',
+      t('userManagement.deleteConfirm', { username: row.username }),
+      t('userManagement.deleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('userManagement.confirm'),
+        cancelButtonText: t('userManagement.cancel'),
         type: 'warning'
       }
     )
 
     await deleteUser(row.id)
-    ElMessage.success('用户删除成功')
+    ElMessage.success(t('userManagement.deleteSuccess'))
     await loadUsers()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除用户失败:', error)
-      ElMessage.error('删除用户失败')
+      ElMessage.error(t('userManagement.deleteFailed'))
     }
   }
 }
@@ -534,24 +537,24 @@ const handleDelete = async (row: User) => {
 const handleBatchDelete = async () => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedUsers.value.length} 个用户吗？`,
-      '批量删除确认',
+      t('userManagement.batchDeleteConfirm', { count: selectedUsers.value.length }),
+      t('userManagement.batchDeleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('userManagement.confirm'),
+        cancelButtonText: t('userManagement.cancel'),
         type: 'warning'
       }
     )
 
     const userIds = selectedUsers.value.map(user => user.id)
     await deleteUsers(userIds)
-    ElMessage.success(`成功删除 ${selectedUsers.value.length} 个用户`)
+    ElMessage.success(t('userManagement.batchDeleteSuccess', { count: selectedUsers.value.length }))
     selectedUsers.value = []
     await loadUsers()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('批量删除用户失败:', error)
-      ElMessage.error('批量删除用户失败')
+      ElMessage.error(t('userManagement.batchDeleteFailed'))
     }
   }
 }
@@ -560,22 +563,22 @@ const handleBatchDelete = async () => {
 const handleResetPassword = async (row: User) => {
   try {
     const { value: newPassword } = await ElMessageBox.prompt(
-      `请输入用户 "${row.username}" 的新密码`,
-      '重置密码',
+      t('userManagement.resetPasswordPrompt', { username: row.username }),
+      t('userManagement.resetPasswordTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('userManagement.confirm'),
+        cancelButtonText: t('userManagement.cancel'),
         inputType: 'password',
-        inputPlaceholder: '请输入新密码',
+        inputPlaceholder: t('userManagement.resetPasswordPlaceholder'),
         inputValidator: (value) => {
           if (!value) {
-            return '密码不能为空'
+            return t('userManagement.resetPasswordEmpty')
           }
           if (value.length < 6) {
-            return '密码长度不能少于6位'
+            return t('userManagement.resetPasswordMinLength')
           }
           if (value.length > 20) {
-            return '密码长度不能超过20位'
+            return t('userManagement.resetPasswordMaxLength')
           }
           return true
         }
@@ -583,11 +586,11 @@ const handleResetPassword = async (row: User) => {
     )
 
     await resetUserPassword(row.id, newPassword)
-    ElMessage.success('密码重置成功')
+    ElMessage.success(t('userManagement.resetPasswordSuccess'))
   } catch (error) {
     if (error !== 'cancel') {
       console.error('重置密码失败:', error)
-      ElMessage.error('重置密码失败')
+      ElMessage.error(t('userManagement.resetPasswordFailed'))
     }
   }
 }
@@ -596,18 +599,19 @@ const handleResetPassword = async (row: User) => {
 const handleStatusChange = async (row: User) => {
   try {
     await updateUserStatus(row.id, row.status!)
-    ElMessage.success(`用户状态已${row.status === 'active' ? '启用' : '禁用'}`)
+    const statusText = row.status === 'active' ? t('userManagement.active') : t('userManagement.inactive')
+    ElMessage.success(t('userManagement.statusUpdateSuccess', { status: statusText }))
   } catch (error) {
     // 恢复原状态
     row.status = row.status === 'active' ? 'inactive' : 'active'
     console.error('状态更新失败:', error)
-    ElMessage.error('状态更新失败')
+    ElMessage.error(t('userManagement.statusUpdateFailed'))
   }
 }
 
 // 导出
 const handleExport = () => {
-  ElMessage.info('导出功能开发中...')
+  ElMessage.info(t('userManagement.exportInProgress'))
 }
 
 // 选择变更
@@ -653,7 +657,7 @@ const handleSubmit = async () => {
         roleIds: roleIds,
         status: userForm.status
       })
-      ElMessage.success('用户更新成功')
+      ElMessage.success(t('userManagement.userUpdateSuccess'))
     } else {
       // 创建用户
       await createUser({
@@ -665,7 +669,7 @@ const handleSubmit = async () => {
         status: userForm.status,
         password: userForm.password
       })
-      ElMessage.success('用户创建成功')
+      ElMessage.success(t('userManagement.userCreateSuccess'))
     }
 
     // 重新加载用户列表

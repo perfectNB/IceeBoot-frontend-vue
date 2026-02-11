@@ -4,14 +4,14 @@
       <!-- 左侧会话列表 -->
       <div class="session-sidebar">
         <div class="sidebar-header">
-          <h3>RAG对话</h3>
+          <h3>{{ t('ragChat.ragChat') }}</h3>
           <el-button
             type="primary"
             size="small"
             @click="handleCreateSession"
             :loading="sessionLoading"
           >
-            新建对话
+            {{ t('ragChat.newChat') }}
           </el-button>
         </div>
 
@@ -23,9 +23,9 @@
               @click="handleSelectSession(session)"
             >
               <div class="session-info">
-                <div class="session-title">{{ session.title || '未命名对话' }}</div>
-                <div class="session-model">{{ session.modelName || '未知模型' }}</div>
-                <div class="session-time">{{ session.createTime ? formatTime(session.createTime) : '未知时间' }}</div>
+                <div class="session-title">{{ session.title || t('ragChat.unnamedChat') }}</div>
+                <div class="session-model">{{ session.modelName || t('ragChat.unknownModel') }}</div>
+                <div class="session-time">{{ session.createTime ? formatTime(session.createTime) : t('ragChat.unknownTime') }}</div>
               </div>
               <el-button
                 type="danger"
@@ -41,7 +41,7 @@
           <!-- 会话加载提示 -->
           <div v-if="sessionLoading" class="session-loading">
             <el-icon class="loading-icon"><Loading /></el-icon>
-            <span>加载更多会话...</span>
+            <span>{{ t('ragChat.loadMoreSessions') }}</span>
           </div>
         </div>
       </div>
@@ -49,7 +49,7 @@
       <!-- 右侧对话区域 -->
       <div class="chat-main">
         <div v-if="!currentSession" class="empty-state">
-          <el-empty description="请选择或创建一个对话会话" />
+          <el-empty :description="t('ragChat.selectOrCreateSession')" />
         </div>
 
         <template v-else>
@@ -62,7 +62,7 @@
             <div class="header-actions">
               <el-button size="small" @click="handleClearMessages">
                 <el-icon><Delete /></el-icon>
-                清空对话
+                {{ t('ragChat.clearChat') }}
               </el-button>
             </div>
           </div>
@@ -72,7 +72,7 @@
             <!-- 历史消息加载提示 -->
             <div v-if="messageLoading && messagePage > 1" class="loading-more">
               <el-icon class="loading-icon"><Loading /></el-icon>
-              <span>加载更多消息...</span>
+              <span>{{ t('ragChat.loadMoreMessages') }}</span>
             </div>
 
             <div
@@ -118,7 +118,7 @@
                     <span class="dot"></span>
                     <span class="dot"></span>
                   </div>
-                  <span class="thinking-text">AI正在思考中...</span>
+                  <span class="thinking-text">{{ t('ragChat.aiThinking') }}</span>
                 </div>
               </div>
             </div>
@@ -131,19 +131,19 @@
                 v-model="inputMessage"
                 type="textarea"
                 :rows="3"
-                placeholder="输入您的问题..."
+                :placeholder="t('ragChat.enterYourQuestion')"
                 :disabled="isLoading"
                 @keydown.ctrl.enter="handleSendMessage"
               />
               <div class="input-actions">
-                <span class="input-tip">Ctrl + Enter 发送</span>
+                <span class="input-tip">{{ t('ragChat.ctrlEnterToSend') }}</span>
                 <el-button
                   type="primary"
                   :disabled="!inputMessage.trim() || isLoading"
                   @click="handleSendMessage"
                 >
                   <el-icon><Promotion /></el-icon>
-                  发送
+                  {{ t('ragChat.send') }}
                 </el-button>
               </div>
             </div>
@@ -157,6 +157,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import MarkdownIt from 'markdown-it'
 import hljs from 'highlight.js'
 import 'highlight.js/styles/github.css'
@@ -173,6 +174,8 @@ import { getAiChatSessions, getAiChatMessages, deleteAiChatSession, createAiChat
 import type { AiChatSession, AiChatMessage, StreamChatRequest } from '@/api/aiChat'
 import { getBaseURL } from '@/utils/env'
 import { useUserStore } from '@/stores/user'
+
+const { t } = useI18n()
 
 // 响应式数据
 const isLoading = ref(false)
@@ -302,7 +305,7 @@ const loadMessages = async (sessionId: number, reset = false) => {
     }
   } catch (error) {
     console.error('加载消息列表失败:', error)
-    ElMessage.error('加载消息列表失败')
+    ElMessage.error(t('ragChat.loadMessagesFailed'))
   } finally {
     messageLoading.value = false
   }
@@ -315,11 +318,11 @@ const formatTime = (timestamp: string) => {
   const diff = now.getTime() - date.getTime()
 
   if (diff < 60000) { // 1分钟内
-    return '刚刚'
+    return t('ragChat.justNow')
   } else if (diff < 3600000) { // 1小时内
-    return `${Math.floor(diff / 60000)}分钟前`
+    return t('ragChat.minutesAgo', { minutes: Math.floor(diff / 60000) })
   } else if (diff < 86400000) { // 1天内
-    return `${Math.floor(diff / 3600000)}小时前`
+    return t('ragChat.hoursAgo', { hours: Math.floor(diff / 3600000) })
   } else {
     return date.toLocaleDateString()
   }
@@ -363,7 +366,7 @@ const loadSessions = async (reset = false) => {
     }
   } catch (error) {
     console.error('加载会话列表失败:', error)
-    ElMessage.error('加载会话列表失败')
+    ElMessage.error(t('ragChat.loadSessionsFailed'))
   } finally {
     sessionLoading.value = false
   }
@@ -381,7 +384,7 @@ const handleSelectSession = async (session: AiChatSession) => {
     scrollToBottom()
   } catch (error) {
     console.error('选择会话失败:', error)
-    ElMessage.error('选择会话失败')
+    ElMessage.error(t('ragChat.selectSessionFailed'))
   }
 }
 
@@ -391,21 +394,21 @@ const handleCreateSession = async () => {
     // 获取第一个可用的厂商和模型
     const providers = await getLLMModels()
     if (!providers || providers.length === 0) {
-      ElMessage.error('没有可用的AI模型厂商')
+      ElMessage.error(t('ragChat.noAvailableProviders'))
       return
     }
 
     // 找到第一个有可用密钥的厂商
     const availableProvider = providers.find(p => p.keys && p.keys.length > 0 && p.keys.some(k => k.status === 'active'))
     if (!availableProvider) {
-      ElMessage.error('没有可用的AI模型密钥')
+      ElMessage.error(t('ragChat.noAvailableKeys'))
       return
     }
 
     // 获取第一个可用的密钥
     const availableKey = availableProvider.keys.find(k => k.status === 'active')
     if (!availableKey) {
-      ElMessage.error('没有可用的AI模型密钥')
+      ElMessage.error(t('ragChat.noAvailableKeys'))
       return
     }
 
@@ -444,10 +447,10 @@ const handleCreateSession = async () => {
       await handleSelectSession(sessions.value[0])
     }
 
-    ElMessage.success('创建RAG对话会话成功')
+    ElMessage.success(t('ragChat.createSessionSuccess'))
   } catch (error) {
     console.error('创建会话失败:', error)
-    ElMessage.error('创建会话失败')
+    ElMessage.error(t('ragChat.createSessionFailed'))
   }
 }
 
@@ -455,11 +458,11 @@ const handleCreateSession = async () => {
 const handleDeleteSession = async (session: AiChatSession) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除会话"${session.title}"吗？`,
-      '确认删除',
+      t('ragChat.confirmDeleteSession', { title: session.title }),
+      t('ragChat.deleteConfirm'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('ragChat.confirm'),
+        cancelButtonText: t('ragChat.cancel'),
         type: 'warning'
       }
     )
@@ -478,11 +481,11 @@ const handleDeleteSession = async (session: AiChatSession) => {
       currentMessages.value = []
     }
 
-    ElMessage.success('删除会话成功')
+    ElMessage.success(t('ragChat.deleteSessionSuccess'))
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除会话失败:', error)
-      ElMessage.error('删除会话失败')
+      ElMessage.error(t('ragChat.deleteSessionFailed'))
     }
   }
 }
@@ -490,17 +493,17 @@ const handleDeleteSession = async (session: AiChatSession) => {
 // 清空对话
 const handleClearMessages = async () => {
   if (!currentSession.value) {
-    ElMessage.error('请先选择一个对话会话')
+    ElMessage.error(t('ragChat.pleaseSelectSession'))
     return
   }
 
   try {
     await ElMessageBox.confirm(
-      '确定要清空当前对话的所有消息吗？',
-      '确认清空',
+      t('ragChat.confirmClearMessages'),
+      t('ragChat.clearConfirm'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('ragChat.confirm'),
+        cancelButtonText: t('ragChat.cancel'),
         type: 'warning'
       }
     )
@@ -510,11 +513,11 @@ const handleClearMessages = async () => {
 
     // 清空本地消息列表
     currentMessages.value = []
-    ElMessage.success('清空对话成功')
+    ElMessage.success(t('ragChat.clearChatSuccess'))
   } catch (error) {
     if (error !== 'cancel') {
       console.error('清空对话失败:', error)
-      ElMessage.error('清空对话失败')
+      ElMessage.error(t('ragChat.clearChatFailed'))
     }
   }
 }
@@ -691,7 +694,7 @@ const handleSendMessage = async () => {
       (error: Error) => {
         // 对话出错
         console.error('RAG对话失败:', error)
-        ElMessage.error('RAG对话失败')
+        ElMessage.error(t('ragChat.ragChatFailed'))
         isLoading.value = false
 
         // 移除失败的AI消息
@@ -702,7 +705,7 @@ const handleSendMessage = async () => {
     )
   } catch (error) {
     console.error('发送消息失败:', error)
-    ElMessage.error('发送消息失败')
+    ElMessage.error(t('ragChat.sendMessageFailed'))
     isLoading.value = false
 
     // 移除失败的消息

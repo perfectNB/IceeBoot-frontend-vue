@@ -1,74 +1,74 @@
 <template>
   <div class="workflow-page">
     <div class="page-header">
-      <h2>BPMN设计</h2>
-      <p>拖拽节点设计流程，支持导入、保存与部署</p>
+      <h2>{{ t('bpmnDesign.title') }}</h2>
+      <p>{{ t('bpmnDesign.description') }}</p>
     </div>
 
     <div class="designer-section" :class="{ 'designer-fullscreen': isDesignerFullscreen }">
       <div class="designer-toolbar">
         <el-space wrap>
-          <el-button type="primary" :icon="Plus" @click="handleCreateDiagram">新建</el-button>
-          <el-button :icon="Upload" @click="importDialogVisible = true">导入XML</el-button>
-          <el-button :icon="Document" @click="handleSaveDesignerXml">保存XML</el-button>
+          <el-button type="primary" :icon="Plus" @click="handleCreateDiagram">{{ t('bpmnDesign.new') }}</el-button>
+          <el-button :icon="Upload" @click="importDialogVisible = true">{{ t('bpmnDesign.importXml') }}</el-button>
+          <el-button :icon="Document" @click="handleSaveDesignerXml">{{ t('bpmnDesign.saveXml') }}</el-button>
           <el-button type="success" :icon="UploadFilled" :loading="deployingDesigner" @click="openDesignerDeployDialog">
-            部署
+            {{ t('bpmnDesign.deploy') }}
           </el-button>
           <el-button :icon="FullScreen" @click="toggleDesignerFullscreen">
-            {{ isDesignerFullscreen ? '退出全屏' : '全屏' }}
+            {{ isDesignerFullscreen ? t('bpmnDesign.exitFullscreen') : t('bpmnDesign.fullscreen') }}
           </el-button>
         </el-space>
-        <div class="designer-tip">拖拽左侧面板添加节点，双击节点可编辑名称，连线完成流程编排</div>
+        <div class="designer-tip">{{ t('bpmnDesign.designerTip') }}</div>
       </div>
       <div ref="designerRef" class="designer-canvas"></div>
     </div>
 
     <div class="table-section">
-      <div class="section-title">使用指引</div>
+      <div class="section-title">{{ t('bpmnDesign.usageGuide') }}</div>
       <el-row :gutter="16">
         <el-col :span="12">
           <div class="guide-block">
-            <div class="guide-title">如何搭建流程</div>
-            <div class="guide-item">1. 从左侧中文面板拖拽“开始事件”</div>
-            <div class="guide-item">2. 选择“用户任务/服务任务”并连线</div>
-            <div class="guide-item">3. 拖拽“结束事件”并完成连线</div>
+            <div class="guide-title">{{ t('bpmnDesign.howToBuild') }}</div>
+            <div class="guide-item">{{ t('bpmnDesign.step1') }}</div>
+            <div class="guide-item">{{ t('bpmnDesign.step2') }}</div>
+            <div class="guide-item">{{ t('bpmnDesign.step3') }}</div>
           </div>
         </el-col>
         <el-col :span="12">
           <div class="guide-block">
-            <div class="guide-title">常用操作</div>
-            <div class="guide-item">双击节点：修改节点名称</div>
-            <div class="guide-item">拖拽节点：调整位置</div>
-            <div class="guide-item">连线端点：选择分支方向</div>
+            <div class="guide-title">{{ t('bpmnDesign.commonOperations') }}</div>
+            <div class="guide-item">{{ t('bpmnDesign.doubleClickNode') }}</div>
+            <div class="guide-item">{{ t('bpmnDesign.dragNode') }}</div>
+            <div class="guide-item">{{ t('bpmnDesign.connectionPoint') }}</div>
           </div>
         </el-col>
       </el-row>
     </div>
 
     <div class="table-section">
-      <div class="section-title">节点说明</div>
+      <div class="section-title">{{ t('bpmnDesign.nodeDescription') }}</div>
       <el-table :data="nodeGuideList" stripe border style="width: 100%">
-        <el-table-column prop="name" label="节点名称" width="160" />
-        <el-table-column prop="type" label="类型标识" width="200" show-overflow-tooltip />
-        <el-table-column prop="description" label="作用说明" min-width="320" show-overflow-tooltip />
+        <el-table-column prop="name" :label="t('bpmnDesign.nodeName')" width="160" />
+        <el-table-column prop="type" :label="t('bpmnDesign.typeIdentifier')" width="200" show-overflow-tooltip />
+        <el-table-column prop="description" :label="t('bpmnDesign.functionDescription')" min-width="320" show-overflow-tooltip />
       </el-table>
     </div>
 
     <el-row :gutter="16">
       <el-col :span="12">
         <div class="table-section">
-          <div class="section-title">上传部署</div>
+          <div class="section-title">{{ t('bpmnDesign.uploadDeploy') }}</div>
           <el-form :model="deployForm" label-width="90px">
-            <el-form-item label="流程名称">
-              <el-input v-model="deployForm.name" placeholder="可选" />
+            <el-form-item :label="t('bpmnDesign.processName')">
+              <el-input v-model="deployForm.name" :placeholder="t('bpmnDesign.optional')" />
             </el-form-item>
-            <el-form-item label="流程分类">
-              <el-input v-model="deployForm.category" placeholder="可选" />
+            <el-form-item :label="t('bpmnDesign.processCategory')">
+              <el-input v-model="deployForm.category" :placeholder="t('bpmnDesign.optional')" />
             </el-form-item>
-            <el-form-item label="租户ID">
-              <el-input v-model="deployForm.tenantId" placeholder="可选" />
+            <el-form-item :label="t('bpmnDesign.tenantId')">
+              <el-input v-model="deployForm.tenantId" :placeholder="t('bpmnDesign.optional')" />
             </el-form-item>
-            <el-form-item label="BPMN文件">
+            <el-form-item :label="t('bpmnDesign.bpmnFile')">
               <el-upload
                 :auto-upload="false"
                 :limit="1"
@@ -77,65 +77,65 @@
                 :on-remove="handleDeployFileRemove"
                 accept=".bpmn,.xml"
               >
-                <el-button type="primary">选择文件</el-button>
+                <el-button type="primary">{{ t('bpmnDesign.selectFile') }}</el-button>
               </el-upload>
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" :loading="deploying" @click="handleDeployFile">部署</el-button>
-              <el-button @click="resetDeployForm">重置</el-button>
+              <el-button type="primary" :loading="deploying" @click="handleDeployFile">{{ t('bpmnDesign.deploy') }}</el-button>
+              <el-button @click="resetDeployForm">{{ t('bpmnDesign.reset') }}</el-button>
             </el-form-item>
           </el-form>
         </div>
       </el-col>
       <el-col :span="12">
         <div class="table-section">
-          <div class="section-title">XML设计部署</div>
+          <div class="section-title">{{ t('bpmnDesign.xmlDesignDeploy') }}</div>
           <el-form :model="xmlForm" label-width="90px">
-            <el-form-item label="流程名称">
-              <el-input v-model="xmlForm.name" placeholder="可选" />
+            <el-form-item :label="t('bpmnDesign.processName')">
+              <el-input v-model="xmlForm.name" :placeholder="t('bpmnDesign.optional')" />
             </el-form-item>
-            <el-form-item label="流程分类">
-              <el-input v-model="xmlForm.category" placeholder="可选" />
+            <el-form-item :label="t('bpmnDesign.processCategory')">
+              <el-input v-model="xmlForm.category" :placeholder="t('bpmnDesign.optional')" />
             </el-form-item>
-            <el-form-item label="租户ID">
-              <el-input v-model="xmlForm.tenantId" placeholder="可选" />
+            <el-form-item :label="t('bpmnDesign.tenantId')">
+              <el-input v-model="xmlForm.tenantId" :placeholder="t('bpmnDesign.optional')" />
             </el-form-item>
-            <el-form-item label="BPMN XML">
-              <el-input v-model="xmlForm.xml" type="textarea" :rows="12" placeholder="输入BPMN XML内容" />
+            <el-form-item :label="t('bpmnDesign.bpmnXml')">
+              <el-input v-model="xmlForm.xml" type="textarea" :rows="12" :placeholder="t('bpmnDesign.inputBpmnXml')" />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" :loading="deployingXml" @click="handleDeployXml">保存部署</el-button>
-              <el-button @click="resetXmlForm">重置</el-button>
+              <el-button type="primary" :loading="deployingXml" @click="handleDeployXml">{{ t('bpmnDesign.saveDeploy') }}</el-button>
+              <el-button @click="resetXmlForm">{{ t('bpmnDesign.reset') }}</el-button>
             </el-form-item>
           </el-form>
         </div>
       </el-col>
     </el-row>
 
-    <el-dialog v-model="importDialogVisible" title="导入BPMN XML" width="70%">
-      <el-input v-model="importXml" type="textarea" :rows="20" placeholder="粘贴BPMN XML内容" />
+    <el-dialog v-model="importDialogVisible" :title="t('bpmnDesign.importBpmnXml')" width="70%">
+      <el-input v-model="importXml" type="textarea" :rows="20" :placeholder="t('bpmnDesign.pasteBpmnXml')" />
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="importDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleImportXml">导入</el-button>
+          <el-button @click="importDialogVisible = false">{{ t('bpmnDesign.cancel') }}</el-button>
+          <el-button type="primary" @click="handleImportXml">{{ t('bpmnDesign.import') }}</el-button>
         </span>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="designerDeployDialogVisible" title="部署流程" width="520px" @close="resetDesignerDeployForm">
+    <el-dialog v-model="designerDeployDialogVisible" :title="t('bpmnDesign.deployProcess')" width="520px" @close="resetDesignerDeployForm">
       <el-form :model="designerDeployForm" label-width="90px">
-        <el-form-item label="流程名称">
-          <el-input v-model="designerDeployForm.name" placeholder="必填" />
+        <el-form-item :label="t('bpmnDesign.processName')">
+          <el-input v-model="designerDeployForm.name" :placeholder="t('bpmnDesign.required')" />
         </el-form-item>
-        <el-form-item label="流程分类">
-          <el-input v-model="designerDeployForm.category" placeholder="可选" />
+        <el-form-item :label="t('bpmnDesign.processCategory')">
+          <el-input v-model="designerDeployForm.category" :placeholder="t('bpmnDesign.optional')" />
         </el-form-item>
-        <el-form-item label="租户ID">
-          <el-input v-model="designerDeployForm.tenantId" placeholder="可选" />
+        <el-form-item :label="t('bpmnDesign.tenantId')">
+          <el-input v-model="designerDeployForm.tenantId" :placeholder="t('bpmnDesign.optional')" />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :loading="deployingDesigner" @click="handleConfirmDesignerDeploy">部署</el-button>
-          <el-button @click="designerDeployDialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="deployingDesigner" @click="handleConfirmDesignerDeploy">{{ t('bpmnDesign.deploy') }}</el-button>
+          <el-button @click="designerDeployDialogVisible = false">{{ t('bpmnDesign.cancel') }}</el-button>
         </el-form-item>
       </el-form>
     </el-dialog>
@@ -151,10 +151,13 @@ import 'bpmn-js/dist/assets/diagram-js.css'
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn.css'
 import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css'
 import { deployWorkflowDefinition, getWorkflowDefinitions, type WorkflowDefinition } from '@/api'
+import { useI18n } from 'vue-i18n'
 
 defineOptions({
   name: 'BPMNDesign'
 })
+
+const { t } = useI18n()
 
 const latestOnly = ref(true)
 const definitions = ref<WorkflowDefinition[]>([])
@@ -190,18 +193,18 @@ const designerDeployForm = reactive({
 let bpmnModeler: Modeler | null = null
 
 const nodeGuideList = [
-  { name: '开始事件', type: 'startEvent', description: '流程启动入口，触发后进入后续节点' },
-  { name: '结束事件', type: 'endEvent', description: '流程结束出口，标识流程完成或终止' },
-  { name: '用户任务', type: 'userTask', description: '需要人工处理的审批或填单节点' },
-  { name: '服务任务', type: 'serviceTask', description: '由系统自动执行的服务或接口调用节点' },
-  { name: '脚本任务', type: 'scriptTask', description: '执行脚本逻辑，适合数据处理与转换' },
-  { name: '人工任务', type: 'manualTask', description: '线下人工动作，系统仅记录' },
-  { name: '接收任务', type: 'receiveTask', description: '等待消息或事件触发后继续流程' },
-  { name: '排他网关', type: 'exclusiveGateway', description: '条件判断，只走一条分支' },
-  { name: '并行网关', type: 'parallelGateway', description: '同时分叉或汇聚多个分支' },
-  { name: '包含网关', type: 'inclusiveGateway', description: '满足条件的分支可并行执行' },
-  { name: '调用活动', type: 'callActivity', description: '调用子流程复用流程定义' },
-  { name: '子流程', type: 'subProcess', description: '将复杂流程封装为可折叠子流程' }
+  { name: t('bpmnDesign.startEvent'), type: 'startEvent', description: t('bpmnDesign.startEventDesc') },
+  { name: t('bpmnDesign.endEvent'), type: 'endEvent', description: t('bpmnDesign.endEventDesc') },
+  { name: t('bpmnDesign.userTask'), type: 'userTask', description: t('bpmnDesign.userTaskDesc') },
+  { name: t('bpmnDesign.serviceTask'), type: 'serviceTask', description: t('bpmnDesign.serviceTaskDesc') },
+  { name: t('bpmnDesign.scriptTask'), type: 'scriptTask', description: t('bpmnDesign.scriptTaskDesc') },
+  { name: t('bpmnDesign.manualTask'), type: 'manualTask', description: t('bpmnDesign.manualTaskDesc') },
+  { name: t('bpmnDesign.receiveTask'), type: 'receiveTask', description: t('bpmnDesign.receiveTaskDesc') },
+  { name: t('bpmnDesign.exclusiveGateway'), type: 'exclusiveGateway', description: t('bpmnDesign.exclusiveGatewayDesc') },
+  { name: t('bpmnDesign.parallelGateway'), type: 'parallelGateway', description: t('bpmnDesign.parallelGatewayDesc') },
+  { name: t('bpmnDesign.inclusiveGateway'), type: 'inclusiveGateway', description: t('bpmnDesign.inclusiveGatewayDesc') },
+  { name: t('bpmnDesign.callActivity'), type: 'callActivity', description: t('bpmnDesign.callActivityDesc') },
+  { name: t('bpmnDesign.subProcess'), type: 'subProcess', description: t('bpmnDesign.subProcessDesc') }
 ]
 
 const designerTranslations: Record<string, string> = {
@@ -358,7 +361,7 @@ const importXmlToDesigner = async (xml: string) => {
     const canvas = bpmnModeler.get('canvas') as { zoom: (value: string) => void }
     canvas.zoom('fit-viewport')
   } catch {
-    ElMessage.error('导入BPMN失败')
+    ElMessage.error(t('bpmnDesign.importFailed'))
   }
 }
 
@@ -371,7 +374,7 @@ const handleCreateDiagram = async () => {
 
 const handleImportXml = async () => {
   if (!importXml.value.trim()) {
-    ElMessage.warning('请输入BPMN XML内容')
+    ElMessage.warning(t('bpmnDesign.inputBpmnXmlContent'))
     return
   }
   if (!bpmnModeler) {
@@ -379,7 +382,7 @@ const handleImportXml = async () => {
   }
   await importXmlToDesigner(importXml.value)
   importDialogVisible.value = false
-  ElMessage.success('导入成功')
+  ElMessage.success(t('bpmnDesign.importSuccess'))
 }
 
 const handleSaveDesignerXml = async () => {
@@ -390,13 +393,13 @@ const handleSaveDesignerXml = async () => {
   try {
     const { xml } = await bpmnModeler.saveXML({ format: true })
     if (!xml) {
-      ElMessage.error('保存XML失败')
+      ElMessage.error(t('bpmnDesign.saveXmlFailed'))
       return
     }
     xmlForm.xml = xml
-    ElMessage.success('已同步到XML输入框')
+    ElMessage.success(t('bpmnDesign.syncedToXmlInput'))
   } catch {
-    ElMessage.error('保存XML失败')
+    ElMessage.error(t('bpmnDesign.saveXmlFailed'))
   }
 }
 
@@ -412,7 +415,7 @@ const resetDesignerDeployForm = () => {
 
 const handleConfirmDesignerDeploy = async () => {
   if (!designerDeployForm.name.trim()) {
-    ElMessage.warning('请输入流程名称')
+    ElMessage.warning(t('bpmnDesign.inputProcessName'))
     return
   }
   if (!bpmnModeler) {
@@ -423,7 +426,7 @@ const handleConfirmDesignerDeploy = async () => {
   try {
     const { xml } = await bpmnModeler.saveXML({ format: true })
     if (!xml) {
-      ElMessage.error('部署失败')
+      ElMessage.error(t('bpmnDesign.deployFailed'))
       return
     }
     const name = designerDeployForm.name.trim()
@@ -434,12 +437,12 @@ const handleConfirmDesignerDeploy = async () => {
       category: designerDeployForm.category || undefined,
       tenantId: designerDeployForm.tenantId || undefined
     })
-    ElMessage.success('部署成功')
+    ElMessage.success(t('bpmnDesign.deploySuccess'))
     designerDeployDialogVisible.value = false
     resetDesignerDeployForm()
     await loadDefinitions()
   } catch {
-    ElMessage.error('部署失败')
+    ElMessage.error(t('bpmnDesign.deployFailed'))
   } finally {
     deployingDesigner.value = false
   }
@@ -449,7 +452,7 @@ const loadDefinitions = async () => {
   try {
     definitions.value = await getWorkflowDefinitions({ latestOnly: latestOnly.value })
   } catch {
-    ElMessage.error('加载流程定义失败')
+    ElMessage.error(t('bpmnDesign.loadDefinitionsFailed'))
   }
 }
 
@@ -465,7 +468,7 @@ const handleDeployFileRemove = () => {
 
 const handleDeployFile = async () => {
   if (!deployFile.value) {
-    ElMessage.warning('请选择BPMN文件')
+    ElMessage.warning(t('bpmnDesign.selectBpmnFile'))
     return
   }
   deploying.value = true
@@ -476,11 +479,11 @@ const handleDeployFile = async () => {
       category: deployForm.category || undefined,
       tenantId: deployForm.tenantId || undefined
     })
-    ElMessage.success('部署成功')
+    ElMessage.success(t('bpmnDesign.deploySuccess'))
     resetDeployForm()
     await loadDefinitions()
   } catch {
-    ElMessage.error('部署失败')
+    ElMessage.error(t('bpmnDesign.deployFailed'))
   } finally {
     deploying.value = false
   }
@@ -496,7 +499,7 @@ const resetDeployForm = () => {
 
 const handleDeployXml = async () => {
   if (!xmlForm.xml.trim()) {
-    ElMessage.warning('请输入BPMN XML内容')
+    ElMessage.warning(t('bpmnDesign.inputBpmnXmlContentRequired'))
     return
   }
   deployingXml.value = true
@@ -509,11 +512,11 @@ const handleDeployXml = async () => {
       category: xmlForm.category || undefined,
       tenantId: xmlForm.tenantId || undefined
     })
-    ElMessage.success('部署成功')
+    ElMessage.success(t('bpmnDesign.deploySuccess'))
     resetXmlForm()
     await loadDefinitions()
   } catch {
-    ElMessage.error('部署失败')
+    ElMessage.error(t('bpmnDesign.deployFailed'))
   } finally {
     deployingXml.value = false
   }

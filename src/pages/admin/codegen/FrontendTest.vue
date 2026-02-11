@@ -1,14 +1,14 @@
 <template>
   <div class="student-management">
     <div class="page-header">
-      <h1>Student</h1>
-      <p>Student</p>
+      <h1>{{ t('frontendTest.pageTitle') }}</h1>
+      <p>{{ t('frontendTest.pageDescription') }}</p>
     </div>
 
     <!-- 操作按钮区域 -->
     <div class="action-section">
       <el-button type="primary" :icon="Plus" @click="handleCreate">
-        新增Student
+        {{ t('frontendTest.addStudent') }}
       </el-button>
       <el-button
         type="danger"
@@ -16,7 +16,7 @@
         @click="handleBatchDelete"
       >
         <el-icon><Delete /></el-icon>
-        批量删除
+        {{ t('frontendTest.batchDelete') }}
       </el-button>
 
     </div>
@@ -27,7 +27,7 @@
         <el-form-item>
           <el-input
             v-model="searchForm.name"
-            placeholder="搜索名字"
+            :placeholder="t('frontendTest.searchName')"
             style="width: 200px"
             clearable
           />
@@ -35,22 +35,22 @@
         <el-form-item>
           <el-select
             v-model="searchForm.sex"
-            placeholder="请选择性别"
+            :placeholder="t('frontendTest.selectSex')"
             style="width: 200px"
             clearable
           >
-            <el-option label="选项1" value="option1" />
-            <el-option label="选项2" value="option2" />
+            <el-option :label="t('frontendTest.option1')" value="option1" />
+            <el-option :label="t('frontendTest.option2')" value="option2" />
           </el-select>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('frontendTest.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon><Refresh /></el-icon>
-            重置
+            {{ t('frontendTest.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -68,11 +68,11 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="name" label="名字" min-width="120" />
-        <el-table-column prop="age" label="年龄" min-width="120" />
-        <el-table-column prop="sex" label="性别" min-width="120" />
-        <el-table-column prop="hobby" label="爱好" min-width="120" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column prop="name" :label="t('frontendTest.name')" min-width="120" />
+        <el-table-column prop="age" :label="t('frontendTest.age')" min-width="120" />
+        <el-table-column prop="sex" :label="t('frontendTest.sex')" min-width="120" />
+        <el-table-column prop="hobby" :label="t('frontendTest.hobby')" min-width="120" />
+        <el-table-column :label="t('frontendTest.operation')" width="200" fixed="right">
           <template #default="{ row }">
             <el-button
               type="warning"
@@ -80,7 +80,7 @@
               :icon="Edit"
               @click="handleEdit(row)"
             >
-              编辑
+              {{ t('frontendTest.edit') }}
             </el-button>
             <el-button
               type="danger"
@@ -88,7 +88,7 @@
               :icon="Delete"
               @click="handleDelete(row)"
             >
-              删除
+              {{ t('frontendTest.delete') }}
             </el-button>
           </template>
         </el-table-column>
@@ -122,45 +122,45 @@
         :rules="formRules"
         label-width="120px"
       >
-        <el-form-item label="名字" prop="name">
+        <el-form-item :label="t('frontendTest.nameLabel')" prop="name">
           <el-input
             v-model="formData.name"
-            placeholder="请输入名字"
+            :placeholder="t('frontendTest.namePlaceholder')"
           />
         </el-form-item>
-        <el-form-item label="年龄" prop="age">
+        <el-form-item :label="t('frontendTest.ageLabel')" prop="age">
           <el-input-number
             v-model="formData.age"
-            placeholder="请输入年龄"
+            :placeholder="t('frontendTest.agePlaceholder')"
             style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="性别" prop="sex">
+        <el-form-item :label="t('frontendTest.sexLabel')" prop="sex">
           <el-select
             v-model="formData.sex"
-            placeholder="请选择性别"
+            :placeholder="t('frontendTest.sexPlaceholder')"
             style="width: 100%"
           >
-            <el-option label="选项1" value="option1" />
-            <el-option label="选项2" value="option2" />
+            <el-option :label="t('frontendTest.option1')" value="option1" />
+            <el-option :label="t('frontendTest.option2')" value="option2" />
           </el-select>
         </el-form-item>
-        <el-form-item label="爱好">
+        <el-form-item :label="t('frontendTest.hobbyLabel')">
           <el-input
             v-model="formData.hobby"
-            placeholder="请输入爱好"
+            :placeholder="t('frontendTest.hobbyPlaceholder')"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button @click="dialogVisible = false">{{ t('frontendTest.cancel') }}</el-button>
           <el-button
             type="primary"
             :loading="submitting"
             @click="handleSubmit"
           >
-            确定
+            {{ t('frontendTest.confirm') }}
           </el-button>
         </div>
       </template>
@@ -185,6 +185,9 @@ import {
   getStudentList,
   createStudent
 } from '@/api/student'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // 响应式数据
 const loading = ref(false)
@@ -218,13 +221,13 @@ const formData = reactive({
 // 表单验证规则
 const formRules = {
   name: [
-    { required: true, message: '请输入名字', trigger: 'blur' }
+    { required: true, message: t('frontendTest.nameRequired'), trigger: 'blur' }
   ],
   age: [
-    { required: true, message: '请输入年龄', trigger: 'blur' }
+    { required: true, message: t('frontendTest.ageRequired'), trigger: 'blur' }
   ],
   sex: [
-    { required: true, message: '请输入性别', trigger: 'blur' }
+    { required: true, message: t('frontendTest.sexRequired'), trigger: 'blur' }
   ]
 }
 
@@ -250,7 +253,7 @@ const loadData = async () => {
     pageSize.value = result.size
   } catch (error) {
     console.error('加载数据失败:', error)
-    ElMessage.error('加载数据失败')
+    ElMessage.error(t('frontendTest.loadDataFailed'))
   } finally {
     loading.value = false
   }
@@ -275,7 +278,7 @@ const handleReset = () => {
 // 新建
 const handleCreate = () => {
   isEdit.value = false
-  dialogTitle.value = '新增Student'
+  dialogTitle.value = t('frontendTest.addTitle')
   currentId.value = null
   resetForm()
   dialogVisible.value = true
@@ -284,7 +287,7 @@ const handleCreate = () => {
 // 编辑
 const handleEdit = (row: Student) => {
   isEdit.value = true
-  dialogTitle.value = '编辑Student'
+  dialogTitle.value = t('frontendTest.editTitle')
   currentId.value = row.id
   Object.assign(formData, row)
   dialogVisible.value = true
@@ -309,10 +312,10 @@ const handleSubmit = async () => {
 
     if (isEdit.value && currentId.value) {
       await updateStudent(currentId.value, formData)
-      ElMessage.success('更新成功')
+      ElMessage.success(t('frontendTest.updateSuccess'))
     } else {
       await createStudent(formData)
-      ElMessage.success('创建成功')
+      ElMessage.success(t('frontendTest.createSuccess'))
     }
 
     dialogVisible.value = false
@@ -320,7 +323,7 @@ const handleSubmit = async () => {
   } catch (error) {
     if (error !== false) { // 表单验证失败时不显示错误
       console.error('提交失败:', error)
-      ElMessage.error('操作失败')
+      ElMessage.error(t('frontendTest.operationFailed'))
     }
   } finally {
     submitting.value = false
@@ -330,17 +333,17 @@ const handleSubmit = async () => {
 // 批量删除
 const handleBatchDelete = async () => {
   if (selectedRows.value.length === 0) {
-    ElMessage.warning('请选择要删除的数据')
+    ElMessage.warning(t('frontendTest.selectDataWarning'))
     return
   }
 
   try {
     await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedRows.value.length} 条数据吗？`,
-      '批量删除确认',
+      t('frontendTest.batchDeleteMessage', { count: selectedRows.value.length }),
+      t('frontendTest.batchDeleteConfirm'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('frontendTest.confirm'),
+        cancelButtonText: t('frontendTest.cancel'),
         type: 'warning'
       }
     )
@@ -350,13 +353,13 @@ const handleBatchDelete = async () => {
       await deleteStudent(item.id)
     }
 
-    ElMessage.success('批量删除成功')
+    ElMessage.success(t('frontendTest.batchDeleteSuccess'))
     await loadData()
     tableRef.value?.clearSelection()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('批量删除失败:', error)
-      ElMessage.error('批量删除失败')
+      ElMessage.error(t('frontendTest.batchDeleteFailed'))
     }
   }
 }
@@ -365,22 +368,22 @@ const handleBatchDelete = async () => {
 const handleDelete = async (row: Student) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除该Student吗？`,
-      '删除确认',
+      t('frontendTest.deleteMessage'),
+      t('frontendTest.deleteConfirm'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('frontendTest.confirm'),
+        cancelButtonText: t('frontendTest.cancel'),
         type: 'warning'
       }
     )
 
     await deleteStudent(row.id)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('frontendTest.deleteSuccess'))
     await loadData()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(t('frontendTest.deleteFailed'))
     }
   }
 }

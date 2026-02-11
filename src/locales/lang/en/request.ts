@@ -1,0 +1,17 @@
+export default {
+  networkError: 'Network Error',
+  networkException: 'Network connection exception',
+  requestFailed: 'Request failed',
+  badRequest: 'Bad request parameters',
+  unauthorized: 'Unauthorized, please login again',
+  forbidden: 'Access denied',
+  notFound: 'Resource not found',
+  serverError: 'Internal server error',
+  badGateway: 'Bad gateway',
+  serviceUnavailable: 'Service unavailable',
+  gatewayTimeout: 'Gateway timeout',
+  connectionError: 'Connection error {status}',
+  loginExpired: 'Session expired, please login again',
+  loginExpiredShort: 'Session expired',
+  refreshFailed: 'Refresh failed',
+}

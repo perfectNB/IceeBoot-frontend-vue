@@ -9,6 +9,7 @@
         </div>
 
         <div class="navbar-actions">
+          <LanguageSwitcher />
           <el-button
             :icon="isDark ? Sunny : Moon"
             @click="toggleTheme"
@@ -18,15 +19,15 @@
           />
           <template v-if="isLoggedIn">
             <el-button class="nav-btn" @click="goToFirstMenu">
-              控制台
+              {{ t('home.console') }}
             </el-button>
             <el-button class="nav-btn logout" text @click="handleLogout">
-              退出
+              {{ t('home.logoutBtn') }}
             </el-button>
           </template>
           <template v-else>
             <el-button class="nav-btn primary" @click="showLoginDialog = true">
-              登录
+              {{ t('home.login') }}
             </el-button>
           </template>
         </div>
@@ -47,40 +48,39 @@
           <div class="hero-content">
             <div class="hero-badge">
               <span class="pulse-dot"></span>
-              AI 原生企业级脚手架
+              {{ t('home.badge') }}
             </div>
             <h1 class="hero-title">
-              构建未来的
-              <span class="gradient-text">智能应用</span>
+              {{ t('home.heroTitle') }}
+              <span class="gradient-text">{{ t('home.heroTitleHighlight') }}</span>
             </h1>
             <p class="hero-description">
-              IceeBoot 是基于 Vue 3 + TypeScript + Element Plus 的下一代企业级开发平台。
-              深度集成 AI 能力，提供从设计到部署的全链路解决方案。
+              {{ t('home.heroDescription') }}
             </p>
             <div class="hero-actions">
               <el-button class="cta-btn primary" size="large" @click="handleExperience">
-                立即体验
+                {{ t('home.experience') }}
                 <el-icon class="el-icon--right"><ArrowRight /></el-icon>
               </el-button>
               <el-button class="cta-btn secondary" size="large" @click="openOfficialDocs">
-                文档中心
+                {{ t('home.docs') }}
               </el-button>
             </div>
 
             <div class="hero-stats">
               <div class="stat-item">
                 <span class="stat-value">30+</span>
-                <span class="stat-label">开箱模块</span>
+                <span class="stat-label">{{ t('home.statModules') }}</span>
               </div>
               <div class="stat-divider"></div>
               <div class="stat-item">
                 <span class="stat-value">50+</span>
-                <span class="stat-label">企业方案</span>
+                <span class="stat-label">{{ t('home.statSolutions') }}</span>
               </div>
               <div class="stat-divider"></div>
               <div class="stat-item">
                 <span class="stat-value">10x</span>
-                <span class="stat-label">开发提效</span>
+                <span class="stat-label">{{ t('home.statEfficiency') }}</span>
               </div>
             </div>
           </div>
@@ -132,8 +132,8 @@
       <section id="features" class="features-section">
         <div class="container">
           <div class="section-header">
-            <h2 class="section-title">核心特性</h2>
-            <p class="section-subtitle">不仅仅是模板，更是生产力工具</p>
+            <h2 class="section-title">{{ t('home.featuresTitle') }}</h2>
+            <p class="section-subtitle">{{ t('home.featuresSubtitle') }}</p>
           </div>
           <div class="features-grid">
             <div
@@ -157,8 +157,8 @@
       <section class="tech-section">
         <div class="container">
           <div class="section-header">
-            <h2 class="section-title">技术栈</h2>
-            <p class="section-subtitle">采用行业前沿技术构建，确保项目的长期生命力</p>
+            <h2 class="section-title">{{ t('home.techTitle') }}</h2>
+            <p class="section-subtitle">{{ t('home.techSubtitle') }}</p>
           </div>
           <div class="tech-grid">
             <div class="tech-item" v-for="tech in techStack" :key="tech.name">
@@ -181,8 +181,8 @@
         </div>
         <div class="footer-links">
           <a href="https://gitee.com/woshinibaba438cnmlgb/zboot-backend-java" target="_blank">Gitee</a>
-          <a href="https://doc.iceeboot.yxycompany.com" target="_blank">文档</a>
-          <a href="#" @click.prevent="showContactDialog = true">联系我们</a>
+          <a href="https://doc.iceeboot.yxycompany.com" target="_blank">{{ t('home.docs') }}</a>
+          <a href="#" @click.prevent="showContactDialog = true">{{ t('home.contactUs') }}</a>
           <a href="https://beian.miit.gov.cn/" target="_blank">京ICP备2024086986号-2</a>
         </div>
       </div>
@@ -193,24 +193,24 @@
 
     <el-dialog
       v-model="showMockDialog"
-      title="Mock 模式提示"
+      title="Mock"
       width="400px"
       class="custom-dialog"
       align-center
     >
       <div class="mock-content">
         <el-icon class="warning-icon"><Warning /></el-icon>
-        <p>当前处于演示模式，数据仅供参考。</p>
+        <p>{{ t('home.mockContent') }}</p>
       </div>
       <template #footer>
-        <el-button @click="showMockDialog = false">我知道了</el-button>
-        <el-button type="primary" @click="openGitee">获取源码</el-button>
+        <el-button @click="showMockDialog = false">{{ t('home.mockDismiss') }}</el-button>
+        <el-button type="primary" @click="openGitee">{{ t('home.getSource') }}</el-button>
       </template>
     </el-dialog>
 
     <el-dialog
       v-model="showContactDialog"
-      title="联系我们"
+      :title="t('home.contactUs')"
       width="600px"
       class="custom-dialog"
       align-center
@@ -234,6 +234,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import {
   Moon,
   Sunny,
@@ -257,6 +258,7 @@ import {
 } from '@element-plus/icons-vue'
 import { isDark, toggleTheme } from '@/utils/theme'
 import LoginDialog from '../../components/common/LoginDialog.vue'
+import LanguageSwitcher from '../../components/common/LanguageSwitcher.vue'
 import { useUserStore } from '@/stores/user'
 import { isMockEnabled } from '@/config/mock'
 import { exchangeWechatTicket } from '@/api'
@@ -265,6 +267,7 @@ import type { MenuItem } from '@/types'
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+const { t } = useI18n()
 
 const showLoginDialog = ref(false)
 const isLoggedIn = computed(() => !!userStore.getToken())
@@ -272,15 +275,15 @@ const showMockDialog = ref(false)
 const showContactDialog = ref(false)
 
 // Orbit Items Configuration
-const orbitItems = [
-  { icon: ChatDotRound, label: 'AI大模型' },
-  { icon: Lightning, label: '智能Agent' },
-  { icon: User, label: '第三方登录' },
-  { icon: Cellphone, label: '小程序端' },
-  { icon: Monitor, label: 'PC端' },
-  { icon: Iphone, label: 'iOS端' },
-  { icon: Platform, label: '安卓鸿蒙' }
-]
+const orbitItems = computed(() => [
+  { icon: ChatDotRound, label: t('home.orbitAI') },
+  { icon: Lightning, label: t('home.orbitAgent') },
+  { icon: User, label: t('home.orbitThirdLogin') },
+  { icon: Cellphone, label: t('home.orbitMiniApp') },
+  { icon: Monitor, label: t('home.orbitPC') },
+  { icon: Iphone, label: t('home.orbitIOS') },
+  { icon: Platform, label: t('home.orbitAndroid') }
+])
 
 // Social Platforms
 const socialPlatforms = [
@@ -352,13 +355,13 @@ const goToFirstMenu = () => {
 
 const handleLogout = async () => {
   try {
-    await ElMessageBox.confirm('确定要退出登录吗？', '提示', {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
+    await ElMessageBox.confirm(t('home.logoutConfirm'), t('common.tip'), {
+      confirmButtonText: t('common.confirm'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning',
     })
     userStore.logout()
-    ElMessage.success('已退出登录')
+    ElMessage.success(t('home.logoutSuccess'))
   } catch { /* cancelled */ }
 }
 
@@ -371,19 +374,19 @@ const handleMouseMove = (e: MouseEvent) => {
   target.style.setProperty('--mouse-y', `${y}px`)
 }
 
-const features = [
-  { icon: Setting, title: '开箱即用', description: '完整的项目结构和配置，二次开发超级简单', highlight: true },
-  { icon: ChatDotRound, title: 'AI大模型集成', description: '接入DeepSeek、ChatGPT、Kimi、Claude等主流大模型', highlight: true },
-  { icon: User, title: '第三方登录', description: '集成微信登录等多种第三方登录方式' },
-  { icon: Upload, title: '云存储支持', description: '支持阿里云、华为云、腾讯云、MinIO等多种OSS存储' },
-  { icon: Cellphone, title: '全平台适配', description: '小程序、iOS、安卓、鸿蒙、Web、Mac、Win全平台支持', highlight: true },
-  { icon: Search, title: 'SEO优化', description: 'SEO自动优化，快速检索到网站内容' },
-  { icon: Lock, title: '权限管理', description: '完善的用户权限和路由拦截机制' },
-  { icon: DataAnalysis, title: '数据可视化', description: '集成图表组件，轻松实现数据展示' },
-  { icon: Tools, title: '工具丰富', description: '内置常用工具函数和组件库' },
-  { icon: Cpu, title: '性能优化', description: '代码分割、懒加载等性能优化方案' },
-  { icon: Connection, title: 'API集成', description: '统一的HTTP请求封装和错误处理' }
-]
+const features = computed(() => [
+  { icon: Setting, title: t('home.featureReadyToUse'), description: t('home.featureReadyToUseDesc'), highlight: true },
+  { icon: ChatDotRound, title: t('home.featureAI'), description: t('home.featureAIDesc'), highlight: true },
+  { icon: User, title: t('home.featureThirdLogin'), description: t('home.featureThirdLoginDesc') },
+  { icon: Upload, title: t('home.featureCloudStorage'), description: t('home.featureCloudStorageDesc') },
+  { icon: Cellphone, title: t('home.featureMultiPlatform'), description: t('home.featureMultiPlatformDesc'), highlight: true },
+  { icon: Search, title: t('home.featureSEO'), description: t('home.featureSEODesc') },
+  { icon: Lock, title: t('home.featurePermission'), description: t('home.featurePermissionDesc') },
+  { icon: DataAnalysis, title: t('home.featureDataViz'), description: t('home.featureDataVizDesc') },
+  { icon: Tools, title: t('home.featureTools'), description: t('home.featureToolsDesc') },
+  { icon: Cpu, title: t('home.featurePerformance'), description: t('home.featurePerformanceDesc') },
+  { icon: Connection, title: t('home.featureAPI'), description: t('home.featureAPIDesc') }
+])
 
 const techStack = [
   { name: 'Vue 3', logo: 'https://vuejs.org/logo.svg' },
@@ -444,7 +447,7 @@ const handleWechatCallback = async () => {
     await router.replace({ path: '/', query: {} })
     goToFirstMenu()
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '登录失败')
+    ElMessage.error(error instanceof Error ? error.message : t('login.loginFailed'))
     showLoginDialog.value = true
     await router.replace({ path: '/', query: {} })
   }

@@ -1,8 +1,8 @@
 <template>
   <div class="sms-management">
     <div class="page-header">
-      <h1 class="page-title">短信服务管理</h1>
-      <p class="page-description">管理短信服务配置和API密钥</p>
+      <h1 class="page-title">{{ t('thirdSms.title') }}</h1>
+      <p class="page-description">{{ t('thirdSms.description') }}</p>
     </div>
 
     <!-- 服务商卡片区域 -->
@@ -36,7 +36,7 @@
 
         <div class="provider-stats">
           <div class="stat-item">
-            <span class="stat-label">密钥数量</span>
+            <span class="stat-label">{{ t('thirdSms.keyCount') }}</span>
             <span class="stat-value">{{ provider.keys?.length || 0 }}</span>
           </div>
         </div>
@@ -49,7 +49,7 @@
             class="manage-keys-btn"
             v-if="hasPermission('third:sms:view')"
           >
-            管理密钥
+            {{ t('thirdSms.manageKeys') }}
           </el-button>
         </div>
       </div>
@@ -58,40 +58,40 @@
     <!-- 密钥管理对话框 -->
     <el-dialog
       v-model="keyDialogVisible"
-      title="短信密钥管理"
+      :title="t('thirdSms.keyManagementTitle')"
       width="900px"
       :close-on-click-modal="false"
     >
       <div class="key-management">
         <div class="key-header">
-          <h3>{{ currentProvider?.displayName }} - 短信密钥</h3>
+          <h3>{{ currentProvider?.displayName }} - {{ t('thirdSms.smsKeys') }}</h3>
           <el-button type="primary" size="small" @click="handleAddKey" v-if="hasPermission('third:sms:create')">
             <el-icon><Plus /></el-icon>
-            添加密钥
+            {{ t('thirdSms.addKey') }}
           </el-button>
         </div>
 
         <el-table :data="currentProvider?.keys || []" stripe border>
-          <el-table-column prop="id" label="ID" width="80" />
-          <el-table-column label="AccessKey ID" min-width="200">
+          <el-table-column prop="id" :label="t('thirdSms.table.id')" width="80" />
+          <el-table-column :label="t('thirdSms.table.accessKeyId')" min-width="200">
             <template #default="{ row }">
               <span class="key-display">
                 {{ maskKey(row.accessKeyId) }}
               </span>
             </template>
           </el-table-column>
-          <el-table-column label="AccessKey Secret" min-width="200">
+          <el-table-column :label="t('thirdSms.table.accessKeySecret')" min-width="200">
             <template #default="{ row }">
               <span class="key-display">
                 {{ maskKey(row.accessKeySecret) }}
               </span>
             </template>
           </el-table-column>
-          <el-table-column prop="defaultSignName" label="默认签名" min-width="150" />
-          <el-table-column prop="defaultTemplateId" label="默认模板ID" min-width="150" />
-          <el-table-column prop="sender" label="发送方" min-width="150" />
-          <el-table-column prop="remark" label="备注" min-width="150" />
-          <el-table-column label="状态" width="100">
+          <el-table-column prop="defaultSignName" :label="t('thirdSms.table.defaultSignName')" min-width="150" />
+          <el-table-column prop="defaultTemplateId" :label="t('thirdSms.table.defaultTemplateId')" min-width="150" />
+          <el-table-column prop="sender" :label="t('thirdSms.table.sender')" min-width="150" />
+          <el-table-column prop="remark" :label="t('thirdSms.table.remark')" min-width="150" />
+          <el-table-column :label="t('thirdSms.table.status')" width="100">
             <template #default="{ row }">
               <el-switch
                 v-model="row.status"
@@ -101,8 +101,8 @@
               />
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="创建时间" width="160" />
-          <el-table-column label="操作" width="180">
+          <el-table-column prop="createTime" :label="t('thirdSms.table.createTime')" width="160" />
+          <el-table-column :label="t('thirdSms.table.actions')" width="180">
             <template #default="{ row }">
               <el-button
                 type="primary"
@@ -112,7 +112,7 @@
                 v-if="hasPermission('third:sms:edit')"
               >
                 <el-icon><Edit /></el-icon>
-                编辑
+                {{ t('thirdSms.edit') }}
               </el-button>
               <el-button
                 type="danger"
@@ -122,7 +122,7 @@
                 v-if="hasPermission('third:sms:delete')"
               >
                 <el-icon><Delete /></el-icon>
-                删除
+                {{ t('thirdSms.delete') }}
               </el-button>
             </template>
           </el-table-column>
@@ -131,7 +131,7 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="keyDialogVisible = false">关闭</el-button>
+          <el-button @click="keyDialogVisible = false">{{ t('thirdSms.close') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -139,7 +139,7 @@
     <!-- 添加密钥对话框 -->
     <el-dialog
       v-model="addKeyDialogVisible"
-      title="添加短信密钥"
+      :title="t('thirdSms.addKeyTitle')"
       width="600px"
       :close-on-click-modal="false"
     >
@@ -149,51 +149,51 @@
         :rules="keyFormRules"
         label-width="120px"
       >
-        <el-form-item label="密钥备注" prop="remark">
+        <el-form-item :label="t('thirdSms.form.remark')" prop="remark">
           <el-input
             v-model="keyForm.remark"
-            placeholder="请输入密钥备注"
+            :placeholder="t('thirdSms.form.remarkPlaceholder')"
           />
         </el-form-item>
-        <el-form-item label="AccessKey ID" prop="accessKeyId">
+        <el-form-item :label="t('thirdSms.form.accessKeyId')" prop="accessKeyId">
           <el-input
             v-model="keyForm.accessKeyId"
-            placeholder="请输入AccessKey ID"
+            :placeholder="t('thirdSms.form.accessKeyIdPlaceholder')"
           />
         </el-form-item>
-        <el-form-item label="AccessKey Secret" prop="accessKeySecret">
+        <el-form-item :label="t('thirdSms.form.accessKeySecret')" prop="accessKeySecret">
           <el-input
             v-model="keyForm.accessKeySecret"
             type="password"
             show-password
-            placeholder="请输入AccessKey Secret"
+            :placeholder="t('thirdSms.form.accessKeySecretPlaceholder')"
           />
         </el-form-item>
-        <el-form-item label="默认签名" prop="defaultSignName">
+        <el-form-item :label="t('thirdSms.form.defaultSignName')" prop="defaultSignName">
           <el-input
             v-model="keyForm.defaultSignName"
-            placeholder="请输入默认短信签名"
+            :placeholder="t('thirdSms.form.defaultSignNamePlaceholder')"
           />
         </el-form-item>
-        <el-form-item label="默认模板ID" prop="defaultTemplateId">
+        <el-form-item :label="t('thirdSms.form.defaultTemplateId')" prop="defaultTemplateId">
           <el-input
             v-model="keyForm.defaultTemplateId"
-            placeholder="请输入默认短信模板ID"
+            :placeholder="t('thirdSms.form.defaultTemplateIdPlaceholder')"
           />
         </el-form-item>
-        <el-form-item label="发送方" prop="sender">
+        <el-form-item :label="t('thirdSms.form.sender')" prop="sender">
           <el-input
             v-model="keyForm.sender"
-            placeholder="请输入发送方（如需要）"
+            :placeholder="t('thirdSms.form.senderPlaceholder')"
           />
         </el-form-item>
       </el-form>
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="addKeyDialogVisible = false">取消</el-button>
+          <el-button @click="addKeyDialogVisible = false">{{ t('thirdSms.cancel') }}</el-button>
           <el-button type="primary" @click="handleSubmitKey" :loading="submitting">
-            {{ keyForm.id ? '更新' : '添加' }}
+            {{ keyForm.id ? t('thirdSms.update') : t('thirdSms.add') }}
           </el-button>
         </div>
       </template>
@@ -210,6 +210,7 @@ import {
   Delete,
   Key
 } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 
 // 导入API接口
 import {
@@ -221,6 +222,8 @@ import {
 } from '@/api/sms'
 import { hasPermission } from '@/utils/permission'
 import type { SMSProvider, SMSKey } from '@/api/sms'
+
+const { t } = useI18n()
 
 // 响应式数据
 const loading = ref(false)
@@ -253,9 +256,9 @@ const keyForm = reactive<{
 
 // 表单验证规则
 const keyFormRules = {
-  accessKeyId: [{ required: true, message: '请输入AccessKey ID', trigger: 'blur' }],
-  accessKeySecret: [{ required: true, message: '请输入AccessKey Secret', trigger: 'blur' }],
-  defaultSignName: [{ required: true, message: '请输入默认短信签名', trigger: 'blur' }]
+  accessKeyId: [{ required: true, message: () => t('thirdSms.form.accessKeyIdRequired'), trigger: 'blur' }],
+  accessKeySecret: [{ required: true, message: () => t('thirdSms.form.accessKeySecretRequired'), trigger: 'blur' }],
+  defaultSignName: [{ required: true, message: () => t('thirdSms.form.defaultSignNameRequired'), trigger: 'blur' }]
 }
 
 // 获取服务商首字母
@@ -317,17 +320,17 @@ const handleAddKey = () => {
 const handleDeleteKey = async (key: SMSKey) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除这个密钥吗？`,
-      '删除确认',
+      t('thirdSms.deleteConfirm'),
+      t('thirdSms.deleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('thirdSms.confirm'),
+        cancelButtonText: t('thirdSms.cancel'),
         type: 'warning'
       }
     )
 
     await deleteSMSKey(key.id)
-    ElMessage.success('密钥删除成功')
+    ElMessage.success(t('thirdSms.deleteSuccess'))
 
     // 重新加载所有服务商数据
     await loadProviders()
@@ -340,7 +343,7 @@ const handleDeleteKey = async (key: SMSKey) => {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除密钥失败:', error)
-      ElMessage.error('删除密钥失败')
+      ElMessage.error(t('thirdSms.deleteFailed'))
     }
   }
 }
@@ -349,10 +352,10 @@ const handleDeleteKey = async (key: SMSKey) => {
 const handleKeyStatusChange = async (key: SMSKey) => {
   try {
     await updateSMSKeyStatus(currentProvider.value!.providerName, key.id, key.status)
-    ElMessage.success('密钥状态更新成功')
+    ElMessage.success(t('thirdSms.statusUpdateSuccess'))
   } catch (error) {
     console.error('密钥状态更新失败:', error)
-    ElMessage.error('密钥状态更新失败')
+    ElMessage.error(t('thirdSms.statusUpdateFailed'))
     key.status = key.status === 'active' ? 'inactive' : 'active'
   }
 }
@@ -372,7 +375,7 @@ const handleSubmitKey = async () => {
         ...keyForm
       }
       await updateSMSKey(currentProvider.value!.providerName, keyForm.id, keyData)
-      ElMessage.success('密钥更新成功')
+      ElMessage.success(t('thirdSms.updateSuccess'))
 
       // 重新加载所有服务商数据
       await loadProviders()
@@ -390,7 +393,7 @@ const handleSubmitKey = async () => {
         status: 'active' as const
       }
       await addSMSKey(keyData)
-      ElMessage.success('密钥添加成功')
+      ElMessage.success(t('thirdSms.addSuccess'))
     }
 
     // 重新加载所有服务商数据
@@ -406,7 +409,7 @@ const handleSubmitKey = async () => {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('操作密钥失败:', error)
-      ElMessage.error('操作密钥失败')
+      ElMessage.error(t('thirdSms.operationFailed'))
     }
   } finally {
     submitting.value = false
@@ -452,7 +455,7 @@ const loadProviders = async () => {
     providerList.value = providers
   } catch (error) {
     console.error('加载服务商数据失败:', error)
-    ElMessage.error('加载服务商数据失败')
+    ElMessage.error(t('thirdSms.loadFailed'))
   } finally {
     loading.value = false
   }

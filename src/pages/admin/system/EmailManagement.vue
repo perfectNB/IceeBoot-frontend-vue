@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { getEmailProviders, sendEmail, queryEmailStatus, type EmailProvider, type EmailResponse, type EmailSendDTO, type EmailStatusQuery } from '@/api'
+
+const { t } = useI18n()
 
 defineOptions({
   name: 'EmailManagement'
@@ -72,12 +75,12 @@ const parseJsonObject = (value: string, errorText: string): Record<string, unkno
   try {
     const parsed = JSON.parse(value) as Record<string, unknown>
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      ElMessage.error(errorText)
+      ElMessage.error(t(errorText))
       return null
     }
     return parsed
   } catch {
-    ElMessage.error(errorText)
+    ElMessage.error(t(errorText))
     return null
   }
 }
@@ -87,12 +90,12 @@ const parseJsonArray = (value: string, errorText: string): unknown[] | undefined
   try {
     const parsed = JSON.parse(value)
     if (!Array.isArray(parsed)) {
-      ElMessage.error(errorText)
+      ElMessage.error(t(errorText))
       return null
     }
     return parsed
   } catch {
-    ElMessage.error(errorText)
+    ElMessage.error(t(errorText))
     return null
   }
 }
@@ -104,21 +107,21 @@ const formatResult = (value: EmailResponse | null): string => {
 
 const validateReceiver = (_rule: unknown, _value: string, callback: (error?: Error) => void) => {
   if (!sendForm.toEmail && !sendForm.toEmails) {
-    callback(new Error('请输入收件人邮箱或邮箱列表'))
+    callback(new Error(t('emailManagement.receiverRequired')))
     return
   }
   callback()
 }
 
 const sendRules: FormRules = {
-  provider: [{ required: true, message: '请选择服务商', trigger: 'change' }],
-  subject: [{ required: true, message: '请输入邮件主题', trigger: 'blur' }],
+  provider: [{ required: true, message: t('emailManagement.providerRequired'), trigger: 'change' }],
+  subject: [{ required: true, message: t('emailManagement.subjectRequired'), trigger: 'blur' }],
   toEmail: [{ validator: validateReceiver, trigger: 'blur' }],
   toEmails: [{ validator: validateReceiver, trigger: 'blur' }]
 }
 
 const statusRules: FormRules = {
-  messageId: [{ required: true, message: '请输入邮件ID', trigger: 'blur' }]
+  messageId: [{ required: true, message: t('emailManagement.messageIdRequired'), trigger: 'blur' }]
 }
 
 const loadProviders = async () => {
@@ -126,7 +129,7 @@ const loadProviders = async () => {
   try {
     providerList.value = await getEmailProviders()
   } catch {
-    ElMessage.error('加载邮件服务商失败')
+    ElMessage.error(t('emailManagement.loadProvidersError'))
   } finally {
     loadingProviders.value = false
   }
@@ -136,11 +139,11 @@ const handleSend = async () => {
   if (!sendFormRef.value) return
   try {
     await sendFormRef.value.validate()
-    const templateParams = parseJsonObject(sendForm.templateParamsJson, '模板参数需要是JSON对象')
+    const templateParams = parseJsonObject(sendForm.templateParamsJson, 'emailManagement.templateParamsError')
     if (templateParams === null) return
-    const customHeaders = parseJsonObject(sendForm.customHeadersJson, '自定义头需要是JSON对象')
+    const customHeaders = parseJsonObject(sendForm.customHeadersJson, 'emailManagement.customHeadersError')
     if (customHeaders === null) return
-    const attachments = parseJsonArray(sendForm.attachmentsJson, '附件需要是JSON数组')
+    const attachments = parseJsonArray(sendForm.attachmentsJson, 'emailManagement.attachmentsError')
     if (attachments === null) return
 
     const toEmails = parseList(sendForm.toEmails)
@@ -170,7 +173,7 @@ const handleSend = async () => {
     }
     sending.value = true
     sendResult.value = await sendEmail(payload)
-    ElMessage.success('邮件发送请求已提交')
+    ElMessage.success(t('emailManagement.sendSuccess'))
   } catch {
     return
   } finally {
@@ -189,7 +192,7 @@ const handleQueryStatus = async () => {
     }
     queryingStatus.value = true
     statusResult.value = await queryEmailStatus(payload)
-    ElMessage.success('邮件状态查询完成')
+    ElMessage.success(t('emailManagement.querySuccess'))
   } catch {
     return
   } finally {
@@ -242,12 +245,12 @@ onMounted(() => {
 <template>
   <div class="email-management">
     <div class="page-header">
-      <h2>邮件发送管理</h2>
-      <p>发送邮件、查询发送状态</p>
+      <h2>{{ t('emailManagement.title') }}</h2>
+      <p>{{ t('emailManagement.description') }}</p>
     </div>
 
     <el-tabs v-model="activeTab" type="card">
-      <el-tab-pane label="发送邮件" name="send">
+      <el-tab-pane :label="t('emailManagement.sendEmail')" name="send">
         <div class="panel-card" v-loading="loadingProviders">
           <el-form
             ref="sendFormRef"
@@ -257,8 +260,8 @@ onMounted(() => {
           >
             <el-row :gutter="16">
               <el-col :span="12">
-                <el-form-item label="服务商" prop="provider">
-                  <el-select v-model="sendForm.provider" placeholder="请选择服务商" filterable>
+                <el-form-item :label="t('emailManagement.provider')" prop="provider">
+                  <el-select v-model="sendForm.provider" :placeholder="t('emailManagement.providerPlaceholder')" filterable>
                     <el-option
                       v-for="provider in providerOptions"
                       :key="provider.providerName"
@@ -269,8 +272,8 @@ onMounted(() => {
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="密钥ID">
-                  <el-select v-model="sendForm.keyId" placeholder="请选择密钥">
+                <el-form-item :label="t('emailManagement.keyId')">
+                  <el-select v-model="sendForm.keyId" :placeholder="t('emailManagement.keyPlaceholder')">
                     <el-option
                       v-for="key in keyOptions"
                       :key="key.id"
@@ -281,110 +284,110 @@ onMounted(() => {
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="收件人" prop="toEmail">
-                  <el-input v-model="sendForm.toEmail" placeholder="请输入收件人邮箱" />
+                <el-form-item :label="t('emailManagement.toEmail')" prop="toEmail">
+                  <el-input v-model="sendForm.toEmail" :placeholder="t('emailManagement.toEmailPlaceholder')" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="收件人列表" prop="toEmails">
+                <el-form-item :label="t('emailManagement.toEmails')" prop="toEmails">
                   <el-input
                     v-model="sendForm.toEmails"
-                    placeholder="多个邮箱用逗号或换行分隔"
+                    :placeholder="t('emailManagement.toEmailsPlaceholder')"
                     type="textarea"
                     :rows="2"
                   />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="抄送">
-                  <el-input v-model="sendForm.ccEmails" placeholder="多个邮箱用逗号或换行分隔" />
+                <el-form-item :label="t('emailManagement.ccEmails')">
+                  <el-input v-model="sendForm.ccEmails" :placeholder="t('emailManagement.ccEmailsPlaceholder')" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="密送">
-                  <el-input v-model="sendForm.bccEmails" placeholder="多个邮箱用逗号或换行分隔" />
+                <el-form-item :label="t('emailManagement.bccEmails')">
+                  <el-input v-model="sendForm.bccEmails" :placeholder="t('emailManagement.bccEmailsPlaceholder')" />
                 </el-form-item>
               </el-col>
               <el-col :span="24">
-                <el-form-item label="邮件主题" prop="subject">
-                  <el-input v-model="sendForm.subject" placeholder="请输入邮件主题" />
+                <el-form-item :label="t('emailManagement.subject')" prop="subject">
+                  <el-input v-model="sendForm.subject" :placeholder="t('emailManagement.subjectPlaceholder')" />
                 </el-form-item>
               </el-col>
               <el-col :span="24">
-                <el-form-item label="纯文本内容">
+                <el-form-item :label="t('emailManagement.textContent')">
                   <el-input v-model="sendForm.textContent" type="textarea" :rows="3" />
                 </el-form-item>
               </el-col>
               <el-col :span="24">
-                <el-form-item label="HTML内容">
+                <el-form-item :label="t('emailManagement.htmlContent')">
                   <el-input v-model="sendForm.htmlContent" type="textarea" :rows="3" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="模板ID">
-                  <el-input v-model="sendForm.templateId" placeholder="请输入模板ID" />
+                <el-form-item :label="t('emailManagement.templateId')">
+                  <el-input v-model="sendForm.templateId" :placeholder="t('emailManagement.templateIdPlaceholder')" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="发件人名称">
-                  <el-input v-model="sendForm.fromName" placeholder="发件人展示名称" />
+                <el-form-item :label="t('emailManagement.fromName')">
+                  <el-input v-model="sendForm.fromName" :placeholder="t('emailManagement.fromNamePlaceholder')" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="邮件类型">
-                  <el-input v-model="sendForm.emailType" placeholder="如通知、营销" />
+                <el-form-item :label="t('emailManagement.emailType')">
+                  <el-input v-model="sendForm.emailType" :placeholder="t('emailManagement.emailTypePlaceholder')" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="优先级">
+                <el-form-item :label="t('emailManagement.priority')">
                   <el-input-number v-model="sendForm.priority" :min="0" style="width: 100%" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="需要回执">
+                <el-form-item :label="t('emailManagement.needReceipt')">
                   <el-switch v-model="sendForm.needReceipt" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="回复地址">
-                  <el-input v-model="sendForm.replyTo" placeholder="回复邮箱地址" />
+                <el-form-item :label="t('emailManagement.replyTo')">
+                  <el-input v-model="sendForm.replyTo" :placeholder="t('emailManagement.replyToPlaceholder')" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="字符集">
-                  <el-input v-model="sendForm.charset" placeholder="如 UTF-8" />
+                <el-form-item :label="t('emailManagement.charset')">
+                  <el-input v-model="sendForm.charset" :placeholder="t('emailManagement.charsetPlaceholder')" />
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="异步发送">
+                <el-form-item :label="t('emailManagement.async')">
                   <el-switch v-model="sendForm.async" />
                 </el-form-item>
               </el-col>
               <el-col :span="24">
-                <el-form-item label="模板参数">
+                <el-form-item :label="t('emailManagement.templateParams')">
                   <el-input
                     v-model="sendForm.templateParamsJson"
-                    placeholder='请输入JSON格式，如 {"name":"张三"}'
+                    :placeholder="t('emailManagement.templateParamsPlaceholder')"
                     type="textarea"
                     :rows="3"
                   />
                 </el-form-item>
               </el-col>
               <el-col :span="24">
-                <el-form-item label="自定义头">
+                <el-form-item :label="t('emailManagement.customHeaders')">
                   <el-input
                     v-model="sendForm.customHeadersJson"
-                    placeholder='请输入JSON格式，如 {"X-Trace-Id":"xxx"}'
+                    :placeholder="t('emailManagement.customHeadersPlaceholder')"
                     type="textarea"
                     :rows="3"
                   />
                 </el-form-item>
               </el-col>
               <el-col :span="24">
-                <el-form-item label="附件列表">
+                <el-form-item :label="t('emailManagement.attachments')">
                   <el-input
                     v-model="sendForm.attachmentsJson"
-                    placeholder='请输入JSON数组格式'
+                    :placeholder="t('emailManagement.attachmentsPlaceholder')"
                     type="textarea"
                     :rows="3"
                   />
@@ -392,24 +395,24 @@ onMounted(() => {
               </el-col>
             </el-row>
             <div class="action-row">
-              <el-button type="primary" :loading="sending" @click="handleSend">发送邮件</el-button>
-              <el-button @click="resetSendForm">重置</el-button>
+              <el-button type="primary" :loading="sending" @click="handleSend">{{ t('emailManagement.send') }}</el-button>
+              <el-button @click="resetSendForm">{{ t('emailManagement.reset') }}</el-button>
             </div>
           </el-form>
         </div>
         <div v-if="sendResult" class="result-card">
-          <div class="result-title">发送结果</div>
+          <div class="result-title">{{ t('emailManagement.sendResult') }}</div>
           <pre class="result-content">{{ formatResult(sendResult) }}</pre>
         </div>
       </el-tab-pane>
 
-      <el-tab-pane label="查询状态" name="status">
+      <el-tab-pane :label="t('emailManagement.queryStatus')" name="status">
         <div class="panel-card" v-loading="loadingProviders">
           <el-form ref="statusFormRef" :model="statusForm" :rules="statusRules" label-width="110px">
             <el-row :gutter="16">
               <el-col :span="12">
-                <el-form-item label="服务商" prop="provider">
-                  <el-select v-model="statusForm.provider" placeholder="请选择服务商" filterable>
+                <el-form-item :label="t('emailManagement.provider')" prop="provider">
+                  <el-select v-model="statusForm.provider" :placeholder="t('emailManagement.providerPlaceholder')" filterable>
                     <el-option
                       v-for="provider in providerOptions"
                       :key="provider.providerName"
@@ -420,8 +423,8 @@ onMounted(() => {
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="密钥ID">
-                  <el-select v-model="statusForm.keyId" placeholder="请选择密钥">
+                <el-form-item :label="t('emailManagement.keyId')">
+                  <el-select v-model="statusForm.keyId" :placeholder="t('emailManagement.keyPlaceholder')">
                     <el-option
                       v-for="key in statusKeyOptions"
                       :key="key.id"
@@ -432,19 +435,19 @@ onMounted(() => {
                 </el-form-item>
               </el-col>
               <el-col :span="24">
-                <el-form-item label="邮件ID" prop="messageId">
-                  <el-input v-model="statusForm.messageId" placeholder="请输入邮件ID" />
+                <el-form-item :label="t('emailManagement.messageId')" prop="messageId">
+                  <el-input v-model="statusForm.messageId" :placeholder="t('emailManagement.messageIdPlaceholder')" />
                 </el-form-item>
               </el-col>
             </el-row>
             <div class="action-row">
-              <el-button type="primary" :loading="queryingStatus" @click="handleQueryStatus">查询状态</el-button>
-              <el-button @click="resetStatusForm">重置</el-button>
+              <el-button type="primary" :loading="queryingStatus" @click="handleQueryStatus">{{ t('emailManagement.query') }}</el-button>
+              <el-button @click="resetStatusForm">{{ t('emailManagement.reset') }}</el-button>
             </div>
           </el-form>
         </div>
         <div v-if="statusResult" class="result-card">
-          <div class="result-title">查询结果</div>
+          <div class="result-title">{{ t('emailManagement.queryResult') }}</div>
           <pre class="result-content">{{ formatResult(statusResult) }}</pre>
         </div>
       </el-tab-pane>

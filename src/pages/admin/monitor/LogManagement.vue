@@ -1,8 +1,8 @@
 <template>
   <div class="log-management">
     <div class="page-header">
-      <h2>日志管理</h2>
-      <p>查看和管理系统日志</p>
+      <h2>{{ t('logManagement.pageTitle') }}</h2>
+      <p>{{ t('logManagement.pageDescription') }}</p>
     </div>
 
     <!-- 操作区域 -->
@@ -14,17 +14,17 @@
         v-if="hasPermission('monitor:log:delete')"
       >
         <el-icon><Delete /></el-icon>
-        批量删除
+        {{ t('logManagement.actions.batchDelete') }}
       </el-button>
     </div>
 
     <!-- 搜索区域 -->
     <div class="search-section">
       <el-form :model="searchForm" inline>
-        <el-form-item label="日志级别">
+        <el-form-item :label="t('logManagement.search.logLevel')">
           <el-select
             v-model="searchForm.level"
-            placeholder="请选择日志级别"
+            :placeholder="t('logManagement.search.selectLogLevel')"
             clearable
             style="width: 150px"
           >
@@ -34,29 +34,29 @@
             <el-option label="ERROR" value="ERROR" />
           </el-select>
         </el-form-item>
-        <el-form-item label="模块">
+        <el-form-item :label="t('logManagement.search.module')">
           <el-input
             v-model="searchForm.module"
-            placeholder="请输入模块名称"
+            :placeholder="t('logManagement.search.enterModule')"
             clearable
             style="width: 150px"
           />
         </el-form-item>
-        <el-form-item label="关键词">
+        <el-form-item :label="t('logManagement.search.keyword')">
           <el-input
             v-model="searchForm.keyword"
-            placeholder="请输入关键词"
+            :placeholder="t('logManagement.search.enterKeyword')"
             clearable
             style="width: 200px"
           />
         </el-form-item>
-        <el-form-item label="时间范围">
+        <el-form-item :label="t('logManagement.search.timeRange')">
           <el-date-picker
             v-model="searchForm.dateRange"
             type="datetimerange"
-            range-separator="至"
-            start-placeholder="开始时间"
-            end-placeholder="结束时间"
+            :range-separator="t('logManagement.search.to')"
+            :start-placeholder="t('logManagement.search.startTime')"
+            :end-placeholder="t('logManagement.search.endTime')"
             format="YYYY-MM-DD HH:mm:ss"
             value-format="YYYY-MM-DD HH:mm:ss"
             style="width: 350px"
@@ -65,11 +65,11 @@
         <el-form-item>
           <el-button type="primary" @click="handleSearch" :loading="loading">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('logManagement.actions.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon><Refresh /></el-icon>
-            重置
+            {{ t('logManagement.actions.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -87,25 +87,25 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="level" label="级别" width="90">
+        <el-table-column prop="level" :label="t('logManagement.table.level')" width="90">
           <template #default="{ row }">
             <el-tag :type="getLevelTagType(row.level)" size="small">{{ row.level }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="timestamp" label="时间" width="180">
+        <el-table-column prop="timestamp" :label="t('logManagement.table.time')" width="180">
           <template #default="{ row }">
             {{ formatDate(row.timestamp) }}
           </template>
         </el-table-column>
-        <el-table-column prop="module" label="模块" width="120" show-overflow-tooltip />
-        <el-table-column prop="message" label="日志内容" min-width="400" show-overflow-tooltip>
+        <el-table-column prop="module" :label="t('logManagement.table.module')" width="120" show-overflow-tooltip />
+        <el-table-column prop="message" :label="t('logManagement.table.logContent')" min-width="400" show-overflow-tooltip>
           <template #default="{ row }">
             <span class="log-message" :class="`log-${row.level.toLowerCase()}`">{{ row.message }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="thread" label="线程" width="120" show-overflow-tooltip />
-        <el-table-column prop="className" label="类名" width="200" show-overflow-tooltip />
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column prop="thread" :label="t('logManagement.table.thread')" width="120" show-overflow-tooltip />
+        <el-table-column prop="className" :label="t('logManagement.table.className')" width="200" show-overflow-tooltip />
+        <el-table-column :label="t('logManagement.table.operation')" width="180" fixed="right">
           <template #default="{ row }">
             <el-button
               type="primary"
@@ -114,7 +114,7 @@
               v-if="hasPermission('monitor:log:view')"
             >
               <el-icon><View /></el-icon>
-              查看
+              {{ t('logManagement.actions.view') }}
             </el-button>
             <el-button
               type="danger"
@@ -123,7 +123,7 @@
               v-if="hasPermission('monitor:log:delete')"
             >
               <el-icon><Delete /></el-icon>
-              删除
+              {{ t('logManagement.actions.delete') }}
             </el-button>
           </template>
         </el-table-column>
@@ -146,23 +146,23 @@
     <!-- 查看详情对话框 -->
     <el-dialog
       v-model="viewDialogVisible"
-      title="日志详情"
+      :title="t('logManagement.dialog.title')"
       width="70%"
       :before-close="handleCloseViewDialog"
     >
       <div class="log-detail" v-if="currentLogItem">
         <el-descriptions :column="2" border>
-          <el-descriptions-item label="日志级别">
+          <el-descriptions-item :label="t('logManagement.dialog.logLevel')">
             <el-tag :type="getLevelTagType(currentLogItem.level)">{{ currentLogItem.level }}</el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="时间">{{ currentLogItem.timestamp }}</el-descriptions-item>
-          <el-descriptions-item label="模块">{{ currentLogItem.module }}</el-descriptions-item>
-          <el-descriptions-item label="线程">{{ currentLogItem.thread }}</el-descriptions-item>
-          <el-descriptions-item label="类名" :span="2">{{ currentLogItem.className }}</el-descriptions-item>
+          <el-descriptions-item :label="t('logManagement.dialog.time')">{{ currentLogItem.timestamp }}</el-descriptions-item>
+          <el-descriptions-item :label="t('logManagement.dialog.module')">{{ currentLogItem.module }}</el-descriptions-item>
+          <el-descriptions-item :label="t('logManagement.dialog.thread')">{{ currentLogItem.thread }}</el-descriptions-item>
+          <el-descriptions-item :label="t('logManagement.dialog.className')" :span="2">{{ currentLogItem.className }}</el-descriptions-item>
         </el-descriptions>
 
         <div class="message-section" style="margin-top: 20px;">
-          <h4>日志内容：</h4>
+          <h4>{{ t('logManagement.dialog.logContent') }}</h4>
           <el-input
             v-model="currentLogItem.message"
             type="textarea"
@@ -173,7 +173,7 @@
         </div>
 
         <div class="stack-section" style="margin-top: 20px;" v-if="currentLogItem.stackTrace">
-          <h4>堆栈信息：</h4>
+          <h4>{{ t('logManagement.dialog.stackTrace') }}</h4>
           <el-input
             v-model="currentLogItem.stackTrace"
             type="textarea"
@@ -185,7 +185,7 @@
       </div>
 
       <template #footer>
-        <el-button @click="viewDialogVisible = false">关闭</el-button>
+        <el-button @click="viewDialogVisible = false">{{ t('logManagement.actions.close') }}</el-button>
       </template>
     </el-dialog>
   </div>
@@ -197,6 +197,9 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, View, Delete } from '@element-plus/icons-vue'
 import { getLogs, deleteLog, deleteLogs } from '../../../api/log'
 import { hasPermission } from '../../../utils/permission'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 interface LogItem {
   id: string
@@ -269,7 +272,7 @@ const loadLogs = async () => {
     console.log('LogManagement loadLogs response:', response)
   } catch (error: unknown) {
     console.error('获取日志数据失败:', error)
-    ElMessage.error('获取日志数据失败')
+    ElMessage.error(t('logManagement.messages.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -301,22 +304,22 @@ const handleView = (row: LogItem) => {
 const handleDelete = async (row: LogItem) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除这条日志吗？`,
-      '确认删除',
+      t('logManagement.confirm.deleteMessage'),
+      t('logManagement.confirm.deleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('logManagement.confirm.confirmButton'),
+        cancelButtonText: t('logManagement.confirm.cancelButton'),
         type: 'warning'
       }
     )
 
     await deleteLog(row.id)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('logManagement.messages.deleteSuccess'))
     loadLogs()
   } catch (error: unknown) {
     if (error !== 'cancel') {
       console.error('删除失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(t('logManagement.messages.deleteFailed'))
     }
   }
 }
@@ -360,24 +363,24 @@ const handleSelectionChange = (selection: LogItem[]) => {
 const handleBatchDelete = async () => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedLogs.value.length} 条日志吗？`,
-      '批量删除确认',
+      t('logManagement.confirm.batchDeleteMessage', { count: selectedLogs.value.length }),
+      t('logManagement.confirm.batchDeleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('logManagement.confirm.confirmButton'),
+        cancelButtonText: t('logManagement.confirm.cancelButton'),
         type: 'warning'
       }
     )
 
     const logIds = selectedLogs.value.map(log => log.id)
     await deleteLogs(logIds)
-    ElMessage.success(`成功删除 ${selectedLogs.value.length} 条日志`)
+    ElMessage.success(t('logManagement.messages.batchDeleteSuccess', { count: selectedLogs.value.length }))
     selectedLogs.value = []
     loadLogs()
   } catch (error: unknown) {
     if (error !== 'cancel') {
       console.error('批量删除日志失败:', error)
-      ElMessage.error('批量删除日志失败')
+      ElMessage.error(t('logManagement.messages.batchDeleteFailed'))
     }
   }
 }

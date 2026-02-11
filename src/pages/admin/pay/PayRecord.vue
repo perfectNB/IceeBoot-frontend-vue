@@ -1,8 +1,8 @@
 <template>
   <div class="pay-record-management">
     <div class="page-header">
-      <h1 class="page-title">支付记录管理</h1>
-      <p class="page-description">查看和管理系统支付记录</p>
+      <h1 class="page-title">{{ t('payRecord.title') }}</h1>
+      <p class="page-description">{{ t('payRecord.description') }}</p>
     </div>
 
     <!-- 操作区域 -->
@@ -13,67 +13,67 @@
         :disabled="selectedRecords.length === 0"
       >
         <el-icon><Delete /></el-icon>
-        批量删除
+        {{ t('payRecord.batchDelete') }}
       </el-button>
       <el-button @click="handleExport">
         <el-icon><Download /></el-icon>
-        导出
+        {{ t('payRecord.export') }}
       </el-button>
     </div>
 
     <!-- 搜索区域 -->
     <div class="search-section">
       <el-form :model="searchForm" :inline="true">
-        <el-form-item label="订单号">
+        <el-form-item :label="t('payRecord.search.orderNo')">
           <el-input
             v-model="searchForm.outTradeNo"
-            placeholder="请输入订单号"
+            :placeholder="t('payRecord.search.orderNoPlaceholder')"
             clearable
             style="width: 200px"
             @keyup.enter="handleSearch"
           />
         </el-form-item>
-        <el-form-item label="用户名">
+        <el-form-item :label="t('payRecord.search.username')">
           <el-input
             v-model="searchForm.keyword"
-            placeholder="请输入用户名"
+            :placeholder="t('payRecord.search.usernamePlaceholder')"
             clearable
             style="width: 150px"
             @keyup.enter="handleSearch"
           />
         </el-form-item>
-        <el-form-item label="支付方式">
+        <el-form-item :label="t('payRecord.search.payType')">
           <el-select
             v-model="searchForm.payType"
-            placeholder="请选择支付方式"
+            :placeholder="t('payRecord.search.payTypePlaceholder')"
             clearable
             style="width: 130px"
           >
-            <el-option label="微信支付" :value="1" />
-            <el-option label="支付宝" :value="2" />
-            <el-option label="网银支付" :value="3" />
+            <el-option :label="t('payRecord.payType.wechat')" :value="1" />
+            <el-option :label="t('payRecord.payType.alipay')" :value="2" />
+            <el-option :label="t('payRecord.payType.bank')" :value="3" />
           </el-select>
         </el-form-item>
-        <el-form-item label="支付状态">
+        <el-form-item :label="t('payRecord.search.payStatus')">
           <el-select
             v-model="searchForm.payStatus"
-            placeholder="请选择状态"
+            :placeholder="t('payRecord.search.payStatusPlaceholder')"
             clearable
             style="width: 130px"
           >
-            <el-option label="支付中" :value="1" />
-            <el-option label="支付成功" :value="2" />
-            <el-option label="支付失败" :value="3" />
-            <el-option label="已退款" :value="4" />
+            <el-option :label="t('payRecord.payStatus.paying')" :value="1" />
+            <el-option :label="t('payRecord.payStatus.success')" :value="2" />
+            <el-option :label="t('payRecord.payStatus.failed')" :value="3" />
+            <el-option :label="t('payRecord.payStatus.refunded')" :value="4" />
           </el-select>
         </el-form-item>
-        <el-form-item label="时间范围">
+        <el-form-item :label="t('payRecord.search.dateRange')">
           <el-date-picker
             v-model="dateRange"
             type="daterange"
-            range-separator="至"
-            start-placeholder="开始日期"
-            end-placeholder="结束日期"
+            :range-separator="t('payRecord.search.to')"
+            :start-placeholder="t('payRecord.search.startDate')"
+            :end-placeholder="t('payRecord.search.endDate')"
             value-format="YYYY-MM-DD"
             style="width: 240px"
           />
@@ -82,11 +82,11 @@
         <el-form-item>
           <el-button type="primary" @click="handleSearch" :loading="loading">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('payRecord.search.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon><Refresh /></el-icon>
-            重置
+            {{ t('payRecord.search.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -103,34 +103,34 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="outTradeNo" label="商户订单号" min-width="180" />
-        <el-table-column prop="tradeNo" label="第三方订单号" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="orderName" label="订单名称" min-width="150" />
-        <el-table-column label="支付方式" width="110">
+        <el-table-column prop="id" :label="t('payRecord.table.id')" width="80" />
+        <el-table-column prop="outTradeNo" :label="t('payRecord.table.outTradeNo')" min-width="180" />
+        <el-table-column prop="tradeNo" :label="t('payRecord.table.tradeNo')" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="orderName" :label="t('payRecord.table.orderName')" min-width="150" />
+        <el-table-column :label="t('payRecord.table.payType')" width="110">
           <template #default="{ row }">
             <el-tag :type="getPayTypeTag(row.payType)">
               {{ row.payTypeName }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="支付金额" width="120">
+        <el-table-column :label="t('payRecord.table.payAmount')" width="120">
           <template #default="{ row }">
             <span class="price-text">¥{{ row.payAmountYuan }}</span>
           </template>
         </el-table-column>
-        <el-table-column label="支付状态" width="110">
+        <el-table-column :label="t('payRecord.table.payStatus')" width="110">
           <template #default="{ row }">
             <el-tag :type="getPayStatusTag(row.payStatus)">
               {{ row.payStatusName }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="username" label="用户名" width="120" />
-        <el-table-column prop="configName" label="套餐名称" min-width="120" />
-        <el-table-column prop="remark" label="备注" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="createTime" label="创建时间" width="160" />
-        <el-table-column label="操作" width="180" fixed="right">
+        <el-table-column prop="username" :label="t('payRecord.table.username')" width="120" />
+        <el-table-column prop="configName" :label="t('payRecord.table.configName')" min-width="120" />
+        <el-table-column prop="remark" :label="t('payRecord.table.remark')" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="createTime" :label="t('payRecord.table.createTime')" width="160" />
+        <el-table-column :label="t('payRecord.table.actions')" width="180" fixed="right">
           <template #default="{ row }">
             <div style="display: flex; gap: 8px;">
               <el-button
@@ -139,7 +139,7 @@
                 :icon="View"
                 @click="handleView(row)"
               >
-                详情
+                {{ t('payRecord.detailButton') }}
               </el-button>
               <el-button
                 type="danger"
@@ -147,7 +147,7 @@
                 :icon="Delete"
                 @click="handleDelete(row)"
               >
-                删除
+                {{ t('payRecord.delete') }}
               </el-button>
             </div>
           </template>
@@ -171,58 +171,58 @@
     <!-- 详情对话框 -->
     <el-dialog
       v-model="detailDialogVisible"
-      title="支付记录详情"
+      :title="t('payRecord.detailTitle')"
       width="600px"
     >
       <el-descriptions :column="2" border v-if="currentRecord">
-        <el-descriptions-item label="记录ID">
+        <el-descriptions-item :label="t('payRecord.detail.id')">
           {{ currentRecord.id }}
         </el-descriptions-item>
-        <el-descriptions-item label="商户订单号">
+        <el-descriptions-item :label="t('payRecord.detail.outTradeNo')">
           {{ currentRecord.outTradeNo }}
         </el-descriptions-item>
-        <el-descriptions-item label="第三方订单号" :span="2">
-          {{ currentRecord.tradeNo || '暂无' }}
+        <el-descriptions-item :label="t('payRecord.detail.tradeNo')" :span="2">
+          {{ currentRecord.tradeNo || t('payRecord.detail.none') }}
         </el-descriptions-item>
-        <el-descriptions-item label="订单名称" :span="2">
+        <el-descriptions-item :label="t('payRecord.detail.orderName')" :span="2">
           {{ currentRecord.orderName }}
         </el-descriptions-item>
-        <el-descriptions-item label="支付方式">
+        <el-descriptions-item :label="t('payRecord.detail.payType')">
           <el-tag :type="getPayTypeTag(currentRecord.payType)">
             {{ currentRecord.payTypeName }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="支付状态">
+        <el-descriptions-item :label="t('payRecord.detail.payStatus')">
           <el-tag :type="getPayStatusTag(currentRecord.payStatus)">
             {{ currentRecord.payStatusName }}
           </el-tag>
         </el-descriptions-item>
-        <el-descriptions-item label="支付金额">
+        <el-descriptions-item :label="t('payRecord.detail.payAmount')">
           <span class="price-text">¥{{ currentRecord.payAmountYuan }}</span>
         </el-descriptions-item>
-        <el-descriptions-item label="套餐名称">
+        <el-descriptions-item :label="t('payRecord.detail.configName')">
           {{ currentRecord.configName }}
         </el-descriptions-item>
-        <el-descriptions-item label="用户ID">
+        <el-descriptions-item :label="t('payRecord.detail.userId')">
           {{ currentRecord.userId }}
         </el-descriptions-item>
-        <el-descriptions-item label="用户名">
+        <el-descriptions-item :label="t('payRecord.detail.username')">
           {{ currentRecord.username }}
         </el-descriptions-item>
-        <el-descriptions-item label="创建时间" :span="2">
+        <el-descriptions-item :label="t('payRecord.detail.createTime')" :span="2">
           {{ currentRecord.createTime }}
         </el-descriptions-item>
-        <el-descriptions-item label="更新时间" :span="2">
+        <el-descriptions-item :label="t('payRecord.detail.updateTime')" :span="2">
           {{ currentRecord.updateTime }}
         </el-descriptions-item>
-        <el-descriptions-item label="备注" :span="2">
-          {{ currentRecord.remark || '无' }}
+        <el-descriptions-item :label="t('payRecord.detail.remark')" :span="2">
+          {{ currentRecord.remark || t('payRecord.detail.noRemark') }}
         </el-descriptions-item>
       </el-descriptions>
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="detailDialogVisible = false">关闭</el-button>
+          <el-button @click="detailDialogVisible = false">{{ t('payRecord.close') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -239,6 +239,7 @@ import {
   Delete,
   View
 } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import type { PayRecordVO, PayRecordQueryParams } from '@/api/pay'
 import {
   getPayRecords,
@@ -246,6 +247,8 @@ import {
   deletePayRecord,
   deletePayRecords
 } from '@/api'
+
+const { t } = useI18n()
 
 interface SearchForm {
   outTradeNo: string
@@ -342,7 +345,7 @@ const loadRecords = async () => {
     pagination.size = result.size
   } catch (error) {
     console.error('加载支付记录失败:', error)
-    ElMessage.error('加载支付记录失败')
+    ElMessage.error(t('payRecord.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -373,7 +376,7 @@ const handleView = async (row: PayRecordVO) => {
     detailDialogVisible.value = true
   } catch (error) {
     console.error('获取支付记录详情失败:', error)
-    ElMessage.error('获取支付记录详情失败')
+    ElMessage.error(t('payRecord.detailFailed'))
   }
 }
 
@@ -381,22 +384,22 @@ const handleView = async (row: PayRecordVO) => {
 const handleDelete = async (row: PayRecordVO) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除订单号为 "${row.outTradeNo}" 的记录吗？`,
-      '删除确认',
+      t('payRecord.deleteConfirm', { orderNo: row.outTradeNo }),
+      t('payRecord.deleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('payRecord.confirm'),
+        cancelButtonText: t('payRecord.cancel'),
         type: 'warning'
       }
     )
 
     await deletePayRecord(row.id)
-    ElMessage.success('支付记录删除成功')
+    ElMessage.success(t('payRecord.deleteSuccess'))
     await loadRecords()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除支付记录失败:', error)
-      ElMessage.error('删除支付记录失败')
+      ElMessage.error(t('payRecord.deleteFailed'))
     }
   }
 }
@@ -405,31 +408,31 @@ const handleDelete = async (row: PayRecordVO) => {
 const handleBatchDelete = async () => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedRecords.value.length} 条记录吗？`,
-      '批量删除确认',
+      t('payRecord.batchDeleteConfirm', { count: selectedRecords.value.length }),
+      t('payRecord.batchDeleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('payRecord.confirm'),
+        cancelButtonText: t('payRecord.cancel'),
         type: 'warning'
       }
     )
 
     const recordIds = selectedRecords.value.map(record => record.id)
     await deletePayRecords(recordIds)
-    ElMessage.success(`成功删除 ${selectedRecords.value.length} 条记录`)
+    ElMessage.success(t('payRecord.batchDeleteSuccess', { count: selectedRecords.value.length }))
     selectedRecords.value = []
     await loadRecords()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('批量删除支付记录失败:', error)
-      ElMessage.error('批量删除支付记录失败')
+      ElMessage.error(t('payRecord.batchDeleteFailed'))
     }
   }
 }
 
 // 导出
 const handleExport = () => {
-  ElMessage.info('导出功能开发中...')
+  ElMessage.info(t('payRecord.exportInProgress'))
 }
 
 // 选择变更

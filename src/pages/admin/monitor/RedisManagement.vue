@@ -1,8 +1,8 @@
 <template>
   <div class="redis-management">
     <div class="page-header">
-      <h2>Redis管理</h2>
-      <p>管理Redis缓存数据</p>
+      <h2>{{ t('redisManagement.pageTitle') }}</h2>
+      <p>{{ t('redisManagement.pageDescription') }}</p>
     </div>
 
     <!-- 操作区域 -->
@@ -13,7 +13,7 @@
         v-if="hasPermission('monitor:redis:create')"
       >
         <el-icon><Plus /></el-icon>
-        添加缓存
+        {{ t('redisManagement.actions.addCache') }}
       </el-button>
       <el-button
         type="danger"
@@ -22,43 +22,43 @@
         v-if="hasPermission('monitor:redis:delete')"
       >
         <el-icon><Delete /></el-icon>
-        批量删除
+        {{ t('redisManagement.actions.batchDelete') }}
       </el-button>
     </div>
 
     <!-- 搜索区域 -->
     <div class="search-section">
       <el-form :model="searchForm" inline>
-        <el-form-item label="键名">
+        <el-form-item :label="t('redisManagement.search.keyName')">
           <el-input
             v-model="searchForm.key"
-            placeholder="请输入Redis键名"
+            :placeholder="t('redisManagement.search.enterKeyName')"
             clearable
             style="width: 200px"
           />
         </el-form-item>
-        <el-form-item label="数据类型">
+        <el-form-item :label="t('redisManagement.search.dataType')">
           <el-select
             v-model="searchForm.type"
-            placeholder="请选择数据类型"
+            :placeholder="t('redisManagement.search.selectDataType')"
             clearable
             style="width: 150px"
           >
-            <el-option label="字符串" value="string" />
-            <el-option label="哈希" value="hash" />
-            <el-option label="列表" value="list" />
-            <el-option label="集合" value="set" />
-            <el-option label="有序集合" value="zset" />
+            <el-option :label="t('redisManagement.dataTypes.string')" value="string" />
+            <el-option :label="t('redisManagement.dataTypes.hash')" value="hash" />
+            <el-option :label="t('redisManagement.dataTypes.list')" value="list" />
+            <el-option :label="t('redisManagement.dataTypes.set')" value="set" />
+            <el-option :label="t('redisManagement.dataTypes.zset')" value="zset" />
           </el-select>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch" :loading="loading">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('redisManagement.actions.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon><Refresh /></el-icon>
-            重置
+            {{ t('redisManagement.actions.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -75,30 +75,30 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="key" label="键名" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="type" label="数据类型" width="120">
+        <el-table-column prop="key" :label="t('redisManagement.table.keyName')" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="type" :label="t('redisManagement.table.dataType')" width="120">
           <template #default="{ row }">
             <el-tag :type="getTypeTagType(row.type)">{{ getTypeLabel(row.type) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="value" label="值" min-width="300" show-overflow-tooltip>
+        <el-table-column prop="value" :label="t('redisManagement.table.value')" min-width="300" show-overflow-tooltip>
           <template #default="{ row }">
             <span class="redis-value">{{ formatValue(row.value) }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="ttl" label="过期时间(秒)" width="120">
+        <el-table-column prop="ttl" :label="t('redisManagement.table.ttl')" width="120">
           <template #default="{ row }">
-            <span v-if="row.ttl === -1">永不过期</span>
-            <span v-else-if="row.ttl === -2">已过期</span>
+            <span v-if="row.ttl === -1">{{ t('redisManagement.table.neverExpire') }}</span>
+            <span v-else-if="row.ttl === -2">{{ t('redisManagement.table.expired') }}</span>
             <span v-else>{{ row.ttl }}</span>
           </template>
         </el-table-column>
-        <el-table-column prop="size" label="大小" width="100">
+        <el-table-column prop="size" :label="t('redisManagement.table.size')" width="100">
           <template #default="{ row }">
             {{ formatSize(row.size) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column :label="t('redisManagement.table.operation')" width="200" fixed="right">
           <template #default="{ row }">
             <el-button
               type="primary"
@@ -107,7 +107,7 @@
               v-if="hasPermission('monitor:redis:view')"
             >
               <el-icon><View /></el-icon>
-              查看
+              {{ t('redisManagement.actions.view') }}
             </el-button>
             <el-button
               type="danger"
@@ -116,7 +116,7 @@
               v-if="hasPermission('monitor:redis:delete')"
             >
               <el-icon><Delete /></el-icon>
-              删除
+              {{ t('redisManagement.actions.delete') }}
             </el-button>
           </template>
         </el-table-column>
@@ -139,27 +139,27 @@
     <!-- 查看详情对话框 -->
     <el-dialog
       v-model="viewDialogVisible"
-      title="Redis数据详情"
+      :title="t('redisManagement.viewDialog.title')"
       width="60%"
       :before-close="handleCloseViewDialog"
     >
       <div class="redis-detail">
         <div v-if="currentRedisItem">
           <el-descriptions :column="2" border>
-            <el-descriptions-item label="键名">{{ currentRedisItem.key }}</el-descriptions-item>
-            <el-descriptions-item label="数据类型">
+            <el-descriptions-item :label="t('redisManagement.viewDialog.keyName')">{{ currentRedisItem.key }}</el-descriptions-item>
+            <el-descriptions-item :label="t('redisManagement.viewDialog.dataType')">
               <el-tag :type="getTypeTagType(currentRedisItem.type)">{{ getTypeLabel(currentRedisItem.type) }}</el-tag>
             </el-descriptions-item>
-            <el-descriptions-item label="过期时间">
-              <span v-if="currentRedisItem.ttl === -1">永不过期</span>
-              <span v-else-if="currentRedisItem.ttl === -2">已过期</span>
-              <span v-else>{{ currentRedisItem.ttl }}秒</span>
+            <el-descriptions-item :label="t('redisManagement.viewDialog.ttl')">
+              <span v-if="currentRedisItem.ttl === -1">{{ t('redisManagement.table.neverExpire') }}</span>
+              <span v-else-if="currentRedisItem.ttl === -2">{{ t('redisManagement.table.expired') }}</span>
+              <span v-else>{{ t('redisManagement.viewDialog.ttlSeconds', { ttl: currentRedisItem.ttl }) }}</span>
             </el-descriptions-item>
-            <el-descriptions-item label="大小">{{ formatSize(currentRedisItem.size) }}</el-descriptions-item>
+            <el-descriptions-item :label="t('redisManagement.viewDialog.size')">{{ formatSize(currentRedisItem.size) }}</el-descriptions-item>
           </el-descriptions>
 
           <div class="value-section" style="margin-top: 20px;">
-            <h4>数据内容：</h4>
+            <h4>{{ t('redisManagement.viewDialog.dataContent') }}</h4>
             <el-input
               :model-value="formatValueForDisplay(currentRedisItem.value)"
               type="textarea"
@@ -172,14 +172,14 @@
       </div>
 
       <template #footer>
-        <el-button @click="viewDialogVisible = false">关闭</el-button>
+        <el-button @click="viewDialogVisible = false">{{ t('redisManagement.actions.close') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 新增Redis缓存对话框 -->
     <el-dialog
       v-model="createDialogVisible"
-      title="添加Redis缓存"
+      :title="t('redisManagement.createDialog.title')"
       width="600px"
       :close-on-click-modal="false"
       @close="resetCreateForm"
@@ -190,53 +190,53 @@
         :rules="createFormRules"
         label-width="100px"
       >
-        <el-form-item label="键名" prop="key">
+        <el-form-item :label="t('redisManagement.createDialog.keyName')" prop="key">
           <el-input
             v-model="createForm.key"
-            placeholder="请输入Redis键名"
+            :placeholder="t('redisManagement.createDialog.enterKeyName')"
           />
         </el-form-item>
-        <el-form-item label="数据类型" prop="type">
+        <el-form-item :label="t('redisManagement.createDialog.dataType')" prop="type">
           <el-select
             v-model="createForm.type"
-            placeholder="请选择数据类型"
+            :placeholder="t('redisManagement.createDialog.selectDataType')"
             style="width: 100%"
             @change="handleTypeChange"
           >
-            <el-option label="字符串" value="string" />
-            <el-option label="哈希" value="hash" />
-            <el-option label="列表" value="list" />
-            <el-option label="集合" value="set" />
-            <el-option label="有序集合" value="zset" />
+            <el-option :label="t('redisManagement.dataTypes.string')" value="string" />
+            <el-option :label="t('redisManagement.dataTypes.hash')" value="hash" />
+            <el-option :label="t('redisManagement.dataTypes.list')" value="list" />
+            <el-option :label="t('redisManagement.dataTypes.set')" value="set" />
+            <el-option :label="t('redisManagement.dataTypes.zset')" value="zset" />
           </el-select>
         </el-form-item>
-        <el-form-item label="过期时间" prop="ttl">
+        <el-form-item :label="t('redisManagement.createDialog.ttl')" prop="ttl">
           <el-input-number
             v-model="createForm.ttl"
             :min="-1"
-            placeholder="-1表示永不过期"
+            :placeholder="t('redisManagement.createDialog.ttlPlaceholder')"
             style="width: 100%"
           />
-          <div class="form-tip">单位：秒，-1表示永不过期</div>
+          <div class="form-tip">{{ t('redisManagement.createDialog.ttlTip') }}</div>
         </el-form-item>
-        <el-form-item label="数据内容" prop="value">
+        <el-form-item :label="t('redisManagement.createDialog.dataContent')" prop="value">
           <el-input
             v-if="createForm.type === 'string'"
             v-model="createForm.value"
             type="textarea"
             :rows="4"
-            placeholder="请输入字符串内容"
+            :placeholder="t('redisManagement.createDialog.enterStringContent')"
           />
           <div v-else-if="createForm.type === 'hash'">
             <div v-for="(item, index) in createForm.hashFields" :key="index" class="hash-field">
               <el-input
                 v-model="item.field"
-                placeholder="字段名"
+                :placeholder="t('redisManagement.createDialog.fieldName')"
                 style="width: 40%; margin-right: 10px"
               />
               <el-input
                 v-model="item.value"
-                placeholder="字段值"
+                :placeholder="t('redisManagement.createDialog.fieldValue')"
                 style="width: 40%; margin-right: 10px"
               />
               <el-button
@@ -245,18 +245,18 @@
                 @click="removeHashField(index)"
                 :disabled="createForm.hashFields.length === 1"
               >
-                删除
+                {{ t('redisManagement.actions.delete') }}
               </el-button>
             </div>
             <el-button type="primary" size="small" @click="addHashField" style="margin-top: 10px">
-              添加字段
+              {{ t('redisManagement.actions.addField') }}
             </el-button>
           </div>
           <div v-else-if="createForm.type === 'list'">
             <div v-for="(item, index) in createForm.listValues" :key="index" class="list-item">
               <el-input
                 v-model="createForm.listValues[index]"
-                placeholder="列表项值"
+                :placeholder="t('redisManagement.createDialog.listItemValue')"
                 style="width: 80%; margin-right: 10px"
               />
               <el-button
@@ -265,18 +265,18 @@
                 @click="removeListItem(index)"
                 :disabled="createForm.listValues.length === 1"
               >
-                删除
+                {{ t('redisManagement.actions.delete') }}
               </el-button>
             </div>
             <el-button type="primary" size="small" @click="addListItem" style="margin-top: 10px">
-              添加项
+              {{ t('redisManagement.actions.addItem') }}
             </el-button>
           </div>
           <div v-else-if="createForm.type === 'set'">
             <div v-for="(item, index) in createForm.setValues" :key="index" class="set-item">
               <el-input
                 v-model="createForm.setValues[index]"
-                placeholder="集合成员值"
+                :placeholder="t('redisManagement.createDialog.setMemberValue')"
                 style="width: 80%; margin-right: 10px"
               />
               <el-button
@@ -285,23 +285,23 @@
                 @click="removeSetItem(index)"
                 :disabled="createForm.setValues.length === 1"
               >
-                删除
+                {{ t('redisManagement.actions.delete') }}
               </el-button>
             </div>
             <el-button type="primary" size="small" @click="addSetItem" style="margin-top: 10px">
-              添加成员
+              {{ t('redisManagement.actions.addMember') }}
             </el-button>
           </div>
           <div v-else-if="createForm.type === 'zset'">
             <div v-for="(item, index) in createForm.zsetValues" :key="index" class="zset-item">
               <el-input-number
                 v-model="item.score"
-                placeholder="分数"
+                :placeholder="t('redisManagement.createDialog.score')"
                 style="width: 30%; margin-right: 10px"
               />
               <el-input
                 v-model="item.member"
-                placeholder="成员值"
+                :placeholder="t('redisManagement.createDialog.memberValue')"
                 style="width: 50%; margin-right: 10px"
               />
               <el-button
@@ -310,19 +310,19 @@
                 @click="removeZsetItem(index)"
                 :disabled="createForm.zsetValues.length === 1"
               >
-                删除
+                {{ t('redisManagement.actions.delete') }}
               </el-button>
             </div>
             <el-button type="primary" size="small" @click="addZsetItem" style="margin-top: 10px">
-              添加成员
+              {{ t('redisManagement.actions.addMember') }}
             </el-button>
           </div>
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="createDialogVisible = false">取消</el-button>
+        <el-button @click="createDialogVisible = false">{{ t('redisManagement.actions.cancel') }}</el-button>
         <el-button type="primary" @click="handleSubmitCreate" :loading="creating">
-          确定
+          {{ t('redisManagement.actions.confirm') }}
         </el-button>
       </template>
     </el-dialog>
@@ -335,6 +335,9 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, View, Delete, Plus } from '@element-plus/icons-vue'
 import { getRedisKeys, deleteRedisKey, deleteRedisKeys, createRedisKey } from '../../../api/redis'
 import { hasPermission } from '../../../utils/permission'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 interface RedisItem {
   key: string
@@ -392,13 +395,13 @@ const createForm = reactive<CreateForm>({
 // 表单验证规则
 const createFormRules = {
   key: [
-    { required: true, message: '请输入Redis键名', trigger: 'blur' }
+    { required: true, message: t('redisManagement.validation.keyRequired'), trigger: 'blur' }
   ],
   type: [
-    { required: true, message: '请选择数据类型', trigger: 'change' }
+    { required: true, message: t('redisManagement.validation.typeRequired'), trigger: 'change' }
   ],
   value: [
-    { required: true, message: '请输入数据内容', trigger: 'blur' }
+    { required: true, message: t('redisManagement.validation.contentRequired'), trigger: 'blur' }
   ]
 }
 
@@ -436,7 +439,7 @@ const loadRedisData = async () => {
     console.log('RedisManagement loadRedisData response:', response)
   } catch (error: unknown) {
     console.error('获取Redis数据失败:', error)
-    ElMessage.error('获取Redis数据失败')
+    ElMessage.error(t('redisManagement.messages.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -466,22 +469,22 @@ const handleView = (row: RedisItem) => {
 const handleDelete = async (row: RedisItem) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除Redis键 "${row.key}" 吗？`,
-      '确认删除',
+      t('redisManagement.confirm.deleteMessage', { key: row.key }),
+      t('redisManagement.confirm.deleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('redisManagement.confirm.confirmButton'),
+        cancelButtonText: t('redisManagement.confirm.cancelButton'),
         type: 'warning'
       }
     )
 
     await deleteRedisKey(row.key)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('redisManagement.messages.deleteSuccess'))
     loadRedisData()
   } catch (error: unknown) {
     if (error !== 'cancel') {
       console.error('删除失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(t('redisManagement.messages.deleteFailed'))
     }
   }
 }
@@ -520,11 +523,11 @@ const getTypeTagType = (type: string) => {
 // 获取类型标签文本
 const getTypeLabel = (type: string) => {
   const typeMap: Record<string, string> = {
-    string: '字符串',
-    hash: '哈希',
-    list: '列表',
-    set: '集合',
-    zset: '有序集合'
+    string: t('redisManagement.dataTypes.string'),
+    hash: t('redisManagement.dataTypes.hash'),
+    list: t('redisManagement.dataTypes.list'),
+    set: t('redisManagement.dataTypes.set'),
+    zset: t('redisManagement.dataTypes.zset')
   }
   return typeMap[type] || type
 }
@@ -538,11 +541,11 @@ const handleSelectionChange = (selection: RedisItem[]) => {
 const handleBatchDelete = async () => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedRedisItems.value.length} 个Redis键吗？`,
-      '批量删除确认',
+      t('redisManagement.confirm.batchDeleteMessage', { count: selectedRedisItems.value.length }),
+      t('redisManagement.confirm.batchDeleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('redisManagement.confirm.confirmButton'),
+        cancelButtonText: t('redisManagement.confirm.cancelButton'),
         type: 'warning'
       }
     )
@@ -553,13 +556,13 @@ const handleBatchDelete = async () => {
     // 批量删除Redis键
     await deleteRedisKeys(keys)
 
-    ElMessage.success(`成功删除 ${selectedRedisItems.value.length} 个Redis键`)
+    ElMessage.success(t('redisManagement.messages.batchDeleteSuccess', { count: selectedRedisItems.value.length }))
     selectedRedisItems.value = []
     loadRedisData()
   } catch (error: unknown) {
     if (error !== 'cancel') {
       console.error('批量删除Redis键失败:', error)
-      ElMessage.error('批量删除Redis键失败')
+      ElMessage.error(t('redisManagement.messages.batchDeleteFailed'))
     }
   }
 }
@@ -680,7 +683,7 @@ const handleSubmitCreate = async () => {
     switch (createForm.type) {
       case 'string':
         if (!createForm.value.trim()) {
-          ElMessage.error('请输入字符串内容')
+          ElMessage.error(t('redisManagement.validation.enterStringContent'))
           return
         }
         value = createForm.value
@@ -695,7 +698,7 @@ const handleSubmitCreate = async () => {
           }
         })
         if (!hasValidData) {
-          ElMessage.error('请至少添加一个有效的哈希字段')
+          ElMessage.error(t('redisManagement.validation.addHashField'))
           return
         }
         value = hashValue
@@ -703,7 +706,7 @@ const handleSubmitCreate = async () => {
       case 'list':
         const listValues = createForm.listValues.filter(item => item.trim() !== '')
         if (listValues.length === 0) {
-          ElMessage.error('请至少添加一个有效的列表项')
+          ElMessage.error(t('redisManagement.validation.addListItem'))
           return
         }
         value = listValues
@@ -712,7 +715,7 @@ const handleSubmitCreate = async () => {
       case 'set':
         const setValues = createForm.setValues.filter(item => item.trim() !== '')
         if (setValues.length === 0) {
-          ElMessage.error('请至少添加一个有效的集合成员')
+          ElMessage.error(t('redisManagement.validation.addSetMember'))
           return
         }
         value = setValues
@@ -721,16 +724,16 @@ const handleSubmitCreate = async () => {
       case 'zset':
         const zsetValues = createForm.zsetValues.filter(item => item.member.trim() !== '')
         if (zsetValues.length === 0) {
-          ElMessage.error('请至少添加一个有效的有序集合成员')
+          ElMessage.error(t('redisManagement.validation.addZsetMember'))
           return
         }
         value = zsetValues.map(item => ({ score: item.score, member: item.member }))
         hasValidData = true
         break
     }
-    
+
     if (!hasValidData) {
-      ElMessage.error('请输入有效的数据内容')
+      ElMessage.error(t('redisManagement.validation.enterValidContent'))
       return
     }
     
@@ -739,13 +742,13 @@ const handleSubmitCreate = async () => {
     // 调用创建Redis缓存的API
     await createRedisKey({ key: createForm.key, type: createForm.type, value, ttl: createForm.ttl })
 
-    ElMessage.success('添加Redis缓存成功')
+    ElMessage.success(t('redisManagement.messages.createSuccess'))
     createDialogVisible.value = false
     resetCreateForm()
     loadRedisData()
   } catch (error: unknown) {
     console.error('添加Redis缓存失败:', error)
-    ElMessage.error('添加Redis缓存失败')
+    ElMessage.error(t('redisManagement.messages.createFailed'))
   } finally {
     creating.value = false
   }

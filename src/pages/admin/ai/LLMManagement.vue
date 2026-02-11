@@ -1,8 +1,8 @@
 <template>
   <div class="llm-management">
     <div class="page-header">
-      <h1 class="page-title">大模型管理</h1>
-      <p class="page-description">管理AI大模型配置和API密钥</p>
+      <h1 class="page-title">{{ t('llmManagement.pageTitle') }}</h1>
+      <p class="page-description">{{ t('llmManagement.pageDescription') }}</p>
     </div>
 
     <!-- 模型卡片区域 -->
@@ -36,7 +36,7 @@
 
         <div class="model-stats">
           <div class="stat-item">
-            <span class="stat-label">API密钥数量</span>
+            <span class="stat-label">{{ t('llmManagement.apiKeyCount') }}</span>
             <span class="stat-value">{{ model.keys?.length || 0 }}</span>
           </div>
         </div>
@@ -49,7 +49,7 @@
             class="manage-keys-btn"
             v-if="hasPermission('ai:llm:view')"
           >
-            管理密钥
+            {{ t('llmManagement.manageKeys') }}
           </el-button>
         </div>
       </div>
@@ -60,29 +60,29 @@
     <!-- 密钥管理对话框 -->
     <el-dialog
       v-model="keyDialogVisible"
-      title="API密钥管理"
+      :title="t('llmManagement.apiKeyManagement')"
       width="800px"
       :close-on-click-modal="false"
     >
       <div class="key-management">
         <div class="key-header">
-          <h3>{{ currentModel?.displayName }} - API密钥</h3>
+          <h3>{{ currentModel?.displayName }} - {{ t('llmManagement.apiKey') }}</h3>
           <el-button type="primary" size="small" @click="handleAddKey" v-if="hasPermission('ai:llm:create')">
             <el-icon><Plus /></el-icon>
-            添加密钥
+            {{ t('llmManagement.addKey') }}
           </el-button>
         </div>
 
         <el-table :data="currentModel?.keys || []" stripe border>
-          <el-table-column prop="id" label="ID" width="80" />
-          <el-table-column label="API密钥" min-width="200">
+          <el-table-column prop="id" :label="t('llmManagement.id')" width="80" />
+          <el-table-column :label="t('llmManagement.apiKey')" min-width="200">
             <template #default="{ row }">
               <span class="key-display">
                 {{ maskKey(row.apiKey) }}
               </span>
             </template>
           </el-table-column>
-          <el-table-column label="SecretKey" min-width="200">
+          <el-table-column :label="t('llmManagement.secretKey')" min-width="200">
             <template #default="{ row }">
               <span class="key-display">
                 {{ maskKey(row.secretKey) }}
@@ -96,8 +96,8 @@
               </span>
             </template>
           </el-table-column>
-          <el-table-column prop="remark" label="备注" min-width="150" />
-          <el-table-column label="状态" width="100">
+          <el-table-column prop="remark" :label="t('llmManagement.remark')" min-width="150" />
+          <el-table-column :label="t('llmManagement.status')" width="100">
             <template #default="{ row }">
               <el-switch
                 v-model="row.status"
@@ -107,8 +107,8 @@
               />
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="创建时间" width="160" />
-          <el-table-column label="操作" width="180">
+          <el-table-column prop="createTime" :label="t('llmManagement.createTime')" width="160" />
+          <el-table-column :label="t('llmManagement.operation')" width="180">
             <template #default="{ row }">
               <el-button
                 type="primary"
@@ -118,7 +118,7 @@
                 v-if="hasPermission('ai:llm:edit')"
               >
                 <el-icon><Edit /></el-icon>
-                编辑
+                {{ t('llmManagement.edit') }}
               </el-button>
               <el-button
                 type="danger"
@@ -128,7 +128,7 @@
                 v-if="hasPermission('ai:llm:delete')"
               >
                 <el-icon><Delete /></el-icon>
-                删除
+                {{ t('llmManagement.delete') }}
               </el-button>
             </template>
           </el-table-column>
@@ -137,7 +137,7 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="keyDialogVisible = false">关闭</el-button>
+          <el-button @click="keyDialogVisible = false">{{ t('llmManagement.close') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -145,7 +145,7 @@
     <!-- 添加密钥对话框 -->
     <el-dialog
       v-model="addKeyDialogVisible"
-      title="添加API密钥"
+      :title="t('llmManagement.addApiKey')"
       width="500px"
       :close-on-click-modal="false"
     >
@@ -155,26 +155,26 @@
         :rules="keyFormRules"
         label-width="100px"
       >
-        <el-form-item label="密钥备注" prop="remark">
+        <el-form-item :label="t('llmManagement.keyRemark')" prop="remark">
           <el-input
             v-model="keyForm.remark"
-            placeholder="请输入密钥备注"
+            :placeholder="t('llmManagement.pleaseEnterKeyRemark')"
           />
         </el-form-item>
-        <el-form-item label="API密钥" prop="apiKey">
+        <el-form-item :label="t('llmManagement.apiKey')" prop="apiKey">
           <el-input
             v-model="keyForm.apiKey"
             type="textarea"
             :rows="3"
-            placeholder="请输入API密钥"
+            :placeholder="t('llmManagement.pleaseEnterApiKey')"
           />
         </el-form-item>
-        <el-form-item label="SecretKey" prop="secretKey">
+        <el-form-item :label="t('llmManagement.secretKey')" prop="secretKey">
           <el-input
             v-model="keyForm.secretKey"
             type="textarea"
             :rows="3"
-            placeholder="请输入SecretKey"
+            :placeholder="t('llmManagement.pleaseEnterSecretKey')"
           />
         </el-form-item>
         <el-form-item label="ApiKey" prop="apiKey">
@@ -189,9 +189,9 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="addKeyDialogVisible = false">取消</el-button>
+          <el-button @click="addKeyDialogVisible = false">{{ t('llmManagement.cancel') }}</el-button>
           <el-button type="primary" @click="handleSubmitKey" :loading="submitting">
-            添加
+            {{ t('llmManagement.add') }}
           </el-button>
         </div>
       </template>
@@ -217,6 +217,9 @@ import {
 } from '@/api/llm'
 import { hasPermission } from '@/utils/permission'
 import type { LLMModel, LLMKey } from '@/types'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 // 响应式数据
 const loading = ref(false)
@@ -243,7 +246,7 @@ const keyForm = reactive<{
 
 // 表单验证规则
 const keyFormRules = {
-  apiKey: [{ required: true, message: '请输入API密钥', trigger: 'blur' }]
+  apiKey: [{ required: true, message: t('llmManagement.pleaseEnterApiKeyValidation'), trigger: 'blur' }]
 }
 
 // 加载模型数据
@@ -260,7 +263,7 @@ const loadModels = async () => {
     }))
   } catch (error) {
     console.error('加载模型数据失败:', error)
-    ElMessage.error('加载模型数据失败')
+    ElMessage.error(t('llmManagement.loadModelDataFailed'))
   } finally {
     loading.value = false
   }
@@ -278,21 +281,21 @@ const getModelInitials = (name: string) => {
 
 // 获取模型描述
 const getModelDescription = (displayName: string) => {
-  const descriptions = {
-    'DeepSeek': '由深度求索开发的AI大模型，擅长代码生成和推理',
-    '文心一言': '百度开发的大语言模型，中文理解能力强',
-    '通义千问': '阿里云开发的大语言模型，支持多种任务',
-    'Kimi': 'Moonshot AI开发的长文本理解模型',
-    '月之暗面 (Kimi)': 'Moonshot AI开发的长文本理解模型',
-    'ChatGPT': 'OpenAI开发的对话式AI模型',
-    'Grok': 'xAI开发的AI助手，具有幽默感',
-    'Claude': 'Anthropic开发的AI助手，注重安全性',
-    'Gemini': 'Google开发的多模态AI模型',
-    '智谱AI': '智谱AI开发的大语言模型',
-    '百川智能': '百川智能开发的大语言模型',
-    '讯飞星火': '科大讯飞开发的认知智能大模型'
+  const descriptions: Record<string, string> = {
+    'DeepSeek': t('llmManagement.deepseekDesc'),
+    '文心一言': t('llmManagement.wenxinDesc'),
+    '通义千问': t('llmManagement.qwenDesc'),
+    'Kimi': t('llmManagement.kimiDesc'),
+    '月之暗面 (Kimi)': t('llmManagement.kimiDesc'),
+    'ChatGPT': t('llmManagement.chatgptDesc'),
+    'Grok': t('llmManagement.grokDesc'),
+    'Claude': t('llmManagement.claudeDesc'),
+    'Gemini': t('llmManagement.geminiDesc'),
+    '智谱AI': t('llmManagement.zhipuDesc'),
+    '百川智能': t('llmManagement.baichuanDesc'),
+    '讯飞星火': t('llmManagement.xunfeiDesc')
   }
-  return descriptions[displayName as keyof typeof descriptions] || '先进的AI大语言模型'
+  return descriptions[displayName] || t('llmManagement.advancedAiModel')
 }
 
 // 获取模型颜色
@@ -324,10 +327,10 @@ const maskKey = (key: string) => {
 const handleStatusChange = async (model: LLMModel) => {
   try {
     // 这里可以调用API更新状态，暂时只更新本地状态
-    ElMessage.success('状态更新成功')
+    ElMessage.success(t('llmManagement.statusUpdateSuccess'))
   } catch (error) {
     console.error('状态更新失败:', error)
-    ElMessage.error('状态更新失败')
+    ElMessage.error(t('llmManagement.statusUpdateFailed'))
     // 恢复原状态
     model.status = model.status === 'active' ? 'inactive' : 'active'
   }
@@ -350,17 +353,17 @@ const handleAddKey = () => {
 const handleDeleteKey = async (key: LLMKey) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除这个密钥吗？`,
-      '删除确认',
+      t('llmManagement.confirmDeleteKey'),
+      t('llmManagement.deleteConfirm'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('llmManagement.confirm'),
+        cancelButtonText: t('llmManagement.cancel'),
         type: 'warning'
       }
     )
 
     await deleteLLMModelKey(currentModel.value!.providerName, key.id)
-    ElMessage.success('密钥删除成功')
+    ElMessage.success(t('llmManagement.keyDeleteSuccess'))
 
     // 重新加载所有模型数据
     await loadModels()
@@ -373,7 +376,7 @@ const handleDeleteKey = async (key: LLMKey) => {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除密钥失败:', error)
-      ElMessage.error('删除密钥失败')
+      ElMessage.error(t('llmManagement.keyDeleteFailed'))
     }
   }
 }
@@ -382,10 +385,10 @@ const handleDeleteKey = async (key: LLMKey) => {
 const handleKeyStatusChange = async (key: LLMKey) => {
   try {
     await updateLLMModelKeyStatus(currentModel.value!.providerName, key.id, key.status)
-    ElMessage.success('密钥状态更新成功')
+    ElMessage.success(t('llmManagement.keyStatusUpdateSuccess'))
   } catch (error) {
     console.error('密钥状态更新失败:', error)
-    ElMessage.error('密钥状态更新失败')
+    ElMessage.error(t('llmManagement.keyStatusUpdateFailed'))
     // 恢复原状态
     key.status = key.status === 'active' ? 'inactive' : 'active'
   }
@@ -402,7 +405,7 @@ const handleSubmitKey = async () => {
     if (keyForm.id) {
       // 编辑模式
       await updateLLMModelKey(currentModel.value!.providerName, keyForm.id, keyForm)
-      ElMessage.success('密钥更新成功')
+      ElMessage.success(t('llmManagement.keyUpdateSuccess'))
     } else {
       // 新增模式
       const keyData = {
@@ -413,7 +416,7 @@ const handleSubmitKey = async () => {
         status: 'active' as const
       }
       await addLLMModelKey(keyData)
-      ElMessage.success('密钥添加成功')
+      ElMessage.success(t('llmManagement.keyAddSuccess'))
     }
 
     // 重新加载所有模型数据
@@ -430,7 +433,7 @@ const handleSubmitKey = async () => {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('操作密钥失败:', error)
-      ElMessage.error('操作密钥失败')
+      ElMessage.error(t('llmManagement.operationFailed'))
     }
   } finally {
     submitting.value = false

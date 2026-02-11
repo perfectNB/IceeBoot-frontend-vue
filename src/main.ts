@@ -12,6 +12,9 @@ import('element-plus/theme-chalk/dark/css-vars.css')
 import App from './App.vue'
 import router from './router'
 
+// 国际化
+import i18n from './locales'
+
 // 全局样式
 import './assets/base.css'
 import './styles/index.scss'
@@ -47,6 +50,7 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 // 使用插件
 app.use(createPinia())
 app.use(router)
+app.use(i18n)
 app.use(ElementPlus)
 
 // // 应用初始化

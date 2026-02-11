@@ -1,8 +1,8 @@
 <template>
   <div class="message-center">
     <div class="page-header">
-      <h1 class="page-title">消息中心</h1>
-      <p class="page-description">管理您的系统消息和通知</p>
+      <h1 class="page-title">{{ t('message.title') }}</h1>
+      <p class="page-description">{{ t('message.description') }}</p>
     </div>
 
     <div class="message-content">
@@ -14,7 +14,7 @@
           </div>
           <div class="stat-content">
             <div class="stat-value">{{ unreadCount }}</div>
-            <div class="stat-label">未读消息</div>
+            <div class="stat-label">{{ t('message.unreadMessages') }}</div>
           </div>
         </div>
         <div class="stat-card">
@@ -23,7 +23,7 @@
           </div>
           <div class="stat-content">
             <div class="stat-value">{{ readCount }}</div>
-            <div class="stat-label">已读消息</div>
+            <div class="stat-label">{{ t('message.readMessages') }}</div>
           </div>
         </div>
         <div class="stat-card">
@@ -32,7 +32,7 @@
           </div>
           <div class="stat-content">
             <div class="stat-value">{{ totalCount }}</div>
-            <div class="stat-label">总消息数</div>
+            <div class="stat-label">{{ t('message.totalMessages') }}</div>
           </div>
         </div>
       </div>
@@ -42,18 +42,18 @@
         <div class="list-header">
           <div class="filter-tabs">
             <el-radio-group v-model="activeTab" @change="handleTabChange">
-              <el-radio-button value="all">全部消息</el-radio-button>
-              <el-radio-button value="unread">未读消息</el-radio-button>
-              <el-radio-button value="read">已读消息</el-radio-button>
+              <el-radio-button value="all">{{ t('message.allMessages') }}</el-radio-button>
+              <el-radio-button value="unread">{{ t('message.unread') }}</el-radio-button>
+              <el-radio-button value="read">{{ t('message.read') }}</el-radio-button>
             </el-radio-group>
           </div>
           <div class="time-filter">
             <el-date-picker
               v-model="timeRange"
               type="datetimerange"
-              range-separator="至"
-              start-placeholder="开始时间"
-              end-placeholder="结束时间"
+              :range-separator="t('message.rangeSeparator')"
+              :start-placeholder="t('message.startTime')"
+              :end-placeholder="t('message.endTime')"
               format="YYYY-MM-DD HH:mm:ss"
               value-format="YYYY-MM-DD HH:mm:ss"
               @change="handleTimeRangeChange"
@@ -68,7 +68,7 @@
               :loading="batchReading"
             >
               <el-icon><Check /></el-icon>
-              标记已读 ({{ selectedMessages.length }})
+              {{ t('message.markReadCount', { count: selectedMessages.length }) }}
             </el-button>
             <el-button
               v-if="selectedMessages.length > 0"
@@ -77,11 +77,11 @@
               :loading="batchDeleting"
             >
               <el-icon><Delete /></el-icon>
-              批量删除 ({{ selectedMessages.length }})
+              {{ t('message.batchDelete', { count: selectedMessages.length }) }}
             </el-button>
             <el-button @click="handleRefresh" :loading="loading">
               <el-icon><Refresh /></el-icon>
-              刷新
+              {{ t('common.refresh') }}
             </el-button>
           </div>
         </div>
@@ -94,17 +94,17 @@
             style="width: 100%"
           >
             <el-table-column type="selection" width="55" />
-            <el-table-column label="状态" width="80">
+            <el-table-column :label="t('message.statusLabel')" width="80">
               <template #default="{ row }">
                 <el-tag
                   :type="row.status === 'read' ? 'success' : 'danger'"
                   size="small"
                 >
-                  {{ row.status === 'read' ? '已读' : '未读' }}
+                  {{ row.status === 'read' ? t('message.read') : t('message.unread') }}
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="类型" width="100">
+            <el-table-column :label="t('message.typeLabel')" width="100">
               <template #default="{ row }">
                 <el-tag
                   :type="getMessageTypeColor(row.type)"
@@ -114,7 +114,7 @@
                 </el-tag>
               </template>
             </el-table-column>
-            <el-table-column label="标题" min-width="200">
+            <el-table-column :label="t('message.titleLabel')" min-width="200">
               <template #default="{ row }">
                 <div
                   class="message-title"
@@ -125,21 +125,21 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column label="内容" min-width="300">
+            <el-table-column :label="t('message.contentLabel')" min-width="300">
               <template #default="{ row }">
                 <div class="message-content-preview">
                   {{ row.content }}
                 </div>
               </template>
             </el-table-column>
-            <el-table-column label="发送时间" width="180">
+            <el-table-column :label="t('message.sendTime')" width="180">
               <template #default="{ row }">
                 <div class="message-time">
                   {{ formatDateTime(row.createTime) }}
                 </div>
               </template>
             </el-table-column>
-            <el-table-column label="操作" width="180">
+            <el-table-column :label="t('message.operationLabel')" width="180">
               <template #default="{ row }">
                 <div class="action-buttons">
                   <el-button
@@ -150,7 +150,7 @@
                     @click="handleMarkRead(row)"
                   >
                     <el-icon><Check /></el-icon>
-                    标记已读
+                    {{ t('message.markRead') }}
                   </el-button>
                   <el-button
                     type="danger"
@@ -159,7 +159,7 @@
                     @click="handleDelete(row)"
                   >
                     <el-icon><Delete /></el-icon>
-                    删除
+                    {{ t('common.delete') }}
                   </el-button>
                 </div>
               </template>
@@ -192,7 +192,7 @@
       <div class="message-detail" v-if="currentMessage">
         <div class="message-meta">
           <div class="meta-item">
-            <span class="meta-label">类型：</span>
+            <span class="meta-label">{{ t('message.detailType') }}</span>
             <el-tag
               :type="getMessageTypeColor(currentMessage.type)"
               size="small"
@@ -201,16 +201,16 @@
             </el-tag>
           </div>
           <div class="meta-item">
-            <span class="meta-label">状态：</span>
+            <span class="meta-label">{{ t('message.detailStatus') }}</span>
             <el-tag
               :type="currentMessage.status === 'read' ? 'success' : 'danger'"
               size="small"
             >
-              {{ currentMessage.status === 'read' ? '已读' : '未读' }}
+              {{ currentMessage.status === 'read' ? t('message.read') : t('message.unread') }}
             </el-tag>
           </div>
           <div class="meta-item">
-            <span class="meta-label">发送时间：</span>
+            <span class="meta-label">{{ t('message.detailTime') }}</span>
             <span>{{ formatDateTime(currentMessage.createTime) }}</span>
           </div>
         </div>
@@ -222,14 +222,14 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="showMessageDialog = false">关闭</el-button>
+          <el-button @click="showMessageDialog = false">{{ t('common.close') }}</el-button>
           <el-button
             v-if="currentMessage && currentMessage.status === 'unread'"
             type="primary"
             @click="handleMarkReadInDialog"
             :loading="markingRead"
           >
-            标记已读
+            {{ t('message.markRead') }}
           </el-button>
         </div>
       </template>
@@ -249,6 +249,7 @@ import {
   Refresh
 } from '@element-plus/icons-vue'
 import { marked } from 'marked'
+import { useI18n } from 'vue-i18n'
 import {
   getMessages,
   markMessageAsRead,
@@ -275,6 +276,8 @@ const currentMessage = ref<MessageItem | null>(null)
 const timeRange = ref<[string, string] | null>(null)
 const statsData = ref<MessageStats>({ unread: 0, read: 0, total: 0 })
 
+const { t } = useI18n()
+
 // 分页数据
 const pagination = reactive({
   current: 1,
@@ -298,11 +301,11 @@ const totalCount = computed(() => {
 // 消息类型映射
 const getMessageTypeName = (type: MessageType): string => {
   const typeMap: Record<MessageType, string> = {
-    system: '系统消息',
-    notice: '通知消息',
-    warning: '警告消息'
+    system: t('message.typeSystem'),
+    notice: t('message.typeNotice'),
+    warning: t('message.typeWarning')
   }
-  return typeMap[type] || '未知'
+  return typeMap[type] || t('message.typeUnknown')
 }
 
 const getMessageTypeColor = (type: MessageType): string => {
@@ -341,7 +344,7 @@ const loadMessageStats = async () => {
     statsData.value = stats
   } catch (error) {
     console.error('加载消息统计失败:', error)
-    ElMessage.error('加载消息统计失败')
+    ElMessage.error(t('message.loadStatsFailed'))
   }
 }
 
@@ -362,7 +365,7 @@ const loadMessages = async () => {
     pagination.total = result.total
   } catch (error) {
     console.error('加载消息列表失败:', error)
-    ElMessage.error('加载消息列表失败')
+    ElMessage.error(t('message.loadListFailed'))
   } finally {
     loading.value = false
   }
@@ -414,11 +417,11 @@ const handleMarkRead = async (message: MessageItem, showSuccess = true) => {
     await markMessageAsRead(message.id)
     message.status = 'read'
     if (showSuccess) {
-      ElMessage.success('已标记为已读')
+      ElMessage.success(t('message.markedAsRead'))
     }
   } catch (error) {
     console.error('标记已读失败:', error)
-    ElMessage.error('标记已读失败')
+    ElMessage.error(t('message.markReadFailed'))
   }
 }
 
@@ -439,22 +442,22 @@ const handleMarkReadInDialog = async () => {
 const handleDelete = async (message: MessageItem) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除消息"${message.title}"吗？`,
-      '删除确认',
+      t('message.deleteConfirm', { title: message.title }),
+      t('message.deleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning'
       }
     )
 
     await deleteMessage(message.id)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('message.deleteSuccess'))
     loadMessages()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除消息失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(t('message.deleteFailed'))
     }
   }
 }
@@ -467,11 +470,11 @@ const handleBatchRead = async () => {
   try {
     const ids = selectedMessages.value.map(msg => msg.id)
     await batchMarkAsRead(ids)
-    ElMessage.success(`已标记 ${ids.length} 条消息为已读`)
+    ElMessage.success(t('message.batchMarkedRead', { count: ids.length }))
     loadMessages()
   } catch (error) {
     console.error('批量标记已读失败:', error)
-    ElMessage.error('批量标记已读失败')
+    ElMessage.error(t('message.batchMarkReadFailed'))
   } finally {
     batchReading.value = false
   }
@@ -483,11 +486,11 @@ const handleBatchDelete = async () => {
 
   try {
     await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedMessages.value.length} 条消息吗？`,
-      '批量删除确认',
+      t('message.batchDeleteConfirm', { count: selectedMessages.value.length }),
+      t('message.batchDeleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning'
       }
     )
@@ -495,12 +498,12 @@ const handleBatchDelete = async () => {
     batchDeleting.value = true
     const ids = selectedMessages.value.map(msg => msg.id)
     await batchDeleteMessages(ids)
-    ElMessage.success(`已删除 ${ids.length} 条消息`)
+    ElMessage.success(t('message.batchDeleteSuccess', { count: ids.length }))
     loadMessages()
   } catch (error) {
     if (error !== 'cancel') {
       console.error('批量删除失败:', error)
-      ElMessage.error('批量删除失败')
+      ElMessage.error(t('message.batchDeleteFailed'))
     }
   } finally {
     batchDeleting.value = false

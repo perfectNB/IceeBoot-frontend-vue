@@ -1,8 +1,8 @@
 <template>
   <div class="task-management">
     <div class="page-header">
-      <h2>定时任务管理</h2>
-      <p>管理系统定时任务</p>
+      <h2>{{ t('taskManagement.pageTitle') }}</h2>
+      <p>{{ t('taskManagement.pageDescription') }}</p>
     </div>
 
     <!-- 操作栏 -->
@@ -13,7 +13,7 @@
         v-if="hasPermission('monitor:task:create')"
       >
         <el-icon><Plus /></el-icon>
-        新增任务
+        {{ t('taskManagement.actions.addTask') }}
       </el-button>
       <el-button
         type="danger"
@@ -22,41 +22,41 @@
         v-if="hasPermission('monitor:task:delete')"
       >
         <el-icon><Delete /></el-icon>
-        批量删除
+        {{ t('taskManagement.actions.batchDelete') }}
       </el-button>
     </div>
 
     <!-- 搜索区域 -->
     <div class="search-section">
       <el-form :model="searchForm" inline>
-        <el-form-item label="任务名称">
+        <el-form-item :label="t('taskManagement.search.taskName')">
           <el-input
             v-model="searchForm.name"
-            placeholder="请输入任务名称"
+            :placeholder="t('taskManagement.search.enterTaskName')"
             clearable
             style="width: 200px"
           />
         </el-form-item>
-        <el-form-item label="任务状态">
+        <el-form-item :label="t('taskManagement.search.taskStatus')">
           <el-select
             v-model="searchForm.status"
-            placeholder="请选择任务状态"
+            :placeholder="t('taskManagement.search.selectTaskStatus')"
             clearable
             style="width: 150px"
           >
-            <el-option label="运行中" value="active" />
-            <el-option label="已停止" value="inactive" />
+            <el-option :label="t('taskManagement.status.active')" value="active" />
+            <el-option :label="t('taskManagement.status.inactive')" value="inactive" />
             <!-- <el-option label="已暂停" value="paused" /> -->
           </el-select>
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch" :loading="loading">
             <el-icon><Search /></el-icon>
-            搜索
+            {{ t('taskManagement.actions.search') }}
           </el-button>
           <el-button @click="handleReset">
             <el-icon><Refresh /></el-icon>
-            重置
+            {{ t('taskManagement.actions.reset') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -73,17 +73,17 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="name" label="任务名称" min-width="150" show-overflow-tooltip />
-        <el-table-column prop="className" label="任务类" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="cronExpression" label="Cron表达式" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="name" :label="t('taskManagement.table.taskName')" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="className" :label="t('taskManagement.table.taskClass')" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="cronExpression" :label="t('taskManagement.table.cronExpression')" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="status" :label="t('taskManagement.table.status')" width="100">
           <template #default="{ row }">
             <el-tag :type="getStatusTagType(row.status)">{{ getStatusLabel(row.status) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="description" label="备注" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="description" :label="t('taskManagement.table.remark')" min-width="150" show-overflow-tooltip />
 
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column :label="t('taskManagement.table.operation')" width="280" fixed="right">
           <template #default="{ row }">
             <el-button
               type="success"
@@ -92,7 +92,7 @@
               v-if="row.status === 'inactive' && hasPermission('monitor:task:start')"
             >
               <el-icon><VideoPlay /></el-icon>
-              启动
+              {{ t('taskManagement.actions.start') }}
             </el-button>
             <el-button
               type="warning"
@@ -101,7 +101,7 @@
               v-if="row.status === 'active' && hasPermission('monitor:task:stop')"
             >
               <el-icon><VideoPause /></el-icon>
-              停止
+              {{ t('taskManagement.actions.stop') }}
             </el-button>
             <el-button
               type="primary"
@@ -110,7 +110,7 @@
               v-if="hasPermission('monitor:task:edit')"
             >
               <el-icon><Edit /></el-icon>
-              编辑
+              {{ t('taskManagement.actions.edit') }}
             </el-button>
             <el-button
               type="danger"
@@ -120,7 +120,7 @@
               v-if="hasPermission('monitor:task:delete')"
             >
               <el-icon><Delete /></el-icon>
-              删除
+              {{ t('taskManagement.actions.delete') }}
             </el-button>
           </template>
         </el-table-column>
@@ -143,7 +143,7 @@
     <!-- 新增/编辑对话框 -->
     <el-dialog
       v-model="dialogVisible"
-      :title="isEdit ? '编辑任务' : '新增任务'"
+      :title="isEdit ? t('taskManagement.dialog.editTitle') : t('taskManagement.dialog.addTitle')"
       width="600px"
       :before-close="handleCloseDialog"
     >
@@ -153,32 +153,32 @@
         :rules="formRules"
         label-width="120px"
       >
-        <el-form-item label="任务名称" prop="name">
-          <el-input v-model="formData.name" placeholder="请输入任务名称" />
+        <el-form-item :label="t('taskManagement.dialog.taskName')" prop="name">
+          <el-input v-model="formData.name" :placeholder="t('taskManagement.dialog.enterTaskName')" />
         </el-form-item>
-        <el-form-item label="任务类路径" prop="className">
-          <el-input v-model="formData.className" placeholder="请输入任务类完整路径" />
+        <el-form-item :label="t('taskManagement.dialog.taskClassPath')" prop="className">
+          <el-input v-model="formData.className" :placeholder="t('taskManagement.dialog.enterTaskClassPath')" />
         </el-form-item>
-        <el-form-item label="Cron表达式" prop="cronExpression">
-          <el-input v-model="formData.cronExpression" placeholder="请输入Cron表达式，如：0 0 12 * * ?" />
+        <el-form-item :label="t('taskManagement.dialog.cronExpression')" prop="cronExpression">
+          <el-input v-model="formData.cronExpression" :placeholder="t('taskManagement.dialog.enterCronExpression')" />
           <div class="cron-help">
-            <small>格式：秒 分 时 日 月 周 [年]，例如：0 0 12 * * ? 表示每天12点执行</small>
+            <small>{{ t('taskManagement.dialog.cronHelp') }}</small>
           </div>
         </el-form-item>
-        <el-form-item label="任务描述" prop="description">
+        <el-form-item :label="t('taskManagement.dialog.taskDescription')" prop="description">
           <el-input
             v-model="formData.description"
             type="textarea"
             :rows="3"
-            placeholder="请输入任务描述"
+            :placeholder="t('taskManagement.dialog.enterTaskDescription')"
           />
         </el-form-item>
       </el-form>
 
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
+        <el-button @click="dialogVisible = false">{{ t('taskManagement.actions.cancel') }}</el-button>
         <el-button type="primary" @click="handleSubmit" :loading="submitLoading">
-          {{ isEdit ? '更新' : '创建' }}
+          {{ isEdit ? t('taskManagement.actions.update') : t('taskManagement.actions.create') }}
         </el-button>
       </template>
     </el-dialog>
@@ -191,6 +191,9 @@ import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import { Plus, Search, Refresh, VideoPlay, VideoPause, Edit, Delete } from '@element-plus/icons-vue'
 import { getTasks, createTask, updateTask, deleteTask, startTask, stopTask } from '../../../api/task'
 import { hasPermission } from '../../../utils/permission'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 interface Task {
   id?: string
@@ -252,16 +255,16 @@ const formData = reactive<Task>({
 // 表单验证规则
 const formRules = {
   name: [
-    { required: true, message: '请输入任务名称', trigger: 'blur' },
-    { min: 2, max: 50, message: '任务名称长度在 2 到 50 个字符', trigger: 'blur' }
+    { required: true, message: t('taskManagement.validation.nameRequired'), trigger: 'blur' },
+    { min: 2, max: 50, message: t('taskManagement.validation.nameLength'), trigger: 'blur' }
   ],
   className: [
-    { required: true, message: '请输入任务类路径', trigger: 'blur' },
-    { pattern: /^[a-zA-Z][a-zA-Z0-9._]*$/, message: '请输入有效的Java类路径', trigger: 'blur' }
+    { required: true, message: t('taskManagement.validation.classPathRequired'), trigger: 'blur' },
+    { pattern: /^[a-zA-Z][a-zA-Z0-9._]*$/, message: t('taskManagement.validation.classPathPattern'), trigger: 'blur' }
   ],
   cronExpression: [
-    { required: true, message: '请输入Cron表达式', trigger: 'blur' },
-    { pattern: /^\s*(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)(\s+(\S+))?\s*$/, message: '请输入有效的Cron表达式', trigger: 'blur' }
+    { required: true, message: t('taskManagement.validation.cronRequired'), trigger: 'blur' },
+    { pattern: /^\s*(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)(\s+(\S+))?\s*$/, message: t('taskManagement.validation.cronPattern'), trigger: 'blur' }
   ]
 }
 
@@ -285,7 +288,7 @@ const loadTasks = async () => {
     console.log('TaskManagement loadTasks response:', response)
   } catch (error: unknown) {
     console.error('获取任务列表失败:', error)
-    ElMessage.error('获取任务列表失败')
+    ElMessage.error(t('taskManagement.messages.loadFailed'))
   } finally {
     loading.value = false
   }
@@ -323,11 +326,11 @@ const handleEdit = (row: Task) => {
 const handleStart = async (row: Task) => {
   try {
     await startTask(row.id!)
-    ElMessage.success('任务启动成功')
+    ElMessage.success(t('taskManagement.messages.startSuccess'))
     loadTasks()
   } catch (error: unknown) {
     console.error('启动任务失败:', error)
-    ElMessage.error('启动任务失败')
+    ElMessage.error(t('taskManagement.messages.startFailed'))
   }
 }
 
@@ -335,11 +338,11 @@ const handleStart = async (row: Task) => {
 const handleStop = async (row: Task) => {
   try {
     await stopTask(row.id!)
-    ElMessage.success('任务停止成功')
+    ElMessage.success(t('taskManagement.messages.stopSuccess'))
     loadTasks()
   } catch (error: unknown) {
     console.error('停止任务失败:', error)
-    ElMessage.error('停止任务失败')
+    ElMessage.error(t('taskManagement.messages.stopFailed'))
   }
 }
 
@@ -347,22 +350,22 @@ const handleStop = async (row: Task) => {
 const handleDelete = async (row: Task) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除任务 "${row.name}" 吗？`,
-      '确认删除',
+      t('taskManagement.confirm.deleteMessage', { name: row.name }),
+      t('taskManagement.confirm.deleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('taskManagement.confirm.confirmButton'),
+        cancelButtonText: t('taskManagement.confirm.cancelButton'),
         type: 'warning'
       }
     )
 
     await deleteTask(row.id!)
-    ElMessage.success('删除成功')
+    ElMessage.success(t('taskManagement.messages.deleteSuccess'))
     loadTasks()
   } catch (error: unknown) {
     if (error !== 'cancel') {
       console.error('删除失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(t('taskManagement.messages.deleteFailed'))
     }
   }
 }
@@ -377,10 +380,10 @@ const handleSubmit = async () => {
 
     if (isEdit.value) {
       await updateTask(formData.id!, formData)
-      ElMessage.success('更新成功')
+      ElMessage.success(t('taskManagement.messages.updateSuccess'))
     } else {
       await createTask(formData)
-      ElMessage.success('创建成功')
+      ElMessage.success(t('taskManagement.messages.createSuccess'))
     }
 
     dialogVisible.value = false
@@ -388,7 +391,7 @@ const handleSubmit = async () => {
   } catch (error: unknown) {
     if (error !== false) { // 表单验证失败时error为false
       console.error('提交失败:', error)
-      ElMessage.error('提交失败')
+      ElMessage.error(t('taskManagement.messages.submitFailed'))
     }
   } finally {
     submitLoading.value = false
@@ -444,11 +447,11 @@ const handleSelectionChange = (selection: Task[]) => {
 const handleBatchDelete = async () => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除选中的 ${selectedTasks.value.length} 个任务吗？`,
-      '批量删除确认',
+      t('taskManagement.confirm.batchDeleteMessage', { count: selectedTasks.value.length }),
+      t('taskManagement.confirm.batchDeleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('taskManagement.confirm.confirmButton'),
+        cancelButtonText: t('taskManagement.confirm.cancelButton'),
         type: 'warning'
       }
     )
@@ -458,13 +461,13 @@ const handleBatchDelete = async () => {
       await deleteTask(task.id!)
     }
 
-    ElMessage.success(`成功删除 ${selectedTasks.value.length} 个任务`)
+    ElMessage.success(t('taskManagement.messages.batchDeleteSuccess', { count: selectedTasks.value.length }))
     selectedTasks.value = []
     loadTasks()
   } catch (error: unknown) {
     if (error !== 'cancel') {
       console.error('批量删除任务失败:', error)
-      ElMessage.error('批量删除任务失败')
+      ElMessage.error(t('taskManagement.messages.batchDeleteFailed'))
     }
   }
 }
@@ -472,8 +475,8 @@ const handleBatchDelete = async () => {
 // 获取状态标签文本
 const getStatusLabel = (status: string) => {
   const statusMap: Record<string, string> = {
-    active: '运行中',
-    inactive: '已停止'
+    active: t('taskManagement.status.active'),
+    inactive: t('taskManagement.status.inactive')
   }
   return statusMap[status] || status
 }

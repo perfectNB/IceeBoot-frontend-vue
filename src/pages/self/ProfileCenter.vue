@@ -1,8 +1,8 @@
 <template>
   <div class="profile-center">
     <div class="page-header">
-      <h1 class="page-title">个人中心</h1>
-      <p class="page-description">管理您的个人信息和账户设置</p>
+      <h1 class="page-title">{{ t('profile.title') }}</h1>
+      <p class="page-description">{{ t('profile.description') }}</p>
     </div>
 
     <div class="profile-content">
@@ -19,7 +19,7 @@
             </el-avatar>
             <el-button type="primary" size="small" class="upload-btn">
               <el-icon><Camera /></el-icon>
-              更换头像
+              {{ t('profile.changeAvatar') }}
             </el-button>
           </div>
           <div class="user-info">
@@ -27,7 +27,7 @@
             <p class="user-username">@{{ userStore.user?.username }}</p>
             <div class="user-status">
               <el-tag :type="userStore.user?.status === 'active' ? 'success' : 'danger'" size="small">
-                {{ userStore.user?.status === 'active' ? '正常' : '禁用' }}
+                {{ userStore.user?.status === 'active' ? t('profile.statusActive') : t('profile.statusDisabled') }}
               </el-tag>
             </div>
           </div>
@@ -36,15 +36,15 @@
         <div class="profile-stats">
           <div class="stat-item">
             <div class="stat-value">{{ userStore.user?.roles?.length || 0 }}</div>
-            <div class="stat-label">角色数量</div>
+            <div class="stat-label">{{ t('profile.roleCount') }}</div>
           </div>
           <div class="stat-item">
             <div class="stat-value">{{ userStore.user?.permissions?.length || 0 }}</div>
-            <div class="stat-label">权限数量</div>
+            <div class="stat-label">{{ t('profile.permissionCount') }}</div>
           </div>
           <div class="stat-item">
             <div class="stat-value">{{ formatDate(userStore.user?.createTime) }}</div>
-            <div class="stat-label">注册时间</div>
+            <div class="stat-label">{{ t('profile.registerTime') }}</div>
           </div>
         </div>
       </div>
@@ -56,40 +56,40 @@
           <div class="section-header">
             <h3 class="section-title">
               <el-icon><User /></el-icon>
-              基本信息
+              {{ t('profile.basicInfo') }}
             </h3>
             <el-button type="primary" text @click="editMode = !editMode">
               <el-icon><Edit /></el-icon>
-              {{ editMode ? '取消编辑' : '编辑信息' }}
+              {{ editMode ? t('profile.cancelEdit') : t('profile.editInfo') }}
             </el-button>
           </div>
 
           <div class="info-grid">
             <div class="info-item">
-              <label class="info-label">用户名</label>
+              <label class="info-label">{{ t('profile.username') }}</label>
               <div class="info-value">{{ userStore.user?.username }}</div>
             </div>
             <div class="info-item">
-              <label class="info-label">昵称</label>
+              <label class="info-label">{{ t('profile.nickname') }}</label>
               <div class="info-value" v-if="!editMode">{{ userStore.user?.nickname || '-' }}</div>
-              <el-input v-else v-model="editForm.nickname" placeholder="请输入昵称" />
+              <el-input v-else v-model="editForm.nickname" :placeholder="t('profile.nicknamePlaceholder')" />
             </div>
             <div class="info-item">
-              <label class="info-label">邮箱</label>
+              <label class="info-label">{{ t('profile.email') }}</label>
               <div class="info-value" v-if="!editMode">{{ userStore.user?.email || '-' }}</div>
-              <el-input v-else v-model="editForm.email" placeholder="请输入邮箱" />
+              <el-input v-else v-model="editForm.email" :placeholder="t('profile.emailPlaceholder')" />
             </div>
             <div class="info-item">
-              <label class="info-label">手机号</label>
+              <label class="info-label">{{ t('profile.phone') }}</label>
               <div class="info-value" v-if="!editMode">{{ userStore.user?.phone || '-' }}</div>
-              <el-input v-else v-model="editForm.phone" placeholder="请输入手机号" />
+              <el-input v-else v-model="editForm.phone" :placeholder="t('profile.phonePlaceholder')" />
             </div>
           </div>
 
           <div class="edit-actions" v-if="editMode">
-            <el-button @click="editMode = false">取消</el-button>
+            <el-button @click="editMode = false">{{ t('common.cancel') }}</el-button>
             <el-button type="primary" @click="handleSave" :loading="saving">
-              保存修改
+              {{ t('profile.saveChanges') }}
             </el-button>
           </div>
         </div>
@@ -99,13 +99,13 @@
           <div class="section-header">
             <h3 class="section-title">
               <el-icon><Key /></el-icon>
-              角色权限
+              {{ t('profile.rolesPermissions') }}
             </h3>
           </div>
 
           <div class="roles-section">
             <div class="roles-list">
-              <h4>当前角色</h4>
+              <h4>{{ t('profile.currentRoles') }}</h4>
               <div class="role-tags">
                 <el-tag
                   v-for="role in userStore.user?.roles"
@@ -116,13 +116,13 @@
                   {{ role }}
                 </el-tag>
                 <el-tag v-if="!userStore.user?.roles?.length" type="info">
-                  暂无角色
+                  {{ t('profile.noRoles') }}
                 </el-tag>
               </div>
             </div>
 
             <div class="permissions-list">
-              <h4>权限列表</h4>
+              <h4>{{ t('profile.permissionList') }}</h4>
               <div class="permission-tags">
                 <el-tag
                   v-for="permission in userStore.user?.permissions?.slice(0, 10)"
@@ -137,10 +137,10 @@
                   size="small"
                   type="info"
                 >
-                  +{{ (userStore.user?.permissions?.length || 0) - 10 }} 更多
+                  {{ t('profile.morePermissions', { count: (userStore.user?.permissions?.length || 0) - 10 }) }}
                 </el-tag>
                 <el-tag v-if="!userStore.user?.permissions?.length" type="info" size="small">
-                  暂无权限
+                  {{ t('profile.noPermissions') }}
                 </el-tag>
               </div>
             </div>
@@ -152,25 +152,25 @@
           <div class="section-header">
             <h3 class="section-title">
               <el-icon><Clock /></el-icon>
-              登录信息
+              {{ t('profile.loginInfo') }}
             </h3>
           </div>
 
           <div class="login-info">
             <div class="login-item">
-              <span class="login-label">最后登录时间：</span>
+              <span class="login-label">{{ t('profile.lastLoginTime') }}</span>
               <span class="login-value">{{ formatDateTime(userStore.user?.lastLoginTime) }}</span>
             </div>
             <div class="login-item">
-              <span class="login-label">最后登录IP：</span>
+              <span class="login-label">{{ t('profile.lastLoginIP') }}</span>
               <span class="login-value">{{ userStore.user?.lastLoginIp || '-' }}</span>
             </div>
             <div class="login-item">
-              <span class="login-label">账户创建时间：</span>
+              <span class="login-label">{{ t('profile.accountCreateTime') }}</span>
               <span class="login-value">{{ formatDateTime(userStore.user?.createTime) }}</span>
             </div>
             <div class="login-item">
-              <span class="login-label">最后更新时间：</span>
+              <span class="login-label">{{ t('profile.lastUpdateTime') }}</span>
               <span class="login-value">{{ formatDateTime(userStore.user?.updateTime) }}</span>
             </div>
           </div>
@@ -181,18 +181,18 @@
           <div class="section-header">
             <h3 class="section-title">
               <el-icon><Lock /></el-icon>
-              安全设置
+              {{ t('profile.security') }}
             </h3>
           </div>
 
           <div class="security-actions">
             <el-button type="primary" @click="showPasswordDialog = true">
               <el-icon><Key /></el-icon>
-              修改密码
+              {{ t('profile.changePassword') }}
             </el-button>
             <el-button type="warning">
               <el-icon><Warning /></el-icon>
-              清除登录状态
+              {{ t('profile.clearLoginState') }}
             </el-button>
           </div>
         </div>
@@ -202,7 +202,7 @@
     <!-- 修改密码对话框 -->
     <el-dialog
       v-model="showPasswordDialog"
-      title="修改密码"
+      :title="t('profile.changePasswordTitle')"
       width="400px"
       :close-on-click-modal="false"
     >
@@ -212,37 +212,37 @@
         :rules="passwordRules"
         label-width="100px"
       >
-        <el-form-item label="当前密码" prop="oldPassword">
+        <el-form-item :label="t('profile.currentPassword')" prop="oldPassword">
           <el-input
             v-model="passwordForm.oldPassword"
             type="password"
             show-password
-            placeholder="请输入当前密码"
+            :placeholder="t('profile.currentPasswordPlaceholder')"
           />
         </el-form-item>
-        <el-form-item label="新密码" prop="newPassword">
+        <el-form-item :label="t('profile.newPassword')" prop="newPassword">
           <el-input
             v-model="passwordForm.newPassword"
             type="password"
             show-password
-            placeholder="请输入新密码"
+            :placeholder="t('profile.newPasswordPlaceholder')"
           />
         </el-form-item>
-        <el-form-item label="确认密码" prop="confirmPassword">
+        <el-form-item :label="t('profile.confirmPassword')" prop="confirmPassword">
           <el-input
             v-model="passwordForm.confirmPassword"
             type="password"
             show-password
-            placeholder="请再次输入新密码"
+            :placeholder="t('profile.confirmPasswordPlaceholder')"
           />
         </el-form-item>
       </el-form>
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="showPasswordDialog = false">取消</el-button>
+          <el-button @click="showPasswordDialog = false">{{ t('common.cancel') }}</el-button>
           <el-button type="primary" @click="handleChangePassword" :loading="changingPassword">
-            确认修改
+            {{ t('profile.confirmChange') }}
           </el-button>
         </div>
       </template>
@@ -251,7 +251,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, type FormInstance } from 'element-plus'
 import {
   User,
@@ -263,8 +263,10 @@ import {
   Warning
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
+import { useI18n } from 'vue-i18n'
 
 const userStore = useUserStore()
+const { t } = useI18n()
 
 // 编辑模式
 const editMode = ref(false)
@@ -288,18 +290,18 @@ const passwordForm = reactive({
   confirmPassword: ''
 })
 
-const passwordRules = {
-  oldPassword: [{ required: true, message: '请输入当前密码', trigger: 'blur' }],
+const passwordRules = computed(() => ({
+  oldPassword: [{ required: true, message: t('profile.currentPasswordRequired'), trigger: 'blur' }],
   newPassword: [
-    { required: true, message: '请输入新密码', trigger: 'blur' },
-    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+    { required: true, message: t('profile.newPasswordRequired'), trigger: 'blur' },
+    { min: 6, message: t('profile.passwordMinLength'), trigger: 'blur' }
   ],
   confirmPassword: [
-    { required: true, message: '请确认新密码', trigger: 'blur' },
+    { required: true, message: t('profile.confirmPasswordRequired'), trigger: 'blur' },
     {
       validator: (_rule: unknown, value: string, callback: (error?: Error) => void) => {
         if (value !== passwordForm.newPassword) {
-          callback(new Error('两次输入的密码不一致'))
+          callback(new Error(t('profile.passwordMismatch')))
         } else {
           callback()
         }
@@ -307,7 +309,7 @@ const passwordRules = {
       trigger: 'blur'
     }
   ]
-}
+}))
 
 // 格式化日期
 const formatDate = (dateStr?: string) => {
@@ -326,11 +328,11 @@ const handleSave = async () => {
   try {
     // TODO: 调用更新用户信息API
     await new Promise(resolve => setTimeout(resolve, 1000)) // 模拟API调用
-    ElMessage.success('信息更新成功')
+    ElMessage.success(t('profile.saveSuccess'))
     editMode.value = false
   } catch (error) {
     console.error('更新用户信息失败:', error)
-    ElMessage.error('更新失败，请重试')
+    ElMessage.error(t('profile.saveFailed'))
   } finally {
     saving.value = false
   }
@@ -347,7 +349,7 @@ const handleChangePassword = async () => {
     // TODO: 调用修改密码API
     await new Promise(resolve => setTimeout(resolve, 1000)) // 模拟API调用
 
-    ElMessage.success('密码修改成功')
+    ElMessage.success(t('profile.passwordChangeSuccess'))
     showPasswordDialog.value = false
 
     // 重置表单
@@ -358,7 +360,7 @@ const handleChangePassword = async () => {
     })
   } catch (error) {
     console.error('修改密码失败:', error)
-    ElMessage.error('修改失败，请重试')
+    ElMessage.error(t('profile.passwordChangeFailed'))
   } finally {
     changingPassword.value = false
   }

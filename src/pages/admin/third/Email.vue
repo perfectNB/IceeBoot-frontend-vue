@@ -1,8 +1,8 @@
 <template>
   <div class="email-management">
     <div class="page-header">
-      <h1 class="page-title">邮件服务管理</h1>
-      <p class="page-description">管理邮件服务配置和SMTP密钥</p>
+      <h1 class="page-title">{{ t('thirdEmail.pageTitle') }}</h1>
+      <p class="page-description">{{ t('thirdEmail.pageDescription') }}</p>
     </div>
 
     <!-- 服务商卡片区域 -->
@@ -36,7 +36,7 @@
 
         <div class="provider-stats">
           <div class="stat-item">
-            <span class="stat-label">密钥数量</span>
+            <span class="stat-label">{{ t('thirdEmail.keyCount') }}</span>
             <span class="stat-value">{{ provider.keys?.length || 0 }}</span>
           </div>
         </div>
@@ -49,7 +49,7 @@
             class="manage-keys-btn"
             v-if="hasPermission('third:email:view')"
           >
-            管理密钥
+            {{ t('thirdEmail.manageKeys') }}
           </el-button>
         </div>
       </div>
@@ -58,41 +58,41 @@
     <!-- 密钥管理对话框 -->
     <el-dialog
       v-model="keyDialogVisible"
-      title="邮件密钥管理"
+      :title="t('thirdEmail.keyManagementTitle')"
       width="1000px"
       :close-on-click-modal="false"
     >
       <div class="key-management">
         <div class="key-header">
-          <h3>{{ currentProvider?.displayName }} - 邮件密钥</h3>
+          <h3>{{ currentProvider?.displayName }} - {{ t('thirdEmail.keyManagementSubtitle') }}</h3>
           <el-button type="primary" size="small" @click="handleAddKey" v-if="hasPermission('third:email:create')">
             <el-icon><Plus /></el-icon>
-            添加密钥
+            {{ t('thirdEmail.addKey') }}
           </el-button>
         </div>
 
         <el-table :data="currentProvider?.keys || []" stripe border>
-          <el-table-column prop="id" label="ID" width="80" />
-          <el-table-column prop="emailAddress" label="邮箱地址" min-width="200" />
-          <el-table-column label="密码/授权码" min-width="150">
+          <el-table-column prop="id" :label="t('thirdEmail.id')" width="80" />
+          <el-table-column prop="emailAddress" :label="t('thirdEmail.emailAddress')" min-width="200" />
+          <el-table-column :label="t('thirdEmail.passwordOrAuthCode')" min-width="150">
             <template #default="{ row }">
               <span class="key-display">
                 {{ maskKey(row.emailPassword) }}
               </span>
             </template>
           </el-table-column>
-          <el-table-column prop="smtpHost" label="SMTP服务器" min-width="180" />
-          <el-table-column prop="smtpPort" label="端口" width="80" />
-          <el-table-column label="SSL" width="80">
+          <el-table-column prop="smtpHost" :label="t('thirdEmail.smtpServer')" min-width="180" />
+          <el-table-column prop="smtpPort" :label="t('thirdEmail.port')" width="80" />
+          <el-table-column :label="t('thirdEmail.ssl')" width="80">
             <template #default="{ row }">
               <el-tag :type="row.enableSsl ? 'success' : 'info'" size="small">
-                {{ row.enableSsl ? '是' : '否' }}
+                {{ row.enableSsl ? t('thirdEmail.yes') : t('thirdEmail.no') }}
               </el-tag>
             </template>
           </el-table-column>
-          <el-table-column prop="senderName" label="发件人名称" min-width="150" />
-          <el-table-column prop="remark" label="备注" min-width="150" />
-          <el-table-column label="状态" width="100">
+          <el-table-column prop="senderName" :label="t('thirdEmail.senderName')" min-width="150" />
+          <el-table-column prop="remark" :label="t('thirdEmail.remark')" min-width="150" />
+          <el-table-column :label="t('thirdEmail.status')" width="100">
             <template #default="{ row }">
               <el-switch
                 v-model="row.status"
@@ -102,8 +102,8 @@
               />
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" label="创建时间" width="160" />
-          <el-table-column label="操作" width="180">
+          <el-table-column prop="createTime" :label="t('thirdEmail.createTime')" width="160" />
+          <el-table-column :label="t('thirdEmail.operation')" width="180">
             <template #default="{ row }">
               <el-button
                 type="primary"
@@ -113,7 +113,7 @@
                 v-if="hasPermission('third:email:edit')"
               >
                 <el-icon><Edit /></el-icon>
-                编辑
+                {{ t('thirdEmail.edit') }}
               </el-button>
               <el-button
                 type="danger"
@@ -123,7 +123,7 @@
                 v-if="hasPermission('third:email:delete')"
               >
                 <el-icon><Delete /></el-icon>
-                删除
+                {{ t('thirdEmail.delete') }}
               </el-button>
             </template>
           </el-table-column>
@@ -132,7 +132,7 @@
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="keyDialogVisible = false">关闭</el-button>
+          <el-button @click="keyDialogVisible = false">{{ t('thirdEmail.close') }}</el-button>
         </div>
       </template>
     </el-dialog>
@@ -140,7 +140,7 @@
     <!-- 添加密钥对话框 -->
     <el-dialog
       v-model="addKeyDialogVisible"
-      title="添加邮件密钥"
+      :title="t('thirdEmail.addKeyTitle')"
       width="600px"
       :close-on-click-modal="false"
     >
@@ -150,61 +150,61 @@
         :rules="keyFormRules"
         label-width="120px"
       >
-        <el-form-item label="密钥备注" prop="remark">
+        <el-form-item :label="t('thirdEmail.keyRemark')" prop="remark">
           <el-input
             v-model="keyForm.remark"
-            placeholder="请输入密钥备注"
+            :placeholder="t('thirdEmail.placeholderKeyRemark')"
           />
         </el-form-item>
-        <el-form-item label="邮箱地址" prop="emailAddress">
+        <el-form-item :label="t('thirdEmail.emailAddress')" prop="emailAddress">
           <el-input
             v-model="keyForm.emailAddress"
-            placeholder="请输入邮箱地址"
+            :placeholder="t('thirdEmail.placeholderEmailAddress')"
           />
         </el-form-item>
-        <el-form-item label="密码/授权码" prop="emailPassword">
+        <el-form-item :label="t('thirdEmail.passwordOrAuthCode')" prop="emailPassword">
           <el-input
             v-model="keyForm.emailPassword"
             type="password"
             show-password
-            placeholder="请输入密码或授权码"
+            :placeholder="t('thirdEmail.placeholderPasswordOrAuthCode')"
           />
         </el-form-item>
-        <el-form-item label="SMTP服务器" prop="smtpHost">
+        <el-form-item :label="t('thirdEmail.smtpServer')" prop="smtpHost">
           <el-input
             v-model="keyForm.smtpHost"
-            placeholder="请输入SMTP服务器地址"
+            :placeholder="t('thirdEmail.placeholderSmtpServer')"
           />
         </el-form-item>
-        <el-form-item label="SMTP端口" prop="smtpPort">
+        <el-form-item :label="t('thirdEmail.smtpPort')" prop="smtpPort">
           <el-input-number
             v-model="keyForm.smtpPort"
             :min="1"
             :max="65535"
-            placeholder="请输入端口号"
+            :placeholder="t('thirdEmail.placeholderPort')"
             style="width: 100%"
           />
         </el-form-item>
-        <el-form-item label="启用SSL" prop="enableSsl">
+        <el-form-item :label="t('thirdEmail.enableSsl')" prop="enableSsl">
           <el-switch
             v-model="keyForm.enableSsl"
-            active-text="启用"
-            inactive-text="禁用"
+            :active-text="t('thirdEmail.enable')"
+            :inactive-text="t('thirdEmail.disable')"
           />
         </el-form-item>
-        <el-form-item label="发件人名称" prop="senderName">
+        <el-form-item :label="t('thirdEmail.senderName')" prop="senderName">
           <el-input
             v-model="keyForm.senderName"
-            placeholder="请输入发件人显示名称"
+            :placeholder="t('thirdEmail.placeholderSenderName')"
           />
         </el-form-item>
       </el-form>
 
       <template #footer>
         <div class="dialog-footer">
-          <el-button @click="addKeyDialogVisible = false">取消</el-button>
+          <el-button @click="addKeyDialogVisible = false">{{ t('thirdEmail.cancel') }}</el-button>
           <el-button type="primary" @click="handleSubmitKey" :loading="submitting">
-            {{ keyForm.id ? '更新' : '添加' }}
+            {{ keyForm.id ? t('thirdEmail.update') : t('thirdEmail.add') }}
           </el-button>
         </div>
       </template>
@@ -215,6 +215,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 
 // 定义组件名称
 defineOptions({
@@ -226,6 +227,8 @@ import {
   Delete,
   Key
 } from '@element-plus/icons-vue'
+
+const { t } = useI18n()
 
 // 导入API接口
 import {
@@ -272,12 +275,12 @@ const keyForm = reactive<{
 // 表单验证规则
 const keyFormRules = {
   emailAddress: [
-    { required: true, message: '请输入邮箱地址', trigger: 'blur' },
-    { type: 'email', message: '请输入正确的邮箱格式', trigger: 'blur' }
+    { required: true, message: t('thirdEmail.validationEmailAddress'), trigger: 'blur' },
+    { type: 'email', message: t('thirdEmail.validationEmailFormat'), trigger: 'blur' }
   ],
-  emailPassword: [{ required: true, message: '请输入密码或授权码', trigger: 'blur' }],
-  smtpHost: [{ required: true, message: '请输入SMTP服务器地址', trigger: 'blur' }],
-  smtpPort: [{ required: true, message: '请输入SMTP端口', trigger: 'blur' }]
+  emailPassword: [{ required: true, message: t('thirdEmail.validationPasswordOrAuthCode'), trigger: 'blur' }],
+  smtpHost: [{ required: true, message: t('thirdEmail.validationSmtpServer'), trigger: 'blur' }],
+  smtpPort: [{ required: true, message: t('thirdEmail.validationSmtpPort'), trigger: 'blur' }]
 }
 
 // 获取服务商首字母
@@ -384,17 +387,17 @@ const setDefaultValues = (providerName: string) => {
 const handleDeleteKey = async (key: EmailKey) => {
   try {
     await ElMessageBox.confirm(
-      `确定要删除这个密钥吗？`,
-      '删除确认',
+      t('thirdEmail.deleteConfirm'),
+      t('thirdEmail.deleteTitle'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('thirdEmail.confirm'),
+        cancelButtonText: t('thirdEmail.cancel'),
         type: 'warning'
       }
     )
 
     await deleteEmailKey(key.id)
-    ElMessage.success('密钥删除成功')
+    ElMessage.success(t('thirdEmail.keyDeleteSuccess'))
 
     // 重新加载所有服务商数据
     await loadProviders()
@@ -407,7 +410,7 @@ const handleDeleteKey = async (key: EmailKey) => {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除密钥失败:', error)
-      ElMessage.error('删除密钥失败')
+      ElMessage.error(t('thirdEmail.keyDeleteFailed'))
     }
   }
 }
@@ -416,10 +419,10 @@ const handleDeleteKey = async (key: EmailKey) => {
 const handleKeyStatusChange = async (key: EmailKey) => {
   try {
     await updateEmailKeyStatus(currentProvider.value!.providerName, key.id, key.status)
-    ElMessage.success('密钥状态更新成功')
+    ElMessage.success(t('thirdEmail.keyStatusUpdateSuccess'))
   } catch (error) {
     console.error('密钥状态更新失败:', error)
-    ElMessage.error('密钥状态更新失败')
+    ElMessage.error(t('thirdEmail.keyStatusUpdateFailed'))
     key.status = key.status === 'active' ? 'inactive' : 'active'
   }
 }
@@ -439,7 +442,7 @@ const handleSubmitKey = async () => {
         ...keyForm
       }
       await updateEmailKey(currentProvider.value!.providerName, keyForm.id, keyData)
-      ElMessage.success('密钥更新成功')
+      ElMessage.success(t('thirdEmail.keyUpdateSuccess'))
 
       // 重新加载所有服务商数据
       await loadProviders()
@@ -457,7 +460,7 @@ const handleSubmitKey = async () => {
         status: 'active' as const
       }
       await addEmailKey(keyData)
-      ElMessage.success('密钥添加成功')
+      ElMessage.success(t('thirdEmail.keyAddSuccess'))
     }
 
     // 重新加载所有服务商数据
@@ -473,7 +476,7 @@ const handleSubmitKey = async () => {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('操作密钥失败:', error)
-      ElMessage.error('操作密钥失败')
+      ElMessage.error(t('thirdEmail.keyOperationFailed'))
     }
   } finally {
     submitting.value = false
@@ -521,7 +524,7 @@ const loadProviders = async () => {
     providerList.value = providers
   } catch (error) {
     console.error('加载服务商数据失败:', error)
-    ElMessage.error('加载服务商数据失败')
+    ElMessage.error(t('thirdEmail.loadProvidersFailed'))
   } finally {
     loading.value = false
   }

@@ -1,8 +1,8 @@
 <template>
   <div class="admin-dashboard">
     <div class="dashboard-header">
-      <h1 class="page-title">工作台</h1>
-      <p class="page-description">欢迎使用 IceeBoot 前端脚手架管理系统</p>
+      <h1 class="page-title">{{ t('dashboard.pageTitle') }}</h1>
+      <p class="page-description">{{ t('dashboard.pageDescription') }}</p>
     </div>
 
     <!-- 统计卡片 -->
@@ -29,7 +29,7 @@
       <div class="chart-row">
         <div class="chart-card">
           <div class="card-header">
-            <h3>访问趋势</h3>
+            <h3>{{ t('dashboard.charts.visitTrend') }}</h3>
             <el-button-group>
               <el-button
                 v-for="period in periods"
@@ -49,7 +49,7 @@
 
         <div class="chart-card">
           <div class="card-header">
-            <h3>用户分布</h3>
+            <h3>{{ t('dashboard.charts.userDistribution') }}</h3>
           </div>
           <div class="chart-content">
             <VChart :option="userDistributionOption" :loading="loading" autoresize />
@@ -61,7 +61,7 @@
     <!-- 快捷操作 -->
     <div class="quick-actions">
       <div class="section-header">
-        <h3>快捷操作</h3>
+        <h3>{{ t('dashboard.quickActions.title') }}</h3>
       </div>
       <div class="actions-grid">
         <div
@@ -85,8 +85,8 @@
     <!-- 最近活动 -->
     <div class="recent-activities">
       <div class="section-header">
-        <h3>最近活动</h3>
-        <el-button text @click="viewAllActivities">查看全部</el-button>
+        <h3>{{ t('dashboard.recentActivities.title') }}</h3>
+        <el-button text @click="viewAllActivities">{{ t('dashboard.recentActivities.viewAll') }}</el-button>
       </div>
       <div class="activities-list">
         <div
@@ -121,6 +121,7 @@ defineOptions({ name: 'AdminDashboard' })
 
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { ElMessage } from 'element-plus'
 import {
   ArrowRight
@@ -150,6 +151,7 @@ use([
 ])
 
 const router = useRouter()
+const { t } = useI18n()
 
 const getCssVarValue = (name: string) => {
   if (typeof window === 'undefined') {
@@ -171,7 +173,7 @@ const dashboardStats = ref<DashboardStats>({
   totalUsers: 0,
   todayVisits: 0,
   totalArticles: 0,
-  systemStatus: '正常',
+  systemStatus: t('dashboard.stats.statusNormal'),
   userGrowth: 0,
   visitGrowth: 0,
   articleGrowth: 0
@@ -182,109 +184,109 @@ const userDistributionData = ref<UserDistribution[]>([])
 const loading = ref(false)
 
 // 统计数据（基于API数据）
-const stats = ref([
+const stats = computed(() => [
   {
-    title: '总用户数',
-    value: '0',
+    title: t('dashboard.stats.totalUsers'),
+    value: dashboardStats.value.totalUsers.toLocaleString(),
     icon: 'User',
-    trend: 0
+    trend: dashboardStats.value.userGrowth
   },
   {
-    title: '今日访问',
-    value: '0',
+    title: t('dashboard.stats.todayVisits'),
+    value: dashboardStats.value.todayVisits.toLocaleString(),
     icon: 'DataAnalysis',
-    trend: 0
+    trend: dashboardStats.value.visitGrowth
   },
   {
-    title: '文章数量',
-    value: '0',
+    title: t('dashboard.stats.totalArticles'),
+    value: dashboardStats.value.totalArticles.toLocaleString(),
     icon: 'Document',
-    trend: 0
+    trend: dashboardStats.value.articleGrowth
   },
   {
-    title: '系统状态',
-    value: '正常',
+    title: t('dashboard.stats.systemStatus'),
+    value: dashboardStats.value.systemStatus,
     icon: 'Setting',
     trend: 0
   }
 ])
 
 // 时间周期
-const periods = [
-  { label: '今日', value: 'today' },
-  { label: '本周', value: 'week' },
-  { label: '本月', value: 'month' },
-  { label: '本年', value: 'year' }
-]
+const periods = computed(() => [
+  { label: t('dashboard.periods.today'), value: 'today' },
+  { label: t('dashboard.periods.week'), value: 'week' },
+  { label: t('dashboard.periods.month'), value: 'month' },
+  { label: t('dashboard.periods.year'), value: 'year' }
+])
 
 const activePeriod = ref('week')
 
 // 快捷操作
-const quickActions = [
+const quickActions = computed(() => [
   {
-    title: '新建文章',
-    description: '创建新的文章内容',
+    title: t('dashboard.quickActions.createArticle'),
+    description: t('dashboard.quickActions.createArticleDesc'),
     icon: 'Plus',
     action: 'create-article'
   },
   {
-    title: '用户管理',
-    description: '管理系统用户',
+    title: t('dashboard.quickActions.userManagement'),
+    description: t('dashboard.quickActions.userManagementDesc'),
     icon: 'User',
     action: 'user-management'
   },
   {
-    title: '系统设置',
-    description: '配置系统参数',
+    title: t('dashboard.quickActions.systemSettings'),
+    description: t('dashboard.quickActions.systemSettingsDesc'),
     icon: 'Setting',
     action: 'system-settings'
   },
   {
-    title: '数据分析',
-    description: '查看数据报表',
+    title: t('dashboard.quickActions.dataAnalysis'),
+    description: t('dashboard.quickActions.dataAnalysisDesc'),
     icon: 'DataAnalysis',
     action: 'data-analysis'
   }
-]
+])
 
 // 最近活动
-const recentActivities = [
+const recentActivities = computed(() => [
   {
     id: 1,
-    user: '张三',
-    action: '创建了新文章《Vue 3 最佳实践》',
-    time: '2分钟前',
-    type: '创建',
+    user: t('dashboard.activities.user1'),
+    action: t('dashboard.activities.action1'),
+    time: t('dashboard.activities.time1'),
+    type: t('dashboard.recentActivities.types.create'),
     avatar: ''
   },
   {
     id: 2,
-    user: '李四',
-    action: '更新了用户权限设置',
-    time: '10分钟前',
-    type: '更新',
+    user: t('dashboard.activities.user2'),
+    action: t('dashboard.activities.action2'),
+    time: t('dashboard.activities.time2'),
+    type: t('dashboard.recentActivities.types.update'),
     avatar: ''
   },
   {
     id: 3,
-    user: '王五',
-    action: '删除了过期的日志文件',
-    time: '1小时前',
-    type: '删除',
+    user: t('dashboard.activities.user3'),
+    action: t('dashboard.activities.action3'),
+    time: t('dashboard.activities.time3'),
+    type: t('dashboard.recentActivities.types.delete'),
     avatar: ''
   },
   {
     id: 4,
-    user: '赵六',
-    action: '登录了系统',
-    time: '2小时前',
-    type: '登录',
+    user: t('dashboard.activities.user4'),
+    action: t('dashboard.activities.action4'),
+    time: t('dashboard.activities.time4'),
+    type: t('dashboard.recentActivities.types.login'),
     avatar: ''
   }
-]
+])
 
 // 处理快捷操作
-const handleQuickAction = (action: typeof quickActions[0]) => {
+const handleQuickAction = (action: { action: string }) => {
   switch (action.action) {
     case 'create-article':
       router.push('/admin/content/article/create')
@@ -299,7 +301,7 @@ const handleQuickAction = (action: typeof quickActions[0]) => {
       router.push('/admin/statistics')
       break
     default:
-      ElMessage.info('功能开发中...')
+      ElMessage.info(t('dashboard.messages.featureInDevelopment'))
   }
 }
 
@@ -311,10 +313,10 @@ const viewAllActivities = () => {
 // 获取活动类型样式
 const getActivityType = (type: string) => {
   const typeMap: Record<string, string> = {
-    '创建': 'success',
-    '更新': 'warning',
-    '删除': 'danger',
-    '登录': 'info'
+    [t('dashboard.recentActivities.types.create')]: 'success',
+    [t('dashboard.recentActivities.types.update')]: 'warning',
+    [t('dashboard.recentActivities.types.delete')]: 'danger',
+    [t('dashboard.recentActivities.types.login')]: 'info'
   }
   return typeMap[type] || 'info'
 }
@@ -325,21 +327,9 @@ const loadDashboardStats = async () => {
     loading.value = true
     const response = await getDashboardStats()
     dashboardStats.value = response
-
-    // 更新统计卡片数据
-    stats.value[0].value = dashboardStats.value.totalUsers.toLocaleString()
-    stats.value[0].trend = dashboardStats.value.userGrowth
-
-    stats.value[1].value = dashboardStats.value.todayVisits.toLocaleString()
-    stats.value[1].trend = dashboardStats.value.visitGrowth
-
-    stats.value[2].value = dashboardStats.value.totalArticles.toLocaleString()
-    stats.value[2].trend = dashboardStats.value.articleGrowth
-
-    stats.value[3].value = dashboardStats.value.systemStatus
   } catch (error) {
     console.error('加载统计数据失败:', error)
-    ElMessage.error('加载统计数据失败')
+    ElMessage.error(t('dashboard.messages.loadStatsFailed'))
   } finally {
     loading.value = false
   }
@@ -352,7 +342,7 @@ const loadVisitTrend = async () => {
     visitTrendData.value = response
   } catch (error) {
     console.error('加载访问趋势数据失败:', error)
-    ElMessage.error('加载访问趋势数据失败')
+    ElMessage.error(t('dashboard.messages.loadVisitTrendFailed'))
   }
 }
 
@@ -363,7 +353,7 @@ const loadUserDistribution = async () => {
     userDistributionData.value = response
   } catch (error) {
     console.error('加载用户分布数据失败:', error)
-    ElMessage.error('加载用户分布数据失败')
+    ElMessage.error(t('dashboard.messages.loadUserDistributionFailed'))
   }
 }
 
@@ -403,7 +393,7 @@ const visitTrendOption = computed(() => ({
   },
   series: [
     {
-      name: '访问量',
+      name: t('dashboard.charts.visits'),
       type: 'line',
       stack: 'Total',
       smooth: true,
@@ -449,7 +439,7 @@ const userDistributionOption = computed(() => ({
   },
   series: [
     {
-      name: '用户分布',
+      name: t('dashboard.charts.userDistribution'),
       type: 'pie',
       radius: ['40%', '70%'],
       avoidLabelOverlap: false,

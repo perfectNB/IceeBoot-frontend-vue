@@ -1,42 +1,42 @@
 <template>
   <div class="workflow-page">
     <div class="page-header">
-      <h2>流程定义</h2>
-      <p>管理流程定义、查看XML与流程图、启动流程实例</p>
+      <h2>{{ t('workflowDefinitions.title') }}</h2>
+      <p>{{ t('workflowDefinitions.description') }}</p>
     </div>
 
     <div class="action-section">
       <el-space wrap>
         <el-button type="primary" :icon="Refresh" :loading="loadingDefinitions" @click="loadDefinitions">
-          刷新
+          {{ t('workflowDefinitions.refresh') }}
         </el-button>
-        <el-switch v-model="latestOnly" active-text="仅最新版本" inactive-text="全部版本" @change="loadDefinitions" />
+        <el-switch v-model="latestOnly" :active-text="t('workflowDefinitions.latestVersionOnly')" :inactive-text="t('workflowDefinitions.allVersions')" @change="loadDefinitions" />
       </el-space>
     </div>
 
     <div class="table-section">
       <el-table :data="definitions" v-loading="loadingDefinitions" stripe border style="width: 100%">
-        <el-table-column prop="id" label="定义ID" min-width="180" show-overflow-tooltip />
-        <el-table-column prop="key" label="流程Key" min-width="160" show-overflow-tooltip />
-        <el-table-column prop="name" label="流程名称" min-width="180" show-overflow-tooltip />
-        <el-table-column prop="version" label="版本" width="80" />
-        <el-table-column prop="category" label="分类" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="deploymentId" label="部署ID" min-width="160" show-overflow-tooltip />
-        <el-table-column label="操作" width="260" fixed="right">
+        <el-table-column prop="id" :label="t('workflowDefinitions.definitionId')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="key" :label="t('workflowDefinitions.processKey')" min-width="160" show-overflow-tooltip />
+        <el-table-column prop="name" :label="t('workflowDefinitions.processName')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="version" :label="t('workflowDefinitions.version')" width="80" />
+        <el-table-column prop="category" :label="t('workflowDefinitions.category')" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="deploymentId" :label="t('workflowDefinitions.deploymentId')" min-width="160" show-overflow-tooltip />
+        <el-table-column :label="t('workflowDefinitions.operation')" width="260" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" size="small" :icon="View" @click="handleViewXml(row)">XML</el-button>
-            <el-button type="info" size="small" :icon="Picture" @click="handleViewDiagram(row)">流程图</el-button>
-            <el-button type="success" size="small" :icon="VideoPlay" @click="openStartDialog(row)">启动</el-button>
+            <el-button type="primary" size="small" :icon="View" @click="handleViewXml(row)">{{ t('workflowDefinitions.xml') }}</el-button>
+            <el-button type="info" size="small" :icon="Picture" @click="handleViewDiagram(row)">{{ t('workflowDefinitions.diagram') }}</el-button>
+            <el-button type="success" size="small" :icon="VideoPlay" @click="openStartDialog(row)">{{ t('workflowDefinitions.start') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
     </div>
 
-    <el-dialog v-model="xmlDialogVisible" title="流程定义XML" width="70%">
+    <el-dialog v-model="xmlDialogVisible" :title="t('workflowDefinitions.processDefinitionXml')" width="70%">
       <el-input v-model="xmlContent" type="textarea" :rows="20" readonly />
     </el-dialog>
 
-    <el-dialog v-model="diagramDialogVisible" title="流程图预览" width="80%">
+    <el-dialog v-model="diagramDialogVisible" :title="t('workflowDefinitions.diagramPreview')" width="80%">
       <div class="diagram-section">
         <div v-if="diagramImage" class="diagram-container">
           <div class="diagram-wrapper">
@@ -55,16 +55,16 @@
             </div>
           </div>
         </div>
-        <el-empty v-else description="暂无流程图" />
+        <el-empty v-else :description="t('workflowDefinitions.noDiagram')" />
       </div>
 
       <div class="table-section">
-        <div class="section-title">节点状态</div>
+        <div class="section-title">{{ t('workflowDefinitions.nodeStatus') }}</div>
         <el-table :data="currentNodes" stripe border style="width: 100%">
-          <el-table-column prop="activityId" label="节点ID" min-width="160" show-overflow-tooltip />
-          <el-table-column prop="name" label="节点名称" min-width="160" show-overflow-tooltip />
-          <el-table-column prop="type" label="类型" width="120" show-overflow-tooltip />
-          <el-table-column label="状态" width="120">
+          <el-table-column prop="activityId" :label="t('workflowDefinitions.nodeId')" min-width="160" show-overflow-tooltip />
+          <el-table-column prop="name" :label="t('workflowDefinitions.nodeName')" min-width="160" show-overflow-tooltip />
+          <el-table-column prop="type" :label="t('workflowDefinitions.type')" width="120" show-overflow-tooltip />
+          <el-table-column :label="t('workflowDefinitions.status')" width="120">
             <template #default="{ row }">
               <el-tag :type="getNodeTagType(row.status)">
                 {{ row.status || '-' }}
@@ -73,9 +73,9 @@
           </el-table-column>
           <el-table-column prop="x" label="X" width="80" />
           <el-table-column prop="y" label="Y" width="80" />
-          <el-table-column prop="width" label="宽度" width="80" />
-          <el-table-column prop="height" label="高度" width="80" />
-          <el-table-column label="说明" min-width="240" show-overflow-tooltip>
+          <el-table-column prop="width" :label="t('workflowDefinitions.width')" width="80" />
+          <el-table-column prop="height" :label="t('workflowDefinitions.height')" width="80" />
+          <el-table-column :label="t('workflowDefinitions.description')" min-width="240" show-overflow-tooltip>
             <template #default="{ row }">
               {{ getNodeDescription(row.type) }}
             </template>
@@ -84,20 +84,20 @@
       </div>
     </el-dialog>
 
-    <el-dialog v-model="startDialogVisible" title="启动流程实例" width="520px">
+    <el-dialog v-model="startDialogVisible" :title="t('workflowDefinitions.startProcessInstance')" width="520px">
       <el-form :model="startDialogForm" label-width="90px">
-        <el-form-item label="流程Key">
+        <el-form-item :label="t('workflowDefinitions.processKey')">
           <el-input v-model="startDialogForm.processDefinitionKey" readonly />
         </el-form-item>
-        <el-form-item label="业务Key">
-          <el-input v-model="startDialogForm.businessKey" placeholder="可选" />
+        <el-form-item :label="t('workflowDefinitions.businessKey')">
+          <el-input v-model="startDialogForm.businessKey" :placeholder="t('workflowDefinitions.optional')" />
         </el-form-item>
-        <el-form-item label="流程变量">
-          <el-input v-model="startDialogForm.variablesJson" type="textarea" :rows="6" placeholder="JSON对象" />
+        <el-form-item :label="t('workflowDefinitions.processVariables')">
+          <el-input v-model="startDialogForm.variablesJson" type="textarea" :rows="6" :placeholder="t('workflowDefinitions.jsonObject')" />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :loading="startingProcess" @click="handleStartDialog">启动</el-button>
-          <el-button @click="startDialogVisible = false">取消</el-button>
+          <el-button type="primary" :loading="startingProcess" @click="handleStartDialog">{{ t('workflowDefinitions.start') }}</el-button>
+          <el-button @click="startDialogVisible = false">{{ t('workflowDefinitions.cancel') }}</el-button>
         </el-form-item>
       </el-form>
     </el-dialog>
@@ -117,10 +117,13 @@ import {
   type WorkflowDefinition,
   type WorkflowNode
 } from '@/api'
+import { useI18n } from 'vue-i18n'
 
 defineOptions({
   name: 'WorkflowDefinitions'
 })
+
+const { t } = useI18n()
 
 const latestOnly = ref(true)
 const loadingDefinitions = ref(false)
@@ -149,18 +152,18 @@ const diagramSize = reactive({
 })
 
 const nodeGuideList = [
-  { name: '开始事件', type: 'startEvent', description: '流程启动入口，触发后进入后续节点' },
-  { name: '结束事件', type: 'endEvent', description: '流程结束出口，标识流程完成或终止' },
-  { name: '用户任务', type: 'userTask', description: '需要人工处理的审批或填单节点' },
-  { name: '服务任务', type: 'serviceTask', description: '由系统自动执行的服务或接口调用节点' },
-  { name: '脚本任务', type: 'scriptTask', description: '执行脚本逻辑，适合数据处理与转换' },
-  { name: '人工任务', type: 'manualTask', description: '线下人工动作，系统仅记录' },
-  { name: '接收任务', type: 'receiveTask', description: '等待消息或事件触发后继续流程' },
-  { name: '排他网关', type: 'exclusiveGateway', description: '条件判断，只走一条分支' },
-  { name: '并行网关', type: 'parallelGateway', description: '同时分叉或汇聚多个分支' },
-  { name: '包含网关', type: 'inclusiveGateway', description: '满足条件的分支可并行执行' },
-  { name: '调用活动', type: 'callActivity', description: '调用子流程复用流程定义' },
-  { name: '子流程', type: 'subProcess', description: '将复杂流程封装为可折叠子流程' }
+  { name: t('bpmnDesign.startEvent'), type: 'startEvent', description: t('bpmnDesign.startEventDesc') },
+  { name: t('bpmnDesign.endEvent'), type: 'endEvent', description: t('bpmnDesign.endEventDesc') },
+  { name: t('bpmnDesign.userTask'), type: 'userTask', description: t('bpmnDesign.userTaskDesc') },
+  { name: t('bpmnDesign.serviceTask'), type: 'serviceTask', description: t('bpmnDesign.serviceTaskDesc') },
+  { name: t('bpmnDesign.scriptTask'), type: 'scriptTask', description: t('bpmnDesign.scriptTaskDesc') },
+  { name: t('bpmnDesign.manualTask'), type: 'manualTask', description: t('bpmnDesign.manualTaskDesc') },
+  { name: t('bpmnDesign.receiveTask'), type: 'receiveTask', description: t('bpmnDesign.receiveTaskDesc') },
+  { name: t('bpmnDesign.exclusiveGateway'), type: 'exclusiveGateway', description: t('bpmnDesign.exclusiveGatewayDesc') },
+  { name: t('bpmnDesign.parallelGateway'), type: 'parallelGateway', description: t('bpmnDesign.parallelGatewayDesc') },
+  { name: t('bpmnDesign.inclusiveGateway'), type: 'inclusiveGateway', description: t('bpmnDesign.inclusiveGatewayDesc') },
+  { name: t('bpmnDesign.callActivity'), type: 'callActivity', description: t('bpmnDesign.callActivityDesc') },
+  { name: t('bpmnDesign.subProcess'), type: 'subProcess', description: t('bpmnDesign.subProcessDesc') }
 ]
 
 const overlayNodes = computed(() => {
@@ -191,7 +194,7 @@ const loadDefinitions = async () => {
   try {
     definitions.value = await getWorkflowDefinitions({ latestOnly: latestOnly.value })
   } catch {
-    ElMessage.error('加载流程定义失败')
+    ElMessage.error(t('workflowDefinitions.loadDefinitionsFailed'))
   } finally {
     loadingDefinitions.value = false
   }
@@ -200,21 +203,21 @@ const loadDefinitions = async () => {
 const handleViewXml = async (definition: WorkflowDefinition) => {
   const definitionId = resolveDefinitionId(definition)
   if (!definitionId) {
-    ElMessage.warning('无法识别流程定义ID')
+    ElMessage.warning(t('workflowDefinitions.cannotRecognizeDefinitionId'))
     return
   }
   try {
     xmlContent.value = await getWorkflowDefinitionXml(definitionId)
     xmlDialogVisible.value = true
   } catch {
-    ElMessage.error('获取XML失败')
+    ElMessage.error(t('workflowDefinitions.getXmlFailed'))
   }
 }
 
 const handleViewDiagram = async (definition: WorkflowDefinition) => {
   const definitionId = resolveDefinitionId(definition)
   if (!definitionId) {
-    ElMessage.warning('无法识别流程定义ID')
+    ElMessage.warning(t('workflowDefinitions.cannotRecognizeDefinitionId'))
     return
   }
   try {
@@ -225,7 +228,7 @@ const handleViewDiagram = async (definition: WorkflowDefinition) => {
     await nextTick()
     updateDiagramSize()
   } catch {
-    ElMessage.error('加载流程图失败')
+    ElMessage.error(t('workflowDefinitions.loadDiagramFailed'))
   }
 }
 
@@ -245,7 +248,7 @@ const updateDiagramSize = () => {
 const openStartDialog = (definition: WorkflowDefinition) => {
   const key = resolveDefinitionKey(definition)
   if (!key) {
-    ElMessage.warning('无法识别流程Key')
+    ElMessage.warning(t('workflowDefinitions.cannotRecognizeProcessKey'))
     return
   }
   startDialogForm.processDefinitionKey = key
@@ -266,9 +269,9 @@ const handleStartDialog = async () => {
     }
     await startWorkflowProcess(payload)
     startDialogVisible.value = false
-    ElMessage.success('流程已启动')
+    ElMessage.success(t('workflowDefinitions.processStarted'))
   } catch {
-    ElMessage.error('启动失败')
+    ElMessage.error(t('workflowDefinitions.startFailed'))
   } finally {
     startingProcess.value = false
   }
@@ -279,12 +282,12 @@ const parseJson = (value: string): Record<string, unknown> | undefined | null =>
   try {
     const parsed = JSON.parse(value) as Record<string, unknown>
     if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-      ElMessage.error('变量需要是JSON对象')
+      ElMessage.error(t('workflowDefinitions.variablesMustBeJsonObject'))
       return null
     }
     return parsed
   } catch {
-    ElMessage.error('JSON格式不正确')
+    ElMessage.error(t('workflowDefinitions.jsonFormatIncorrect'))
     return null
   }
 }
@@ -360,14 +363,14 @@ const buildImageSource = (value: string, contentType?: string): string => {
 }
 
 const getNodeDescription = (type?: string) => {
-  if (!type) return '暂无说明'
+  if (!type) return t('workflowDefinitions.noDescription')
   const lowered = type.toLowerCase()
   const matched = nodeGuideList.find(item => lowered.includes(item.type.toLowerCase()))
-  return matched ? matched.description : '暂无说明'
+  return matched ? matched.description : t('workflowDefinitions.noDescription')
 }
 
 const getNodeTooltip = (node: WorkflowNode) => {
-  const name = node.name || node.activityId || node.id || '节点'
+  const name = node.name || node.activityId || node.id || t('workflowDefinitions.node')
   const type = node.type || 'unknown'
   const description = getNodeDescription(type)
   return `${name} · ${type} · ${description}`

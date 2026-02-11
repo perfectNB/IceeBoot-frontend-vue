@@ -1,0 +1,17 @@
+export default {
+  networkError: '网络错误',
+  networkException: '网络连接异常',
+  requestFailed: '请求失败',
+  badRequest: '请求参数错误',
+  unauthorized: '未授权，请重新登录',
+  forbidden: '权限不足',
+  notFound: '请求的资源不存在',
+  serverError: '服务器内部错误',
+  badGateway: '网关错误',
+  serviceUnavailable: '服务不可用',
+  gatewayTimeout: '网关超时',
+  connectionError: '连接错误{status}',
+  loginExpired: '登录已过期，请重新登录',
+  loginExpiredShort: '登录已过期',
+  refreshFailed: '刷新失败',
+}

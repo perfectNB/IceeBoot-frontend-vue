@@ -1,30 +1,30 @@
 <template>
   <div class="workflow-page">
     <div class="page-header">
-      <h2>流程图展示</h2>
-      <p>按流程定义或流程实例查看流程图与节点状态</p>
+      <h2>{{ t('workflowDiagram.title') }}</h2>
+      <p>{{ t('workflowDiagram.description') }}</p>
     </div>
 
     <div class="search-section">
       <el-form :model="diagramForm" inline>
-        <el-form-item label="展示类型">
+        <el-form-item :label="t('workflowDiagram.displayType')">
           <el-radio-group v-model="diagramForm.mode">
-            <el-radio-button label="definition">流程定义</el-radio-button>
-            <el-radio-button label="instance">流程实例</el-radio-button>
+            <el-radio-button label="definition">{{ t('workflowDiagram.processDefinition') }}</el-radio-button>
+            <el-radio-button label="instance">{{ t('workflowDiagram.processInstance') }}</el-radio-button>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="流程定义" v-if="diagramForm.mode === 'definition'">
-          <el-select v-model="diagramForm.definitionId" placeholder="请选择流程定义" style="width: 240px">
+        <el-form-item :label="t('workflowDiagram.processDefinition')" v-if="diagramForm.mode === 'definition'">
+          <el-select v-model="diagramForm.definitionId" :placeholder="t('workflowDiagram.selectProcessDefinition')" style="width: 240px">
             <el-option v-for="item in definitionOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="流程实例" v-else>
-          <el-input v-model="diagramForm.processInstanceId" placeholder="请输入流程实例ID" style="width: 260px" />
+        <el-form-item :label="t('workflowDiagram.processInstance')" v-else>
+          <el-input v-model="diagramForm.processInstanceId" :placeholder="t('workflowDiagram.inputProcessInstanceId')" style="width: 260px" />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :loading="loadingDiagram" @click="loadDiagram">加载流程图</el-button>
+          <el-button type="primary" :loading="loadingDiagram" @click="loadDiagram">{{ t('workflowDiagram.loadDiagram') }}</el-button>
           <el-button :icon="FullScreen" @click="toggleDiagramFullscreen">
-            {{ isDiagramFullscreen ? '退出全屏' : '全屏' }}
+            {{ isDiagramFullscreen ? t('workflowDiagram.exitFullscreen') : t('workflowDiagram.fullscreen') }}
           </el-button>
         </el-form-item>
       </el-form>
@@ -48,16 +48,16 @@
           </div>
         </div>
       </div>
-      <el-empty v-else description="暂无流程图" />
+      <el-empty v-else :description="t('workflowDiagram.noDiagram')" />
     </div>
 
     <div class="table-section">
-      <div class="section-title">节点状态</div>
+      <div class="section-title">{{ t('workflowDiagram.nodeStatus') }}</div>
       <el-table :data="currentNodes" stripe border style="width: 100%">
-        <el-table-column prop="activityId" label="节点ID" min-width="160" show-overflow-tooltip />
-        <el-table-column prop="name" label="节点名称" min-width="160" show-overflow-tooltip />
-        <el-table-column prop="type" label="类型" width="120" show-overflow-tooltip />
-        <el-table-column label="状态" width="120">
+        <el-table-column prop="activityId" :label="t('workflowDiagram.nodeId')" min-width="160" show-overflow-tooltip />
+        <el-table-column prop="name" :label="t('workflowDiagram.nodeName')" min-width="160" show-overflow-tooltip />
+        <el-table-column prop="type" :label="t('workflowDiagram.type')" width="120" show-overflow-tooltip />
+        <el-table-column :label="t('workflowDiagram.status')" width="120">
           <template #default="{ row }">
             <el-tag :type="getNodeTagType(row.status)">
               {{ row.status || '-' }}
@@ -66,9 +66,9 @@
         </el-table-column>
         <el-table-column prop="x" label="X" width="80" />
         <el-table-column prop="y" label="Y" width="80" />
-        <el-table-column prop="width" label="宽度" width="80" />
-        <el-table-column prop="height" label="高度" width="80" />
-        <el-table-column label="说明" min-width="240" show-overflow-tooltip>
+        <el-table-column prop="width" :label="t('workflowDiagram.width')" width="80" />
+        <el-table-column prop="height" :label="t('workflowDiagram.height')" width="80" />
+        <el-table-column :label="t('workflowDiagram.description')" min-width="240" show-overflow-tooltip>
           <template #default="{ row }">
             {{ getNodeDescription(row.type) }}
           </template>
@@ -91,10 +91,13 @@ import {
   type WorkflowDefinition,
   type WorkflowNode
 } from '@/api'
+import { useI18n } from 'vue-i18n'
 
 defineOptions({
   name: 'WorkflowDiagram'
 })
+
+const { t } = useI18n()
 
 const definitions = ref<WorkflowDefinition[]>([])
 
@@ -166,17 +169,17 @@ const loadDefinitions = async () => {
   try {
     definitions.value = await getWorkflowDefinitions({ latestOnly: true })
   } catch {
-    ElMessage.error('加载流程定义失败')
+    ElMessage.error(t('workflowDiagram.loadDefinitionsFailed'))
   }
 }
 
 const loadDiagram = async () => {
   if (diagramForm.mode === 'definition' && !diagramForm.definitionId) {
-    ElMessage.warning('请选择流程定义')
+    ElMessage.warning(t('workflowDiagram.selectProcessDefinitionRequired'))
     return
   }
   if (diagramForm.mode === 'instance' && !diagramForm.processInstanceId) {
-    ElMessage.warning('请输入流程实例ID')
+    ElMessage.warning(t('workflowDiagram.inputProcessInstanceIdRequired'))
     return
   }
   loadingDiagram.value = true
@@ -190,7 +193,7 @@ const loadDiagram = async () => {
       const instance = await getWorkflowProcess(instanceId)
       const definitionId = instance.processDefinitionId || instance.id || ''
       if (!definitionId) {
-        ElMessage.warning('无法获取流程定义ID')
+        ElMessage.warning(t('workflowDiagram.cannotGetDefinitionId'))
         return
       }
       const diagramData = await getWorkflowDefinitionDiagram(definitionId)
@@ -200,7 +203,7 @@ const loadDiagram = async () => {
     await nextTick()
     updateDiagramSize()
   } catch {
-    ElMessage.error('加载流程图失败')
+    ElMessage.error(t('workflowDiagram.loadDiagramFailed'))
   } finally {
     loadingDiagram.value = false
   }
@@ -283,14 +286,14 @@ const resolveDefinitionId = (definition: WorkflowDefinition): string => {
 }
 
 const getNodeDescription = (type?: string) => {
-  if (!type) return '暂无说明'
+  if (!type) return t('workflowDiagram.noDescription')
   const lowered = type.toLowerCase()
   const matched = nodeGuideList.find(item => lowered.includes(item.type.toLowerCase()))
-  return matched ? matched.description : '暂无说明'
+  return matched ? matched.description : t('workflowDiagram.noDescription')
 }
 
 const getNodeTooltip = (node: WorkflowNode) => {
-  const name = node.name || node.activityId || node.id || '节点'
+  const name = node.name || node.activityId || node.id || t('workflowDiagram.node')
   const type = node.type || 'unknown'
   const description = getNodeDescription(type)
   return `${name} · ${type} · ${description}`

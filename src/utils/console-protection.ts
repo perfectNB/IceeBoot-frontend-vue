@@ -3,9 +3,11 @@
  * 防止用户在生产环境中打开浏览器控制台
  */
 
+import { isMockEnabled } from '@/config/mock'
+
 // 防护配置
 interface ProtectionConfig {
-  // 是否启用防护（仅在生产环境启用）
+  // 是否启用防护（仅在生产环境且非Mock模式下启用）
   enabled: boolean
   // 检测间隔（毫秒）
   detectInterval: number
@@ -20,7 +22,7 @@ interface ProtectionConfig {
 }
 
 const defaultConfig: ProtectionConfig = {
-  enabled: import.meta.env.PROD, // 仅在生产环境启用
+  enabled: import.meta.env.PROD && !isMockEnabled(), // 仅在生产环境且非Mock模式下启用
   detectInterval: 1000,
   warningMessage: '检测到开发者工具，为了系统安全，请关闭控制台！',
   showAlert: true,
@@ -44,7 +46,11 @@ class ConsoleProtection {
    */
   public start(): void {
     if (!this.config.enabled) {
-      console.log('控制台防护已禁用（开发环境）')
+      if (isMockEnabled()) {
+        console.log('控制台防护已禁用（Mock模式）')
+      } else {
+        console.log('控制台防护已禁用（开发环境）')
+      }
       return
     }
 

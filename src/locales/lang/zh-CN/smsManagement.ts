@@ -31,7 +31,7 @@ export default {
   userData: '自定义数据',
   userDataPlaceholder: '用户自定义参数',
   templateParams: '模板参数',
-  templateParamsPlaceholder: '请输入JSON格式，如 {"code":"1234"}',
+  templateParamsPlaceholder: "请输入JSON格式，如 {'{'}'code':'1234'{'}'}",
   sendSms: '发送短信',
   reset: '重置',
   sendResult: '发送结果',

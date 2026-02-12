@@ -31,7 +31,7 @@ export default {
   userData: 'User Data',
   userDataPlaceholder: 'User custom parameters',
   templateParams: 'Template Parameters',
-  templateParamsPlaceholder: 'Enter JSON format, e.g. {"code":"1234"}',
+  templateParamsPlaceholder: "Enter JSON format, e.g. {'{'}'code':'1234'{'}'}",
   sendSms: 'Send SMS',
   reset: 'Reset',
   sendResult: 'Send Result',

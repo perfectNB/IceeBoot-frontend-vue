@@ -261,7 +261,7 @@ import LoginDialog from '../../components/common/LoginDialog.vue'
 import LanguageSwitcher from '../../components/common/LanguageSwitcher.vue'
 import { useUserStore } from '@/stores/user'
 import { isMockEnabled } from '@/config/mock'
-import { exchangeWechatTicket } from '@/api'
+import { exchangeWechatTicket } from '@/api/auth'
 import type { MenuItem } from '@/types'
 
 const router = useRouter()

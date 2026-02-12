@@ -13,7 +13,7 @@ import App from './App.vue'
 import router from './router'
 
 // 国际化
-import i18n from './locales'
+import i18n, { setLocale } from './locales'
 
 // 全局样式
 import './assets/base.css'
@@ -53,25 +53,48 @@ app.use(router)
 app.use(i18n)
 app.use(ElementPlus)
 
-// // 应用初始化
-// const initApp = async () => {
-//   const { useUserStore } = await import('./stores/user')
-//   const userStore = useUserStore()
-//
-//   // 如果有token，尝试恢复用户信息
-//   const token = userStore.getToken()
-//   if (token && !userStore.user) {
-//     try {
-//       await userStore.getUserInfo()
-//       console.log('用户状态已恢复')
-//     } catch (error) {
-//       console.warn('恢复用户状态失败，可能token已过期:', error)
-//       // 清除无效的token
-//       userStore.clearToken()
-//       userStore.clearUser()
-//     }
-//   }
-// }
+// 调试信息（仅开发环境输出）
+if (import.meta.env.DEV) {
+  const zhCNHome = i18n.global.getLocaleMessage('zh-CN')?.home as Record<string, unknown> | undefined
+  console.log('[i18n Debug] Available locales:', i18n.global.availableLocales)
+  console.log('[i18n Debug] Current locale:', i18n.global.locale.value)
+  console.log('[i18n Debug] home.heroTitle:', zhCNHome?.heroTitle)
+  console.log('[i18n Debug] Test translation:', i18n.global.t('home.heroTitle'))
+}
+
+// 初始化语言设置（在挂载前从 localStorage 恢复）
+if (typeof window !== 'undefined') {
+  const savedLocale = localStorage.getItem('app-locale')
+  if (import.meta.env.DEV) {
+    console.log('[i18n Debug] Saved locale from localStorage:', savedLocale)
+  }
+  if (savedLocale === 'zh-CN' || savedLocale === 'en') {
+    setLocale(savedLocale)
+    if (import.meta.env.DEV) {
+      console.log('[i18n Debug] Locale set to:', savedLocale)
+    }
+  } else {
+    // 根据浏览器语言设置默认语言
+    const browserLang = navigator.language
+    if (import.meta.env.DEV) {
+      console.log('[i18n Debug] Browser language:', browserLang)
+    }
+    if (browserLang.startsWith('zh')) {
+      setLocale('zh-CN')
+      if (import.meta.env.DEV) {
+        console.log('[i18n Debug] Locale set to zh-CN based on browser')
+      }
+    } else {
+      setLocale('en')
+      if (import.meta.env.DEV) {
+        console.log('[i18n Debug] Locale set to en based on browser')
+      }
+    }
+  }
+  if (import.meta.env.DEV) {
+    console.log('[i18n Debug] Final locale:', i18n.global.locale.value)
+  }
+}
 
 // 挂载应用
 app.mount('#app')

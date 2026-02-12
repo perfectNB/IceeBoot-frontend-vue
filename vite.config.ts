@@ -53,8 +53,7 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      '@': fileURLToPath(new URL('./src', import.meta.url)),
-      'vue-i18n': 'vue-i18n/dist/vue-i18n.runtime.esm-bundler.js'
+      '@': fileURLToPath(new URL('./src', import.meta.url))
     }
   },
   // 静态资源服务配置
@@ -88,7 +87,7 @@ export default defineConfig({
       output: {
         manualChunks: {
           // 核心框架
-          vendor: ['vue', 'vue-router', 'pinia'],
+          vendor: ['vue', 'vue-router', 'pinia', 'vue-i18n'],
           // UI组件库
           elementPlus: ['element-plus', '@element-plus/icons-vue'],
           // 工具库
@@ -125,12 +124,12 @@ export default defineConfig({
     minify: 'terser',
     terserOptions: {
       compress: {
-        // 移除console
-        drop_console: true,
+        // 移除console - 暂时禁用以便调试
+        drop_console: false,
         // 移除debugger
         drop_debugger: true,
         // 移除无用代码
-        pure_funcs: ['console.log', 'console.info', 'console.debug']
+        pure_funcs: []
       },
       format: {
         // 移除注释

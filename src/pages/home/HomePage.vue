@@ -627,6 +627,28 @@ onMounted(() => {
       }
     }
   }
+
+  @media (max-width: 768px) {
+    gap: 8px;
+
+    .nav-btn {
+      padding: 8px 16px;
+      font-size: 14px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    gap: 6px;
+
+    .brand-text {
+      display: none;
+    }
+
+    .nav-btn {
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+  }
 }
 
 // Hero Section
@@ -637,6 +659,12 @@ onMounted(() => {
   align-items: center;
   padding-top: 72px;
   overflow: hidden;
+
+  @media (max-width: 480px) {
+    min-height: auto;
+    align-items: flex-start;
+    padding-bottom: 56px;
+  }
 }
 
 .hero-background {
@@ -700,6 +728,11 @@ onMounted(() => {
     gap: 60px;
     padding: 0 24px;
   }
+
+  @media (max-width: 480px) {
+    padding: 0 16px;
+    gap: 28px;
+  }
 }
 
 .hero-content {
@@ -727,6 +760,13 @@ onMounted(() => {
     letter-spacing: 0.5px;
     transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 
+    @media (max-width: 480px) {
+      padding: 7px 14px;
+      margin-bottom: 18px;
+      font-size: 12px;
+      gap: 8px;
+    }
+
     &:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
@@ -749,7 +789,12 @@ onMounted(() => {
     margin-bottom: 28px;
     letter-spacing: -2px;
     color: var(--text-primary);
-    white-space: nowrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+
+    @media (min-width: 1025px) {
+      white-space: nowrap;
+    }
 
     .gradient-text {
       background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
@@ -766,7 +811,10 @@ onMounted(() => {
     }
 
     @media (max-width: 480px) {
-      font-size: 28px;
+      font-size: clamp(28px, 7.4vw, 34px);
+      line-height: 1.18;
+      margin-bottom: 16px;
+      letter-spacing: -1.4px;
       white-space: normal;
     }
   }
@@ -782,7 +830,15 @@ onMounted(() => {
     @media (max-width: 1024px) {
       margin-left: auto;
       margin-right: auto;
-      max-width: 500px;
+      max-width: 640px;
+    }
+
+    @media (max-width: 480px) {
+      font-size: 14px;
+      line-height: 1.78;
+      margin-bottom: 26px;
+      max-width: 36ch;
+      letter-spacing: 0;
     }
   }
 }
@@ -799,7 +855,9 @@ onMounted(() => {
   @media (max-width: 480px) {
     flex-direction: column;
     width: 100%;
-    max-width: 300px;
+    max-width: 340px;
+    margin-bottom: 36px;
+    gap: 12px;
   }
 
   .cta-btn {
@@ -813,6 +871,9 @@ onMounted(() => {
 
     @media (max-width: 480px) {
       width: 100%;
+      padding: 14px 18px;
+      font-size: 14px;
+      border-radius: 12px;
     }
 
     &::before {
@@ -873,11 +934,25 @@ onMounted(() => {
       justify-content: center;
     }
 
+    @media (max-width: 480px) {
+      width: 100%;
+      gap: 14px;
+      padding-top: 22px;
+      justify-content: space-between;
+    }
+
   .stat-item {
     display: flex;
     flex-direction: column;
     gap: 6px;
     transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    flex: 1 1 auto;
+    min-width: 0;
+
+    @media (max-width: 480px) {
+      align-items: center;
+      gap: 4px;
+    }
 
     &:hover {
       transform: translateY(-4px);
@@ -891,12 +966,21 @@ onMounted(() => {
       -webkit-text-fill-color: transparent;
       background-clip: text;
       letter-spacing: -0.5px;
+
+      @media (max-width: 480px) {
+        font-size: 22px;
+      }
     }
 
     .stat-label {
     font-size: 13px;
     color: var(--text-secondary);
     font-weight: 500;
+
+    @media (max-width: 480px) {
+      font-size: 12px;
+      text-align: center;
+    }
   }
 }
 
@@ -904,6 +988,10 @@ onMounted(() => {
   width: 1px;
   height: 40px;
   background: linear-gradient(to bottom, transparent, rgba(59, 130, 246, 0.3), transparent);
+
+  @media (max-width: 480px) {
+    display: none;
+  }
 }
 }
 
@@ -951,22 +1039,45 @@ onMounted(() => {
   }
 
   @media (max-width: 768px) {
-    height: 400px;
-    transform: scale(0.8);
+    height: 440px;
   }
 
   @media (max-width: 480px) {
-    height: 350px;
-    transform: scale(0.65);
+    height: 360px;
   }
 }
 
 .orbit-system {
+  --orbit-size: 500px;
+  --ring-1-size: 250px;
+  --ring-2-size: 380px;
+  --ring-3-size: 500px;
+  --orbit-radius: 190px;
+  --core-size: 160px;
+
   position: relative;
-  width: 500px;
-  height: 500px;
+  width: var(--orbit-size);
+  height: var(--orbit-size);
   transform-style: preserve-3d;
   animation: gentle-float 6s ease-in-out infinite;
+
+  @media (max-width: 768px) {
+    --orbit-size: 420px;
+    --ring-1-size: 210px;
+    --ring-2-size: 320px;
+    --ring-3-size: 420px;
+    --orbit-radius: 160px;
+    --core-size: 140px;
+  }
+
+  @media (max-width: 480px) {
+    --orbit-size: 320px;
+    --ring-1-size: 160px;
+    --ring-2-size: 240px;
+    --ring-3-size: 320px;
+    --orbit-radius: 120px;
+    --core-size: 118px;
+  }
 }
 
 .core-wrapper {
@@ -974,8 +1085,8 @@ onMounted(() => {
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 160px;
-  height: 160px;
+  width: var(--core-size);
+  height: var(--core-size);
   z-index: 10;
   animation: core-pulse 4s ease-in-out infinite;
 
@@ -1020,6 +1131,10 @@ onMounted(() => {
       background-clip: text;
       margin-bottom: 8px;
       animation: icon-float 3s ease-in-out infinite;
+
+      @media (max-width: 480px) {
+        font-size: 32px;
+      }
     }
 
     .core-title {
@@ -1030,6 +1145,11 @@ onMounted(() => {
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+
+      @media (max-width: 480px) {
+        font-size: 16px;
+        letter-spacing: 0.6px;
+      }
     }
 
     .core-subtitle {
@@ -1038,6 +1158,10 @@ onMounted(() => {
       margin-top: 6px;
       font-family: 'Space Mono', monospace;
       letter-spacing: 0.5px;
+
+      @media (max-width: 480px) {
+        display: none;
+      }
     }
   }
 }
@@ -1052,24 +1176,24 @@ onMounted(() => {
   transition: all 0.3s;
 
   &.ring-1 {
-    width: 250px;
-    height: 250px;
+    width: var(--ring-1-size);
+    height: var(--ring-1-size);
     opacity: 0.6;
     border-width: 2px;
     border-color: rgba(59, 130, 246, 0.2);
   }
 
   &.ring-2 {
-    width: 380px;
-    height: 380px;
+    width: var(--ring-2-size);
+    height: var(--ring-2-size);
     border-style: dashed;
     opacity: 0.4;
     animation: ring-pulse 3s ease-in-out infinite;
   }
 
   &.ring-3 {
-    width: 500px;
-    height: 500px;
+    width: var(--ring-3-size);
+    height: var(--ring-3-size);
     opacity: 0.3;
     border-width: 1px;
   }
@@ -1087,7 +1211,7 @@ onMounted(() => {
   left: 50%;
   width: 0;
   height: 0;
-  transform: rotate(var(--angle)) translate(190px);
+  transform: rotate(var(--angle)) translate(var(--orbit-radius));
 
   .orbit-item {
     animation: counter-rotate 40s linear infinite;
@@ -1099,6 +1223,11 @@ onMounted(() => {
       align-items: center;
       gap: 10px;
       width: 100px;
+
+      @media (max-width: 480px) {
+        gap: 8px;
+        width: 84px;
+      }
     }
 
     .item-icon {
@@ -1115,6 +1244,13 @@ onMounted(() => {
       color: #3b82f6;
       box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
       transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+      @media (max-width: 480px) {
+        width: 44px;
+        height: 44px;
+        border-radius: 14px;
+        font-size: 20px;
+      }
     }
 
     .item-label {
@@ -1124,6 +1260,10 @@ onMounted(() => {
       text-align: center;
       white-space: nowrap;
       transition: all 0.3s;
+
+      @media (max-width: 480px) {
+        font-size: 12px;
+      }
     }
 
     &:hover .item-icon {
@@ -1162,11 +1302,17 @@ onMounted(() => {
 
   .features-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 24px;
     max-width: 1200px;
     margin: 0 auto;
     padding: 0 32px;
+
+    @media (max-width: 480px) {
+      grid-template-columns: 1fr;
+      padding: 0 16px;
+      gap: 16px;
+    }
 
     .feature-card {
       background: rgba(255, 255, 255, 0.5);
@@ -1310,6 +1456,11 @@ onMounted(() => {
     padding: 0 32px;
     position: relative;
     z-index: 1;
+
+    @media (max-width: 480px) {
+      gap: 32px;
+      margin-top: 40px;
+    }
 
     .tech-item {
       display: flex;

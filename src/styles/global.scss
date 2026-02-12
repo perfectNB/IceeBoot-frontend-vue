@@ -176,3 +176,21 @@ html, body {
 .pl-20 { padding-left: 20px; }
 .pr-10 { padding-right: 10px; }
 .pr-20 { padding-right: 20px; }
+
+// 统一的页面头部样式
+.page-header {
+  margin-bottom: 24px;
+
+  .page-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 8px 0;
+  }
+
+  .page-description {
+    color: var(--text-secondary);
+    margin: 0;
+    font-size: 14px;
+  }
+}

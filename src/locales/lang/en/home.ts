@@ -1,6 +1,6 @@
 export default {
   badge: 'AI-Native Enterprise Scaffold',
-  heroTitle: 'Build the Future of',
+  heroTitle: 'Build ',
   heroTitleHighlight: 'Smart Apps',
   heroDescription: 'IceeBoot is a next-gen enterprise development platform built on Vue 3 + TypeScript + Element Plus. Deeply integrated with AI capabilities, providing end-to-end solutions from design to deployment.',
   experience: 'Get Started',

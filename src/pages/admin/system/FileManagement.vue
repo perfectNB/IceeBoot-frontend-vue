@@ -958,7 +958,8 @@ const submitUploadForm = async () => {
     // 刷新存储桶列表（更新文件数量）
     loadBucketList()
   } catch (error) {
-    ElMessage.error(t('fileManagement.uploadError'))
+    const message = error instanceof Error ? error.message : ''
+    ElMessage.error(message || t('fileManagement.uploadError'))
     console.error('上传文件失败:', error)
   } finally {
     uploadLoading.value = false

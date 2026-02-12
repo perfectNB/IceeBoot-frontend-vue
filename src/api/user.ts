@@ -80,7 +80,7 @@ export const resetUserPassword = async (id: string | number, newPassword: string
     await MockUserService.resetPassword(Number(id), newPassword)
   } else {
     // 调用真实API
-    await request.put(`/api/v1/users/${id}/password?newPassword=${encodeURIComponent(newPassword)}`)
+    await request.put(`/api/v1/users/${id}/password`, { newPassword })
   }
 }
 

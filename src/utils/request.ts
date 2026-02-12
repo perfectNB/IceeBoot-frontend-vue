@@ -217,8 +217,12 @@ service.interceptors.response.use(
     }
 
     // 其他错误
-    ElMessage.error(message || t('request.requestFailed'))
-    return Promise.reject(new Error(message || t('request.requestFailed')))
+    const normalizedMessage = message || t('request.requestFailed')
+    const skipErrorMessage = Boolean((response.config as RequestConfig | undefined)?.skipErrorMessage)
+    if (!skipErrorMessage) {
+      ElMessage.error(normalizedMessage)
+    }
+    return Promise.reject(new Error(normalizedMessage))
   },
   (error) => {
     console.error('响应错误:', error)

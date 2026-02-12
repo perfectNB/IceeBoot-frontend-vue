@@ -335,7 +335,8 @@ export const uploadFile = async (params: UploadFileParams): Promise<OssFile> => 
       const response = await service.post('/api/v1/oss-files/upload', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
-        }
+        },
+        skipErrorMessage: true
       })
 
       // 处理不同的响应格式

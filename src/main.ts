@@ -30,6 +30,8 @@ import { initPerformanceMonitoring } from './utils/performance'
 
 // SEO初始化
 import { initSEO } from './utils/seo'
+import { setupPWA } from './pwa'
+import { setupVersionGuard } from './versionGuard'
 
 const app = createApp(App)
 
@@ -41,6 +43,12 @@ consoleProtection.start()
 
 // 初始化SEO配置
 initSEO()
+
+if (import.meta.env.PROD) {
+  setupPWA()
+}
+
+setupVersionGuard()
 
 // 注册 Element Plus 图标
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {

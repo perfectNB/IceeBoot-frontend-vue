@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import { agentConsole, type Capability, type CapabilityKind } from '@/api/agentConsole'
@@ -71,12 +71,19 @@ function empty(): Capability {
   }
 }
 const form = ref<Capability>(empty())
+let loadVersion = 0
 async function load() {
+  const version = ++loadVersion
+  const kind = page.value.kind
   loading.value = true
   try {
-    all.value = await agentConsole.capabilities()
+    const [current, skillTools] = await Promise.all([
+      agentConsole.capabilities(kind),
+      kind === 'SKILL' ? agentConsole.capabilities('TOOL') : Promise.resolve([]),
+    ])
+    if (version === loadVersion) all.value = [...current, ...skillTools]
   } finally {
-    loading.value = false
+    if (version === loadVersion) loading.value = false
   }
 }
 function edit(c?: Capability) {
@@ -100,10 +107,13 @@ async function remove(c: Capability) {
   await ElMessageBox.confirm(`删除“${c.name}”？已发布 Agent 的快照仍保留原配置。`, '删除能力', {
     type: 'warning',
   })
-  await agentConsole.deleteCapability(c.id!)
+  await agentConsole.deleteCapability(c.id!, c.kind)
   await load()
 }
-onMounted(load)
+watch(() => page.value.kind, () => {
+  visible.value = false
+  return load()
+}, { immediate: true })
 </script>
 <template>
   <main class="agent-console">

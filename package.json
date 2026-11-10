@@ -12,7 +12,8 @@
     "preview": "vite preview",
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
-    "lint": "eslint . --fix"
+    "lint": "eslint . --fix",
+    "test:agent-console": "node --test tests/agentConsole.test.cjs"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",

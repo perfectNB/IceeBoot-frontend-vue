@@ -133,9 +133,111 @@ export interface RunDetail {
   usageKnown: boolean
 }
 const root = '/api/v1/agent-console'
+const capabilityRoutes: Record<CapabilityKind, string> = {
+  SKILL: 'skills',
+  TOOL: 'tools',
+  MCP: 'mcps',
+  SANDBOX: 'sandbox-templates',
+  KNOWLEDGE: 'knowledge',
+}
+
+interface CapabilityResource {
+  id?: number
+  code: string
+  name: string
+  description?: string
+  enabled: boolean
+  content?: string
+  resources?: Record<string, string>
+  toolIds?: number[]
+  kind?: ToolConfig['kind']
+  url?: string
+  method?: string
+  headers?: Record<string, string>
+  inputSchema?: Record<string, unknown>
+  script?: string
+  projectApi?: boolean
+  permissionCode?: string
+  allowedTools?: string[]
+  templateId?: string
+  timeoutSeconds?: number
+}
+
+function capabilityFromResource(kind: CapabilityKind, value: CapabilityResource): Capability {
+  const capability: Capability = {
+    id: value.id,
+    kind,
+    code: value.code,
+    name: value.name,
+    description: value.description ?? '',
+    enabled: value.enabled,
+  }
+  switch (kind) {
+    case 'SKILL':
+      capability.skill = {
+        content: value.content ?? '',
+        resources: value.resources ?? {},
+        toolIds: value.toolIds ?? [],
+      }
+      break
+    case 'TOOL':
+    case 'KNOWLEDGE':
+      capability.tool = {
+        kind: value.kind ?? 'HTTP',
+        url: value.url ?? '',
+        method: value.method ?? 'POST',
+        headers: value.headers ?? {},
+        inputSchema: value.inputSchema ?? { type: 'object', properties: {} },
+        script: value.script ?? '',
+        projectApi: value.projectApi ?? false,
+        permissionCode: value.permissionCode ?? '',
+      }
+      break
+    case 'MCP':
+      capability.mcp = {
+        url: value.url ?? '',
+        headers: value.headers ?? {},
+        allowedTools: value.allowedTools ?? [],
+      }
+      break
+    case 'SANDBOX':
+      capability.sandbox = {
+        templateId: value.templateId ?? '',
+        timeoutSeconds: value.timeoutSeconds ?? 600,
+      }
+  }
+  return capability
+}
+
+async function listCapabilities(kind: CapabilityKind): Promise<Capability[]> {
+  const values = await request.get<CapabilityResource[]>(`${root}/${capabilityRoutes[kind]}`)
+  return values.map((value) => capabilityFromResource(kind, value))
+}
+
+function capabilityPayload(value: Capability) {
+  const details =
+    value.kind === 'SKILL' ? value.skill
+      : value.kind === 'MCP' ? value.mcp
+        : value.kind === 'SANDBOX' ? value.sandbox
+          : value.tool
+  return {
+    ...details,
+    id: value.id,
+    code: value.code,
+    name: value.name,
+    description: value.description,
+    enabled: value.enabled,
+  }
+}
+
 export const agentConsole = {
-  models: () => request.get<ModelConfig[]>(`${root}/models`),
-  saveModel: (value: ModelConfig) => request.post<ModelConfig>(`${root}/models`, { ...value }),
+  models: async () => {
+    const values = await request.get<ModelConfig[]>(`${root}/models`)
+    return values.map((value) => ({ ...value, generation: value.generation ?? { extra: {} } }))
+  },
+  saveModel: (value: ModelConfig) => value.id != null
+    ? request.put<ModelConfig>(`${root}/models`, { ...value })
+    : request.post<ModelConfig>(`${root}/models`, { ...value }),
   deleteModel: (id: number) => request.delete(`${root}/models/${id}`),
   invokeModel: (id: number, input: string) =>
     request.post<string>(
@@ -143,12 +245,27 @@ export const agentConsole = {
       { modelConfigId: id, input },
       { timeout: 150000, _skipAuthRefresh: true },
     ),
-  capabilities: () => request.get<Capability[]>(`${root}/capabilities`),
-  saveCapability: (value: Capability) =>
-    request.post<Capability>(`${root}/capabilities`, { ...value }),
-  deleteCapability: (id: number) => request.delete(`${root}/capabilities/${id}`),
+  capabilities: async (kind?: CapabilityKind): Promise<Capability[]> => {
+    if (kind) return listCapabilities(kind)
+    const groups = await Promise.all(
+      (Object.keys(capabilityRoutes) as CapabilityKind[]).map(listCapabilities),
+    )
+    return groups.flat()
+  },
+  saveCapability: async (value: Capability): Promise<Capability> => {
+    const url = `${root}/${capabilityRoutes[value.kind]}`
+    const payload = capabilityPayload(value)
+    const saved = value.id != null
+      ? await request.put<CapabilityResource>(url, payload)
+      : await request.post<CapabilityResource>(url, payload)
+    return capabilityFromResource(value.kind, saved)
+  },
+  deleteCapability: (id: number, kind: CapabilityKind) =>
+    request.delete(`${root}/${capabilityRoutes[kind]}/${id}`),
   agents: () => request.get<AgentView[]>(`${root}/agents`),
-  saveAgent: (value: AgentSpec) => request.post<AgentView>(`${root}/agents`, { ...value }),
+  saveAgent: (value: AgentSpec) => value.id != null
+    ? request.put<AgentView>(`${root}/agents`, { ...value })
+    : request.post<AgentView>(`${root}/agents`, { ...value }),
   deleteAgent: (id: number) => request.delete(`${root}/agents/${id}`),
   releases: (id: number) => request.get<ReleaseView[]>(`${root}/agents/${id}/releases`),
   publish: (id: number) => request.post<ReleaseView>(`${root}/agents/${id}/publish`),

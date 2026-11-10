@@ -84,6 +84,23 @@ async function invoke() {
     testing.value = false
   }
 }
+const rotating = ref(false)
+async function rotateSecrets() {
+  const confirmed = await ElMessageBox.confirm(
+    '请先配置当前主密钥、独立的密钥标识和历史解密密钥，并备份数据库。本操作会重加密存量凭据及发布快照。',
+    '轮换存储密文',
+    { type: 'warning', confirmButtonText: '开始轮换' },
+  ).then(() => true).catch(() => false)
+  if (!confirmed) return
+  rotating.value = true
+  try {
+    const result = await agentConsole.rotateSecrets()
+    ElMessage.success(`已处理 ${result.updatedRows} 条记录，当前密钥标识：${result.activeKeyId}`)
+    await load()
+  } finally {
+    rotating.value = false
+  }
+}
 onMounted(load)
 </script>
 <template>
@@ -94,6 +111,7 @@ onMounted(load)
         <p class="subtitle">统一配置供应商、模型和接入地址，供业务接口与智能体共同使用。</p>
       </div>
       <div class="console-actions">
+        <el-button v-if="hasPermission('ai:secret:rotate')" :loading="rotating" @click="rotateSecrets">轮换存储密文</el-button>
         <el-button @click="load">刷新</el-button>
         <el-button v-if="hasPermission('ai:model:write')" type="primary" @click="edit()">
           新建连接

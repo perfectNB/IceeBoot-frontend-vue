@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
-import { agentConsole, type RunView, type RunDetail } from '@/api/agentConsole'
+import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { hasPermission } from '@/utils/permission'
+import { agentConsole, type RunView, type RunDetail, type AgentQuota } from '@/api/agentConsole'
 import './console.scss'
 const rows = ref<RunView[]>([]),
   detail = ref<RunDetail>(),
@@ -11,20 +13,58 @@ const labels: Record<string, string> = {
   SUCCEEDED: '成功',
   FAILED: '失败',
   CANCELLED: '已取消',
+  INTERRUPTED: '节点中断',
+  TIMED_OUT: '已超时',
 }
+const quota = ref<AgentQuota>()
+const cancelling = ref('')
+let poll: ReturnType<typeof setTimeout> | undefined
+let destroyed = false
 async function load() {
+  if (loading.value) return
+  if (poll) clearTimeout(poll)
   loading.value = true
   try {
-    rows.value = await agentConsole.runs()
+    const [runs, dailyQuota] = await Promise.all([
+      agentConsole.runs(),
+      hasPermission('ai:quota:read') ? agentConsole.quota() : Promise.resolve(undefined),
+    ])
+    rows.value = runs
+    quota.value = dailyQuota
   } finally {
     loading.value = false
+    if (!destroyed && rows.value.some((row) => row.status === 'RUNNING')) {
+      poll = setTimeout(() => {
+        void load().catch(() => undefined)
+      }, 2000)
+    }
   }
 }
 async function open(row: RunView) {
   detail.value = await agentConsole.run(row.id)
   visible.value = true
 }
+async function cancel(row: RunView) {
+  const confirmed = await ElMessageBox.confirm(
+    '将停止当前任务及其子任务，已经发生的模型调用用量会保留。',
+    '取消执行',
+    { type: 'warning' },
+  ).then(() => true).catch(() => false)
+  if (!confirmed) return
+  cancelling.value = row.id
+  try {
+    await agentConsole.cancelRun(row.id)
+    ElMessage.success('取消请求已提交，正在等待执行节点停止')
+    await load()
+  } finally {
+    cancelling.value = ''
+  }
+}
 onMounted(load)
+onBeforeUnmount(() => {
+  destroyed = true
+  if (poll) clearTimeout(poll)
+})
 </script>
 <template>
   <main class="agent-console">
@@ -35,12 +75,15 @@ onMounted(load)
           查看每次调用的输入、输出，以及父子智能体和每轮模型请求的 Token 消耗。
         </p>
       </div>
-      <el-button @click="load">刷新</el-button>
+      <div class="console-actions">
+        <span v-if="quota" class="quota-summary">今日模型请求（UTC）：{{ quota.usedRequests }} / {{ quota.dailyLimit || '不限' }}</span>
+        <el-button @click="load">刷新</el-button>
+      </div>
     </header>
     <section class="console-panel">
       <el-table v-loading="loading" :data="rows" empty-text="还没有执行记录。">
-        <el-table-column prop="agentCode" label="智能体" min-width="180" />
-        <el-table-column prop="version" label="版本" width="75" />
+        <el-table-column prop="agentCode" label="智能体 / 模型" min-width="180" />
+        <el-table-column label="版本" width="75"><template #default="{ row }">{{ row.version === 0 ? '直调' : row.version }}</template></el-table-column>
         <el-table-column label="状态" width="100">
           <template #default="{ row }">
             <el-tag
@@ -48,16 +91,18 @@ onMounted(load)
                 row.status === 'SUCCEEDED' ? 'success' : row.status === 'FAILED' ? 'danger' : 'info'
               "
             >
-              {{ labels[row.status] || row.status }}
+              {{ row.status === 'RUNNING' && row.cancelRequested ? '取消中' : labels[row.status] || row.status }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="startedAt" label="开始时间" min-width="190" />
         <el-table-column prop="inputTokens" label="自身输入 Token" width="145" />
         <el-table-column prop="outputTokens" label="自身输出 Token" width="145" />
-        <el-table-column label="操作" width="95">
+        <el-table-column label="操作" width="175">
           <template #default="{ row }">
             <el-button link type="primary" @click="open(row)">详情</el-button>
+            <el-button v-if="row.status === 'RUNNING' && hasPermission('ai:run:cancel')" link type="danger"
+              :disabled="row.cancelRequested" :loading="cancelling === row.id" @click="cancel(row)">取消执行</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -99,6 +144,7 @@ onMounted(load)
                       <br />
                       父调用：{{ row.parentRunId || '根调用' }}
                     </p>
+                    <p v-if="row.traceId || row.errorCode" class="code">错误分类：{{ row.errorCode || '—' }} · 追踪 ID：{{ row.traceId || '—' }}</p>
                     <h3>输入</h3>
                     <pre class="agent-output">{{ row.input }}</pre>
                     <h3>输出</h3>
@@ -107,10 +153,10 @@ onMounted(load)
                   </div>
                 </template>
               </el-table-column>
-              <el-table-column prop="agentCode" label="智能体" min-width="180" />
+              <el-table-column prop="agentCode" label="智能体 / 模型" min-width="180" />
               <el-table-column prop="version" label="版本" width="80" />
               <el-table-column label="状态" width="100">
-                <template #default="{ row }">{{ labels[row.status] || row.status }}</template>
+                <template #default="{ row }">{{ row.status === 'RUNNING' && row.cancelRequested ? '取消中' : labels[row.status] || row.status }}</template>
               </el-table-column>
               <el-table-column prop="inputTokens" label="自身输入 Token" min-width="140" />
               <el-table-column prop="outputTokens" label="自身输出 Token" min-width="140" />
@@ -131,7 +177,7 @@ onMounted(load)
                   </div>
                 </template>
               </el-table-column>
-              <el-table-column prop="agentCode" label="智能体" min-width="160" />
+              <el-table-column prop="agentCode" label="智能体 / 模型" min-width="160" />
               <el-table-column prop="model" label="模型" min-width="180" />
               <el-table-column prop="inputTokens" label="输入 Token" width="130" />
               <el-table-column prop="outputTokens" label="输出 Token" width="130" />
@@ -144,6 +190,7 @@ onMounted(load)
   </main>
 </template>
 <style scoped>
+.quota-summary { font-size: 12px; color: var(--el-text-color-secondary); }
 .usage-summary {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

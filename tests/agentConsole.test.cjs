@@ -78,3 +78,17 @@ test('legacy model records with null generation remain editable', async () => {
   const models = await api.models()
   assert.deepEqual(clean(models[0].generation), { extra: {} })
 })
+
+test('operations expose quota, cancellation and server-side secret rotation without accepting keys', async () => {
+  const { api, calls } = apiWithMock(() => ({}))
+  await api.quota()
+  assert.equal(calls.at(-1).url, '/api/v1/agent-console/quota')
+  assert.equal(calls.at(-1).method, 'get')
+  await api.cancelRun('run/with space')
+  assert.equal(calls.at(-1).url, '/api/v1/agent-console/runs/run%2Fwith%20space/cancel')
+  assert.equal(calls.at(-1).method, 'post')
+  await api.rotateSecrets()
+  assert.equal(calls.at(-1).url, '/api/v1/agent-console/secrets/rotate')
+  assert.equal(calls.at(-1).method, 'post')
+  assert.equal(calls.at(-1).body, undefined)
+})

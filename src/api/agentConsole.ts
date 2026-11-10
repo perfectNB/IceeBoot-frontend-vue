@@ -111,6 +111,9 @@ export interface RunView {
   usageKnown: boolean
   startedAt: string
   finishedAt: string
+  errorCode?: string
+  traceId?: string
+  cancelRequested?: boolean
 }
 export interface ModelCall {
   id: string
@@ -131,6 +134,16 @@ export interface RunDetail {
   totalInputTokens: number
   totalOutputTokens: number
   usageKnown: boolean
+}
+export interface AgentQuota {
+  usageDay: string
+  usedRequests: number
+  dailyLimit: number
+  remainingRequests: number | null
+}
+export interface SecretRotation {
+  activeKeyId: string
+  updatedRows: number
 }
 const root = '/api/v1/agent-console'
 const capabilityRoutes: Record<CapabilityKind, string> = {
@@ -275,6 +288,9 @@ export const agentConsole = {
       { input, sessionId },
       { timeout: 330000, _skipAuthRefresh: true },
     ),
+  quota: () => request.get<AgentQuota>(`${root}/quota`),
+  cancelRun: (id: string) => request.post<void>(`${root}/runs/${encodeURIComponent(id)}/cancel`),
+  rotateSecrets: () => request.post<SecretRotation>(`${root}/secrets/rotate`, undefined, { timeout: 300000, _skipAuthRefresh: true }),
   runs: () => request.get<RunView[]>(`${root}/runs`),
   run: (id: string) => request.get<RunDetail>(`${root}/runs/${id}`),
 }

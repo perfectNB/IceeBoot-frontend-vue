@@ -435,21 +435,22 @@ const handleWechatCallback = async () => {
   if (errorMessage) {
     ElMessage.error(errorMessage)
     showLoginDialog.value = true
-    await router.replace({ path: '/', query: {} })
+    await router.replace({ path: '/', query: {}, hash: '' })
     return
   }
-  const ticket = resolveSingleQueryValue(route.query.ticket)
+  const fragmentTicket = new URLSearchParams(route.hash.replace(/^#/, '')).get('ticket')
+  const ticket = fragmentTicket || resolveSingleQueryValue(route.query.ticket)
   if (!ticket) return
   try {
     const response = await exchangeWechatTicket(ticket)
     userStore.setAuthTokens(response)
     userStore.setUser(response.user)
-    await router.replace({ path: '/', query: {} })
+    await router.replace({ path: '/', query: {}, hash: '' })
     goToFirstMenu()
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : t('login.loginFailed'))
     showLoginDialog.value = true
-    await router.replace({ path: '/', query: {} })
+    await router.replace({ path: '/', query: {}, hash: '' })
   }
 }
 

@@ -53,7 +53,7 @@ export const getWechatAuthUrl = () => {
 }
 
 export const exchangeWechatTicket = (ticket: string) => {
-  return request.post<LoginResponse>(`/api/v1/auth/wechat/exchange-ticket?ticket=${encodeURIComponent(ticket)}`)
+  return request.post<LoginResponse>('/api/v1/auth/wechat/exchange-ticket', { ticket })
 }
 
 // 检查微信登录状态

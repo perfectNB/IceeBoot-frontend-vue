@@ -22,10 +22,6 @@ import menuManagement from './menuManagement'
 import fileManagement from './fileManagement'
 import emailManagement from './emailManagement'
 import smsManagement from './smsManagement'
-import llmManagement from './llmManagement'
-import agentManagement from './agentManagement'
-import ragChat from './ragChat'
-import chatInterface from './chatInterface'
 import bpmnDesign from './bpmnDesign'
 import workflowDefinitions from './workflowDefinitions'
 import workflowDiagram from './workflowDiagram'
@@ -63,10 +59,6 @@ export default {
   fileManagement,
   emailManagement,
   smsManagement,
-  llmManagement,
-  agentManagement,
-  ragChat,
-  chatInterface,
   bpmnDesign,
   workflowDefinitions,
   workflowDiagram,

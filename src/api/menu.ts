@@ -56,7 +56,8 @@ export const getUserMenus = async (
     return response
   } else {
     // 调用真实API
-    return await request.get<MenuItem[]>('/api/v1/menus/user', undefined, config)
+    const menus = await request.get<MenuItem[]>('/api/v1/menus/user', undefined, config)
+    return menus.map(normalizeMenuPermissions)
   }
 }
 
@@ -137,5 +138,16 @@ export const getMenuById = async (id: string | number): Promise<MenuItem> => {
   } else {
     // 调用真实API
     return await request.get<MenuItem>(`/api/v1/menus/${id}`)
+  }
+}
+
+// 用户菜单接口兼容数据库中的逗号分隔格式，路由与菜单组件统一使用权限数组。
+function normalizeMenuPermissions(menu: MenuItem): MenuItem {
+  const raw: unknown = menu.permissions
+  return {
+    ...menu,
+    permissions: Array.isArray(raw) ? raw.filter((code): code is string => typeof code === 'string')
+      : typeof raw === 'string' ? raw.split(',').map(code => code.trim()).filter(Boolean) : [],
+    children: menu.children?.map(normalizeMenuPermissions),
   }
 }

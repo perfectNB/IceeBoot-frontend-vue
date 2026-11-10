@@ -14,6 +14,8 @@ export const getEnv = (): string => {
 
 // 获取API基础URL
 export const getBaseURL = (): string => {
+  const configured = import.meta.env.VITE_APP_BASE_API?.trim()
+  if (configured) return configured
   const env = getEnv()
   return envConfig[env] || envConfig.development
 }

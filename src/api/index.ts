@@ -57,38 +57,6 @@ export {
   type CreateUserData
 } from './user'
 
-// AI管理相关接口
-export {
-  getLLMModels,
-  getLLMModel,
-  createLLMModel,
-  updateLLMModel,
-  deleteLLMModel,
-  addLLMModelKey,
-  deleteLLMModelKey,
-  updateLLMModelKeyStatus
-} from './llm.ts'
-
-export {
-  getAgents,
-  getAgent,
-  createAgent,
-  updateAgent,
-  deleteAgent,
-  updateAgentStatus
-} from './agent'
-// 聊天相关接口
-export {
-  getChatSessions,
-  getChatSession,
-  createChatSession,
-  deleteChatSession,
-  sendMessage,
-  getAvailableModels,
-  getModelApiConfig,
-  streamChat
-} from './chat'
-
 // 工作台相关接口
 export {
   getDashboardStats,
@@ -218,21 +186,6 @@ export type {
   MessageQueryParams
 } from './message'
 
-
-
-// AI聊天相关接口
-export {
-  getAiChatSessions,
-  createAiChatSession,
-  deleteAiChatSession,
-  streamAiChat,
-  getAiChatMessages,
-  type AiChatSession,
-  type AiChatMessage,
-  type CreateSessionParams,
-  type StreamChatRequest
-} from './aiChat'
-
 // 支付相关接口
 export {
   getPaymentConfigs,
@@ -251,3 +204,5 @@ export {
   type PayRecordVO,
   type PayRecordQueryParams
 } from './pay'
+
+export { agentConsole } from './agentConsole'

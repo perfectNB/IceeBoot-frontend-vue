@@ -162,58 +162,16 @@ export const mockMenus: MenuItem[] = [
       }
     ]
   },
-  {
-    id: 4,
-    title: 'AI管理',
-    name: 'AIManagement',
-    path: '/admin/ai',
-    icon: 'Cpu',
-    type: 'menu',
-    sort: 4,
-    requiresAuth: true,
-    permissions: [],
-    children: [
-      {
-        id: 14,
-        title: '大模型管理',
-        name: 'LLMManagement',
-        path: '/admin/ai/llm',
-        component: 'LLMManagement',
-        icon: 'Cpu',
-        parentId: 4,
-        type: 'menu',
-        sort: 1,
-        requiresAuth: true,
-        permissions: []
-      },
-      {
-        id: 15,
-        title: 'Agent管理',
-        name: 'AgentManagement',
-        path: '/admin/ai/agent',
-        component: 'AgentManagement',
-        icon: 'Avatar',
-        parentId: 4,
-        type: 'menu',
-        sort: 2,
-        requiresAuth: true,
-        permissions: []
-      },
-      {
-        id: 16,
-        title: 'AI对话',
-        name: 'AIChat',
-        path: '/admin/ai/chat',
-        component: 'ChatInterface',
-        icon: 'ChatDotRound',
-        parentId: 4,
-        type: 'menu',
-        sort: 3,
-        requiresAuth: true,
-        permissions: []
-      }
-    ]
-  },
+  { id: 4, title: '智能体控制台', name: 'AgentConsoleRoot', path: '/admin/agent-console', icon: 'Cpu', type: 'menu', sort: 4, requiresAuth: true, permissions: ['ai:agent:read'], children: [
+    {id: 100, title: '智能体', name: 'AgentConsoleagents', path: '/admin/agent-console/agents', component: 'HarnessAgents', icon: 'Cpu', parentId:4, type:'menu', sort:1, requiresAuth:true, permissions:['ai:agent:read']},
+    {id: 101, title: '模型连接', name: 'AgentConsolemodels', path: '/admin/agent-console/models', component: 'ModelConnections', icon: 'Cpu', parentId:4, type:'menu', sort:2, requiresAuth:true, permissions:['ai:model:read']},
+    {id: 102, title: '技能', name: 'AgentConsoleskills', path: '/admin/agent-console/skills', component: 'CapabilityManagement', icon: 'Cpu', parentId:4, type:'menu', sort:3, requiresAuth:true, permissions:['ai:capability:read']},
+    {id: 103, title: '工具', name: 'AgentConsoletools', path: '/admin/agent-console/tools', component: 'CapabilityManagement', icon: 'Cpu', parentId:4, type:'menu', sort:4, requiresAuth:true, permissions:['ai:capability:read']},
+    {id: 104, title: 'MCP 服务', name: 'AgentConsolemcps', path: '/admin/agent-console/mcps', component: 'CapabilityManagement', icon: 'Cpu', parentId:4, type:'menu', sort:5, requiresAuth:true, permissions:['ai:capability:read']},
+    {id: 105, title: '知识库连接', name: 'AgentConsoleknowledge', path: '/admin/agent-console/knowledge', component: 'CapabilityManagement', icon: 'Cpu', parentId:4, type:'menu', sort:6, requiresAuth:true, permissions:['ai:capability:read']},
+    {id: 106, title: '沙箱模板', name: 'AgentConsolesandboxes', path: '/admin/agent-console/sandboxes', component: 'CapabilityManagement', icon: 'Cpu', parentId:4, type:'menu', sort:7, requiresAuth:true, permissions:['ai:capability:read']},
+    {id: 107, title: '执行记录', name: 'AgentConsoleruns', path: '/admin/agent-console/runs', component: 'AgentRuns', icon: 'Cpu', parentId:4, type:'menu', sort:8, requiresAuth:true, permissions:['ai:run:read']},
+  ] },
   {
     id: 22,
     title: '三方管理',

@@ -2,306 +2,202 @@ import type * as Three from 'three'
 
 type ThreeModule = typeof import('three')
 type Disposable = { dispose: () => void }
-
+export type SceneKind = 'hero' | 'foundation' | 'agent' | 'models' | 'sandbox'
 export interface EngineScene {
   resize: (width: number, height: number) => void
-  render: (progress: number, time: number, pointerX: number, pointerY: number) => void
+  render: (progress: number, time: number, pointerX: number, pointerY: number, selection?: number) => void
   dispose: () => void
 }
 
-/** 自建几何与演播室反射，不加载模型、纹理或第三方网络资源。 */
-export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement): EngineScene {
+/** 每个章节使用独立几何叙事；共享材质语言，不加载外部模型或纹理。 */
+export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement, kind: SceneKind = 'hero'): EngineScene {
   const resources = new Set<Disposable>()
-  const track = <T extends Disposable>(resource: T): T => { resources.add(resource); return resource }
-  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'high-performance' })
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.75))
+  const keep = <T extends Disposable>(value: T): T => { resources.add(value); return value }
+  const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: 'low-power' })
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5))
   renderer.setClearColor(0x000000, 0)
   renderer.outputColorSpace = THREE.SRGBColorSpace
   renderer.toneMapping = THREE.ACESFilmicToneMapping
-  renderer.toneMappingExposure = 1.16
-
+  renderer.toneMappingExposure = 1.05
   const scene = new THREE.Scene()
-  const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 70)
+  const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 60)
   const rig = new THREE.Group()
   scene.add(rig)
   let aspect = 1
   let disposed = false
-  const cleanUp = () => {
+  const dispose = () => {
     if (disposed) return
     disposed = true
     scene.environment = null
     scene.clear()
-    for (const resource of resources) resource.dispose()
+    resources.forEach(resource => resource.dispose())
     resources.clear()
     renderer.dispose()
     if (!renderer.getContext().isContextLost()) renderer.forceContextLoss()
   }
-
   try {
-    // 数条明亮的摄影棚灯带在金属倒角上形成清晰的银色高光。
-    const environmentCanvas = document.createElement('canvas')
-    environmentCanvas.width = 1024
-    environmentCanvas.height = 512
-    const environmentContext = environmentCanvas.getContext('2d')
-    if (environmentContext) {
-      const gradient = environmentContext.createLinearGradient(0, 0, 0, 512)
-      gradient.addColorStop(0, '#9baac3')
-      gradient.addColorStop(0.46, '#263349')
-      gradient.addColorStop(1, '#080d19')
-      environmentContext.fillStyle = gradient
-      environmentContext.fillRect(0, 0, 1024, 512)
-      environmentContext.fillStyle = '#edf4ff'
-      environmentContext.fillRect(80, 70, 550, 75)
-      environmentContext.fillStyle = '#b8d5ff'
-      environmentContext.fillRect(770, 160, 80, 250)
-      environmentContext.fillStyle = '#314e9f'
-      environmentContext.fillRect(0, 275, 350, 60)
-      const environment = new THREE.CanvasTexture(environmentCanvas)
-      environment.mapping = THREE.EquirectangularReflectionMapping
-      environment.colorSpace = THREE.SRGBColorSpace
-      const pmrem = new THREE.PMREMGenerator(renderer)
-      try {
-        const target = track(pmrem.fromEquirectangular(environment))
-        scene.environment = target.texture
-      } finally {
-        environment.dispose()
-        pmrem.dispose()
-      }
+    const studio = document.createElement('canvas')
+    studio.width = 1024; studio.height = 512
+    const context = studio.getContext('2d')
+    if (context) {
+      context.fillStyle = '#10161b'; context.fillRect(0, 0, 1024, 512)
+      const glow = context.createLinearGradient(0, 0, 0, 512)
+      glow.addColorStop(0, '#6b858d'); glow.addColorStop(.45, '#13262c'); glow.addColorStop(1, '#05080b')
+      context.fillStyle = glow; context.fillRect(0, 0, 1024, 512)
+      context.fillStyle = '#ffffff'; context.fillRect(50, 40, 120, 290); context.fillRect(440, 70, 350, 65)
+      context.fillStyle = '#a3f3e0'; context.fillRect(850, 160, 55, 270)
+      const texture = new THREE.CanvasTexture(studio)
+      texture.mapping = THREE.EquirectangularReflectionMapping
+      texture.colorSpace = THREE.SRGBColorSpace
+      const generator = new THREE.PMREMGenerator(renderer)
+      try { scene.environment = keep(generator.fromEquirectangular(texture)).texture }
+      finally { texture.dispose(); generator.dispose() }
     }
-
-    scene.add(new THREE.HemisphereLight(0xcbdcff, 0x10172c, 2.1))
-    const key = new THREE.DirectionalLight(0xf0f5ff, 4.4)
-    key.position.set(3.5, 7, 5)
-    const fill = new THREE.DirectionalLight(0x4b82ff, 3.8)
-    fill.position.set(-5, 2, 2)
-    const rim = new THREE.DirectionalLight(0xbddaff, 4.6)
-    rim.position.set(2, 5, -5)
-    scene.add(key, fill, rim)
-
-    const silver = track(new THREE.MeshStandardMaterial({ color: 0x8f9eb7, metalness: 0.94, roughness: 0.22 }))
-    const darkMetal = track(new THREE.MeshStandardMaterial({ color: 0x101a2c, metalness: 0.82, roughness: 0.29 }))
-    const graphite = track(new THREE.MeshStandardMaterial({ color: 0x060c19, metalness: 0.65, roughness: 0.25 }))
-    const cobalt = track(new THREE.MeshPhysicalMaterial({ color: 0x153e9c, metalness: 0.48, roughness: 0.16, clearcoat: 1, clearcoatRoughness: 0.15 }))
-    const glass = track(new THREE.MeshPhysicalMaterial({ color: 0xb1ccff, metalness: 0.08, roughness: 0.12, transmission: 0.3, thickness: 0.16, transparent: true, opacity: 0.58, clearcoat: 1, depthWrite: false }))
-    const blueLight = track(new THREE.MeshBasicMaterial({ color: 0x8bb8ff, toneMapped: false }))
-    const traceMaterial = track(new THREE.LineBasicMaterial({ color: 0x708fbb, transparent: true, opacity: 0.42, depthWrite: false }))
-    const edgeMaterial = track(new THREE.LineBasicMaterial({ color: 0xb7d6ff, transparent: true, opacity: 0.62, depthWrite: false }))
-
-    function roundedShape(width: number, depth: number, radius = 0.18) {
+    scene.add(new THREE.HemisphereLight(0xd9f5f2, 0x11161f, 2))
+    const key = new THREE.DirectionalLight(0xffffff, 3.4); key.position.set(-3, 6, 7)
+    const rim = new THREE.DirectionalLight(0x80e9d1, 2.5); rim.position.set(6, 2, -4)
+    scene.add(key, rim)
+    const chrome = keep(new THREE.MeshStandardMaterial({ color: 0xc1ccce, metalness: 1, roughness: .17 }))
+    const graphite = keep(new THREE.MeshStandardMaterial({ color: 0x182025, metalness: .87, roughness: .26 }))
+    const porcelain = keep(new THREE.MeshStandardMaterial({ color: 0xe4eceb, metalness: .62, roughness: .23 }))
+    const mint = keep(new THREE.MeshPhysicalMaterial({ color: 0x52ba9e, metalness: .4, roughness: .18, clearcoat: 1 }))
+    const glass = keep(new THREE.MeshPhysicalMaterial({ color: 0x92e5d4, metalness: .08, roughness: .12, transparent: true, opacity: .15, depthWrite: false, side: THREE.DoubleSide }))
+    const glow = keep(new THREE.MeshBasicMaterial({ color: 0xa6ffe2, toneMapped: false }))
+    const lineMaterial = keep(new THREE.LineBasicMaterial({ color: 0x77b4a9, transparent: true, opacity: .35 }))
+    const nodes: Three.Group[] = []
+    const rings: Three.Mesh[] = []
+    const wires: Three.BufferGeometry[] = []
+    const wireLines: Three.Line[] = []
+    const plates: Three.Mesh[] = []
+    const sparks: Three.Mesh[] = []
+    function mesh(parent: Three.Object3D, geometry: Three.BufferGeometry, material: Three.Material) {
+      const object = new THREE.Mesh(keep(geometry), material); parent.add(object); return object
+    }
+    function slab(parent: Three.Object3D, width: number, height: number, depth: number, material: Three.Material) {
+      const r = Math.min(.16, height / 4), x = -width / 2, y = -height / 2
       const shape = new THREE.Shape()
-      const x = -width / 2, z = -depth / 2
-      shape.moveTo(x + radius, z)
-      shape.lineTo(x + width - radius, z)
-      shape.quadraticCurveTo(x + width, z, x + width, z + radius)
-      shape.lineTo(x + width, z + depth - radius)
-      shape.quadraticCurveTo(x + width, z + depth, x + width - radius, z + depth)
-      shape.lineTo(x + radius, z + depth)
-      shape.quadraticCurveTo(x, z + depth, x, z + depth - radius)
-      shape.lineTo(x, z + radius)
-      shape.quadraticCurveTo(x, z, x + radius, z)
-      return shape
-    }
-
-    function plate(parent: Three.Group, width: number, depth: number, height: number, y: number, material: Three.Material, radius = 0.18) {
-      const geometry = track(new THREE.ExtrudeGeometry(roundedShape(width, depth, radius), {
-        depth: height, bevelEnabled: true, bevelSegments: 3,
-        steps: 1, bevelSize: Math.min(height * 0.3, 0.055), bevelThickness: Math.min(height * 0.22, 0.045), curveSegments: 10,
-      }))
+      shape.moveTo(x + r, y); shape.lineTo(x + width - r, y)
+      shape.quadraticCurveTo(x + width, y, x + width, y + r); shape.lineTo(x + width, y + height - r)
+      shape.quadraticCurveTo(x + width, y + height, x + width - r, y + height); shape.lineTo(x + r, y + height)
+      shape.quadraticCurveTo(x, y + height, x, y + height - r); shape.lineTo(x, y + r)
+      shape.quadraticCurveTo(x, y, x + r, y)
+      const geometry = new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: true, bevelSegments: 3, bevelSize: .035, bevelThickness: .035, curveSegments: 8, steps: 1 })
       geometry.center()
-      geometry.rotateX(-Math.PI / 2)
-      const mesh = new THREE.Mesh(geometry, material)
-      mesh.position.y = y
-      parent.add(mesh)
-      return mesh
+      return mesh(parent, geometry, material)
     }
-
-    function border(parent: Three.Group, width: number, depth: number, y: number) {
-      const vertices = roundedShape(width, depth).getPoints(10).map(point => new THREE.Vector3(point.x, y, -point.y))
-      const geometry = track(new THREE.BufferGeometry().setFromPoints(vertices))
-      parent.add(new THREE.LineLoop(geometry, edgeMaterial))
+    function label(parent: Three.Object3D, text: string, width: number, color = '#d3eee7') {
+      const surface = document.createElement('canvas'); surface.width = 512; surface.height = 128
+      const ctx = surface.getContext('2d')
+      if (ctx) { ctx.font = '500 82px sans-serif'; ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, 256, 64, 470) }
+      const map = keep(new THREE.CanvasTexture(surface)); map.colorSpace = THREE.SRGBColorSpace
+      const material = keep(new THREE.MeshBasicMaterial({ map, transparent: true, depthWrite: false, toneMapped: false }))
+      return mesh(parent, new THREE.PlaneGeometry(width, width / 4), material)
     }
-
-    function circuits(parent: Three.Group, width: number, depth: number, y: number) {
-      const points: number[] = []
-      for (let i = 0; i < 12; i++) {
-        const side = i < 6 ? -1 : 1
-        const z = ((i % 6) / 5 - 0.5) * (depth - 0.65)
-        const x0 = side * (width / 2 - 0.24)
-        const x1 = side * (0.85 + (i % 3) * 0.19)
-        const x2 = side * 0.58
-        const z2 = z * 0.55
-        points.push(x0, y, z, x1, y, z, x1, y, z, x2, y, z2, x2, y, z2, side * 0.34, y, z2)
+    function ring(parent: Three.Object3D, radius: number, thickness: number, material: Three.Material) {
+      return mesh(parent, new THREE.TorusGeometry(radius, thickness, 12, 96), material)
+    }
+    function outline(parent: Three.Object3D, geometry: Three.BufferGeometry) {
+      const edges = keep(new THREE.EdgesGeometry(geometry)); parent.add(new THREE.LineSegments(edges, lineMaterial))
+    }
+    const orb = new THREE.Group(); rig.add(orb)
+    if (kind === 'hero') {
+      mesh(orb, new THREE.IcosahedronGeometry(1.03, 5), chrome)
+      for (let i = 0; i < 3; i++) {
+        const hoop = ring(rig, 1.65 + i * .38, i === 0 ? .12 : .065, i === 1 ? mint : chrome)
+        hoop.rotation.set(.7 + i * .5, -.6 + i * .55, i * .8)
+        rings.push(hoop)
       }
-      const geometry = track(new THREE.BufferGeometry())
-      geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3))
-      parent.add(new THREE.LineSegments(geometry, traceMaterial))
-    }
-
-    const foundation = new THREE.Group()
-    const security = new THREE.Group()
-    const agent = new THREE.Group()
-    rig.add(foundation, security, agent)
-    plate(foundation, 5.25, 3.65, 0.23, 0, silver, 0.26)
-    plate(foundation, 4.98, 3.38, 0.09, 0.16, darkMetal, 0.23)
-    border(foundation, 5.1, 3.5, 0.135)
-    circuits(foundation, 4.95, 3.35, 0.215)
-
-    // 侧面机加工散热槽，批量实例化控制 draw call。
-    const slotGeometry = track(new THREE.BoxGeometry(0.13, 0.048, 0.015))
-    const vents = track(new THREE.InstancedMesh(slotGeometry, graphite, 18))
-    const matrix = new THREE.Matrix4()
-    for (let i = 0; i < 18; i++) {
-      matrix.makeTranslation(-1.84 + i * 0.215, -0.005, 1.842)
-      vents.setMatrixAt(i, matrix)
-    }
-    foundation.add(vents)
-    const screws = track(new THREE.InstancedMesh(track(new THREE.CylinderGeometry(0.05, 0.05, 0.02, 14)), silver, 4))
-    for (let i = 0; i < 4; i++) {
-      matrix.makeTranslation(i % 2 ? 2.29 : -2.29, 0.224, i < 2 ? -1.46 : 1.46)
-      screws.setMatrixAt(i, matrix)
-    }
-    foundation.add(screws)
-
-    plate(security, 4.72, 3.2, 0.09, 0, silver, 0.22)
-    plate(security, 4.48, 2.96, 0.09, 0.105, glass, 0.2)
-    border(security, 4.53, 3.01, 0.17)
-    circuits(security, 4.3, 2.8, 0.159)
-    plate(agent, 3.85, 2.57, 0.12, 0, darkMetal, 0.2)
-    border(agent, 3.74, 2.46, 0.081)
-    circuits(agent, 3.65, 2.4, 0.086)
-    plate(agent, 2.02, 1.82, 0.22, 0.23, silver, 0.14)
-    plate(agent, 1.84, 1.64, 0.17, 0.4, graphite, 0.12)
-    plate(agent, 1.57, 1.37, 0.06, 0.525, cobalt, 0.1)
-    border(agent, 1.63, 1.43, 0.569)
-
-    const pinGeometry = track(new THREE.BoxGeometry(0.16, 0.035, 0.05))
-    const pins = track(new THREE.InstancedMesh(pinGeometry, silver, 28))
-    for (let i = 0; i < 28; i++) {
-      const side = i < 14 ? -1 : 1
-      matrix.makeTranslation(side * 1.07, 0.27, -0.75 + (i % 14) * 0.115)
-      pins.setMatrixAt(i, matrix)
-    }
-    agent.add(pins)
-    const glyphMaterial = track(new THREE.MeshStandardMaterial({ color: 0xe0edff, metalness: 0.68, roughness: 0.15, emissive: 0x7cabff, emissiveIntensity: 0.18 }))
-    for (const side of [-1, 1]) {
-      const bracket = new THREE.Mesh(track(new THREE.BoxGeometry(0.06, 0.026, 0.6)), glyphMaterial)
-      bracket.position.set(side * 0.3, 0.575, 0)
-      agent.add(bracket)
-      for (const end of [-1, 1]) {
-        const tip = new THREE.Mesh(track(new THREE.BoxGeometry(0.17, 0.026, 0.06)), glyphMaterial)
-        tip.position.set(side * 0.245, 0.575, end * 0.27)
-        agent.add(tip)
+      const core = ring(orb, 1.05, .035, glow); core.rotation.x = Math.PI / 2
+      for (let i = 0; i < 5; i++) sparks.push(mesh(rig, new THREE.SphereGeometry(i === 0 ? .18 : .07, 20, 16), i === 0 ? porcelain : glow))
+    } else if (kind === 'foundation') {
+      for (let i = 0; i < 3; i++) {
+        const group = new THREE.Group(); rig.add(group); nodes.push(group)
+        const body = slab(group, 3.6, 2.65, .16, i === 1 ? chrome : graphite); body.rotation.x = -Math.PI / 2
+        const edge = slab(group, 3.5, 2.55, .025, i === 1 ? mint : porcelain); edge.rotation.x = -Math.PI / 2; edge.position.y = -.1
+        const title = label(group, ['IDENTITY / RBAC', 'SERVICES', 'APPLICATION'][i]!, 2.4); title.rotation.x = -Math.PI / 2; title.position.set(0, .14, .8)
+        for (let j = 0; j < 3; j++) {
+          const block = slab(group, .72, .7, .16, j === i ? mint : chrome); block.rotation.x = -Math.PI / 2; block.position.set((j - 1) * .95, .19, -.35)
+        }
       }
-    }
-    const glyphCore = new THREE.Mesh(track(new THREE.BoxGeometry(0.09, 0.03, 0.42)), blueLight)
-    glyphCore.position.set(0, 0.577, 0)
-    glyphCore.rotation.y = 0.25
-    agent.add(glyphCore)
-    // 单个半透明封装盖形成真实折射与反射层，而不是纯平面示意。
-    plate(agent, 2.17, 1.97, 0.075, 0.735, glass, 0.16)
-    border(agent, 2.14, 1.94, 0.78)
-
-    const modules: Three.Group[] = []
-    const connections: { geometry: Three.BufferGeometry; values: Float32Array; material: Three.LineBasicMaterial; sparks: Three.Mesh[] }[] = []
-    const sparkGeometry = track(new THREE.SphereGeometry(0.025, 8, 6))
-    for (let i = 0; i < 3; i++) {
-      const module = new THREE.Group()
-      plate(module, 0.9, 1.02, 0.28, 0, silver, 0.12)
-      plate(module, 0.75, 0.87, 0.09, 0.2, darkMetal, 0.1)
-      plate(module, 0.53, 0.57, 0.055, 0.285, cobalt, 0.07)
-      border(module, 0.69, 0.81, 0.27)
-      // 1/2/3枚精密触点，在不依赖文字的情况下区分三个能力模块。
-      for (let contact = 0; contact <= i; contact++) {
-        const dot = new THREE.Mesh(track(new THREE.BoxGeometry(0.065, 0.02, 0.19)), blueLight)
-        dot.position.set((contact - i / 2) * 0.14, 0.327, 0)
-        module.add(dot)
+    } else if (kind === 'agent') {
+      mesh(orb, new THREE.OctahedronGeometry(.9, 0), chrome)
+      const inner = ring(orb, 1.15, .04, glow); inner.rotation.x = .5
+      const outer = ring(rig, 2.45, .018, chrome); outer.rotation.x = -.25
+      ;['SKILL', 'TOOL', 'MCP', 'AGENT'].forEach((name, i) => {
+        const node = new THREE.Group(); rig.add(node); nodes.push(node)
+        slab(node, 1.15, .72, .16, graphite)
+        const text = label(node, name, .96); text.position.z = .12
+        const led = slab(node, .55, .022, .01, glow); led.position.set(0, -.26, .12)
+        const wire = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(2.4 * Math.cos(i * Math.PI / 2), 2.4 * Math.sin(i * Math.PI / 2), 0)])
+        wires.push(keep(wire)); const line = new THREE.Line(wire, lineMaterial); wireLines.push(line); rig.add(line)
+      })
+    } else if (kind === 'models') {
+      const disk = mesh(orb, new THREE.CylinderGeometry(1, 1, .24, 64), chrome); disk.rotation.x = Math.PI / 2
+      const face = mesh(orb, new THREE.CircleGeometry(.91, 64), mint); face.position.z = .14
+      const text = label(orb, 'LLM', 1.45); text.position.z = .16
+      rings.push(ring(rig, 2.45, .025, chrome))
+      ;['GPT', 'Claude', 'Gemini', 'Qwen', 'DeepSeek', 'GLM', 'Kimi', 'MiniMax'].forEach(name => {
+        const node = new THREE.Group(); rig.add(node); nodes.push(node)
+        const disc = mesh(node, new THREE.CylinderGeometry(.52, .52, .22, 40), chrome); disc.rotation.x = Math.PI / 2
+        const face = mesh(node, new THREE.CircleGeometry(.48, 40), graphite); face.position.z = .125; plates.push(face)
+        const text = label(node, name, 1.0); text.position.z = .145
+        const trim = ring(node, .5, .025, chrome); trim.position.z = .125
+      })
+    } else {
+      const box = new THREE.BoxGeometry(3.15, 3.2, 2.65)
+      mesh(rig, box, glass); outline(rig, box)
+      for (const y of [-1.64, 1.64]) {
+        const frame = slab(rig, 3.3, 2.8, .15, graphite); frame.rotation.x = -Math.PI / 2; frame.position.y = y
+        const rim = slab(rig, 3.32, 2.82, .025, chrome); rim.rotation.x = -Math.PI / 2; rim.position.y = y - .1
       }
-      modules.push(module)
-      rig.add(module)
-      const values = new Float32Array(40 * 3)
-      const geometry = track(new THREE.BufferGeometry())
-      geometry.setAttribute('position', new THREE.BufferAttribute(values, 3).setUsage(THREE.DynamicDrawUsage))
-      const material = track(new THREE.LineBasicMaterial({ color: 0x88b6ff, transparent: true, opacity: 0.58, depthWrite: false }))
-      const line = new THREE.Line(geometry, material)
-      line.frustumCulled = false
-      rig.add(line)
-      const sparks = [new THREE.Mesh(sparkGeometry, blueLight), new THREE.Mesh(sparkGeometry, blueLight)]
-      sparks.forEach(spark => rig.add(spark))
-      connections.push({ geometry, values, material, sparks })
+      ;['> python', '$ curl', '{ ENV }'].forEach((name, i) => {
+        const node = new THREE.Group(); rig.add(node); nodes.push(node)
+        slab(node, 2.1, .56, .09, i === 1 ? mint : graphite)
+        const text = label(node, name, 1.45); text.position.z = .085
+      })
+      const title = label(rig, 'E2B', 1.1); title.position.set(0, 1.77, .3); title.rotation.x = -Math.PI / 2
+      for (let i = 0; i < 12; i++) sparks.push(mesh(rig, new THREE.SphereGeometry(.025, 8, 6), glow))
     }
-
-    const particlePositions = new Float32Array(84 * 3)
-    let seed = 37
-    const random = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646 }
-    for (let i = 0; i < particlePositions.length; i += 3) {
-      particlePositions[i] = (random() - 0.5) * 13
-      particlePositions[i + 1] = (random() - 0.5) * 6
-      particlePositions[i + 2] = (random() - 0.5) * 9
-    }
-    const particleGeometry = track(new THREE.BufferGeometry())
-    particleGeometry.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3))
-    const particleMaterial = track(new THREE.PointsMaterial({ color: 0x9bbdff, size: 0.017, sizeAttenuation: true, transparent: true, opacity: 0.52, depthWrite: false }))
-    const particles = new THREE.Points(particleGeometry, particleMaterial)
-    scene.add(particles)
-
-    const sampleConnection = (index: number, t: number, destination: Three.Vector3, sourceY: number) => {
-      const sourceX = 1.04, sourceZ = (index - 1) * 0.48
-      const inverse = 1 - t
-      return [
-        inverse ** 3 * sourceX + 3 * inverse ** 2 * t * (sourceX + 0.85) + 3 * inverse * t ** 2 * (destination.x - 0.66) + t ** 3 * (destination.x - 0.47),
-        inverse ** 3 * sourceY + 3 * inverse ** 2 * t * sourceY + 3 * inverse * t ** 2 * destination.y + t ** 3 * destination.y,
-        inverse ** 3 * sourceZ + 3 * inverse ** 2 * t * sourceZ + 3 * inverse * t ** 2 * destination.z + t ** 3 * destination.z,
-      ] as const
-    }
-
+    // 地面细环提供空间参照，不使用大面积高亮粒子背景。
+    const floor = ring(scene, 3.25, .009, graphite); floor.rotation.x = Math.PI / 2; floor.position.y = -2.7
     return {
       resize(width, height) {
         if (disposed || width <= 0 || height <= 0) return
-        aspect = width / height
-        camera.aspect = aspect
-        camera.updateProjectionMatrix()
-        renderer.setSize(width, height, false)
+        aspect = width / height; camera.aspect = aspect; camera.updateProjectionMatrix(); renderer.setSize(width, height, false)
       },
-      render(progress, time, pointerX, pointerY) {
+      render(progress, time, pointerX, pointerY, selection = 0) {
         if (disposed) return
-        const p = Math.min(1, Math.max(0, progress))
-        const unfold = Math.sin(p * Math.PI)
-        foundation.position.y = -0.94 - unfold * 0.62
-        security.position.y = -0.46 + unfold * 0.12
-        agent.position.y = 0.06 + unfold * 1.13
-        security.rotation.y = unfold * -0.065
-        agent.rotation.y = unfold * 0.045
-        rig.rotation.y = -0.14 + p * 0.2 + pointerX * 0.055
-        rig.rotation.z = pointerX * -0.02
-        rig.position.y = Math.sin(time * 0.45) * 0.024
-        for (let i = 0; i < modules.length; i++) {
-          const module = modules[i]!
-          module.position.set(3.03 + unfold * 0.26, 0.13 + unfold * 1.28 + (i - 1) * 0.09, (i - 1) * 1.45)
-          module.rotation.y = unfold * (i - 1) * 0.07
-          const connection = connections[i]!
-          for (let sample = 0; sample < 40; sample++) {
-            const point = sampleConnection(i, sample / 39, module.position, agent.position.y + 0.27)
-            connection.values.set(point, sample * 3)
-          }
-          connection.geometry.attributes.position!.needsUpdate = true
-          for (let sparkIndex = 0; sparkIndex < connection.sparks.length; sparkIndex++) {
-            const point = sampleConnection(i, (time * 0.15 + i * 0.23 + sparkIndex * 0.49) % 1, module.position, agent.position.y + 0.27)
-            connection.sparks[sparkIndex]!.position.set(...point)
-          }
+        const p = THREE.MathUtils.smoothstep(progress, 0, 1)
+        const drift = Math.sin(time * .35) * .035
+        rig.position.y = drift
+        rig.rotation.set(.04 + pointerY * .04, pointerX * .08, 0)
+        orb.rotation.y = p * .9 + time * .08
+        if (kind === 'hero') {
+          rig.rotation.y += -.28 + p * .75
+          rings.forEach((hoop, i) => { hoop.rotation.x = .65 + i * .5 + p * .8; hoop.rotation.y = -.65 + i * .55 + time * .035 * (i % 2 ? 1 : -1); hoop.rotation.z = i * .8 + p * .55 })
+          sparks.forEach((spark, i) => { const a = i * 1.25 + time * .09 + p; spark.position.set(Math.cos(a) * 2.5, Math.sin(a) * 1.8, Math.sin(a + 1) * 1.4) })
+        } else if (kind === 'foundation') {
+          rig.rotation.y += -.5 + p * .55; rig.rotation.x = .32 + pointerY * .04
+          nodes.forEach((node, i) => { node.position.y = (i - 1) * (.48 + p * 1.02); node.rotation.y = (i - 1) * p * .1 })
+        } else if (kind === 'agent') {
+          rig.rotation.y += -.15 + p * .3
+          nodes.forEach((node, i) => { const a = i * Math.PI / 2 + .3; const r = 1.9 + p * .65; node.position.set(Math.cos(a) * r, Math.sin(a) * r * .82, Math.sin(p * Math.PI + i) * .2); node.rotation.y = pointerX * -.08; const positions = wires[i]!.attributes.position!; positions.setXYZ(1, node.position.x, node.position.y, node.position.z); positions.needsUpdate = true; const active = i === 3 || Boolean(selection & (1 << i)); (node.children[0] as Three.Mesh).material = active ? mint : graphite; wireLines[i]!.visible = active })
+        } else if (kind === 'models') {
+          rig.rotation.y += -.6 + p * .4; rig.rotation.x = .35
+          // 选中模型通过材质强调；轨道本身由滚动连续驱动，无瞬移。
+          nodes.forEach((node, i) => { const a = i / 8 * Math.PI * 2 + p * .45; node.position.x = Math.cos(a) * 2.45; node.position.y = Math.sin(a) * 2.45; node.position.z = Math.sin(a) * .32 + (selection === i ? .35 : 0); plates[i]!.material = selection === i ? mint : graphite })
+          orb.rotation.set(0, 0, 0)
+        } else {
+          rig.rotation.y += -.55 + p * .85; rig.rotation.x = .16
+          nodes.forEach((node, i) => { node.position.set(Math.sin(p * Math.PI + i) * .12, (i - 1) * .85, .1 + Math.sin(p * Math.PI) * .25); node.rotation.y = (i - 1) * .06 })
+          sparks.forEach((spark, i) => { const a = i * 2.4 + time * .2; spark.position.set(Math.cos(a) * 1.32, ((i / 12 + time * .07 + p) % 1) * 2.8 - 1.4, Math.sin(a) * 1.1) })
         }
-        const orbit = 0.62 + p * 0.43 + pointerX * 0.04
-        const distance = 12.1 * Math.max(1, 0.96 / Math.max(aspect, 0.4))
-        const elevation = 0.56 + unfold * 0.035 + pointerY * 0.025
-        const horizontal = Math.cos(elevation) * distance
-        camera.position.set(Math.sin(orbit) * horizontal, Math.sin(elevation) * distance, Math.cos(orbit) * horizontal)
-        camera.lookAt(0.24, unfold * 0.17, 0)
-        particles.rotation.y = time * 0.008
+        const distance = (kind === 'hero' ? 10.6 : kind === 'foundation' ? 10 : 11.7) * Math.max(1, .9 / Math.max(aspect, .3))
+        camera.position.set(0, kind === 'foundation' ? 4.8 : .55, distance)
+        camera.lookAt(0, 0, 0)
         renderer.render(scene, camera)
       },
-      dispose: cleanUp,
+      dispose,
     }
-  } catch (error) {
-    cleanUp()
-    throw error
-  }
+  } catch (error) { dispose(); throw error }
 }

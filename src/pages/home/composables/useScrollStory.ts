@@ -1,77 +1,47 @@
-import { computed, onBeforeUnmount, onMounted, ref, type Ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue'
 
-/** 原生滚动叙事，不拦截滚轮；所有监听、观察器与待处理帧随页面销毁。 */
-export function useScrollStory(story: Ref<HTMLElement | undefined>, root: Ref<HTMLElement | undefined>) {
-  const storyProgress = ref(0)
+/** 各章节独立跟随原生滚动；同一帧统一读布局，不劫持滚轮。 */
+export function useScrollStory(root: Ref<HTMLElement | undefined>) {
+  const sceneProgress = ref<Record<string, number>>({})
   const pageProgress = ref(0)
   const prefersReducedMotion = ref(false)
   const canReveal = ref(false)
-  const activeChapter = computed(() => Math.min(2, Math.floor(storyProgress.value * 3)))
   let frame = 0
   let observer: IntersectionObserver | undefined
   let media: MediaQueryList | undefined
-
+  let scenes: HTMLElement[] = []
   function measure() {
     frame = 0
-    const element = story.value
-    if (element) {
-      const bounds = element.getBoundingClientRect()
-      const distance = Math.max(1, bounds.height - window.innerHeight + 64)
-      storyProgress.value = Math.min(1, Math.max(0, (64 - bounds.top) / distance))
+    const height = window.innerHeight
+    const next: Record<string, number> = {}
+    for (const scene of scenes) {
+      const rect = scene.getBoundingClientRect()
+      next[scene.dataset.scene!] = prefersReducedMotion.value ? .45 : Math.min(1, Math.max(0, (height * .65 - rect.top) / (rect.height + height * .1)))
     }
-    const distance = document.documentElement.scrollHeight - window.innerHeight
-    pageProgress.value = distance > 0 ? Math.min(1, window.scrollY / distance) : 0
+    sceneProgress.value = next
+    const distance = document.documentElement.scrollHeight - height
+    pageProgress.value = distance > 0 ? Math.min(1, Math.max(0, window.scrollY / distance)) : 0
   }
-
-  function schedule() {
-    if (!frame) frame = window.requestAnimationFrame(measure)
-  }
-
-  function updateMotion() {
-    prefersReducedMotion.value = media?.matches ?? false
-    schedule()
-  }
-
-  function scrollToChapter(index: number) {
-    const element = story.value
-    if (!element) return
-    if (prefersReducedMotion.value) {
-      element.querySelector<HTMLElement>(`[data-chapter="${index}"]`)?.scrollIntoView({ block: 'center' })
-      return
-    }
-    const distance = Math.max(1, element.offsetHeight - window.innerHeight + 64)
-    const start = element.getBoundingClientRect().top + window.scrollY - 64
-    window.scrollTo({ top: start + distance * (index / 3 + 0.04), behavior: 'smooth' })
-  }
-
+  function schedule() { if (!frame) frame = requestAnimationFrame(measure) }
+  function updateMotion() { prefersReducedMotion.value = media?.matches ?? false; schedule() }
   onMounted(() => {
-    media = window.matchMedia('(prefers-reduced-motion: reduce)')
-    updateMotion()
+    scenes = Array.from(root.value?.querySelectorAll<HTMLElement>('[data-scene]') || [])
+    media = window.matchMedia('(prefers-reduced-motion: reduce)'); updateMotion()
     media.addEventListener('change', updateMotion)
-    window.addEventListener('scroll', schedule, { passive: true })
-    window.addEventListener('resize', schedule, { passive: true })
+    window.addEventListener('scroll', schedule, { passive: true }); window.addEventListener('resize', schedule, { passive: true })
     if ('IntersectionObserver' in window) {
-      observer = new IntersectionObserver((entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('is-visible')
-            observer?.unobserve(entry.target)
-          }
-        }
-      }, { threshold: 0.12, rootMargin: '0px 0px -24px 0px' })
-      root.value?.querySelectorAll('[data-reveal]').forEach((element) => observer?.observe(element))
+      observer = new IntersectionObserver(entries => {
+        for (const entry of entries) if (entry.isIntersecting) { entry.target.classList.add('is-visible'); observer?.unobserve(entry.target) }
+      }, { threshold: .08 })
+      root.value?.querySelectorAll('[data-reveal]').forEach(element => observer?.observe(element))
       canReveal.value = true
     }
     measure()
   })
-
   onBeforeUnmount(() => {
-    if (frame) window.cancelAnimationFrame(frame)
-    observer?.disconnect()
-    media?.removeEventListener('change', updateMotion)
-    window.removeEventListener('scroll', schedule)
-    window.removeEventListener('resize', schedule)
+    if (frame) cancelAnimationFrame(frame)
+    observer?.disconnect(); media?.removeEventListener('change', updateMotion)
+    window.removeEventListener('scroll', schedule); window.removeEventListener('resize', schedule)
   })
-
-  return { storyProgress, pageProgress, activeChapter, prefersReducedMotion, canReveal, scrollToChapter }
+  return { sceneProgress, pageProgress, prefersReducedMotion, canReveal }
 }

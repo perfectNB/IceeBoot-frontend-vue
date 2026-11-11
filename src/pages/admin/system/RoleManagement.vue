@@ -210,7 +210,7 @@
     <el-dialog
       v-model="permissionDialogVisible"
       :title="t('roleManagement.permissionConfigTitle')"
-      width="800px"
+      width="min(800px, calc(100vw - 32px))"
       :close-on-click-modal="false"
       :close-on-press-escape="!permissionsSaving"
       :show-close="!permissionsSaving"
@@ -256,7 +256,7 @@
     <el-dialog
       v-model="menuDialogVisible"
       :title="t('roleManagement.menuConfigTitle')"
-      width="800px"
+      width="min(800px, calc(100vw - 32px))"
       :close-on-click-modal="false"
       :close-on-press-escape="!menusSaving"
       :show-close="!menusSaving"

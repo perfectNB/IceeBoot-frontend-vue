@@ -96,13 +96,13 @@ export const deleteRole = async (id: string | number): Promise<boolean> => {
 }
 
 // 获取角色详情
-export const getRoleById = async (id: string | number): Promise<Role> => {
+export const getRoleById = async (id: string | number, include?: 'permissions' | 'menus'): Promise<Role> => {
   if (isMockEnabled()) {
     // 使用Mock数据
     return await MockRoleService.getRoleById(Number(id))
   } else {
     // 调用真实API
-    return await request.get<Role>(`/api/v1/roles/${id}`, { params: {} })
+    return await request.get<Role>(`/api/v1/roles/${id}`, include ? { include } : undefined)
   }
 }
 

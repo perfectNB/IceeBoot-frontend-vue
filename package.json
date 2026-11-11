@@ -13,7 +13,8 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
     "lint": "eslint . --fix",
-    "test:agent-console": "node --test tests/agentConsole.test.cjs"
+    "test:agent-console": "node --test tests/agentConsole.test.cjs",
+    "test:role-authorization": "node --test tests/roleAuthorization.test.cjs"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",

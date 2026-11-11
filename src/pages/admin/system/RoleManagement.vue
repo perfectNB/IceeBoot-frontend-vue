@@ -212,23 +212,43 @@
       :title="t('roleManagement.permissionConfigTitle')"
       width="800px"
       :close-on-click-modal="false"
+      :close-on-press-escape="!permissionsSaving"
+      :show-close="!permissionsSaving"
+      :before-close="beforePermissionClose"
     >
       <div class="permission-content">
         <div class="permission-header">
           <span class="role-name">{{ t('roleManagement.roleLabel') }}{{ currentRole?.name }}</span>
-          <el-button type="primary" size="small" @click="handleSavePermissions">
+          <el-button
+            type="primary"
+            size="small"
+            :loading="permissionsSaving"
+            :disabled="permissionLoading || !permissionLoaded || permissionsSaving"
+            @click="handleSavePermissions"
+          >
             {{ t('roleManagement.savePermissions') }}
           </el-button>
         </div>
-        <el-tree
-          ref="permissionTreeRef"
-          :data="permissionTree"
-          :props="treeProps"
-          show-checkbox
-          node-key="id"
-          :default-checked-keys="checkedPermissions"
-          class="permission-tree"
-        />
+        <div
+          v-loading="permissionLoading"
+          class="grant-tree-state"
+          :element-loading-text="t('roleManagement.loadingPermissions')"
+          :aria-busy="permissionLoading || permissionsSaving"
+        >
+          <el-alert v-if="permissionLoadError" type="error" :closable="false" show-icon :title="t('roleManagement.getRolePermissionsFailed')">
+            <el-button link type="primary" @click="retryPermissionLoad">{{ t('roleManagement.retry') }}</el-button>
+          </el-alert>
+          <el-tree
+            v-if="permissionLoaded"
+            ref="permissionTreeRef"
+            :data="permissionTree"
+            :props="permissionTreeProps"
+            show-checkbox
+            node-key="id"
+            :default-checked-keys="checkedPermissions"
+            class="permission-tree"
+          />
+        </div>
       </div>
     </el-dialog>
 
@@ -238,32 +258,52 @@
       :title="t('roleManagement.menuConfigTitle')"
       width="800px"
       :close-on-click-modal="false"
+      :close-on-press-escape="!menusSaving"
+      :show-close="!menusSaving"
+      :before-close="beforeMenuClose"
     >
       <div class="permission-content">
         <div class="permission-header">
           <span class="role-name">{{ t('roleManagement.roleLabel') }}{{ currentRole?.name }}</span>
-          <el-button type="primary" size="small" @click="handleSaveMenus">
+          <el-button
+            type="primary"
+            size="small"
+            :loading="menusSaving"
+            :disabled="menuLoading || !menuLoaded || menusSaving"
+            @click="handleSaveMenus"
+          >
             {{ t('roleManagement.saveMenus') }}
           </el-button>
         </div>
-        <el-tree
-          ref="menuTreeRef"
-          :data="menuTree"
-          :props="treeProps"
-          show-checkbox
-          node-key="id"
-          :default-checked-keys="checkedMenus"
-          class="permission-tree"
-        />
+        <div
+          v-loading="menuLoading"
+          class="grant-tree-state"
+          :element-loading-text="t('roleManagement.loadingMenus')"
+          :aria-busy="menuLoading || menusSaving"
+        >
+          <el-alert v-if="menuLoadError" type="error" :closable="false" show-icon :title="t('roleManagement.getRoleMenusFailed')">
+            <el-button link type="primary" @click="retryMenuLoad">{{ t('roleManagement.retry') }}</el-button>
+          </el-alert>
+          <el-tree
+            v-if="menuLoaded"
+            ref="menuTreeRef"
+            :data="menuTree"
+            :props="menuTreeProps"
+            show-checkbox
+            node-key="id"
+            :default-checked-keys="checkedMenus"
+            class="permission-tree"
+          />
+        </div>
       </div>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
+import { ElMessage, ElMessageBox, type FormInstance, type FormRules, type TreeInstance } from 'element-plus'
 import {
   Plus,
   Refresh,
@@ -274,8 +314,6 @@ import {
   Menu
 } from '@element-plus/icons-vue'
 import { getRoles, createRole, updateRole, deleteRole, deleteRoles, saveRolePermissions, getRoleById, updateRoleStatus,saveRoleMenus } from '@/api/role'
-import { getAllPermissions } from '@/api/permission'
-import { getAllMenus } from '@/api/menu'
 import { hasPermission } from '@/utils/permission'
 import type { Role, Permission, MenuItem as MenuType } from '@/types'
 
@@ -307,8 +345,8 @@ const menuDialogVisible = ref(false)
 const isEdit = ref(false)
 const submitting = ref(false)
 const formRef = ref<FormInstance>()
-const permissionTreeRef = ref()
-const menuTreeRef = ref()
+const permissionTreeRef = ref<TreeInstance>()
+const menuTreeRef = ref<TreeInstance>()
 
 // 表单数据
 const formData = ref<Partial<Role>>({
@@ -322,6 +360,16 @@ const formData = ref<Partial<Role>>({
 const currentRole = ref<Role | null>(null)
 const checkedPermissions = ref<string[]>([])
 const checkedMenus = ref<string[]>([])
+const permissionLoading = ref(false)
+const menuLoading = ref(false)
+const permissionLoaded = ref(false)
+const menuLoaded = ref(false)
+const permissionLoadError = ref(false)
+const menuLoadError = ref(false)
+const permissionsSaving = ref(false)
+const menusSaving = ref(false)
+let permissionRequest = 0
+let menuRequest = 0
 
 // 计算属性
 const dialogTitle = computed(() => isEdit.value ? t('roleManagement.editRoleTitle') : t('roleManagement.createRoleTitle'))
@@ -370,6 +418,8 @@ const treeProps = {
   children: 'children',
   label: 'label'
 }
+const permissionTreeProps = { ...treeProps, disabled: () => permissionsSaving.value }
+const menuTreeProps = { ...treeProps, disabled: () => menusSaving.value }
 
 // 表单验证规则
 const formRules: FormRules = {
@@ -414,24 +464,6 @@ const loadRoles = async () => {
     ElMessage.error(t('roleManagement.loadRolesFailed'))
   } finally {
     loading.value = false
-  }
-}
-
-const loadPermissions = async () => {
-  try {
-    permissions.value = await getAllPermissions()
-  } catch (error) {
-    console.error('获取权限列表失败:', error)
-    ElMessage.error(t('roleManagement.loadPermissionsFailed'))
-  }
-}
-
-const loadMenus = async () => {
-  try {
-    menus.value = await getAllMenus()
-  } catch (error) {
-    console.error('获取菜单列表失败:', error)
-    ElMessage.error(t('roleManagement.loadMenusFailed'))
   }
 }
 
@@ -561,113 +593,151 @@ const handleStatusChange = async (role: Role) => {
   }
 }
 
-const handlePermissions = async (role: Role) => {
+type GrantNode = { id: string | number; hasPermission?: boolean; children?: GrantNode[] }
+
+// 只传叶子节点给 Tree，父节点的全选／半选状态由组件按子节点计算。
+const selectedLeafIds = (nodes: GrantNode[]): string[] => nodes.flatMap(node => {
+  if (node.children?.length) return selectedLeafIds(node.children)
+  return node.hasPermission ? [String(node.id)] : []
+})
+
+const invalidatePermissionLoad = () => {
+  permissionRequest++
+  permissionLoading.value = false
+  permissionLoaded.value = false
+  permissionLoadError.value = false
+  permissions.value = []
+  checkedPermissions.value = []
+}
+
+const invalidateMenuLoad = () => {
+  menuRequest++
+  menuLoading.value = false
+  menuLoaded.value = false
+  menuLoadError.value = false
+  menus.value = []
+  checkedMenus.value = []
+}
+
+const loadPermissionTree = async (roleId: Role['id']) => {
+  const request = ++permissionRequest
+  permissionLoading.value = true
+  permissionLoaded.value = false
+  permissionLoadError.value = false
+  permissions.value = []
+  checkedPermissions.value = []
   try {
-    currentRole.value = role
-    // 获取角色的完整权限信息
-    const roleDetail = await getRoleById(role.id)
-
-    // 更新权限树数据
-    permissions.value = roleDetail.permissionTree || []
-
-    // 获取已选中的权限ID列表
-     const getCheckedPermissionIds = (permissionTree: Permission[]): string[] => {
-       const checkedIds: string[] = []
-       const traverse = (nodes: Permission[]) => {
-         nodes.forEach(node => {
-           if (node.hasPermission && (!node.children || node.children.length === 0)) {
-             // 只添加叶子节点的权限ID
-             checkedIds.push(String(node.id))
-           }
-           if (node.children && node.children.length > 0) {
-             traverse(node.children)
-           }
-         })
-       }
-       traverse(permissionTree)
-       return checkedIds
-     }
-
-    checkedPermissions.value = getCheckedPermissionIds(roleDetail.permissionTree || [])
-    permissionDialogVisible.value = true
-  } catch (error) {
-    console.error('获取角色权限失败:', error)
-    ElMessage.error(t('roleManagement.getRolePermissionsFailed'))
+    const roleDetail = await getRoleById(roleId, 'permissions')
+    if (request !== permissionRequest || !permissionDialogVisible.value || currentRole.value?.id !== roleId) return
+    if (!Array.isArray(roleDetail?.permissionTree)) throw new Error('Invalid role permission tree response')
+    permissions.value = roleDetail.permissionTree
+    checkedPermissions.value = selectedLeafIds(permissions.value)
+    permissionLoaded.value = true
+  } catch {
+    if (request === permissionRequest) permissionLoadError.value = true
+  } finally {
+    if (request === permissionRequest) permissionLoading.value = false
   }
+}
+
+const loadMenuTree = async (roleId: Role['id']) => {
+  const request = ++menuRequest
+  menuLoading.value = true
+  menuLoaded.value = false
+  menuLoadError.value = false
+  menus.value = []
+  checkedMenus.value = []
+  try {
+    const roleDetail = await getRoleById(roleId, 'menus')
+    if (request !== menuRequest || !menuDialogVisible.value || currentRole.value?.id !== roleId) return
+    if (!Array.isArray(roleDetail?.menuTree)) throw new Error('Invalid role menu tree response')
+    menus.value = roleDetail.menuTree
+    checkedMenus.value = selectedLeafIds(menus.value)
+    menuLoaded.value = true
+  } catch {
+    if (request === menuRequest) menuLoadError.value = true
+  } finally {
+    if (request === menuRequest) menuLoading.value = false
+  }
+}
+
+const handlePermissions = async (role: Role) => {
+  if (permissionsSaving.value || menusSaving.value) return
+  invalidateMenuLoad()
+  menuDialogVisible.value = false
+  currentRole.value = role
+  permissionDialogVisible.value = true
+  await loadPermissionTree(role.id)
 }
 
 const handleMenus = async (role: Role) => {
-  try {
-    currentRole.value = role
-    // 获取角色的完整菜单信息
-    const roleDetail = await getRoleById(role.id)
+  if (permissionsSaving.value || menusSaving.value) return
+  invalidatePermissionLoad()
+  permissionDialogVisible.value = false
+  currentRole.value = role
+  menuDialogVisible.value = true
+  await loadMenuTree(role.id)
+}
 
-    // 更新菜单树数据
-    menus.value = roleDetail.menuTree || []
+const retryPermissionLoad = async () => {
+  if (!currentRole.value || !permissionDialogVisible.value || permissionLoading.value || permissionsSaving.value) return
+  await loadPermissionTree(currentRole.value.id)
+}
 
-    // 获取已选中的菜单ID列表
-     const getCheckedMenuIds = (menuTree: MenuType[]): string[] => {
-       const checkedIds: string[] = []
-       const traverse = (nodes: MenuType[]) => {
-         nodes.forEach(node => {
-           if (node.hasPermission && (!node.children || node.children.length === 0)) {
-             // 只添加叶子节点的菜单ID
-             checkedIds.push(String(node.id))
-           }
-           if (node.children && node.children.length > 0) {
-             traverse(node.children)
-           }
-         })
-       }
-       traverse(menuTree)
-       return checkedIds
-     }
+const retryMenuLoad = async () => {
+  if (!currentRole.value || !menuDialogVisible.value || menuLoading.value || menusSaving.value) return
+  await loadMenuTree(currentRole.value.id)
+}
 
-    checkedMenus.value = getCheckedMenuIds(roleDetail.menuTree || [])
-    menuDialogVisible.value = true
-  } catch (error) {
-    console.error('获取角色菜单失败:', error)
-    ElMessage.error(t('roleManagement.getRoleMenusFailed'))
-  }
+const beforePermissionClose = (done: () => void) => {
+  if (permissionsSaving.value) return
+  invalidatePermissionLoad()
+  done()
+}
+
+const beforeMenuClose = (done: () => void) => {
+  if (menusSaving.value) return
+  invalidateMenuLoad()
+  done()
 }
 
 const handleSavePermissions = async () => {
-  if (!permissionTreeRef.value || !currentRole.value) return
-
+  if (!permissionDialogVisible.value || permissionsSaving.value || permissionLoading.value || !permissionLoaded.value || !permissionTreeRef.value || !currentRole.value) return
+  const roleId = currentRole.value.id
+  const request = permissionRequest
   const checkedKeys = permissionTreeRef.value.getCheckedKeys()
   const halfCheckedKeys = permissionTreeRef.value.getHalfCheckedKeys()
-  const allCheckedKeys = [...checkedKeys, ...halfCheckedKeys]
-
+  const allCheckedKeys = [...checkedKeys, ...halfCheckedKeys].map(String)
+  permissionsSaving.value = true
   try {
-    // 调用API保存角色权限
-    await saveRolePermissions(currentRole.value.id, allCheckedKeys.map(String))
+    await saveRolePermissions(roleId, allCheckedKeys)
+    if (request !== permissionRequest || currentRole.value?.id !== roleId) return
     ElMessage.success(t('roleManagement.permissionSaveSuccess'))
     permissionDialogVisible.value = false
-    // 重新加载角色列表以更新权限信息
-    await loadRoles()
-  } catch (error) {
-    console.error('保存权限失败:', error)
+  } catch {
     ElMessage.error(t('roleManagement.permissionSaveFailed'))
+  } finally {
+    permissionsSaving.value = false
   }
 }
 
 const handleSaveMenus = async () => {
-  if (!menuTreeRef.value || !currentRole.value) return
-
+  if (!menuDialogVisible.value || menusSaving.value || menuLoading.value || !menuLoaded.value || !menuTreeRef.value || !currentRole.value) return
+  const roleId = currentRole.value.id
+  const request = menuRequest
   const checkedKeys = menuTreeRef.value.getCheckedKeys()
   const halfCheckedKeys = menuTreeRef.value.getHalfCheckedKeys()
-  const allCheckedKeys = [...checkedKeys, ...halfCheckedKeys]
-
+  const allCheckedKeys = [...checkedKeys, ...halfCheckedKeys].map(String)
+  menusSaving.value = true
   try {
-    // 调用API保存角色菜单
-    await saveRoleMenus(currentRole.value.id, allCheckedKeys.map(String))
+    await saveRoleMenus(roleId, allCheckedKeys)
+    if (request !== menuRequest || currentRole.value?.id !== roleId) return
     ElMessage.success(t('roleManagement.menuSaveSuccess'))
     menuDialogVisible.value = false
-    // 重新加载角色列表以更新菜单信息
-    await loadRoles()
-  } catch (error) {
-    console.error('保存菜单失败:', error)
+  } catch {
     ElMessage.error(t('roleManagement.menuSaveFailed'))
+  } finally {
+    menusSaving.value = false
   }
 }
 
@@ -703,8 +773,10 @@ const formatDate = (date: string | Date) => {
 // 生命周期
 onMounted(() => {
   loadRoles()
-  loadPermissions()
-  loadMenus()
+})
+onBeforeUnmount(() => {
+  invalidatePermissionLoad()
+  invalidateMenuLoad()
 })
 </script>
 
@@ -771,6 +843,10 @@ onMounted(() => {
 .permission-content .permission-header .role-name {
   font-weight: 600;
   color: var(--text-primary);
+}
+
+.grant-tree-state {
+  min-height: 160px;
 }
 
 .permission-content .permission-tree {

@@ -6,6 +6,7 @@ export type SceneKind = 'hero' | 'foundation' | 'agent' | 'models' | 'sandbox'
 export interface EngineScene {
   resize: (width: number, height: number) => void
   render: (progress: number, time: number, pointerX: number, pointerY: number, selection?: number) => void
+  setTheme: (dark: boolean) => void
   dispose: () => void
 }
 
@@ -53,7 +54,8 @@ export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement,
       try { scene.environment = keep(generator.fromEquirectangular(texture)).texture }
       finally { texture.dispose(); generator.dispose() }
     }
-    scene.add(new THREE.HemisphereLight(0xd9f5f2, 0x11161f, 2))
+    const ambient = new THREE.HemisphereLight(0xd9f5f2, 0x11161f, 2)
+    scene.add(ambient)
     const key = new THREE.DirectionalLight(0xffffff, 3.4); key.position.set(-3, 6, 7)
     const rim = new THREE.DirectionalLight(0x80e9d1, 2.5); rim.position.set(6, 2, -4)
     scene.add(key, rim)
@@ -70,6 +72,8 @@ export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement,
     const wireLines: Three.Line[] = []
     const plates: Three.Mesh[] = []
     const sparks: Three.Mesh[] = []
+    const activations: number[] = []
+    let previousTime: number | undefined
     function mesh(parent: Three.Object3D, geometry: Three.BufferGeometry, material: Three.Material) {
       const object = new THREE.Mesh(keep(geometry), material); parent.add(object); return object
     }
@@ -126,6 +130,7 @@ export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement,
       ;['SKILL', 'TOOL', 'MCP', 'AGENT'].forEach((name, i) => {
         const node = new THREE.Group(); rig.add(node); nodes.push(node)
         slab(node, 1.15, .72, .16, graphite)
+        sparks.push(mesh(rig, new THREE.SphereGeometry(.045, 12, 8), glow))
         const text = label(node, name, .96); text.position.z = .12
         const led = slab(node, .55, .022, .01, glow); led.position.set(0, -.26, .12)
         const wire = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(2.4 * Math.cos(i * Math.PI / 2), 2.4 * Math.sin(i * Math.PI / 2), 0)])
@@ -135,7 +140,9 @@ export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement,
       const disk = mesh(orb, new THREE.CylinderGeometry(1, 1, .24, 64), chrome); disk.rotation.x = Math.PI / 2
       const face = mesh(orb, new THREE.CircleGeometry(.91, 64), mint); face.position.z = .14
       const text = label(orb, 'LLM', 1.45); text.position.z = .16
-      rings.push(ring(rig, 2.45, .025, chrome))
+      const modelOrbit = ring(rig, 2.45, .025, chrome)
+      modelOrbit.position.z = -.65
+      rings.push(modelOrbit)
       ;['GPT', 'Claude', 'Gemini', 'Qwen', 'DeepSeek', 'GLM', 'Kimi', 'MiniMax'].forEach(name => {
         const node = new THREE.Group(); rig.add(node); nodes.push(node)
         const disc = mesh(node, new THREE.CylinderGeometry(.52, .52, .22, 40), chrome); disc.rotation.x = Math.PI / 2
@@ -159,7 +166,8 @@ export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement,
       for (let i = 0; i < 12; i++) sparks.push(mesh(rig, new THREE.SphereGeometry(.025, 8, 6), glow))
     }
     // 地面细环提供空间参照，不使用大面积高亮粒子背景。
-    const floor = ring(scene, 3.25, .009, graphite); floor.rotation.x = Math.PI / 2; floor.position.y = -2.7
+    const floorMaterial = keep(new THREE.MeshBasicMaterial({ color: 0x36594a, transparent: true, opacity: .3 }))
+    const floor = ring(scene, 3.25, .009, floorMaterial); floor.rotation.x = Math.PI / 2; floor.position.y = -2.7
     return {
       resize(width, height) {
         if (disposed || width <= 0 || height <= 0) return
@@ -168,34 +176,102 @@ export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement,
       render(progress, time, pointerX, pointerY, selection = 0) {
         if (disposed) return
         const p = THREE.MathUtils.smoothstep(progress, 0, 1)
-        const drift = Math.sin(time * .35) * .035
-        rig.position.y = drift
-        rig.rotation.set(.04 + pointerY * .04, pointerX * .08, 0)
-        orb.rotation.y = p * .9 + time * .08
+        // 时间来自可见场景的 RAF；暂停/减少动态效果时固定，不累加离屏时间。
+        const delta = previousTime === undefined ? 0 : Math.max(0, Math.min(time - previousTime, .05))
+        previousTime = time
+        const response = delta > 0 ? 1 - Math.exp(-delta * 10) : 1
+        const activation = (index: number, active: boolean) => {
+          const target = active ? 1 : 0
+          activations[index] = (activations[index] ?? target) + (target - (activations[index] ?? target)) * response
+          return activations[index]!
+        }
+        rig.position.y = Math.sin(time * .65) * .07
+        rig.rotation.set(.04 + pointerY * .09, pointerX * .16, Math.sin(time * .25) * .015)
+        orb.rotation.y = p * .9 + time * .16
         if (kind === 'hero') {
           rig.rotation.y += -.28 + p * .75
-          rings.forEach((hoop, i) => { hoop.rotation.x = .65 + i * .5 + p * .8; hoop.rotation.y = -.65 + i * .55 + time * .035 * (i % 2 ? 1 : -1); hoop.rotation.z = i * .8 + p * .55 })
-          sparks.forEach((spark, i) => { const a = i * 1.25 + time * .09 + p; spark.position.set(Math.cos(a) * 2.5, Math.sin(a) * 1.8, Math.sin(a + 1) * 1.4) })
+          rings.forEach((hoop, i) => {
+            hoop.rotation.x = .65 + i * .5 + p * .8 + Math.sin(time * .28 + i) * .13
+            hoop.rotation.y = -.65 + i * .55 + time * .065 * (i % 2 ? 1 : -1)
+            hoop.rotation.z = i * .8 + p * .55 + Math.sin(time * .35 + i) * .1
+          })
+          sparks.forEach((spark, i) => {
+            const a = i * 1.25 + time * .16 + p
+            spark.position.set(Math.cos(a) * 2.5, Math.sin(a) * 1.8, Math.sin(a + 1) * 1.4)
+          })
         } else if (kind === 'foundation') {
-          rig.rotation.y += -.5 + p * .55; rig.rotation.x = .32 + pointerY * .04
-          nodes.forEach((node, i) => { node.position.y = (i - 1) * (.48 + p * 1.02); node.rotation.y = (i - 1) * p * .1 })
+          rig.rotation.y += -.5 + p * .55 + Math.sin(time * .4) * .07
+          rig.rotation.x = .32 + pointerY * .09
+          nodes.forEach((node, i) => {
+            node.position.y = (i - 1) * (.48 + p * 1.02) + Math.sin(time * .85 + i * .8) * .045
+            node.rotation.y = (i - 1) * p * .1 + Math.sin(time * .45 + i) * .035
+          })
         } else if (kind === 'agent') {
           rig.rotation.y += -.15 + p * .3
-          nodes.forEach((node, i) => { const a = i * Math.PI / 2 + .3; const r = 1.9 + p * .65; node.position.set(Math.cos(a) * r, Math.sin(a) * r * .82, Math.sin(p * Math.PI + i) * .2); node.rotation.y = pointerX * -.08; const positions = wires[i]!.attributes.position!; positions.setXYZ(1, node.position.x, node.position.y, node.position.z); positions.needsUpdate = true; const active = i === 3 || Boolean(selection & (1 << i)); (node.children[0] as Three.Mesh).material = active ? mint : graphite; wireLines[i]!.visible = active })
+          nodes.forEach((node, i) => {
+            const active = i === 3 || Boolean(selection & (1 << i))
+            const emphasis = activation(i, active)
+            const a = i * Math.PI / 2 + .3 + Math.sin(time * .35) * .13
+            const radius = 1.9 + p * .65 + Math.sin(time * .7 + i) * .05
+            node.position.set(Math.cos(a) * radius, Math.sin(a) * radius * .82, Math.sin(p * Math.PI + i + time * .5) * .15 + emphasis * .12)
+            node.rotation.y = pointerX * -.1 + Math.sin(time * .45 + i) * .055
+            node.scale.setScalar(1 + emphasis * .035)
+            const positions = wires[i]!.attributes.position!
+            positions.setXYZ(1, node.position.x, node.position.y, node.position.z)
+            positions.needsUpdate = true
+            ;(node.children[0] as Three.Mesh).material = active ? mint : graphite
+            wireLines[i]!.visible = active
+            const pulse = (time * .25 + i * .23) % 1
+            sparks[i]!.position.copy(node.position).multiplyScalar(pulse)
+            sparks[i]!.visible = active
+          })
         } else if (kind === 'models') {
-          rig.rotation.y += -.6 + p * .4; rig.rotation.x = .35
-          // 选中模型通过材质强调；轨道本身由滚动连续驱动，无瞬移。
-          nodes.forEach((node, i) => { const a = i / 8 * Math.PI * 2 + p * .45; node.position.x = Math.cos(a) * 2.45; node.position.y = Math.sin(a) * 2.45; node.position.z = Math.sin(a) * .32 + (selection === i ? .35 : 0); plates[i]!.material = selection === i ? mint : graphite })
+          rig.rotation.y += -.6 + p * .4 + Math.sin(time * .3) * .07
+          rig.rotation.x = .35 + pointerY * .07
+          // 轨道缓慢公转，标签保持正向；选中节点平滑前浮，不挤动页面布局。
+          nodes.forEach((node, i) => {
+            const a = i / 8 * Math.PI * 2 + p * .45 + time * .055
+            const emphasis = activation(i, selection === i)
+            node.position.set(Math.cos(a) * 2.45, Math.sin(a) * 2.45, Math.sin(a) * .32 + emphasis * .48)
+            node.scale.setScalar(1 + emphasis * .12)
+            node.rotation.y = Math.sin(time * .5 + i) * .06
+            plates[i]!.material = selection === i ? mint : graphite
+          })
           orb.rotation.set(0, 0, 0)
+          orb.scale.setScalar(1 + Math.sin(time * .8) * .015)
         } else {
-          rig.rotation.y += -.55 + p * .85; rig.rotation.x = .16
-          nodes.forEach((node, i) => { node.position.set(Math.sin(p * Math.PI + i) * .12, (i - 1) * .85, .1 + Math.sin(p * Math.PI) * .25); node.rotation.y = (i - 1) * .06 })
-          sparks.forEach((spark, i) => { const a = i * 2.4 + time * .2; spark.position.set(Math.cos(a) * 1.32, ((i / 12 + time * .07 + p) % 1) * 2.8 - 1.4, Math.sin(a) * 1.1) })
+          rig.rotation.y += -.55 + p * .85 + Math.sin(time * .4) * .12
+          rig.rotation.x = .16 + pointerY * .07
+          nodes.forEach((node, i) => {
+            node.position.set(Math.sin(p * Math.PI + i + time * .5) * .13, (i - 1) * .85 + Math.sin(time * .8 + i) * .055, .1 + Math.sin(p * Math.PI) * .25)
+            node.rotation.y = (i - 1) * .06 + Math.sin(time * .45 + i) * .04
+          })
+          sparks.forEach((spark, i) => {
+            const a = i * 2.4 + time * .3
+            spark.position.set(Math.cos(a) * 1.32, ((i / 12 + time * .1 + p) % 1) * 2.8 - 1.4, Math.sin(a) * 1.1)
+          })
         }
         const distance = (kind === 'hero' ? 10.6 : kind === 'foundation' ? 10 : 11.7) * Math.max(1, .9 / Math.max(aspect, .3))
         camera.position.set(0, kind === 'foundation' ? 4.8 : .55, distance)
         camera.lookAt(0, 0, 0)
         renderer.render(scene, camera)
+      },
+      setTheme(dark) {
+        if (disposed) return
+        // 复用现有场景与 GPU 资源，主题切换不重建 canvas，也不重置动画。
+        ambient.color.set(dark ? 0xd9f5f2 : 0xe7efff)
+        rim.color.set(dark ? 0x80e9d1 : 0x88afff)
+        chrome.color.set(dark ? 0xc1ccce : 0xd7e3f7)
+        chrome.metalness = dark ? 1 : .82
+        graphite.color.set(dark ? 0x182025 : 0x233959)
+        mint.color.set(dark ? 0x52ba9e : 0x245cda)
+        glow.color.set(dark ? 0xa6ffe2 : 0x2879ed)
+        lineMaterial.color.set(dark ? 0x77b4a9 : 0x5086ca)
+        lineMaterial.opacity = dark ? .35 : .45
+        glass.color.set(dark ? 0x92e5d4 : 0x7ca7ed)
+        glass.opacity = dark ? .15 : .12
+        floorMaterial.color.set(dark ? 0x36594a : 0x9cacc7)
+        floorMaterial.opacity = dark ? .3 : .45
       },
       dispose,
     }

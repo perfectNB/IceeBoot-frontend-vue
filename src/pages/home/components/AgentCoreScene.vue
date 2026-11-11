@@ -1,5 +1,5 @@
 <template>
-  <div ref="host" class="agent-core-scene" :class="{ 'is-ready': ready }" role="img" :aria-label="label" @pointermove="onPointerMove" @pointerleave="onPointerLeave">
+  <div ref="host" class="agent-core-scene" :class="{ 'is-ready': ready, 'is-light': !dark }" role="img" :aria-label="label" @pointermove="onPointerMove" @pointerleave="onPointerLeave">
     <div v-if="!ready" class="engine-fallback" aria-hidden="true"><div class="fallback-orbit"><i></i><i></i><i></i><span>{{ kind === 'sandbox' ? 'E2B' : kind === 'models' ? 'LLM' : 'ICEEBOOT' }}</span></div></div>
     <canvas ref="canvas" class="engine-canvas" aria-hidden="true"></canvas>
     <div class="engine-vignette" aria-hidden="true"></div>
@@ -10,7 +10,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { createEngineScene, type EngineScene, type SceneKind } from './agentCoreScene'
 
-const props = withDefaults(defineProps<{ progress: number; reducedMotion?: boolean; label?: string; kind?: SceneKind; selection?: number }>(), { reducedMotion: false, label: 'IceeBoot 3D 场景', kind: 'hero', selection: 0 })
+const props = withDefaults(defineProps<{ progress: number; reducedMotion?: boolean; label?: string; kind?: SceneKind; selection?: number; dark?: boolean }>(), { reducedMotion: false, label: 'IceeBoot 3D 场景', kind: 'hero', selection: 0, dark: true })
 const emit = defineEmits<{ ready: []; unsupported: [] }>()
 const host = ref<HTMLDivElement>()
 const canvas = ref<HTMLCanvasElement>()
@@ -93,6 +93,7 @@ async function initialize() {
     const three = await import('three')
     if (disposed || unsupported || !inView || !pageVisible || !canvas.value) return
     engine = createEngineScene(three, canvas.value, props.kind)
+    engine.setTheme(props.dark)
     renderedProgress = normalizedProgress.value
     resize()
     engine.render(renderedProgress, 0, 0, 0, props.selection)
@@ -123,6 +124,7 @@ function onVisibility() {
 }
 function onContextLost(event: Event) { event.preventDefault(); failGracefully() }
 
+watch(() => props.dark, dark => { engine?.setTheme(dark); schedule() })
 watch(normalizedProgress, schedule)
 watch(() => props.selection, schedule)
 watch(motionReduced, () => { pause(); schedule() })
@@ -171,5 +173,6 @@ onBeforeUnmount(() => {
 .engine-vignette { position: absolute; inset: 0; pointer-events: none; }
 .engine-fallback { position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden; }
 .fallback-orbit { position: relative; width: 60%; aspect-ratio: 1; display: grid; place-items: center; perspective: 800px; i { position: absolute; inset: 0; border: 4px solid #bbd9cc; border-radius: 50%; transform: rotateX(55deg) rotateY(-25deg); box-shadow: 0 0 25px #afe3c422; } i:nth-child(2) { inset: 10%; transform: rotateY(65deg) rotateZ(40deg); border-color: #5eab90; } i:nth-child(3) { inset: 20%; transform: rotateX(-35deg); border-width: 12px; } span { position: relative; font: 12px monospace; letter-spacing: .15em; color: #c0e6ce; } }
+.is-light .fallback-orbit { i { border-color: #3d79cc; box-shadow: 0 0 25px #326ddd22; } span { color: #284b7b; } }
 @media (prefers-reduced-motion: reduce) { .engine-canvas { transition: none; } }
 </style>

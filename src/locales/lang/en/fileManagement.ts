@@ -32,6 +32,8 @@ export default {
   editBucketTitle: 'Edit Bucket',
   descriptionPlaceholder: 'Please enter description',
   key: 'Key',
+  keyLabel: 'Key {id}',
+  keyDescription: 'Uses the key configured for the bucket',
   keyPlaceholder: 'Please select key',
   cancel: 'Cancel',
   confirm: 'Confirm',

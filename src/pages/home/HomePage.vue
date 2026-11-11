@@ -1,335 +1,197 @@
 <template>
-  <div class="home-page">
-    <!-- 导航栏 -->
-    <header class="navbar">
-      <div class="navbar-container">
-        <div class="navbar-brand">
-          <img src="@/assets/logo.svg" alt="IceeBoot" class="logo" />
-          <span class="brand-text">IceeBoot</span>
-        </div>
-
-        <div class="navbar-actions">
-          <LanguageSwitcher />
-          <el-button
-            :icon="isDark ? Sunny : Moon"
-            @click="toggleTheme"
-            text
-            circle
-            class="theme-btn"
-          />
-          <template v-if="isLoggedIn">
-            <el-button class="nav-btn" @click="goToFirstMenu">
-              {{ t('home.console') }}
-            </el-button>
-            <el-button class="nav-btn logout" text @click="handleLogout">
-              {{ t('home.logoutBtn') }}
-            </el-button>
-          </template>
-          <template v-else>
-            <el-button class="nav-btn primary" @click="showLoginDialog = true">
-              {{ t('home.login') }}
-            </el-button>
-          </template>
-        </div>
+  <div ref="pageRoot" class="launch-site" :class="{ 'is-dark': isDark, 'can-reveal': canReveal && !prefersReducedMotion, 'reduce-motion': prefersReducedMotion }">
+    <a class="skip-link" href="#capabilities">{{ t('home.skipContent') }}</a>
+    <header class="launch-header">
+      <div class="launch-width header-inner">
+        <a class="brand" href="#" aria-label="IceeBoot"><span class="brand-symbol" aria-hidden="true"><el-icon><Cpu /></el-icon></span>IceeBoot<span class="brand-dot">.</span></a>
+        <nav :aria-label="t('home.navigation')"><a href="#capabilities">{{ t('home.navCapabilities') }}</a><a href="#integration">{{ t('home.navIntegration') }}</a><a :href="docsUrl" target="_blank" rel="noopener noreferrer">{{ t('home.docs') }}<el-icon aria-hidden="true"><TopRight /></el-icon></a></nav>
+        <div class="header-actions"><LanguageSwitcher /><button class="utility-button" :aria-label="t(isDark ? 'home.lightTheme' : 'home.darkTheme')" @click="toggleTheme"><el-icon aria-hidden="true"><component :is="isDark ? Sunny : Moon" /></el-icon></button><button class="nav-cta" @click="handleExperience">{{ t(isLoggedIn ? 'home.console' : 'home.login') }}<el-icon aria-hidden="true"><ArrowRight /></el-icon></button></div>
       </div>
+      <span class="reading-progress" :style="{ transform: `scaleX(${pageProgress})` }" aria-hidden="true"></span>
     </header>
 
-    <!-- 主要内容 -->
-    <main class="main-content">
-      <!-- Hero Section -->
-      <section class="hero-section">
-        <div class="hero-background">
-          <div class="glow-orb orb-1"></div>
-          <div class="glow-orb orb-2"></div>
-          <div class="grid-overlay"></div>
-        </div>
-
-        <div class="hero-container">
-          <div class="hero-content">
-            <div class="hero-badge">
-              <span class="pulse-dot"></span>
-              {{ t('home.badge') }}
+    <main>
+      <section ref="storyElement" class="engine-story" :aria-label="t('home.storyLabel')">
+        <div class="story-sticky">
+          <div class="story-atmosphere" aria-hidden="true"></div>
+          <div class="engine-visual" :class="{ 'is-separated': activeChapter === 1 }"><AgentCoreScene :label="t('home.storyLabel')" :progress="prefersReducedMotion ? 0 : storyProgress" :reduced-motion="prefersReducedMotion || ambientPaused" /></div>
+          <div class="launch-width story-content">
+            <div class="story-copy">
+              <article v-for="(chapter, index) in chapters" :key="chapter.key" :data-chapter="index" class="chapter-copy" :class="{ active: activeChapter === index }" :aria-hidden="!prefersReducedMotion && activeChapter !== index" :inert="!prefersReducedMotion && activeChapter !== index">
+                <p class="chapter-eyebrow"><span aria-hidden="true"></span>{{ t(`home.chapter_${chapter.key}_eyebrow`) }}</p>
+                <h1 v-if="index === 0">{{ t('home.heroTitle') }}<span>{{ t('home.heroTitleHighlight') }}</span></h1>
+                <h2 v-else>{{ t(`home.chapter_${chapter.key}_title`) }}<span>{{ t(`home.chapter_${chapter.key}_highlight`) }}</span></h2>
+                <p class="chapter-description">{{ t(index === 0 ? 'home.heroDescription' : `home.chapter_${chapter.key}_description`) }}</p>
+                <div class="chapter-actions"><button class="launch-button primary" @click="handleExperience">{{ t(isLoggedIn ? 'home.console' : 'home.experience') }}<el-icon aria-hidden="true"><ArrowRight /></el-icon></button><a class="chapter-link" :href="docsUrl" target="_blank" rel="noopener noreferrer">{{ t('home.docs') }}<el-icon aria-hidden="true"><TopRight /></el-icon></a></div>
+                <div class="chapter-tags"><span v-for="tag in chapter.tags" :key="tag">{{ tag }}</span></div>
+              </article>
             </div>
-            <h1 class="hero-title">
-              {{ t('home.heroTitle') }}
-              <span class="gradient-text">{{ t('home.heroTitleHighlight') }}</span>
-            </h1>
-            <p class="hero-description">
-              {{ t('home.heroDescription') }}
-            </p>
-            <div class="hero-actions">
-              <el-button class="cta-btn primary" size="large" @click="handleExperience">
-                {{ t('home.experience') }}
-                <el-icon class="el-icon--right"><ArrowRight /></el-icon>
-              </el-button>
-              <el-button class="cta-btn secondary" size="large" @click="openOfficialDocs">
-                {{ t('home.docs') }}
-              </el-button>
-            </div>
-
-            <div class="hero-stats">
-              <div class="stat-item">
-                <span class="stat-value">30+</span>
-                <span class="stat-label">{{ t('home.statModules') }}</span>
-              </div>
-              <div class="stat-divider"></div>
-              <div class="stat-item">
-                <span class="stat-value">50+</span>
-                <span class="stat-label">{{ t('home.statSolutions') }}</span>
-              </div>
-              <div class="stat-divider"></div>
-              <div class="stat-item">
-                <span class="stat-value">10x</span>
-                <span class="stat-label">{{ t('home.statEfficiency') }}</span>
-              </div>
-            </div>
+            <div class="scene-annotation" aria-hidden="true"><span class="annotation-line"></span><span>{{ t(`home.chapter_${chapters[activeChapter]!.key}_annotation`) }}</span><span class="annotation-spec">ICEEBOOT / ENGINE {{ String(activeChapter + 1).padStart(2, '0') }}</span></div>
           </div>
-
-          <!-- Orbit System -->
-          <div class="orbit-container">
-            <div class="orbit-system">
-              <!-- Central Core -->
-              <div class="core-wrapper">
-                <div class="core-glow"></div>
-                <div class="core-content">
-                  <div class="core-icon">
-                    <el-icon><Cpu /></el-icon>
-                  </div>
-                  <span class="core-title">AI Core</span>
-                  <span class="core-subtitle">Workflow • Auth • Data</span>
-                </div>
-              </div>
-
-              <!-- Orbital Rings -->
-              <div class="orbit-ring ring-1"></div>
-              <div class="orbit-ring ring-2"></div>
-              <div class="orbit-ring ring-3"></div>
-
-              <!-- Orbiting Items -->
-              <div class="orbit-rotator">
-                <div
-                  v-for="(item, index) in orbitItems"
-                  :key="index"
-                  class="orbit-item-wrapper"
-                  :style="{ '--angle': `${index * (360 / orbitItems.length)}deg` }"
-                >
-                  <div class="orbit-item">
-                    <div class="orbit-content-fix">
-                      <div class="item-icon">
-                        <el-icon><component :is="item.icon" /></el-icon>
-                      </div>
-                      <span class="item-label">{{ item.label }}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div class="launch-width story-controls">
+            <div class="chapter-index"><button v-for="(chapter, index) in chapters" :key="chapter.key" :aria-current="activeChapter === index ? 'step' : undefined" @click="scrollToChapter(index)"><span class="chapter-number">0{{ index + 1 }}</span><span>{{ t(`home.chapter_${chapter.key}_short`) }}</span><span class="chapter-progress" :style="{ transform: `scaleX(${Math.max(0, Math.min(1, storyProgress * 3 - index))})` }" aria-hidden="true"></span></button></div>
+            <div class="motion-controls"><span class="scroll-cue">{{ t('home.scrollExplore') }}<el-icon aria-hidden="true"><Bottom /></el-icon></span><button class="motion-button" :disabled="prefersReducedMotion" :aria-label="t(ambientPaused ? 'home.resumeMotion' : 'home.pauseMotion')" :aria-pressed="ambientPaused" @click="ambientPaused = !ambientPaused"><el-icon aria-hidden="true"><component :is="ambientPaused ? VideoPlay : VideoPause" /></el-icon></button></div>
           </div>
         </div>
       </section>
 
-      <!-- Features Section -->
-      <section id="features" class="features-section">
-        <div class="container">
-          <div class="section-header">
-            <h2 class="section-title">{{ t('home.featuresTitle') }}</h2>
-            <p class="section-subtitle">{{ t('home.featuresSubtitle') }}</p>
-          </div>
-          <div class="features-grid">
-            <div
-              class="feature-card"
-              v-for="(feature, index) in features"
-              :key="feature.title"
-              :style="{ '--delay': `${index * 0.1}s` }"
-              @mousemove="handleMouseMove"
-            >
-              <div class="feature-icon-box">
-                <el-icon><component :is="feature.icon" /></el-icon>
-              </div>
-              <h3 class="feature-title">{{ feature.title }}</h3>
-              <p class="feature-desc">{{ feature.description }}</p>
-            </div>
-          </div>
+      <section id="capabilities" class="capabilities-section launch-width">
+        <div class="section-intro" data-reveal><p class="eyebrow">BUILT FOR YOUR NEXT IDEA</p><h2>{{ t('home.platformTitle') }}<span>{{ t('home.platformHighlight') }}</span></h2><p>{{ t('home.platformDescription') }}</p></div>
+        <div class="capability-bento">
+          <article class="product-card agent-product" data-reveal>
+            <div class="product-copy"><span class="product-kicker">01 / AGENT EXECUTION</span><h3>{{ t('home.productAgentTitle') }}</h3><p>{{ t('home.productAgentDescription') }}</p></div>
+            <div class="agent-composer" :aria-label="t('home.composerLabel')"><div class="composer-top"><span class="composer-avatar"><el-icon aria-hidden="true"><Connection /></el-icon></span><div><strong>assistant</strong><span>{{ t('home.composerExample') }}</span></div><span class="version-pill">v1</span></div><div class="composer-lines"><span>{{ t('home.composerModel') }}</span><strong>{{ selectedProvider.name }}</strong></div><div class="composer-capabilities"><button v-for="capability in demoCapabilities" :key="capability" :aria-pressed="selectedCapabilities.includes(capability)" :class="{ selected: selectedCapabilities.includes(capability) }" @click="toggleCapability(capability)"><el-icon aria-hidden="true"><Check v-if="selectedCapabilities.includes(capability)" /><Plus v-else /></el-icon>{{ capability }}</button></div><div class="composer-result"><span class="code-label">{{ t('home.composerMounted') }}</span><code>{{ selectedCapabilities.length ? selectedCapabilities.join(' + ') : t('home.composerEmpty') }}</code></div></div>
+          </article>
+          <article class="product-card services-product" data-reveal>
+            <div class="product-copy"><span class="product-kicker">02 / THE FOUNDATION</span><h3>{{ t('home.productServicesTitle') }}</h3><p>{{ t('home.productServicesDescription') }}</p></div>
+            <div class="service-matrix"><div v-for="service in services" :key="service.key"><span class="service-icon"><el-icon aria-hidden="true"><component :is="service.icon" /></el-icon></span><strong>{{ service.label }}</strong><span>{{ t(`home.service_${service.key}`) }}</span></div></div>
+          </article>
+          <article class="product-card model-product" data-reveal>
+            <div class="product-copy"><span class="product-kicker">03 / YOUR MODEL. YOUR CHOICE.</span><h3>{{ t('home.productModelTitle') }}</h3><p>{{ t('home.productModelDescription') }}</p></div>
+            <div class="provider-grid" :aria-label="t('home.providersLabel')"><button v-for="provider in providers" :key="provider.name" :aria-pressed="selectedProvider.name === provider.name" :class="{ selected: selectedProvider.name === provider.name }" @click="selectedProvider = provider"><span class="provider-monogram" aria-hidden="true">{{ provider.name[0] }}</span>{{ provider.name }}</button></div>
+            <div class="provider-detail"><span>{{ selectedProvider.name }}</span><span>{{ selectedProvider.protocol }}</span><el-icon aria-hidden="true"><Connection /></el-icon></div>
+          </article>
+          <article class="product-card sandbox-product" data-reveal>
+            <div class="product-copy"><span class="product-kicker">04 / ROOM TO EXECUTE</span><h3>{{ t('home.productSandboxTitle') }}</h3><p>{{ t('home.productSandboxDescription') }}</p></div>
+            <div class="sandbox-diagram" aria-hidden="true"><div class="sandbox-layer layer-back"></div><div class="sandbox-layer layer-front"><el-icon><Box /></el-icon><strong>E2B</strong><span>ISOLATED RUNTIME</span></div></div><div class="sandbox-command"><span aria-hidden="true">$</span><code>python scripts/analyze.py</code><span class="command-tag">{{ t('home.composerExample') }}</span></div>
+          </article>
+          <article class="product-card governance-product" data-reveal>
+            <div class="product-copy"><span class="product-kicker">05 / READY FOR REAL APPLICATIONS</span><h3>{{ t('home.productGovernanceTitle') }}</h3><p>{{ t('home.productGovernanceDescription') }}</p></div>
+            <div class="governance-grid"><div v-for="item in governance" :key="item.key"><el-icon aria-hidden="true"><component :is="item.icon" /></el-icon><strong>{{ t(`home.governance_${item.key}`) }}</strong><span>{{ t(`home.governance_${item.key}_description`) }}</span></div></div>
+          </article>
         </div>
       </section>
 
-      <!-- Tech Stack Section -->
-      <section class="tech-section">
-        <div class="container">
-          <div class="section-header">
-            <h2 class="section-title">{{ t('home.techTitle') }}</h2>
-            <p class="section-subtitle">{{ t('home.techSubtitle') }}</p>
-          </div>
-          <div class="tech-grid">
-            <div class="tech-item" v-for="tech in techStack" :key="tech.name">
-              <div class="tech-logo-wrapper">
-                <img :src="tech.logo" :alt="tech.name" class="tech-logo" />
-              </div>
-              <h4 class="tech-name">{{ tech.name }}</h4>
-            </div>
-          </div>
+      <section id="integration" class="integration-section">
+        <div class="launch-width integration-layout">
+          <div class="integration-copy" data-reveal><p class="eyebrow">CONFIGURE. PUBLISH. INVOKE.</p><h2>{{ t('home.integrationTitle') }}<span>{{ t('home.integrationHighlight') }}</span></h2><p>{{ t('home.integrationDescription') }}</p><ul><li v-for="note in ['code', 'release', 'permission']" :key="note"><el-icon aria-hidden="true"><Check /></el-icon>{{ t(`home.integration_${note}`) }}</li></ul><a :href="docsUrl" target="_blank" rel="noopener noreferrer" class="text-link">{{ t('home.integrationDocs') }}<el-icon aria-hidden="true"><TopRight /></el-icon></a></div>
+          <div class="code-window" data-reveal><div class="code-toolbar"><div class="window-dots" aria-hidden="true"><i></i><i></i><i></i></div><div class="code-switch"><button v-for="mode in exampleModes" :key="mode" :aria-pressed="exampleMode === mode" :class="{ active: exampleMode === mode }" @click="exampleMode = mode">{{ mode === 'typescript' ? 'TypeScript' : 'HTTP' }}</button></div><button class="copy-button" :aria-label="t('home.copyCode')" @click="copyCode"><el-icon aria-hidden="true"><CopyDocument /></el-icon>{{ t('home.copy') }}</button></div><div class="code-content" tabindex="0" :aria-label="t('home.codeExample')"><pre><code><span v-for="(line, index) in exampleCode.split('\n')" :key="index" class="code-line"><span class="line-number" aria-hidden="true">{{ String(index + 1).padStart(2, '0') }}</span><span :class="{ 'code-comment': line.startsWith('//') }">{{ line || ' ' }}</span></span></code></pre></div><div class="code-footnote"><el-icon aria-hidden="true"><Lock /></el-icon>{{ t('home.previewPermission') }}<span>{{ t('home.codeExample') }}</span></div></div>
         </div>
       </section>
+
+      <section id="getting-started" class="getting-started launch-width">
+        <div class="section-intro" data-reveal><p class="eyebrow">SMALL STEPS. REAL POSSIBILITIES.</p><h2>{{ t('home.startTitle') }}</h2><p>{{ t('home.startDescription') }}</p></div>
+        <ol class="steps"><li v-for="step in steps" :key="step" data-reveal><span class="step-number">0{{ step }}</span><h3>{{ t(`home.step${step}`) }}</h3><p>{{ t(`home.step${step}Desc`) }}</p></li></ol>
+        <div class="stack-strip" :aria-label="t('home.techTitle')"><span>{{ t('home.techTitle') }}</span><strong v-for="tech in techStack" :key="tech">{{ tech }}</strong></div>
+      </section>
+
+      <section class="finale-section"><div class="finale-glow" aria-hidden="true"></div><div class="launch-width finale-content" data-reveal><span class="finale-mark" aria-hidden="true"><el-icon><Cpu /></el-icon></span><p class="eyebrow">THE NEXT CHAPTER IS YOURS.</p><h2>{{ t('home.calloutTitle') }}<span>{{ t('home.calloutHighlight') }}</span></h2><p>{{ t('home.calloutDescription') }}</p><button class="launch-button primary" @click="handleExperience">{{ t(isLoggedIn ? 'home.console' : 'home.experience') }}<el-icon aria-hidden="true"><ArrowRight /></el-icon></button></div></section>
     </main>
 
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="footer-content">
-        <div class="footer-brand">
-          <img src="@/assets/logo.svg" alt="IceeBoot" class="footer-logo" />
-          <p>© 2025 IceeBoot. All rights reserved.</p>
-        </div>
-        <div class="footer-links">
-          <a href="https://gitee.com/woshinibaba438cnmlgb/zboot-backend-java" target="_blank">Gitee</a>
-          <a href="https://doc.iceeboot.yxycompany.com" target="_blank">{{ t('home.docs') }}</a>
-          <a href="#" @click.prevent="showContactDialog = true">{{ t('home.contactUs') }}</a>
-          <a href="https://beian.miit.gov.cn/" target="_blank">京ICP备2024086986号-2</a>
-        </div>
-      </div>
-    </footer>
-
-    <!-- Dialogs -->
+    <footer class="launch-footer"><div class="launch-width"><div class="footer-main"><a class="brand" href="#"><span class="brand-symbol" aria-hidden="true"><el-icon><Cpu /></el-icon></span>IceeBoot.</a><p>{{ t('home.footerDescription') }}</p><div class="footer-links"><a :href="sourceUrl" target="_blank" rel="noopener noreferrer">Gitee<el-icon aria-hidden="true"><TopRight /></el-icon></a><a :href="docsUrl" target="_blank" rel="noopener noreferrer">{{ t('home.docs') }}</a><button @click="showContactDialog = true">{{ t('home.contactUs') }}</button><button v-if="isLoggedIn" @click="handleLogout">{{ t('home.logoutBtn') }}</button></div></div><div class="footer-bottom"><span>© {{ currentYear }} IceeBoot</span><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">京ICP备2024086986号-2</a></div></div></footer>
     <LoginDialog v-model="showLoginDialog" @success="handleLoginSuccess" />
-
-    <el-dialog
-      v-model="showMockDialog"
-      title="Mock"
-      width="400px"
-      class="custom-dialog"
-      align-center
-    >
-      <div class="mock-content">
-        <el-icon class="warning-icon"><Warning /></el-icon>
-        <p>{{ t('home.mockContent') }}</p>
-      </div>
-      <template #footer>
-        <el-button @click="showMockDialog = false">{{ t('home.mockDismiss') }}</el-button>
-        <el-button type="primary" @click="openGitee">{{ t('home.getSource') }}</el-button>
-      </template>
-    </el-dialog>
-
-    <el-dialog
-      v-model="showContactDialog"
-      :title="t('home.contactUs')"
-      width="600px"
-      class="custom-dialog"
-      align-center
-    >
-      <div class="contact-grid">
-        <div class="contact-item" v-for="platform in socialPlatforms" :key="platform.name">
-          <div class="qr-wrapper">
-            <img :src="platform.qrCode" :alt="platform.name" />
-          </div>
-          <div class="platform-info">
-            <i :class="platform.icon" :style="{ color: platform.color }"></i>
-            <span>{{ platform.name }}</span>
-          </div>
-        </div>
-      </div>
-    </el-dialog>
+    <el-dialog v-model="showMockDialog" :title="t('home.mockTitle')" width="min(400px, calc(100vw - 32px))" align-center><p>{{ t('home.mockContent') }}</p><template #footer><el-button @click="showMockDialog = false">{{ t('home.mockDismiss') }}</el-button><el-button type="primary" @click="openGitee">{{ t('home.getSource') }}</el-button></template></el-dialog>
+    <el-dialog v-model="showContactDialog" :title="t('home.contactUs')" width="min(560px, calc(100vw - 32px))" align-center><div class="contact-grid"><figure v-for="platform in socialPlatforms" :key="platform.name"><img :src="platform.qrCode" :alt="t('home.contactQr', { name: platform.name })" loading="lazy" width="144" height="144" /><figcaption>{{ platform.name }}</figcaption></figure></div></el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
-import {
-  Moon,
-  Sunny,
-  Monitor,
-  Lightning,
-  ChatDotRound,
-  User,
-  Upload, // eslint-disable-line
-  Cellphone,
-  Search, // eslint-disable-line
-  Iphone,
-  Platform,
-  Warning,
-  Cpu,
-  ArrowRight,
-  Setting,
-  Lock,
-  DataAnalysis,
-  Tools,
-  Connection
-} from '@element-plus/icons-vue'
+import { Moon, Sunny, ArrowRight, TopRight, Cpu, Check, Connection, Lock, CopyDocument, Upload, Message, Key, ChatDotRound, Box, Tickets, Finished, Plus, Bottom, VideoPlay, VideoPause } from '@element-plus/icons-vue'
 import { isDark, toggleTheme } from '@/utils/theme'
-import LoginDialog from '../../components/common/LoginDialog.vue'
-import LanguageSwitcher from '../../components/common/LanguageSwitcher.vue'
+import LoginDialog from '@/components/common/LoginDialog.vue'
+import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
 import { useUserStore } from '@/stores/user'
 import { isMockEnabled } from '@/config/mock'
 import { exchangeWechatTicket } from '@/api/auth'
 import type { MenuItem } from '@/types'
+import { useScrollStory } from './composables/useScrollStory'
 
+const AgentCoreScene = defineAsyncComponent(() => import('./components/AgentCoreScene.vue'))
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 const { t } = useI18n()
-
-const showLoginDialog = ref(false)
+const pageRoot = ref<HTMLElement>()
+const storyElement = ref<HTMLElement>()
+const { storyProgress, pageProgress, activeChapter, prefersReducedMotion, canReveal, scrollToChapter } = useScrollStory(storyElement, pageRoot)
+const ambientPaused = ref(false)
 const isLoggedIn = computed(() => !!userStore.getToken())
+const showLoginDialog = ref(false)
 const showMockDialog = ref(false)
 const showContactDialog = ref(false)
-
-// Orbit Items Configuration
-const orbitItems = computed(() => [
-  { icon: ChatDotRound, label: t('home.orbitAI') },
-  { icon: Lightning, label: t('home.orbitAgent') },
-  { icon: User, label: t('home.orbitThirdLogin') },
-  { icon: Cellphone, label: t('home.orbitMiniApp') },
-  { icon: Monitor, label: t('home.orbitPC') },
-  { icon: Iphone, label: t('home.orbitIOS') },
-  { icon: Platform, label: t('home.orbitAndroid') }
-])
-
-// Social Platforms
-const socialPlatforms = [
-  {
-    name: '哔哩哔哩',
-    description: '关注我们的B站账号',
-    icon: 'fab fa-bilibili',
-    color: '#00A1D6',
-    qrCode: new URL('@/assets/img/qr-code/bilibili.png', import.meta.url).href
-  },
-  {
-    name: '抖音',
-    description: '关注我们的抖音账号',
-    icon: 'fab fa-tiktok',
-    color: '#FE2C55',
-    qrCode: new URL('@/assets/img/qr-code/dy.png', import.meta.url).href
-  },
-  {
-    name: '小红书',
-    description: '关注我们的小红书账号',
-    icon: 'fas fa-book',
-    color: '#FF2442',
-    qrCode: new URL('@/assets/img/qr-code/xhs.png', import.meta.url).href
-  },
-  {
-    name: '微信',
-    description: '添加我们的微信',
-    icon: 'fab fa-weixin',
-    color: '#07C160',
-    qrCode: new URL('@/assets/img/qr-code/wx.png', import.meta.url).href
-  },
-  {
-    name: 'QQ',
-    description: '添加我们的QQ',
-    icon: 'fab fa-qq',
-    color: '#12B7F5',
-    qrCode: new URL('@/assets/img/qr-code/qq.png', import.meta.url).href
-  },
-  {
-    name: '微信群',
-    description: '加入我们的微信群',
-    icon: 'fas fa-users',
-    color: '#07C160',
-    qrCode: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTUwIiBoZWlnaHQ9IjE1MCIgZmlsbD0iIzA3QzE2MCIvPjx0ZXh0IHg9Ijc1IiB5PSI2NSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE0IiBmaWxsPSJ3aGl0ZSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPuW+ruS/oeS6pDwvdGV4dD48dGV4dCB4PSI3NSIgeT0iODUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj7kuqTmtYE8L3RleHQ+PC9zdmc+'
-  }
+const currentYear = new Date().getFullYear()
+const docsUrl = 'https://doc.iceeboot.yxycompany.com'
+const sourceUrl = 'https://gitee.com/woshinibaba438cnmlgb/zboot-backend-java'
+const techStack = ['Spring Boot', 'Vue 3', 'TypeScript', 'AgentScope', 'MySQL']
+const chapters = [
+  { key: 'foundation', tags: ['OSS', 'LLM', 'SMS', 'Email', 'RBAC'] },
+  { key: 'capabilities', tags: ['Skills', 'Tools', 'MCP', 'E2B'] },
+  { key: 'delivery', tags: ['Agent code', 'Versions', 'Token usage'] },
 ]
+const steps = [1, 2, 3, 4]
+const exampleModes = ['typescript', 'http'] as const
+const exampleMode = ref<(typeof exampleModes)[number]>('typescript')
+const exampleCode = computed(() => exampleMode.value === 'typescript'
+  ? `import { agentConsole } from '@/api/agentConsole'
+
+// ${t('home.codeComment')}
+const result = await agentConsole.invoke(
+  'assistant',
+  '${t('home.codeInput')}',
+)
+
+console.log(result.output)`
+  : `POST /iceeboot/api/v1/agent-console/agents/by-code/assistant/invoke
+Authorization: Bearer <access_token>
+Content-Type: application/json
+
+{
+  "input": "${t('home.codeInput')}"
+}`)
+const demoCapabilities = ['Skills', 'Tools', 'MCP']
+const selectedCapabilities = ref(['Skills', 'Tools'])
+function toggleCapability(capability: string) {
+  selectedCapabilities.value = selectedCapabilities.value.includes(capability)
+    ? selectedCapabilities.value.filter((item) => item !== capability)
+    : [...selectedCapabilities.value, capability]
+}
+const providers = [
+  { name: 'GPT', protocol: 'OpenAI Chat / Responses' },
+  { name: 'Claude', protocol: 'Anthropic' },
+  { name: 'Gemini', protocol: 'Gemini' },
+  { name: 'Qwen', protocol: 'OpenAI compatible' },
+  { name: 'DeepSeek', protocol: 'OpenAI compatible' },
+  { name: 'GLM', protocol: 'OpenAI compatible' },
+  { name: 'Kimi', protocol: 'OpenAI compatible' },
+  { name: 'MiniMax', protocol: 'OpenAI compatible' },
+]
+const selectedProvider = ref(providers[0]!)
+const services = [
+  { key: 'storage', label: 'OSS', icon: Upload },
+  { key: 'model', label: 'LLM', icon: Cpu },
+  { key: 'sms', label: 'SMS', icon: ChatDotRound },
+  { key: 'email', label: 'Email', icon: Message },
+  { key: 'auth', label: 'Auth', icon: Key },
+  { key: 'sandbox', label: 'Sandbox', icon: Box },
+]
+const governance = [
+  { key: 'permission', icon: Lock },
+  { key: 'version', icon: Finished },
+  { key: 'usage', icon: Tickets },
+]
+const socialPlatforms = [
+  { name: 'Bilibili', qrCode: new URL('@/assets/img/qr-code/bilibili.png', import.meta.url).href },
+  { name: 'Douyin', qrCode: new URL('@/assets/img/qr-code/dy.png', import.meta.url).href },
+  { name: 'Xiaohongshu', qrCode: new URL('@/assets/img/qr-code/xhs.png', import.meta.url).href },
+  { name: 'WeChat', qrCode: new URL('@/assets/img/qr-code/wx.png', import.meta.url).href },
+  { name: 'QQ', qrCode: new URL('@/assets/img/qr-code/qq.png', import.meta.url).href },
+]
+async function copyCode() {
+  try { await navigator.clipboard.writeText(exampleCode.value); ElMessage.success(t('home.copySuccess')) }
+  catch { ElMessage.warning(t('home.copyFailed')) }
+}
+function handleExperience() {
+  if (isLoggedIn.value) goToFirstMenu()
+  else showLoginDialog.value = true
+}
+function openGitee() {
+  window.open(sourceUrl, '_blank', 'noopener,noreferrer')
+  showMockDialog.value = false
+}
 
 const normalizeMenuPath = (path: string): string => {
   return path.startsWith('/') ? path : `/${path}`
@@ -365,56 +227,6 @@ const handleLogout = async () => {
   } catch { /* cancelled */ }
 }
 
-const handleMouseMove = (e: MouseEvent) => {
-  const target = e.currentTarget as HTMLElement
-  const rect = target.getBoundingClientRect()
-  const x = e.clientX - rect.left
-  const y = e.clientY - rect.top
-  target.style.setProperty('--mouse-x', `${x}px`)
-  target.style.setProperty('--mouse-y', `${y}px`)
-}
-
-const features = computed(() => [
-  { icon: Setting, title: t('home.featureReadyToUse'), description: t('home.featureReadyToUseDesc'), highlight: true },
-  { icon: ChatDotRound, title: t('home.featureAI'), description: t('home.featureAIDesc'), highlight: true },
-  { icon: User, title: t('home.featureThirdLogin'), description: t('home.featureThirdLoginDesc') },
-  { icon: Upload, title: t('home.featureCloudStorage'), description: t('home.featureCloudStorageDesc') },
-  { icon: Cellphone, title: t('home.featureMultiPlatform'), description: t('home.featureMultiPlatformDesc'), highlight: true },
-  { icon: Search, title: t('home.featureSEO'), description: t('home.featureSEODesc') },
-  { icon: Lock, title: t('home.featurePermission'), description: t('home.featurePermissionDesc') },
-  { icon: DataAnalysis, title: t('home.featureDataViz'), description: t('home.featureDataVizDesc') },
-  { icon: Tools, title: t('home.featureTools'), description: t('home.featureToolsDesc') },
-  { icon: Cpu, title: t('home.featurePerformance'), description: t('home.featurePerformanceDesc') },
-  { icon: Connection, title: t('home.featureAPI'), description: t('home.featureAPIDesc') }
-])
-
-const techStack = [
-  { name: 'Vue 3', logo: 'https://vuejs.org/logo.svg' },
-  { name: 'TypeScript', logo: 'https://www.typescriptlang.org/favicon-32x32.png' },
-  { name: 'Element Plus', logo: 'https://element-plus.org/images/element-plus-logo-small.svg' },
-  { name: 'Vite', logo: 'https://vitejs.dev/logo.svg' },
-  { name: 'Pinia', logo: 'https://pinia.vuejs.org/logo.svg' },
-  { name: 'Vue Router', logo: 'https://router.vuejs.org/logo.svg' }
-]
-
-const handleExperience = () => {
-  window.open('https://gitee.com/woshinibaba438cnmlgb/zboot-backend-java', '_blank')
-}
-
-const openOfficialDocs = () => {
-  window.open('https://doc.iceeboot.yxycompany.com', '_blank')
-}
-
-const openGitee = () => {
-  window.open('https://gitee.com/woshinibaba438cnmlgb/zboot-backend-java', '_blank')
-  showMockDialog.value = false
-}
-
-const checkMockMode = () => {
-  if (isMockEnabled()) {
-    setTimeout(() => { showMockDialog.value = true }, 2000)
-  }
-}
 
 const resolveSingleQueryValue = (value: unknown): string => {
   if (!value) return ''
@@ -454,1381 +266,231 @@ const handleWechatCallback = async () => {
   }
 }
 
+let mockTimer: ReturnType<typeof setTimeout> | undefined
 onMounted(() => {
-  checkMockMode()
-  handleWechatCallback()
+  if (isMockEnabled()) mockTimer = setTimeout(() => { showMockDialog.value = true }, 2000)
+  void handleWechatCallback()
 })
+onBeforeUnmount(() => { if (mockTimer) clearTimeout(mockTimer) })
 </script>
 
 <style scoped lang="scss">
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:wght@400;700&display=swap');
-
-.home-page {
+.launch-site {
+  --launch-bg: #f5f5f7;
+  --launch-surface: #fff;
+  --launch-ink: #1d1d20;
+  --launch-muted: #666b75;
+  --launch-line: #e4e5e9;
+  --launch-blue: #2461df;
+  --launch-soft: #edf2ff;
   min-height: 100vh;
-  background: var(--bg-color);
-  color: var(--text-primary);
-  font-family: 'Syne', system-ui, -apple-system, sans-serif;
-  overflow-x: hidden;
-  position: relative;
-  transition: background-color 0.3s, color 0.3s;
-
-  &::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background:
-      radial-gradient(circle at 20% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 50%),
-      radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.08) 0%, transparent 50%);
-    pointer-events: none;
-    z-index: 0;
-  }
+  background: var(--launch-bg);
+  color: var(--launch-ink);
+  font-family: 'Avenir Next', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  &.is-dark { --launch-bg: #101217; --launch-surface: #191c23; --launch-ink: #f0f2f7; --launch-muted: #a7aeba; --launch-line: #303541; --launch-blue: #8eb4ff; --launch-soft: #252f43; }
+  a { color: inherit; text-decoration: none; }
+  button { font: inherit; cursor: pointer; }
+  a, button { -webkit-tap-highlight-color: transparent; }
+  button:disabled { opacity: .45; cursor: default; }
+  a:focus-visible, button:focus-visible, [tabindex='0']:focus-visible { outline: 3px solid #6eacff; outline-offset: 5px; }
+  .el-icon { flex-shrink: 0; }
 }
-
-// Navbar
-.navbar {
-  position: fixed;
-  top: 0;
-  width: 100%;
-  z-index: 100;
-  backdrop-filter: blur(20px) saturate(180%);
-  background: rgba(255, 255, 255, 0.7);
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-
-  @media (prefers-color-scheme: dark) {
-    background: rgba(15, 23, 42, 0.7);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg,
-      transparent 0%,
-      rgba(59, 130, 246, 0.3) 50%,
-      transparent 100%);
-    opacity: 0;
-    transition: opacity 0.3s;
-  }
-
-  &:hover::after {
-    opacity: 1;
-  }
+.launch-width { width: min(1200px, calc(100% - 80px)); margin-inline: auto; }
+.skip-link { position: fixed; top: 10px; left: 20px; z-index: 200; background: #fff; color: #161b26 !important; padding: 12px 18px; border-radius: 8px; transform: translateY(-200%); &:focus { transform: translateY(0); } }
+.launch-header { position: sticky; top: 0; z-index: 80; background: #080b12e8; color: #f5f7fc; backdrop-filter: blur(18px); border-bottom: 1px solid #ffffff12; }
+.header-inner { display: flex; align-items: center; min-height: 64px; gap: 32px; }
+.brand { display: inline-flex; align-items: center; gap: 9px; font-size: 21px; font-weight: 650; letter-spacing: -1px; flex-shrink: 0; }
+.brand-symbol { width: 29px; height: 29px; display: grid; place-items: center; border-radius: 8px; color: #98c2ff; border: 1px solid #81a9ee66; background: linear-gradient(145deg, #1a355f, #101725); box-shadow: inset 0 1px 1px #b8d6ff33; font-size: 18px; }
+.brand-dot { margin-left: -8px; color: #8cbaff; }
+.header-inner nav { display: flex; align-items: center; justify-content: center; gap: 32px; margin-left: auto; a { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; min-height: 44px; color: #bec4d1; &:hover { color: #fff; } } }
+.header-actions { display: flex; align-items: center; gap: 5px; :deep(.lang-btn) { width: 44px; height: 44px; margin: 0; color: #bdc8de; } }
+.utility-button { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 8px; background: transparent; color: #bdc8de; font-size: 17px; &:hover { background: #ffffff0a; } }
+.nav-cta { min-height: 36px; margin-left: 8px; padding: 0 16px; border: 1px solid #ffffff24; border-radius: 24px; background: #f1f5ff; color: #151e2f; display: inline-flex; gap: 9px; align-items: center; font-size: 12px; font-weight: 600; }
+.reading-progress { position: absolute; inset: auto 0 -1px; height: 2px; background: #73b6ff; transform-origin: left; pointer-events: none; }
+.engine-story { height: 315svh; min-height: 1900px; background: #060910; color: #f6f8ff; }
+.story-sticky { position: sticky; top: 64px; height: calc(100svh - 64px); min-height: 540px; overflow: hidden; background: #060910; isolation: isolate; }
+.story-atmosphere { position: absolute; inset: 0; background: radial-gradient(ellipse at 77% 47%, #17396460 0%, #0a12202a 33%, transparent 65%), linear-gradient(0deg, #080d16, transparent 30%); pointer-events: none; }
+.engine-visual { position: absolute; inset: -1% -8% 3% 33%; z-index: 0; min-width: 0; transition: filter 500ms ease; }
+.story-content { position: relative; display: flex; align-items: center; height: calc(100% - 112px); padding-top: 12px; pointer-events: none; }
+.story-copy { width: 46%; display: grid; grid-template-areas: 'chapter'; position: relative; z-index: 2; }
+.chapter-copy { grid-area: chapter; opacity: 0; transform: translateY(24px); pointer-events: none; transition: opacity 380ms ease, transform 550ms cubic-bezier(.2,.7,.3,1); &.active { opacity: 1; transform: none; pointer-events: auto; } }
+.chapter-eyebrow { display: flex; align-items: center; gap: 9px; font-size: 11px; font-weight: 500; letter-spacing: .1em; color: #9ec6ff; margin-bottom: 24px; span { width: 5px; height: 5px; border-radius: 50%; background: #8cc9ff; box-shadow: 0 0 14px #77bcff99; } }
+.chapter-copy h1, .chapter-copy h2 { font-size: clamp(46px, 5.2vw, 74px); letter-spacing: -.055em; line-height: 1.2; font-weight: 650; text-wrap: balance; span { display: block; color: #a9cbff; } }
+.chapter-copy h2 { font-size: clamp(42px, 4.5vw, 64px); }
+.chapter-description { color: #aeb9cc; font-size: 15px; line-height: 1.95; margin-top: 28px; max-width: 415px; text-wrap: pretty; }
+.chapter-actions { margin-top: 30px; display: flex; align-items: center; gap: 25px; }
+.launch-button { display: inline-flex; align-items: center; justify-content: center; gap: 16px; min-height: 48px; border: 0; border-radius: 28px; padding: 0 25px; font-size: 14px; font-weight: 600; transition: transform 180ms ease, background 180ms ease; &:hover { transform: translateY(-2px); } &.primary { background: #3677ee; color: #fff; box-shadow: 0 4px 24px #2860d21f; &:hover { background: #4786fb; } } }
+.chapter-link { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-size: 13px; color: #d8e5fb !important; }
+.chapter-tags { display: flex; flex-wrap: wrap; align-items: center; gap: 9px; margin-top: 25px; span { color: #8392aa; font-size: 10px; font-family: 'SFMono-Regular', Consolas, monospace; &:not(:last-child)::after { content: '/'; color: #465268; margin-left: 9px; } } }
+.scene-annotation { position: absolute; right: 0; bottom: 20px; display: flex; align-items: center; gap: 8px; font-size: 11px; color: #b3c8e9; pointer-events: none; }
+.annotation-line { width: 32px; height: 1px; background: #6499de; }
+.annotation-spec { font-size: 8px; letter-spacing: .1em; color: #61738f; margin-left: 8px; }
+.story-controls { position: absolute; inset: auto 0 28px; display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; }
+.chapter-index { display: flex; gap: 23px; button { display: flex; position: relative; align-items: center; gap: 9px; min-height: 48px; width: 125px; padding: 10px 0; border: 0; border-bottom: 1px solid #ffffff24; background: none; color: #7d8ca4; text-align: left; font-size: 12px; &[aria-current='step'] { color: #e4eeff; } } }
+.chapter-number { font-size: 9px; font-family: 'SFMono-Regular', Consolas, monospace; }
+.chapter-progress { position: absolute; height: 1px; bottom: -1px; inset-inline: 0; background: #8dbaff; transform-origin: left; }
+.motion-controls { display: flex; align-items: center; gap: 20px; }
+.scroll-cue { display: flex; align-items: center; gap: 10px; color: #8392aa; font-size: 10px; .el-icon { animation: scroll-nudge 2s ease-in-out infinite; } }
+.motion-button { display: grid; place-items: center; border: 1px solid #ffffff22; background: #ffffff05; border-radius: 50%; width: 44px; height: 44px; color: #c2d2e9; font-size: 17px; }
+@keyframes scroll-nudge { 50% { transform: translateY(4px); } }
+.capabilities-section { padding-block: 112px 104px; scroll-margin-top: 96px; }
+.section-intro { max-width: 850px; margin-bottom: 54px; }
+.eyebrow { color: var(--launch-blue); font-size: 10px; font-weight: 600; letter-spacing: .15em; margin-bottom: 18px; }
+.section-intro h2, .integration-copy h2 { font-size: clamp(34px, 4vw, 52px); line-height: 1.35; font-weight: 650; letter-spacing: -.045em; text-wrap: balance; span { display: block; color: var(--launch-muted); } }
+.section-intro > p:last-child { color: var(--launch-muted); font-size: 16px; line-height: 1.9; margin-top: 23px; max-width: 600px; }
+.capability-bento { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 24px; }
+.product-card { overflow: hidden; border-radius: 26px; background: var(--launch-surface); border: 1px solid var(--launch-line); padding: 38px; position: relative; }
+.product-kicker { display: block; color: var(--launch-muted); font-size: 9px; letter-spacing: .1em; margin-bottom: 16px; }
+.product-copy h3 { font-size: 29px; line-height: 1.35; letter-spacing: -.04em; font-weight: 650; }
+.product-copy p { color: var(--launch-muted); font-size: 13px; line-height: 1.9; margin-top: 15px; max-width: 460px; }
+.agent-product { grid-column: span 7; background: linear-gradient(160deg, var(--launch-surface), var(--launch-soft)); }
+.services-product { grid-column: span 5; }
+.agent-composer { max-width: 440px; margin: 32px auto 0; padding: 22px; border: 1px solid var(--launch-line); background: var(--launch-surface); border-radius: 16px; box-shadow: 0 16px 30px -24px #132b5c77; }
+.composer-top { display: flex; align-items: center; gap: 10px; > div { display: flex; flex-direction: column; gap: 3px; } strong { font-size: 16px; font-weight: 600; } > div > span { color: var(--launch-muted); font-size: 10px; } }
+.composer-avatar { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 10px; background: var(--launch-soft); color: var(--launch-blue); font-size: 20px; }
+.version-pill { margin-left: auto; font-size: 10px; color: var(--launch-blue); background: var(--launch-soft); border-radius: 4px; padding: 4px 8px; }
+.composer-lines { display: flex; justify-content: space-between; font-size: 11px; border-block: 1px solid var(--launch-line); padding-block: 14px; margin-block: 18px 14px; color: var(--launch-muted); strong { color: var(--launch-ink); font-weight: 500; } }
+.composer-capabilities { display: flex; gap: 8px; flex-wrap: wrap; button { display: flex; align-items: center; gap: 5px; min-height: 38px; padding: 0 11px; background: none; border: 1px solid var(--launch-line); border-radius: 7px; color: var(--launch-muted); font-size: 11px; &.selected { border-color: #9ab8f0; color: var(--launch-blue); background: var(--launch-soft); } } }
+.composer-result { border-top: 1px dashed var(--launch-line); padding-top: 15px; margin-top: 15px; display: flex; flex-direction: column; gap: 7px; code { color: var(--launch-blue); font-size: 11px; } }
+.code-label { color: var(--launch-muted); font-size: 10px; }
+.service-matrix { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px 12px; margin-top: 44px; > div { display: flex; flex-direction: column; align-items: center; gap: 8px; } strong { font-size: 12px; font-weight: 600; } > div > span:last-child { color: var(--launch-muted); font-size: 10px; } }
+.service-icon { display: grid; place-items: center; width: 49px; height: 49px; color: var(--launch-blue); background: var(--launch-soft); border: 1px solid var(--launch-line); border-radius: 14px; font-size: 23px; }
+.model-product { grid-column: span 6; }
+.provider-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 27px; button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; min-height: 80px; border: 1px solid var(--launch-line); border-radius: 12px; background: none; color: var(--launch-muted); font-size: 10px; transition: background 180ms, border-color 180ms; &.selected { border-color: var(--launch-blue); background: var(--launch-soft); color: var(--launch-blue); } } }
+.provider-monogram { font-size: 22px; font-weight: 600; line-height: 1; color: var(--launch-ink); }
+.provider-detail { display: flex; align-items: center; gap: 12px; border-top: 1px solid var(--launch-line); margin-top: 20px; padding-top: 17px; font-size: 11px; > span:first-child { font-weight: 600; } > span:nth-child(2) { color: var(--launch-muted); margin-left: auto; } .el-icon { color: var(--launch-blue); } }
+.sandbox-product { grid-column: span 6; background: #101a2c; border-color: #273b58; color: #f1f5ff; .product-kicker { color: #8aabd8; } .product-copy p { color: #a7bbd9; } }
+.sandbox-diagram { width: 220px; height: 172px; margin: 10px auto 5px; position: relative; perspective: 700px; }
+.sandbox-layer { position: absolute; inset: 25px 20px; border-radius: 18px; transform: rotateX(49deg) rotateZ(-31deg); border: 1px solid #92bcff70; }
+.layer-back { background: #315a9226; transform: translateY(27px) rotateX(49deg) rotateZ(-31deg); box-shadow: 0 8px 30px #1c4fa033; }
+.layer-front { background: linear-gradient(145deg, #456b9860, #1a2e4b); box-shadow: inset 0 1px 4px #9fc6ff50, 0 10px 35px #001b42b3; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; .el-icon { color: #b4d6ff; font-size: 24px; } strong { font-size: 24px; line-height: 1; letter-spacing: 1px; } span { color: #94b8e8; font-size: 8px; letter-spacing: .15em; } }
+.sandbox-command { display: flex; align-items: center; gap: 10px; font-size: 11px; border: 1px solid #7ca5db30; border-radius: 8px; padding: 13px 14px; background: #07101f; color: #b9d3f5; > span:first-child { color: #6ea5f7; } code { overflow-wrap: anywhere; min-width: 0; } }
+.command-tag { margin-left: auto; color: #7d9abd; font-size: 9px; white-space: nowrap; }
+.governance-product { grid-column: span 12; display: grid; grid-template-columns: 1fr 1.2fr; align-items: center; gap: 45px; }
+.governance-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 25px; > div { display: flex; flex-direction: column; gap: 12px; border-left: 1px solid var(--launch-line); padding-left: 20px; } .el-icon { font-size: 22px; color: var(--launch-blue); } strong { font-size: 13px; font-weight: 600; } span { font-size: 11px; line-height: 1.8; color: var(--launch-muted); } }
+.integration-section { background: var(--launch-surface); border-block: 1px solid var(--launch-line); padding-block: 100px; scroll-margin-top: 64px; }
+.integration-layout { display: grid; grid-template-columns: .85fr 1.15fr; align-items: center; gap: 70px; }
+.integration-copy > p:not(.eyebrow) { color: var(--launch-muted); font-size: 14px; line-height: 1.9; margin-top: 25px; max-width: 360px; }
+.integration-copy ul { list-style: none; display: flex; flex-direction: column; gap: 13px; margin-top: 25px; li { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--launch-muted); .el-icon { color: var(--launch-blue); } } }
+.text-link { display: inline-flex; align-items: center; gap: 6px; color: var(--launch-blue) !important; font-size: 13px; margin-top: 30px; min-height: 44px; }
+.code-window { background: #111a2a; border: 1px solid #34425b; border-radius: 16px; overflow: hidden; box-shadow: 0 24px 48px -25px #0b173d70; }
+.code-toolbar { display: flex; align-items: center; gap: 15px; padding: 0 18px; border-bottom: 1px solid #ffffff10; }
+.window-dots { display: flex; gap: 5px; margin-right: 5px; i { width: 6px; height: 6px; background: #47556d; border-radius: 50%; } }
+.code-switch { display: flex; gap: 16px; button { border: 0; border-bottom: 2px solid transparent; background: none; color: #9dadc7; min-height: 48px; padding: 0 1px; font-size: 11px; &.active { color: #eff6ff; border-bottom-color: #85b9ff; } } }
+.copy-button { display: flex; align-items: center; gap: 5px; margin-left: auto; min-height: 44px; border: 0; background: none; color: #b7c9e4; font-size: 11px; }
+.code-content { padding: 26px 20px; min-height: 290px; pre { margin: 0; } code { font-family: 'SFMono-Regular', Consolas, monospace; font-size: 12px; line-height: 2.15; color: #dce9ff; } }
+.code-line { display: grid; grid-template-columns: 30px minmax(0, 1fr); white-space: pre-wrap; overflow-wrap: anywhere; }
+.line-number { color: #6d819f; user-select: none; font-size: 10px; }
+.code-comment { color: #8dabc9; }
+.code-footnote { display: flex; align-items: center; gap: 7px; padding: 15px 18px; border-top: 1px solid #ffffff10; color: #95abc9; font-size: 10px; span { margin-left: auto; font-size: 9px; } }
+.getting-started { padding-block: 100px 75px; }
+.steps { list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 32px; li { border-top: 1px solid var(--launch-line); padding-top: 24px; } h3 { font-size: 17px; font-weight: 600; margin-block: 20px 12px; } p { color: var(--launch-muted); font-size: 12px; line-height: 1.9; } }
+.step-number { font-size: 12px; color: var(--launch-blue); font-family: 'SFMono-Regular', Consolas, monospace; }
+.stack-strip { display: flex; align-items: center; flex-wrap: wrap; justify-content: space-between; gap: 20px; padding-top: 45px; margin-top: 60px; border-top: 1px solid var(--launch-line); > span { font-size: 11px; color: var(--launch-muted); } strong { font-size: 13px; font-weight: 600; } }
+.finale-section { background: #070b14; color: #f2f5fd; overflow: hidden; position: relative; padding-block: 105px; }
+.finale-glow { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 100%, #15488360, transparent 60%); pointer-events: none; }
+.finale-content { position: relative; text-align: center; .eyebrow { margin-top: 24px; color: #89b9ff; } h2 { font-size: clamp(38px, 5vw, 62px); line-height: 1.3; letter-spacing: -.05em; font-weight: 600; span { display: block; color: #9ebee9; } } > p:not(.eyebrow) { color: #9aaecb; font-size: 14px; line-height: 1.8; margin-top: 23px; } .launch-button { margin-top: 32px; } }
+.finale-mark { display: inline-grid; place-items: center; width: 65px; height: 65px; border: 1px solid #89b9ff66; border-radius: 18px; font-size: 35px; color: #a8d2ff; background: linear-gradient(135deg, #213a5c, #101a2b); box-shadow: inset 0 1px 3px #c5e0ff66, 0 14px 45px #00387950; transform: perspective(500px) rotateX(18deg) rotateY(-20deg); }
+.launch-footer { background: #070b14; color: #bdc7d8; border-top: 1px solid #ffffff12; padding-block: 32px 20px; }
+.footer-main { display: flex; align-items: center; gap: 24px; > p { font-size: 11px; color: #8c9cb4; } }
+.footer-links { display: flex; gap: 22px; margin-left: auto; a, button { min-height: 44px; display: inline-flex; gap: 4px; align-items: center; border: 0; background: none; color: #9cabc2; font-size: 11px; } }
+.footer-bottom { display: flex; justify-content: space-between; gap: 14px; border-top: 1px solid #ffffff10; margin-top: 24px; padding-top: 20px; color: #71839e; font-size: 10px; }
+.contact-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px 16px; figure { margin: 0; text-align: center; } img { width: 100%; max-width: 144px; height: auto; aspect-ratio: 1; object-fit: contain; } figcaption { font-size: 12px; margin-top: 8px; } }
+.can-reveal [data-reveal] { opacity: 0; transform: translateY(36px) scale(.985); transition: opacity 700ms ease, transform 900ms cubic-bezier(.2,.7,.3,1); &.is-visible { opacity: 1; transform: none; } }
+@media (min-width: 1600px) { .launch-width { width: min(1360px, calc(100% - 120px)); } .chapter-copy h1 { font-size: 84px; } .story-copy { width: 47%; } .chapter-description { font-size: 16px; } }
+@media (max-width: 1100px) {
+  .launch-width { width: calc(100% - 56px); }
+  .chapter-copy h1 { font-size: 58px; }
+  .chapter-copy h2 { font-size: 50px; }
+  .engine-visual { left: 30%; right: -15%; }
+  .chapter-description { font-size: 14px; }
+  .scene-annotation .annotation-spec { display: none; }
+  .product-card { padding: 30px; }
+  .product-copy h3 { font-size: 26px; }
+  .integration-layout { gap: 40px; }
+  .governance-product { grid-template-columns: 1fr; gap: 30px; }
+  .governance-grid > div { padding-left: 0; border-left: 0; border-top: 1px solid var(--launch-line); padding-top: 18px; }
 }
-
-.navbar-container {
-  max-width: 1280px;
-  margin: 0 auto;
-  height: 72px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0 32px;
-  position: relative;
+@media (max-width: 760px) {
+  .launch-width { width: calc(100% - 40px); }
+  .header-inner { gap: 8px; }
+  .header-inner nav { display: none; }
+  .header-actions { margin-left: auto; gap: 0; }
+  .nav-cta { padding-inline: 13px; margin-left: 5px; }
+  .brand { font-size: 19px; gap: 7px; }
+  .brand-symbol { width: 27px; height: 27px; }
+  .engine-story { height: 290svh; min-height: 1700px; }
+  .story-sticky { min-height: 620px; }
+  .story-content { align-items: flex-start; padding-top: 36px; height: calc(100% - 94px); }
+  .story-copy { width: 100%; }
+  .chapter-copy h1 { font-size: clamp(41px, 7vw, 56px); }
+  .chapter-copy h2 { font-size: 40px; }
+  .chapter-eyebrow { font-size: 9px; margin-bottom: 17px; }
+  .chapter-description { margin-top: 18px; max-width: 440px; font-size: 13px; line-height: 1.85; }
+  .chapter-actions { gap: 22px; margin-top: 20px; }
+  .launch-button { min-height: 44px; padding-inline: 21px; font-size: 13px; }
+  .chapter-tags { margin-top: 17px; }
+  .engine-visual { top: 36%; left: -7%; right: -7%; bottom: 48px; }
+  .scene-annotation { bottom: -2px; left: 0; right: auto; font-size: 9px; }
+  .scene-annotation .annotation-line { width: 18px; }
+  .story-controls { bottom: 17px; gap: 12px; align-items: flex-end; }
+  .chapter-index { gap: 12px; flex: 1; button { width: auto; flex: 1; gap: 6px; font-size: 10px; } }
+  .motion-controls { gap: 0; }
+  .scroll-cue { display: none; }
+  .motion-button { width: 40px; height: 40px; }
+  .capabilities-section { padding-block: 70px; }
+  .section-intro { margin-bottom: 34px; }
+  .section-intro h2, .integration-copy h2 { font-size: 34px; }
+  .section-intro > p:last-child { font-size: 14px; margin-top: 20px; }
+  .capability-bento { gap: 18px; }
+  .product-card { grid-column: span 12; padding: 28px; border-radius: 22px; }
+  .services-product .product-copy p { max-width: 100%; }
+  .service-matrix { gap: 24px; margin-top: 30px; }
+  .service-matrix strong { font-size: 13px; }
+  .agent-composer { margin-top: 25px; padding: 18px; }
+  .composer-capabilities button { min-height: 44px; }
+  .sandbox-diagram { margin-block: 20px; }
+  .provider-grid button { min-height: 82px; }
+  .governance-grid { gap: 16px; > div { gap: 10px; } strong { font-size: 12px; } span { font-size: 10px; } }
+  .integration-section { padding-block: 65px; }
+  .integration-layout { grid-template-columns: 1fr; gap: 35px; }
+  .integration-copy > p:not(.eyebrow) { max-width: none; }
+  .code-content { padding: 20px 14px; code { font-size: 11px; } }
+  .code-footnote span { display: none; }
+  .getting-started { padding-block: 65px; }
+  .steps { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 28px 22px; }
+  .steps h3 { font-size: 16px; }
+  .stack-strip { gap: 18px 25px; padding-top: 30px; margin-top: 40px; > span { width: 100%; } }
+  .finale-section { padding-block: 75px; }
+  .finale-content > p:not(.eyebrow) { max-width: 300px; margin-inline: auto; }
+  .footer-main { flex-wrap: wrap; gap: 15px; > p { width: calc(100% - 150px); font-size: 10px; line-height: 1.7; } }
+  .footer-links { width: 100%; margin: 0; gap: 25px; flex-wrap: wrap; }
+  .footer-bottom { font-size: 9px; }
 }
-
-.navbar-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-
-  &:hover {
-    transform: translateY(-2px);
-  }
-
-  .logo {
-    height: 32px;
-    width: 32px;
-    filter: drop-shadow(0 4px 12px rgba(59, 130, 246, 0.3));
-    transition: filter 0.3s;
-
-    &:hover {
-      filter: drop-shadow(0 6px 16px rgba(59, 130, 246, 0.5));
-    }
-  }
-
-  .brand-text {
-    font-size: 25px;
-    font-weight: 600;
-    letter-spacing: -0.5px;
-    background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
+@media (max-width: 400px) {
+  .launch-width { width: calc(100% - 32px); }
+  .chapter-copy h1 { font-size: 40px; }
+  .chapter-copy h2 { font-size: 36px; }
+  .chapter-description { font-size: 12px; max-width: 330px; }
+  .product-card { padding: 24px; }
+  .product-copy h3 { font-size: 25px; }
+  .provider-grid { gap: 6px; button { font-size: 9px; } }
+  .provider-detail { font-size: 10px; }
+  .contact-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-
-.navbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-
-  .theme-btn {
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-
-    &:hover {
-      transform: rotate(180deg) scale(1.1);
-    }
-  }
-
-  .nav-btn {
-    font-weight: 600;
-    border-radius: 12px;
-    padding: 10px 24px;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    position: relative;
-    overflow: hidden;
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      width: 0;
-      height: 0;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.3);
-      transform: translate(-50%, -50%);
-      transition: width 0.6s, height 0.6s;
-    }
-
-    &:hover::before {
-      width: 300px;
-      height: 300px;
-    }
-
-    &.primary {
-      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-      border: none;
-      color: white;
-      box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
-
-      &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
-      }
-
-      &:active {
-        transform: translateY(0);
-      }
-    }
-
-    &.logout {
-      &:hover {
-        color: #ef4444;
-      }
-    }
-  }
-
-  @media (max-width: 768px) {
-    gap: 8px;
-
-    .nav-btn {
-      padding: 8px 16px;
-      font-size: 14px;
-    }
-  }
-
-  @media (max-width: 480px) {
-    gap: 6px;
-
-    .brand-text {
-      display: none;
-    }
-
-    .nav-btn {
-      padding: 6px 12px;
-      font-size: 13px;
-    }
-  }
+.reduce-motion {
+  .engine-story { height: auto; min-height: 0; }
+  .story-sticky { position: relative; top: 0; height: auto; min-height: 0; overflow: hidden; }
+  .story-content { display: block; height: auto; padding-block: 380px 50px; }
+  .engine-visual { inset: 0 0 auto; height: 360px; }
+  .story-copy { display: flex; width: 100%; flex-direction: column; gap: 60px; max-width: 700px; }
+  .chapter-copy { opacity: 1; transform: none; pointer-events: auto; }
+  .chapter-copy h1, .chapter-copy h2 { font-size: clamp(36px, 5vw, 60px); }
+  .scene-annotation, .story-controls { display: none; }
 }
-
-// Hero Section
-.hero-section {
-  position: relative;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  padding-top: 72px;
-  overflow: hidden;
-
-  @media (max-width: 480px) {
-    min-height: auto;
-    align-items: flex-start;
-    padding-bottom: 56px;
-  }
-}
-
-.hero-background {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-
-  .glow-orb {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(120px);
-    opacity: 0.3;
-    animation: float 20s ease-in-out infinite;
-
-    &.orb-1 {
-      width: 600px;
-      height: 600px;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      top: -150px;
-      left: -150px;
-      animation-delay: 0s;
-    }
-
-    &.orb-2 {
-      width: 500px;
-      height: 500px;
-      background: linear-gradient(135deg, #ec4899, #f59e0b);
-      bottom: -100px;
-      right: -100px;
-      animation-delay: -10s;
-    }
-  }
-
-  .grid-overlay {
-    position: absolute;
-    inset: 0;
-    background-image:
-      linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
-    background-size: 60px 60px;
-    mask-image: radial-gradient(circle at center, black 30%, transparent 70%);
-    animation: grid-flow 20s linear infinite;
-  }
-}
-
-.hero-container {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 32px;
-  width: 100%;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 60px;
-  position: relative;
-  z-index: 1;
-  align-items: center;
-
-  @media (max-width: 1024px) {
-    grid-template-columns: 1fr;
-    text-align: center;
-    gap: 60px;
-    padding: 0 24px;
-  }
-
-  @media (max-width: 480px) {
-    padding: 0 16px;
-    gap: 28px;
-  }
-}
-
-.hero-content {
-  animation: fade-in-up 1s ease-out;
-
-  @media (max-width: 1024px) {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-
-  .hero-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 20px;
-    background: rgba(59, 130, 246, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(59, 130, 246, 0.2);
-    border-radius: 100px;
-    font-size: 13px;
-    font-weight: 600;
-    color: #3b82f6;
-    margin-bottom: 32px;
-    letter-spacing: 0.5px;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-
-    @media (max-width: 480px) {
-      padding: 7px 14px;
-      margin-bottom: 18px;
-      font-size: 12px;
-      gap: 8px;
-    }
-
-    &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
-    }
-
-    .pulse-dot {
-      width: 8px;
-      height: 8px;
-      background: #3b82f6;
-      border-radius: 50%;
-      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-      animation: pulse-ring 2s cubic-bezier(0.455, 0.03, 0.515, 0.955) infinite;
-    }
-  }
-
-  .hero-title {
-    font-size: 56px;
-    line-height: 1.2;
-    font-weight: 800;
-    margin-bottom: 28px;
-    letter-spacing: -2px;
-    color: var(--text-primary);
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-
-    @media (min-width: 1025px) {
-      white-space: nowrap;
-    }
-
-    .gradient-text {
-      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      animation: gradient-shift 8s ease infinite;
-      background-size: 200% 200%;
-    }
-
-    @media (max-width: 768px) {
-      font-size: 36px;
-      white-space: normal;
-    }
-
-    @media (max-width: 480px) {
-      font-size: clamp(28px, 7.4vw, 34px);
-      line-height: 1.18;
-      margin-bottom: 16px;
-      letter-spacing: -1.4px;
-      white-space: normal;
-    }
-  }
-
-  .hero-description {
-    font-size: 17px;
-    line-height: 1.7;
-    color: var(--text-secondary);
-    margin-bottom: 48px;
-    max-width: 560px;
-    font-weight: 400;
-
-    @media (max-width: 1024px) {
-      margin-left: auto;
-      margin-right: auto;
-      max-width: 640px;
-    }
-
-    @media (max-width: 480px) {
-      font-size: 14px;
-      line-height: 1.78;
-      margin-bottom: 26px;
-      max-width: 36ch;
-      letter-spacing: 0;
-    }
-  }
-}
-
-.hero-actions {
-  display: flex;
-  gap: 16px;
-  margin-bottom: 56px;
-
-  @media (max-width: 1024px) {
-    justify-content: center;
-  }
-
-  @media (max-width: 480px) {
-    flex-direction: column;
-    width: 100%;
-    max-width: 340px;
-    margin-bottom: 36px;
-    gap: 12px;
-  }
-
-  .cta-btn {
-    border-radius: 14px;
-    font-weight: 700;
-    padding: 16px 32px;
-    font-size: 15px;
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-    position: relative;
-    overflow: hidden;
-
-    @media (max-width: 480px) {
-      width: 100%;
-      padding: 14px 18px;
-      font-size: 14px;
-      border-radius: 12px;
-    }
-
-    &::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: -100%;
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-      transition: left 0.5s;
-    }
-
-    &:hover::before {
-      left: 100%;
-    }
-
-    &.primary {
-      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-      border: none;
-      box-shadow: 0 8px 32px rgba(59, 130, 246, 0.4);
-      color: white;
-
-      &:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 16px 48px rgba(59, 130, 246, 0.5);
-      }
-
-      &:active {
-        transform: translateY(-2px);
-      }
-    }
-
-    &.secondary {
-      background: rgba(59, 130, 246, 0.08);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(59, 130, 246, 0.2);
-      color: var(--text-primary);
-
-      &:hover {
-        background: rgba(59, 130, 246, 0.15);
-        border-color: rgba(59, 130, 246, 0.4);
-        transform: translateY(-2px);
-      }
-    }
-  }
-}
-
-.hero-stats {
-    display: flex;
-    align-items: center;
-    gap: 32px;
-    padding-top: 40px;
-    border-top: 1px solid rgba(59, 130, 246, 0.15);
-    flex-wrap: wrap;
-
-    @media (max-width: 1024px) {
-      justify-content: center;
-    }
-
-    @media (max-width: 480px) {
-      width: 100%;
-      gap: 14px;
-      padding-top: 22px;
-      justify-content: space-between;
-    }
-
-  .stat-item {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    flex: 1 1 auto;
-    min-width: 0;
-
-    @media (max-width: 480px) {
-      align-items: center;
-      gap: 4px;
-    }
-
-    &:hover {
-      transform: translateY(-4px);
-    }
-
-    .stat-value {
-      font-size: 28px;
-      font-weight: 600;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      letter-spacing: -0.5px;
-
-      @media (max-width: 480px) {
-        font-size: 22px;
-      }
-    }
-
-    .stat-label {
-    font-size: 13px;
-    color: var(--text-secondary);
-    font-weight: 500;
-
-    @media (max-width: 480px) {
-      font-size: 12px;
-      text-align: center;
-    }
-  }
-}
-
-.stat-divider {
-  width: 1px;
-  height: 40px;
-  background: linear-gradient(to bottom, transparent, rgba(59, 130, 246, 0.3), transparent);
-
-  @media (max-width: 480px) {
-    display: none;
-  }
-}
-}
-
-// Common Section Header
-.section-header {
-  text-align: center;
-  margin-bottom: 80px;
-  animation: fade-in-up 1s ease-out;
-
-  .section-title {
-    font-size: 42px;
-    font-weight: 800;
-    margin-bottom: 20px;
-    letter-spacing: -1.2px;
-    background: linear-gradient(135deg, var(--text-primary) 0%, var(--text-secondary) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-
-    @media (max-width: 768px) {
-      font-size: 32px;
-    }
-  }
-
-  .section-subtitle {
-    color: var(--text-secondary);
-    font-size: 16px;
-    font-weight: 400;
-    max-width: 600px;
-    margin: 0 auto;
-  }
-}
-
-// Orbit Animation System
-.orbit-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 600px;
-  perspective: 1200px;
-  animation: fade-in 1.2s ease-out 0.3s both;
-
-  @media (max-width: 1024px) {
-    height: 500px;
-  }
-
-  @media (max-width: 768px) {
-    height: 440px;
-  }
-
-  @media (max-width: 480px) {
-    height: 360px;
-  }
-}
-
-.orbit-system {
-  --orbit-size: 500px;
-  --ring-1-size: 250px;
-  --ring-2-size: 380px;
-  --ring-3-size: 500px;
-  --orbit-radius: 190px;
-  --core-size: 160px;
-
-  position: relative;
-  width: var(--orbit-size);
-  height: var(--orbit-size);
-  transform-style: preserve-3d;
-  animation: gentle-float 6s ease-in-out infinite;
-
-  @media (max-width: 768px) {
-    --orbit-size: 420px;
-    --ring-1-size: 210px;
-    --ring-2-size: 320px;
-    --ring-3-size: 420px;
-    --orbit-radius: 160px;
-    --core-size: 140px;
-  }
-
-  @media (max-width: 480px) {
-    --orbit-size: 320px;
-    --ring-1-size: 160px;
-    --ring-2-size: 240px;
-    --ring-3-size: 320px;
-    --orbit-radius: 120px;
-    --core-size: 118px;
-  }
-}
-
-.core-wrapper {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: var(--core-size);
-  height: var(--core-size);
-  z-index: 10;
-  animation: core-pulse 4s ease-in-out infinite;
-
-  .core-glow {
-    position: absolute;
-    inset: -30px;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.4), transparent 70%);
-    filter: blur(30px);
-    animation: pulse-glow 4s infinite alternate;
-  }
-
-  .core-content {
-    position: relative;
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
-    backdrop-filter: blur(20px) saturate(180%);
-    border: 2px solid rgba(59, 130, 246, 0.3);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    box-shadow:
-      0 0 60px rgba(59, 130, 246, 0.3),
-      inset 0 0 40px rgba(59, 130, 246, 0.1);
-    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-
-    &:hover {
-      transform: scale(1.05);
-      border-color: rgba(59, 130, 246, 0.6);
-      box-shadow:
-        0 0 80px rgba(59, 130, 246, 0.5),
-        inset 0 0 60px rgba(59, 130, 246, 0.2);
-    }
-
-    .core-icon {
-      font-size: 40px;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      margin-bottom: 8px;
-      animation: icon-float 3s ease-in-out infinite;
-
-      @media (max-width: 480px) {
-        font-size: 32px;
-      }
-    }
-
-    .core-title {
-      font-weight: 800;
-      font-size: 20px;
-      letter-spacing: 1px;
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-
-      @media (max-width: 480px) {
-        font-size: 16px;
-        letter-spacing: 0.6px;
-      }
-    }
-
-    .core-subtitle {
-      font-size: 10px;
-      color: var(--text-secondary);
-      margin-top: 6px;
-      font-family: 'Space Mono', monospace;
-      letter-spacing: 0.5px;
-
-      @media (max-width: 480px) {
-        display: none;
-      }
-    }
-  }
-}
-
-.orbit-ring {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  border: 1px solid rgba(59, 130, 246, 0.15);
-  transition: all 0.3s;
-
-  &.ring-1 {
-    width: var(--ring-1-size);
-    height: var(--ring-1-size);
-    opacity: 0.6;
-    border-width: 2px;
-    border-color: rgba(59, 130, 246, 0.2);
-  }
-
-  &.ring-2 {
-    width: var(--ring-2-size);
-    height: var(--ring-2-size);
-    border-style: dashed;
-    opacity: 0.4;
-    animation: ring-pulse 3s ease-in-out infinite;
-  }
-
-  &.ring-3 {
-    width: var(--ring-3-size);
-    height: var(--ring-3-size);
-    opacity: 0.3;
-    border-width: 1px;
-  }
-}
-
-.orbit-rotator {
-  position: absolute;
-  inset: 0;
-  animation: rotate 40s linear infinite;
-}
-
-.orbit-item-wrapper {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 0;
-  height: 0;
-  transform: rotate(var(--angle)) translate(var(--orbit-radius));
-
-  .orbit-item {
-    animation: counter-rotate 40s linear infinite;
-
-    .orbit-content-fix {
-      transform: rotate(calc(var(--angle) * -1));
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-      width: 100px;
-
-      @media (max-width: 480px) {
-        gap: 8px;
-        width: 84px;
-      }
-    }
-
-    .item-icon {
-      width: 56px;
-      height: 56px;
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
-      backdrop-filter: blur(10px);
-      border: 2px solid rgba(59, 130, 246, 0.2);
-      border-radius: 16px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 26px;
-      color: #3b82f6;
-      box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
-      transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-
-      @media (max-width: 480px) {
-        width: 44px;
-        height: 44px;
-        border-radius: 14px;
-        font-size: 20px;
-      }
-    }
-
-    .item-label {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text-secondary);
-      text-align: center;
-      white-space: nowrap;
-      transition: all 0.3s;
-
-      @media (max-width: 480px) {
-        font-size: 12px;
-      }
-    }
-
-    &:hover .item-icon {
-      transform: scale(1.15) rotate(-5deg);
-      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-      color: white;
-      border-color: transparent;
-      box-shadow: 0 12px 40px rgba(59, 130, 246, 0.4);
-    }
-
-    &:hover .item-label {
-      color: #3b82f6;
-      transform: translateY(-2px);
-    }
-  }
-}
-
-// Features Section
-.features-section {
-  padding: 120px 0;
-  background: linear-gradient(to bottom, var(--bg-color), var(--bg-surface));
-  position: relative;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg,
-      transparent 0%,
-      rgba(59, 130, 246, 0.3) 50%,
-      transparent 100%);
-  }
-
-  .features-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 24px;
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 0 32px;
-
-    @media (max-width: 480px) {
-      grid-template-columns: 1fr;
-      padding: 0 16px;
-      gap: 16px;
-    }
-
-    .feature-card {
-      background: rgba(255, 255, 255, 0.5);
-      backdrop-filter: blur(20px) saturate(180%);
-      border: 1px solid rgba(59, 130, 246, 0.1);
-      padding: 40px 32px;
-      border-radius: 24px;
-      transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-      position: relative;
-      overflow: hidden;
-      animation: fade-in-up 0.8s ease-out both;
-      animation-delay: var(--delay);
-
-      @media (prefers-color-scheme: dark) {
-        background: rgba(15, 23, 42, 0.5);
-      }
-
-      &::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: radial-gradient(600px circle at var(--mouse-x) var(--mouse-y),
-          rgba(59, 130, 246, 0.1),
-          transparent 40%);
-        opacity: 0;
-        transition: opacity 0.5s;
-        pointer-events: none;
-      }
-
-      &::after {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, #3b82f6, #8b5cf6, #ec4899);
-        transform: scaleX(0);
-        transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-      }
-
-      &:hover {
-        background: rgba(255, 255, 255, 0.8);
-        transform: translateY(-12px);
-        box-shadow: 0 24px 48px rgba(59, 130, 246, 0.2);
-        border-color: rgba(59, 130, 246, 0.3);
-
-        @media (prefers-color-scheme: dark) {
-          background: rgba(15, 23, 42, 0.8);
-        }
-
-        &::before {
-          opacity: 1;
-        }
-
-        &::after {
-          transform: scaleX(1);
-        }
-
-        .feature-icon-box {
-          background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-          color: white;
-          transform: scale(1.1) rotate(-5deg);
-          box-shadow: 0 12px 32px rgba(59, 130, 246, 0.4);
-        }
-
-        .feature-title {
-          background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-        }
-      }
-
-      .feature-icon-box {
-        width: 64px;
-        height: 64px;
-        background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
-        border-radius: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 32px;
-        color: #3b82f6;
-        margin-bottom: 24px;
-        transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-        border: 2px solid rgba(59, 130, 246, 0.2);
-      }
-
-      .feature-title {
-        font-size: 22px;
-        font-weight: 700;
-        margin-bottom: 12px;
-        color: var(--text-primary);
-        transition: all 0.3s;
-        letter-spacing: -0.5px;
-      }
-
-      .feature-desc {
-        color: var(--text-secondary);
-        line-height: 1.7;
-        font-size: 15px;
-        font-weight: 400;
-      }
-    }
-  }
-}
-
-// Tech Stack
-.tech-section {
-  padding: 120px 0;
-  border-top: 1px solid rgba(59, 130, 246, 0.1);
-  background: linear-gradient(to bottom, var(--bg-surface), var(--bg-color));
-  position: relative;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 800px;
-    height: 800px;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.05), transparent 70%);
-    pointer-events: none;
-  }
-
-  .tech-grid {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 60px;
-    margin-top: 80px;
-    max-width: 1000px;
-    margin-left: auto;
-    margin-right: auto;
-    padding: 0 32px;
-    position: relative;
-    z-index: 1;
-
-    @media (max-width: 480px) {
-      gap: 32px;
-      margin-top: 40px;
-    }
-
-    .tech-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 20px;
-      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-      animation: fade-in-up 0.8s ease-out both;
-      animation-delay: calc(var(--index, 0) * 0.1s);
-
-      &:hover {
-        transform: translateY(-12px);
-
-        .tech-logo-wrapper {
-          box-shadow: 0 16px 48px rgba(59, 130, 246, 0.3);
-          border-color: #3b82f6;
-          transform: rotate(-5deg);
-        }
-
-        .tech-name {
-          color: #3b82f6;
-        }
-      }
-
-      .tech-logo-wrapper {
-        width: 100px;
-        height: 100px;
-        background: white;
-        border-radius: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        border: 2px solid rgba(59, 130, 246, 0.1);
-        padding: 16px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-        position: relative;
-        overflow: hidden;
-
-        &::before {
-          content: '';
-          position: absolute;
-          inset: 0;
-          background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
-          opacity: 0;
-          transition: opacity 0.3s;
-        }
-
-        &:hover::before {
-          opacity: 1;
-        }
-
-        .tech-logo {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-          position: relative;
-          z-index: 1;
-        }
-      }
-
-      .tech-name {
-        font-weight: 700;
-        font-size: 16px;
-        color: var(--text-secondary);
-        transition: color 0.3s;
-        letter-spacing: -0.3px;
-      }
-    }
-  }
-}
-
-// Footer
-.footer {
-  padding: 80px 0 40px;
-  border-top: 1px solid rgba(59, 130, 246, 0.1);
-  background: var(--bg-color);
-  position: relative;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 1px;
-    background: linear-gradient(90deg,
-      transparent 0%,
-      rgba(59, 130, 246, 0.3) 50%,
-      transparent 100%);
-  }
-
-  .footer-content {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 0 32px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-
-    @media (max-width: 768px) {
-      flex-direction: column;
-      gap: 32px;
-    }
-  }
-
-  .footer-brand {
-    display: flex;
-    align-items: center;
-    gap: 16px;
-    color: var(--text-secondary);
-    font-size: 14px;
-
-    .footer-logo {
-      height: 36px;
-      filter: grayscale(0.5);
-      opacity: 0.7;
-      transition: all 0.3s;
-
-      &:hover {
-        filter: grayscale(0);
-        opacity: 1;
-      }
-    }
-  }
-
-  .footer-links {
-    display: flex;
-    gap: 32px;
-
-    a {
-      color: var(--text-secondary);
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 500;
-      transition: all 0.3s;
-      position: relative;
-
-      &::after {
-        content: '';
-        position: absolute;
-        bottom: -4px;
-        left: 0;
-        width: 0;
-        height: 2px;
-        background: linear-gradient(90deg, #3b82f6, #8b5cf6);
-        transition: width 0.3s;
-      }
-
-      &:hover {
-        color: #3b82f6;
-
-        &::after {
-          width: 100%;
-        }
-      }
-    }
-  }
-}
-
-// Dialogs
-.custom-dialog {
-  :deep(.el-dialog) {
-    border-radius: 24px;
-    overflow: hidden;
-    backdrop-filter: blur(20px);
-  }
-
-  :deep(.el-dialog__header) {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
-    border-bottom: 1px solid rgba(59, 130, 246, 0.2);
-  }
-
-  :deep(.el-dialog__body) {
-    padding: 32px;
-  }
-
-  .mock-content {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 16px;
-    padding: 20px 0;
-
-    .warning-icon {
-      font-size: 48px;
-      color: #f59e0b;
-    }
-
-    p {
-      font-size: 16px;
-      color: var(--text-secondary);
-      text-align: center;
-    }
-  }
-
-  .contact-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 24px;
-
-    .contact-item {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 16px;
-      padding: 20px;
-      background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05));
-      border-radius: 16px;
-      border: 1px solid rgba(59, 130, 246, 0.1);
-      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-
-      &:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 12px 32px rgba(59, 130, 246, 0.2);
-        border-color: rgba(59, 130, 246, 0.3);
-      }
-
-      .qr-wrapper {
-        width: 120px;
-        height: 120px;
-        border-radius: 12px;
-        overflow: hidden;
-        border: 2px solid rgba(59, 130, 246, 0.2);
-
-        img {
-          width: 100%;
-          height: 100%;
-          object-fit: contain;
-        }
-      }
-
-      .platform-info {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 13px;
-        font-weight: 700;
-        color: var(--text-primary);
-
-        i {
-          font-size: 16px;
-        }
-      }
-    }
-  }
-}
-
-// Animations
-@keyframes pulse {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.5); opacity: 0.5; }
-  100% { transform: scale(1); opacity: 1; }
-}
-
-@keyframes pulse-ring {
-  0% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(59, 130, 246, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
-  }
-}
-
-@keyframes pulse-glow {
-  0% { opacity: 0.3; transform: scale(0.95); }
-  100% { opacity: 0.6; transform: scale(1.05); }
-}
-
-@keyframes rotate {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes counter-rotate {
-  from { transform: rotate(360deg); }
-  to { transform: rotate(0deg); }
-}
-
-@keyframes float {
-  0%, 100% {
-    transform: translate(0, 0) scale(1);
-  }
-  33% {
-    transform: translate(30px, -30px) scale(1.1);
-  }
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
-  }
-}
-
-@keyframes grid-flow {
-  0% {
-    background-position: 0 0;
-  }
-  100% {
-    background-position: 60px 60px;
-  }
-}
-
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes gradient-shift {
-  0%, 100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-}
-
-@keyframes gentle-float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-@keyframes core-pulse {
-  0%, 100% {
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% {
-    transform: translate(-50%, -50%) scale(1.02);
-  }
-}
-
-@keyframes icon-float {
-  0%, 100% {
-    transform: translateY(0px);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
-}
-
-@keyframes ring-pulse {
-  0%, 100% {
-    opacity: 0.4;
-    transform: translate(-50%, -50%) scale(1);
-  }
-  50% {
-    opacity: 0.6;
-    transform: translate(-50%, -50%) scale(1.02);
-  }
+@media (prefers-reduced-motion: reduce) {
+  .launch-site *, .launch-site *::before, .launch-site *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+  .can-reveal [data-reveal] { opacity: 1; transform: none; }
 }
 </style>

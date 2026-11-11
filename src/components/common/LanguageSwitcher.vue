@@ -1,6 +1,6 @@
 <template>
   <el-dropdown @command="handleCommand" trigger="click">
-    <el-button text class="lang-btn">
+    <el-button text class="lang-btn" aria-label="Language / 语言">
       <el-icon><GlobeFilled /></el-icon>
     </el-button>
     <template #dropdown>

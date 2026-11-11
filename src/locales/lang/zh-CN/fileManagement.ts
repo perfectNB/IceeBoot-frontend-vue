@@ -32,6 +32,8 @@ export default {
   editBucketTitle: '编辑存储桶',
   descriptionPlaceholder: '请输入描述',
   key: '密钥',
+  keyLabel: '密钥 {id}',
+  keyDescription: '使用存储桶绑定的密钥',
   keyPlaceholder: '请选择密钥',
   cancel: '取消',
   confirm: '确定',

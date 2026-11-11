@@ -40,8 +40,8 @@
             clearable
             style="width: 120px"
           >
-            <el-option :label="t('payConfig.statusActive')" value="active" />
-            <el-option :label="t('payConfig.statusInactive')" value="inactive" />
+            <el-option :label="t('payConfig.status.enable')" value="active" />
+            <el-option :label="t('payConfig.status.disable')" value="inactive" />
           </el-select>
         </el-form-item>
 
@@ -90,7 +90,7 @@
         </el-table-column>
         <el-table-column prop="createBy" :label="t('payConfig.table.createBy')" width="120" />
         <el-table-column prop="createTime" :label="t('payConfig.table.createTime')" width="160" />
-        <el-table-column :label="t('payConfig.table.actions')" width="280" fixed="right">
+        <el-table-column :label="t('payConfig.table.operation')" width="280" fixed="right">
           <template #default="{ row }">
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
               <el-button
@@ -186,8 +186,8 @@
             :placeholder="t('payConfig.form.statusPlaceholder')"
             style="width: 100%"
           >
-            <el-option :label="t('payConfig.statusActive')" value="active" />
-            <el-option :label="t('payConfig.statusInactive')" value="inactive" />
+            <el-option :label="t('payConfig.status.enable')" value="active" />
+            <el-option :label="t('payConfig.status.disable')" value="inactive" />
           </el-select>
         </el-form-item>
       </el-form>
@@ -467,12 +467,12 @@ const handleBeforeStatusChange = async (row: PaymentConfigVO): Promise<boolean> 
       sort: row.sort,
       status: newStatus
     })
-    ElMessage.success(t('payConfig.statusChangeSuccess', { status: statusText }))
+    ElMessage.success(t('payConfig.statusUpdated', { status: statusText }))
     return true
   } catch (error) {
     if (error !== 'cancel') {
       console.error('状态更新失败:', error)
-      ElMessage.error(t('payConfig.statusChangeFailed'))
+      ElMessage.error(t('payConfig.statusUpdateFailed'))
     }
     return false
   }
@@ -495,11 +495,11 @@ const handleShowQrCode = async (row: PaymentConfigVO) => {
     // 直接在新窗口打开支付链接
     window.open(url, '_blank')
 
-    ElMessage.success(t('payConfig.payLinkOpened'))
+    ElMessage.success(t('payConfig.payPageOpened'))
   } catch (error) {
     loadingMessage.close()
     console.error('获取支付链接失败:', error)
-    ElMessage.error(t('payConfig.payLinkFailed'))
+    ElMessage.error(t('payConfig.getPayLinkFailed'))
   }
 }
 

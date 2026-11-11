@@ -3,7 +3,7 @@
     <!-- 页面标题 -->
     <div class="page-header">
       <h2>{{ t('fileManagement.title') }}</h2>
-      <p>{{ t('fileManagement.description') }}</p>
+      <p>{{ t('fileManagement.pageDescription') }}</p>
     </div>
 
     <!-- 存储桶管理 -->
@@ -37,10 +37,10 @@
                 clearable
                 style="width: 150px"
               >
-                <el-option :label="t('fileManagement.aliyun')" value="aliyun" />
-                <el-option :label="t('fileManagement.huawei')" value="huawei" />
-                <el-option :label="t('fileManagement.tencent')" value="tencent" />
-                <el-option :label="t('fileManagement.qiniu')" value="qiniu" />
+                <el-option :label="t('fileManagement.providerAliyun')" value="aliyun" />
+                <el-option :label="t('fileManagement.providerHuawei')" value="huawei" />
+                <el-option :label="t('fileManagement.providerTencent')" value="tencent" />
+                <el-option :label="t('fileManagement.providerQiniu')" value="qiniu" />
                 <el-option label="MinIO" value="minio" />
               </el-select>
             </el-form-item>
@@ -51,8 +51,8 @@
                 clearable
                 style="width: 120px"
               >
-                <el-option :label="t('fileManagement.active')" value="active" />
-                <el-option :label="t('fileManagement.inactive')" value="inactive" />
+                <el-option :label="t('fileManagement.statusActive')" value="active" />
+                <el-option :label="t('fileManagement.statusInactive')" value="inactive" />
               </el-select>
             </el-form-item>
             <el-form-item>
@@ -88,12 +88,12 @@
           <el-table-column prop="status" :label="t('fileManagement.status')" width="100">
             <template #default="{ row }">
               <el-tag :type="row.status === 'active' ? 'success' : 'danger'">
-                {{ row.status === 'active' ? t('fileManagement.active') : t('fileManagement.inactive') }}
+                {{ row.status === 'active' ? t('fileManagement.statusActive') : t('fileManagement.statusInactive') }}
               </el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="createTime" :label="t('fileManagement.createTime')" width="180" />
-          <el-table-column :label="t('fileManagement.actions')" width="350" fixed="right">
+          <el-table-column :label="t('fileManagement.operation')" width="350" fixed="right">
             <template #default="{ row }">
               <el-button type="primary" size="small" @click="handleViewFiles(row)" v-if="hasPermission('system:file:view')">
                 <el-icon><Document /></el-icon>
@@ -196,8 +196,8 @@
         </el-form-item>
         <el-form-item :label="t('fileManagement.status')" prop="status">
           <el-radio-group v-model="bucketForm.status">
-            <el-radio value="active">{{ t('fileManagement.active') }}</el-radio>
-            <el-radio value="inactive">{{ t('fileManagement.inactive') }}</el-radio>
+            <el-radio value="active">{{ t('fileManagement.statusActive') }}</el-radio>
+            <el-radio value="inactive">{{ t('fileManagement.statusInactive') }}</el-radio>
           </el-radio-group>
         </el-form-item>
       </el-form>
@@ -212,7 +212,7 @@
     <!-- 文件列表对话框 -->
     <el-dialog
       v-model="fileDialogVisible"
-      :title="t('fileManagement.fileManagement')"
+      :title="t('fileManagement.fileManagementTitle')"
       width="1200px"
       @close="resetFileDialog"
     >
@@ -243,10 +243,10 @@
                 clearable
                 style="width: 150px"
               >
-                <el-option :label="t('fileManagement.image')" value="image" />
-                <el-option :label="t('fileManagement.document')" value="document" />
-                <el-option :label="t('fileManagement.video')" value="video" />
-                <el-option :label="t('fileManagement.audio')" value="audio" />
+                <el-option :label="t('fileManagement.fileTypeImage')" value="image" />
+                <el-option :label="t('fileManagement.fileTypeDocument')" value="document" />
+                <el-option :label="t('fileManagement.fileTypeVideo')" value="video" />
+                <el-option :label="t('fileManagement.fileTypeAudio')" value="audio" />
               </el-select>
             </el-form-item>
             <el-form-item>
@@ -287,12 +287,12 @@
           <el-table-column prop="status" :label="t('fileManagement.status')" width="100">
             <template #default="{ row }">
               <el-tag :type="row.status === 'active' ? 'success' : 'danger'">
-                {{ row.status === 'active' ? t('fileManagement.normal') : t('fileManagement.deleted') }}
+                {{ row.status === 'active' ? t('fileManagement.fileStatusNormal') : t('fileManagement.fileStatusDeleted') }}
               </el-tag>
             </template>
           </el-table-column>
           <el-table-column prop="createTime" :label="t('fileManagement.uploadTime')" width="180" />
-          <el-table-column :label="t('fileManagement.actions')" width="200" fixed="right">
+          <el-table-column :label="t('fileManagement.operation')" width="200" fixed="right">
             <template #default="{ row }">
               <el-button type="primary" size="small" @click="handleDownloadFile(row)">
                 <el-icon><Download /></el-icon>
@@ -364,7 +364,7 @@
             drag
           >
             <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-            <div class="el-upload__text" v-html="t('fileManagement.uploadText')"></div>
+            <div class="el-upload__text" v-html="t('fileManagement.dragFileText')"></div>
             <template #tip>
               <div class="el-upload__tip">
                 {{ t('fileManagement.uploadTip') }}
@@ -536,10 +536,10 @@ const getProviderTagType = (provider: string) => {
 // 获取服务商名称
 const getProviderName = (provider: string) => {
   const nameMap: Record<string, string> = {
-    aliyun: t('fileManagement.aliyun'),
-    huawei: t('fileManagement.huawei'),
-    tencent: t('fileManagement.tencent'),
-    qiniu: t('fileManagement.qiniu'),
+    aliyun: t('fileManagement.providerAliyun'),
+    huawei: t('fileManagement.providerHuawei'),
+    tencent: t('fileManagement.providerTencent'),
+    qiniu: t('fileManagement.providerQiniu'),
     minio: 'MinIO'
   }
   return nameMap[provider] || provider
@@ -607,7 +607,7 @@ const loadOSSProviders = async () => {
     availableProviders.value = providers
   } catch (error) {
     console.error('加载OSS服务商列表失败:', error)
-    ElMessage.error(t('fileManagement.loadProvidersError'))
+    ElMessage.error(t('fileManagement.loadProvidersFailed'))
   } finally {
     loadingProviders.value = false
   }
@@ -639,7 +639,7 @@ const loadBucketList = async () => {
     bucketList.value = result.records
     bucketPagination.total = result.total
   } catch (error) {
-    ElMessage.error(t('fileManagement.loadBucketsError'))
+    ElMessage.error(t('fileManagement.loadBucketFailed'))
     console.error('获取存储桶列表失败:', error)
   } finally {
     bucketLoading.value = false
@@ -674,7 +674,7 @@ const handleAddBucket = async () => {
 
 // 编辑存储桶
 const handleEditBucket = async (bucket: OssBucket) => {
-  bucketDialogTitle.value = t('fileManagement.editBucket')
+  bucketDialogTitle.value = t('fileManagement.editBucketTitle')
   await loadOSSProviders()
   Object.assign(bucketForm, bucket)
   bucketDialogVisible.value = true
@@ -684,8 +684,8 @@ const handleEditBucket = async (bucket: OssBucket) => {
 const handleDeleteBucket = async (bucket: OssBucket) => {
   try {
     await ElMessageBox.confirm(
-      t('fileManagement.deleteBucketConfirm', { name: bucket.bucketName }),
-      t('fileManagement.confirmDelete'),
+      t('fileManagement.deleteConfirm', { name: bucket.bucketName }),
+      t('fileManagement.deleteConfirmTitle'),
       {
         confirmButtonText: t('fileManagement.confirm'),
         cancelButtonText: t('fileManagement.cancel'),
@@ -697,7 +697,7 @@ const handleDeleteBucket = async (bucket: OssBucket) => {
     loadBucketList()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(t('fileManagement.deleteError'))
+      ElMessage.error(t('fileManagement.deleteFailed'))
       console.error('删除存储桶失败:', error)
     }
   }
@@ -707,8 +707,8 @@ const handleDeleteBucket = async (bucket: OssBucket) => {
 const handleBatchDeleteBuckets = async () => {
   try {
     await ElMessageBox.confirm(
-      t('fileManagement.batchDeleteBucketsConfirm', { count: selectedBuckets.value.length }),
-      t('fileManagement.confirmBatchDelete'),
+      t('fileManagement.batchDeleteConfirm', { count: selectedBuckets.value.length }),
+      t('fileManagement.batchDeleteConfirmTitle'),
       {
         confirmButtonText: t('fileManagement.confirm'),
         cancelButtonText: t('fileManagement.cancel'),
@@ -721,7 +721,7 @@ const handleBatchDeleteBuckets = async () => {
     loadBucketList()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(t('fileManagement.batchDeleteError'))
+      ElMessage.error(t('fileManagement.batchDeleteFailed'))
       console.error('批量删除存储桶失败:', error)
     }
   }
@@ -767,7 +767,7 @@ const submitBucketForm = async () => {
     bucketDialogVisible.value = false
     loadBucketList()
   } catch (error) {
-    ElMessage.error(t('fileManagement.operationError'))
+    ElMessage.error(t('fileManagement.operationFailed'))
     console.error('存储桶操作失败:', error)
   }
 }
@@ -820,7 +820,7 @@ const loadFileList = async () => {
     fileList.value = result.records
     filePagination.total = result.total
   } catch (error) {
-    ElMessage.error(t('fileManagement.loadFilesError'))
+    ElMessage.error(t('fileManagement.loadFilesFailed'))
     console.error('获取文件列表失败:', error)
   } finally {
     fileLoading.value = false
@@ -852,7 +852,7 @@ const handleDownloadFile = async (file: OssFile) => {
     await downloadAndSaveFile(file.id, file.originalName)
     ElMessage.success(t('fileManagement.downloadSuccess'))
   } catch (error) {
-    ElMessage.error(t('fileManagement.downloadError') + ': ' + (error as Error).message)
+    ElMessage.error(t('fileManagement.downloadFailed') + ': ' + (error as Error).message)
     console.error('下载文件失败:', error)
   }
 }
@@ -862,7 +862,7 @@ const handleDeleteFile = async (file: OssFile) => {
   try {
     await ElMessageBox.confirm(
       t('fileManagement.deleteFileConfirm', { name: file.originalName }),
-      t('fileManagement.confirmDelete'),
+      t('fileManagement.deleteConfirmTitle'),
       {
         confirmButtonText: t('fileManagement.confirm'),
         cancelButtonText: t('fileManagement.cancel'),
@@ -874,7 +874,7 @@ const handleDeleteFile = async (file: OssFile) => {
     loadFileList()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(t('fileManagement.deleteError'))
+      ElMessage.error(t('fileManagement.deleteFailed'))
       console.error('删除文件失败:', error)
     }
   }
@@ -885,7 +885,7 @@ const handleBatchDeleteFiles = async () => {
   try {
     await ElMessageBox.confirm(
       t('fileManagement.batchDeleteFilesConfirm', { count: selectedFiles.value.length }),
-      t('fileManagement.confirmBatchDelete'),
+      t('fileManagement.batchDeleteConfirmTitle'),
       {
         confirmButtonText: t('fileManagement.confirm'),
         cancelButtonText: t('fileManagement.cancel'),
@@ -898,7 +898,7 @@ const handleBatchDeleteFiles = async () => {
     loadFileList()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(t('fileManagement.batchDeleteError'))
+      ElMessage.error(t('fileManagement.batchDeleteFailed'))
       console.error('批量删除文件失败:', error)
     }
   }
@@ -959,7 +959,7 @@ const submitUploadForm = async () => {
     loadBucketList()
   } catch (error) {
     const message = error instanceof Error ? error.message : ''
-    ElMessage.error(message || t('fileManagement.uploadError'))
+    ElMessage.error(message || t('fileManagement.uploadFailed'))
     console.error('上传文件失败:', error)
   } finally {
     uploadLoading.value = false

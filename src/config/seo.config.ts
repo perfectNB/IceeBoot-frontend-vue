@@ -13,13 +13,13 @@ export const SITE_CONFIG = {
   // 网站名称 - 请修改为实际项目名称
   siteName: 'IceeBoot',
   // 网站全称 - 请修改为实际项目全称
-  fullSiteName: 'IceeBoot Ai化超级脚手架',
+  fullSiteName: 'IceeBoot AI 应用开发脚手架',
   // 网站描述 - 请修改为实际项目描述
-  description: '基于Vue3+TypeScript+Element Plus的现代化企业级后台管理系统',
+  description: '面向独立开发者，集成 AgentScope 智能体、模型连接、Skill、Tool、MCP、沙箱与基础服务的 AI 应用开发脚手架',
   // 作者信息 - 请修改为实际作者
   author: 'CodeIcee',
   // 默认关键词 - 请修改为实际关键词
-  keywords: '后台管理系统,Vue3,TypeScript,Element Plus,企业管理,权限管理,AI聊天,代码生成,IceeBoot',
+  keywords: 'AI应用开发,AgentScope,智能体,Skills,MCP,E2B,独立开发者,Spring Boot,Vue3,IceeBoot',
   // 网站语言
   locale: 'zh_CN',
   // 网站类型
@@ -28,8 +28,8 @@ export const SITE_CONFIG = {
 
 // 默认SEO配置
 export const DEFAULT_SEO_CONFIG = {
-  title: `${SITE_CONFIG.fullSiteName} - 现代化企业级后台管理平台`,
-  description: `${SITE_CONFIG.description}，提供用户管理、权限控制、AI聊天、代码生成等功能，助力企业数字化转型。`,
+  title: `${SITE_CONFIG.fullSiteName} - 为独立开发者打造`,
+  description: `${SITE_CONFIG.description}，复用成熟基础，专注应用开发。`,
   keywords: SITE_CONFIG.keywords,
   author: SITE_CONFIG.author,
   robots: 'index,follow',
@@ -38,8 +38,8 @@ export const DEFAULT_SEO_CONFIG = {
   // Open Graph配置
   og: {
     type: SITE_CONFIG.type,
-    title: `${SITE_CONFIG.fullSiteName} - 现代化企业级后台管理平台`,
-    description: `${SITE_CONFIG.description}，提供完整的用户管理、权限控制、AI聊天等功能。`,
+    title: `${SITE_CONFIG.fullSiteName} - 为独立开发者打造`,
+    description: `${SITE_CONFIG.description}，从基础服务到智能体执行。`,
     url: SITE_CONFIG.domain + '/',
     siteName: SITE_CONFIG.siteName,
     locale: SITE_CONFIG.locale
@@ -49,7 +49,7 @@ export const DEFAULT_SEO_CONFIG = {
   twitter: {
     card: 'summary_large_image',
     title: SITE_CONFIG.fullSiteName,
-    description: '现代化企业级后台管理平台，基于Vue3+TypeScript构建'
+    description: '为独立开发者打造的 AI 应用开发脚手架，集成 AgentScope 与常用基础服务'
   }
 }
 

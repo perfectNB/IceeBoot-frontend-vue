@@ -81,7 +81,7 @@ export default defineConfig({
   // 开发服务器配置
   server: {
     host: true,
-    port: 5173,
+    port: 4396,
     strictPort: true,
     fs: {
       // 允许访问document目录

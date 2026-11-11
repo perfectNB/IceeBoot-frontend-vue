@@ -237,14 +237,14 @@ npm install
 npm run dev
 
 # 5. 浏览器访问
-# http://localhost:5173
+# http://localhost:4396
 ```
 
 ### 🎮 可用命令
 
 ```bash
 # 开发
-npm run dev              # 启动开发服务器 (http://localhost:5173)
+npm run dev              # 启动开发服务器 (http://localhost:4396)
 
 # 构建
 npm run build            # 构建生产版本

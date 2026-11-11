@@ -71,7 +71,7 @@
           <el-date-picker
             v-model="dateRange"
             type="daterange"
-            :range-separator="t('payRecord.search.to')"
+            :range-separator="t('payRecord.search.rangeSeparator')"
             :start-placeholder="t('payRecord.search.startDate')"
             :end-placeholder="t('payRecord.search.endDate')"
             value-format="YYYY-MM-DD"
@@ -130,7 +130,7 @@
         <el-table-column prop="configName" :label="t('payRecord.table.configName')" min-width="120" />
         <el-table-column prop="remark" :label="t('payRecord.table.remark')" min-width="120" show-overflow-tooltip />
         <el-table-column prop="createTime" :label="t('payRecord.table.createTime')" width="160" />
-        <el-table-column :label="t('payRecord.table.actions')" width="180" fixed="right">
+        <el-table-column :label="t('payRecord.table.operation')" width="180" fixed="right">
           <template #default="{ row }">
             <div style="display: flex; gap: 8px;">
               <el-button

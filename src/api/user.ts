@@ -10,13 +10,15 @@ export interface CreateUserData extends Partial<User> {
 }
 
 // 获取用户列表
-export const getUserList = async (params: PageParams): Promise<PageResult<User>> => {
+export type UserListItem = Omit<User, 'permissions' | 'menus'>
+
+export const getUserList = async (params: PageParams): Promise<PageResult<UserListItem>> => {
   if (isMockEnabled()) {
     // 使用Mock数据
     return await MockUserService.getUserList(params)
   } else {
     // 调用真实API
-    return await request.get<PageResult<User>>('/api/v1/users', params)
+    return await request.get<PageResult<UserListItem>>('/api/v1/users', params)
   }
 }
 

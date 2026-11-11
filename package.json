@@ -16,7 +16,8 @@
     "test:agent-console": "node --test tests/agentConsole.test.cjs tests/modelConnections.test.cjs tests/agentConversation.test.cjs tests/skillImport.test.cjs tests/agentStream.test.cjs",
     "test:third-management": "node --test tests/thirdManagement.test.cjs",
     "test:theme": "node --test tests/theme.test.cjs",
-    "test:role-authorization": "node --test tests/roleAuthorization.test.cjs"
+    "test:role-authorization": "node --test tests/roleAuthorization.test.cjs",
+    "test:user-list": "node --test tests/userList.test.cjs"
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.3.2",

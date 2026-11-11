@@ -3,7 +3,6 @@ import { onBeforeUnmount, onMounted, ref, type Ref } from 'vue'
 /** 各章节独立跟随原生滚动；同一帧统一读布局，不劫持滚轮。 */
 export function useScrollStory(root: Ref<HTMLElement | undefined>) {
   const sceneProgress = ref<Record<string, number>>({})
-  const pageProgress = ref(0)
   const prefersReducedMotion = ref(false)
   const canReveal = ref(false)
   let frame = 0
@@ -19,8 +18,6 @@ export function useScrollStory(root: Ref<HTMLElement | undefined>) {
       next[scene.dataset.scene!] = prefersReducedMotion.value ? .45 : Math.min(1, Math.max(0, (height * .65 - rect.top) / (rect.height + height * .1)))
     }
     sceneProgress.value = next
-    const distance = document.documentElement.scrollHeight - height
-    pageProgress.value = distance > 0 ? Math.min(1, Math.max(0, window.scrollY / distance)) : 0
   }
   function schedule() { if (!frame) frame = requestAnimationFrame(measure) }
   function updateMotion() { prefersReducedMotion.value = media?.matches ?? false; schedule() }
@@ -43,5 +40,5 @@ export function useScrollStory(root: Ref<HTMLElement | undefined>) {
     observer?.disconnect(); media?.removeEventListener('change', updateMotion)
     window.removeEventListener('scroll', schedule); window.removeEventListener('resize', schedule)
   })
-  return { sceneProgress, pageProgress, prefersReducedMotion, canReveal }
+  return { sceneProgress, prefersReducedMotion, canReveal }
 }

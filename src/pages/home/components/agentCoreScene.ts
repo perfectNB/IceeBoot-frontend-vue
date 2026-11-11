@@ -165,9 +165,6 @@ export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement,
       const title = label(rig, 'E2B', 1.1); title.position.set(0, 1.77, .3); title.rotation.x = -Math.PI / 2
       for (let i = 0; i < 12; i++) sparks.push(mesh(rig, new THREE.SphereGeometry(.025, 8, 6), glow))
     }
-    // 地面细环提供空间参照，不使用大面积高亮粒子背景。
-    const floorMaterial = keep(new THREE.MeshBasicMaterial({ color: 0x36594a, transparent: true, opacity: .3 }))
-    const floor = ring(scene, 3.25, .009, floorMaterial); floor.rotation.x = Math.PI / 2; floor.position.y = -2.7
     return {
       resize(width, height) {
         if (disposed || width <= 0 || height <= 0) return
@@ -270,8 +267,6 @@ export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement,
         lineMaterial.opacity = dark ? .35 : .45
         glass.color.set(dark ? 0x92e5d4 : 0x7ca7ed)
         glass.opacity = dark ? .15 : .12
-        floorMaterial.color.set(dark ? 0x36594a : 0x9cacc7)
-        floorMaterial.opacity = dark ? .3 : .45
       },
       dispose,
     }

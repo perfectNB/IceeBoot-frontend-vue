@@ -4,9 +4,9 @@ import { createPinia } from 'pinia'
 // Element Plus - 优化加载
 import ElementPlus from 'element-plus'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
-// 延迟加载Element Plus样式
-import('element-plus/dist/index.css')
-import('element-plus/theme-chalk/dark/css-vars.css')
+// 主题样式在首屏前加载，避免深色页面混入亮色组件。
+import 'element-plus/dist/index.css'
+import 'element-plus/theme-chalk/dark/css-vars.css'
 
 // 应用组件和路由
 import App from './App.vue'
@@ -20,7 +20,7 @@ import './assets/base.css'
 import './styles/index.scss'
 
 // 主题初始化
-import { initTheme } from './utils/theme'
+import { initTheme, watchSystemTheme } from './utils/theme'
 
 // 控制台防护
 import consoleProtection from './utils/console-protection'
@@ -37,6 +37,8 @@ const app = createApp(App)
 
 // 初始化主题
 initTheme()
+const stopSystemTheme = watchSystemTheme()
+if (import.meta.hot) import.meta.hot.dispose(stopSystemTheme)
 
 // 启动控制台防护
 consoleProtection.start()

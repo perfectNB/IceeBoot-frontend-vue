@@ -300,12 +300,12 @@ onBeforeUnmount(() => { if (mockTimer) clearTimeout(mockTimer) })
   color-scheme: light;
   background: var(--site-bg); color: var(--text); font-family: 'Avenir Next', 'PingFang SC', 'Microsoft YaHei', sans-serif; -webkit-font-smoothing: antialiased;
   &.is-dark {
-    --paper: #0d1023; --ink: #edf0ff; --muted: #a8b0cd; --line: #2a3050; --accent: #b69aff;
-    --site-bg: #080a16; --stage: #0c1022; --stage-alt: #101025; --stage-model: #090e20; --header-bg: #080a16ed;
-    --text: #f0f2ff; --secondary: #adb5d0; --subtle: #929fbe; --highlight: #b49aff; --accent-ink: #7dcfff;
+    --paper: #161616; --ink: #f2f2f2; --muted: #b3b3b3; --line: #303030; --accent: #80b5ff;
+    --site-bg: #0a0a0a; --stage: #141414; --stage-alt: #181818; --stage-model: #111111; --header-bg: #141414f5;
+    --text: #f2f2f2; --secondary: #c4c4c4; --subtle: #a3a3a3; --highlight: #80b5ff; --accent-ink: #80b5ff;
     --hairline: #879cff30; --wash: #7688ff09; --halo: #714dff29; --watermark: #9994ff0e;
     --button-bg: #7546df; --button-ink: #ffffff; --button-hover: #8757ec; --selected-bg: #7546df; --selected-ink: #ffffff;
-    --editor-bg: #101329; --editor-ink: #e0e7ff; --editor-muted: #9eacd0; --editor-border: #6875be5c;
+    --editor-bg: #181818; --editor-ink: #ededed; --editor-muted: #a3a3a3; --editor-border: #383838;
     color-scheme: dark;
   }
   a { color: inherit; text-decoration: none; } button { font: inherit; cursor: pointer; } button:disabled { opacity: .4; cursor: default; }
@@ -315,7 +315,7 @@ onBeforeUnmount(() => { if (mockTimer) clearTimeout(mockTimer) })
 }
 // 夜间光色集中在交互与模型周围，正文保持清晰，避免全屏光污染。
 .launch-site.is-dark {
-  .hero-section { background: radial-gradient(ellipse at 79% 35%, #7350ff20, transparent 45%), radial-gradient(ellipse at 61% 70%, #258bff12, transparent 42%), var(--site-bg); }
+  .hero-section { background: var(--site-bg); }
   .hero-copy h1 span, .finale-content h2 span { color: #b6a0ff; background: linear-gradient(110deg, #77cfff 0%, #b49aff 54%, #ed9bdf 100%); background-clip: text; -webkit-text-fill-color: transparent; }
   .nav-cta, .launch-button.primary { background: linear-gradient(115deg, #6249da, #9138c7); border-color: #bfa0ff40; box-shadow: 0 4px 24px #7846e72b; &:hover { background: linear-gradient(115deg, #7358e8, #a445d7); box-shadow: 0 6px 30px #7846e745; } }
   .provider-list button[aria-pressed='true'], .capability-buttons button[aria-pressed='true'] { background: #34245d; border-color: #b08aff; color: #f1eaff; box-shadow: inset 0 0 18px #9b64ff16, 0 0 18px #8751ff18; }

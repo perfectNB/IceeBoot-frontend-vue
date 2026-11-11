@@ -47,6 +47,8 @@
             @click="toggleTheme"
             text
             class="theme-btn"
+            :aria-label="isDark ? '切换到日间模式' : '切换到夜间模式'"
+            :title="isDark ? '切换到日间模式' : '切换到夜间模式'"
           />
 
           <!-- 语言切换 -->

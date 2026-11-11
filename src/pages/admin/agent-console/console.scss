@@ -135,3 +135,29 @@
 @media (prefers-reduced-motion: reduce) {
   .agent-console *, .agent-settings * { transition: none !important; animation: none !important; }
 }
+
+.agent-conversation-dialog {
+  --el-dialog-padding-primary: 0;
+  padding: 0;
+  border: 1px solid var(--el-border-color-light);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 24px 80px rgb(0 0 0 / 15%);
+  .el-dialog__header { padding: 20px 28px; margin: 0; border-bottom: 1px solid var(--el-border-color-lighter); }
+  .el-dialog__body { padding: 0; }
+  .el-dialog__headerbtn { top: 22px; right: 20px; width: 32px; height: 32px; border-radius: 8px; }
+  .el-dialog__headerbtn:hover { background: var(--el-fill-color-light); }
+  .conversation-dialog-heading { display: flex; align-items: center; gap: 12px; padding-right: 32px; }
+  .conversation-dialog-avatar { display: grid; flex-shrink: 0; place-items: center; width: 40px; height: 40px; border: 1px solid var(--el-color-primary-light-8); border-radius: 12px; background: var(--el-color-primary-light-9); color: var(--el-color-primary); font-size: 22px; }
+  .conversation-dialog-heading > div { min-width: 0; }
+  .conversation-dialog-heading h2 { margin: 0; color: var(--el-text-color-primary); font-size: 17px; line-height: 1.4; font-weight: 600; overflow-wrap: anywhere; }
+  .conversation-dialog-heading p { display: flex; flex-wrap: wrap; gap: 7px; margin: 5px 0 0; color: var(--el-text-color-regular); font-size: 12px; line-height: 1.5; }
+  @media (max-width: 640px) {
+    border-radius: 12px;
+    .el-dialog__header { padding: 14px 16px; }
+    .el-dialog__headerbtn { top: 15px; right: 12px; }
+    .conversation-dialog-avatar { width: 34px; height: 34px; border-radius: 10px; font-size: 19px; }
+    .conversation-dialog-heading h2 { font-size: 15px; }
+    .conversation-dialog-heading p { font-size: 11px; margin-top: 3px; }
+  }
+}

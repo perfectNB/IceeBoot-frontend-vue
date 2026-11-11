@@ -97,3 +97,17 @@ test('file picker can reselect the same file and preview can return to source se
  s.loading.value=true;s.changeMode('github');assert.equal(s.mode.value,'archive')
  s.loading.value=false;s.changeMode('github');assert.equal(s.mode.value,'github')
 })
+
+
+test('multi-file GitHub skills preserve every resource from preview through confirmation',async()=>{
+ const item=draft('research')
+ item.resources=Object.fromEntries(Array.from({length:131},(_,i)=>[`tests/case-${i}.md`,`案例 ${i}`]))
+ let saved
+ const {s}=page({previewGithubSkills:async()=>({skills:[item],warnings:[]}),importSkills:async items=>{saved=items;return [{id:1}]}})
+ s.mode.value='github';s.url.value='https://github.com/owner/research';await vue.nextTick();await s.preview()
+ assert.equal(s.valid.value,true)
+ assert.equal(Object.keys(s.drafts.value[0].resources).length,131)
+ await s.commit()
+ assert.equal(Object.keys(saved[0].resources).length,131)
+ assert.equal(saved[0].resources['tests/case-130.md'],'案例 130')
+})

@@ -1,6 +1,7 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse, type InternalAxiosRequestConfig, type AxiosRequestHeaders } from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getBaseURL } from './env'
+import { readEventStream } from './sse'
 import { useUserStore } from '@/stores/user'
 import router from '@/router'
 import type { ApiResponse, ApiResponseLike, LoginResponse } from '@/types'
@@ -310,6 +311,43 @@ const extractResponseData = <T>(response: AxiosResponse<ApiResponse<T>>): T => {
 }
 
 export const request = {
+  async stream<T>(url: string, data: Record<string, unknown>, onEvent: (event: T) => void, signal?: AbortSignal): Promise<void> {
+    const userStore = useUserStore()
+    const expires = userStore.getTokenExpires()
+    if (expires && expires - Date.now() <= refreshThresholdMs && userStore.getRefreshToken()) await ensureFreshToken()
+    const token = userStore.getToken()
+    const controller = new AbortController()
+    let idle: ReturnType<typeof setTimeout> | undefined
+    let stalled = false
+    const resetDeadline = () => {
+      clearTimeout(idle)
+      idle = setTimeout(() => { stalled = true; controller.abort() }, 45000)
+    }
+    const abort = () => controller.abort()
+    signal?.addEventListener('abort', abort, { once: true })
+    if (signal?.aborted) abort()
+    try {
+      resetDeadline()
+      const response = await fetch(`${getBaseURL().replace(/\/$/, '')}/${url.replace(/^\//, '')}`, {
+        method: 'POST', signal: controller.signal,
+        headers: { 'Content-Type': 'application/json;charset=UTF-8', Accept: 'text/event-stream',
+          ...(token ? { Authorization: `${userStore.getTokenType() || 'Bearer'} ${token}` } : {}) },
+        body: JSON.stringify(data),
+      })
+      if (!response.ok || !response.headers.get('Content-Type')?.includes('text/event-stream') || !response.body) {
+        const payload = await response.json().catch(() => undefined) as { message?: string; code?: number } | undefined
+        if (response.status === 401 || isAuthInvalidCode(payload?.code)) triggerLogout(t('request.loginExpired'))
+        throw new Error(payload?.message || (response.status === 403 ? t('request.forbidden') : '无法建立流式连接'))
+      }
+      await readEventStream<T>(response.body, event => { resetDeadline(); onEvent(event) })
+    } catch (error) {
+      if (stalled) throw new Error('超过45秒未收到执行进度，连接已中断，请查看本轮状态后重试')
+      throw error
+    } finally {
+      clearTimeout(idle)
+      signal?.removeEventListener('abort', abort)
+    }
+  },
   async get<T = Record<string, unknown>>(
     url: string,
     params?: Record<string, unknown>,

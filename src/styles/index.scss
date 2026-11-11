@@ -32,11 +32,11 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-color);
+  background: var(--border-base);
   border-radius: 3px;
   
   &:hover {
-    background: var(--border-color-hover);
+    background: var(--border-base);
   }
 }
 
@@ -119,158 +119,49 @@
 }
 
 
-// 暗色主题下，统一覆盖 Element Plus 组件的表格、卡片等背景与文字颜色
-[data-theme='dark'] {
-  // 表格整体与容器
-  .el-table,
-  .el-table__inner-wrapper,
-  .el-table__header,
-  .el-table__body,
-  .el-table__empty-block {
+// 旧页面的固定浅色容器兼容；Element Plus 使用主题变量保留各自的状态色。
+html.dark {
+  .menu-management, .role-management, .permission-management, .task-management,
+  .log-management, .redis-management, .oss-management, .sms-management,
+  .email-management, .agent-management, .message-center, .profile-center {
+    background-color: var(--bg-color-page);
+    color: var(--text-primary);
+  }
+
+  .search-section, .table-section, .pagination-section, .list-header,
+  .pagination-container, .stat-card, .message-list-container, .profile-card,
+  .info-section, .section-header, .icon-grid, .icon-item, .icon-selector,
+  .page-header, .content-card, .content-section, .panel, .card {
     background-color: var(--bg-color) !important;
-    color: var(--text-primary) !important;
+    color: var(--text-primary);
+    border-color: var(--border-lighter);
   }
 
-  // 表格单元格与边框
-  .el-table tr,
-  .el-table th,
-  .el-table td,
-  .el-table .cell {
-    background-color: var(--bg-color) !important;
-    color: var(--text-primary) !important;
-    border-color: var(--border-base) !important;
+  .page-header h1, .page-header h2, .page-title, .section-title,
+  .stat-content .stat-value, .info-item .info-value { color: var(--text-primary); }
+  .page-description, .stat-content .stat-label, .message-time,
+  .message-content-preview, .user-username, .info-item .info-label { color: var(--text-secondary); }
+
+  .sidebar-menu .el-menu-item.is-active {
+    background: var(--bg-color-soft) !important;
+    color: var(--el-color-primary) !important;
+    box-shadow: none !important;
   }
 
-  // 斑马纹与悬浮态
-  .el-table--striped .el-table__body tr.el-table__row--striped td {
-    background-color: var(--bg-color-overlay) !important;
-  }
-  .el-table .el-table__body tr:hover > td {
-    background-color: rgba(255, 255, 255, 0.04) !important;
-  }
-
-  // 卡片、对话框等常见容器
-  .el-card,
-  .el-dialog,
-  .el-popper,
-  .el-dropdown-menu,
-  .el-select-dropdown {
-    background-color: var(--bg-color) !important;
-    color: var(--text-primary) !important;
-    border-color: var(--border-base) !important;
+  .el-button--primary:not(.is-plain):not(.is-text):not(.is-link) {
+    --el-button-bg-color: #2563eb;
+    --el-button-border-color: #2563eb;
+    --el-button-hover-bg-color: #1d4ed8;
+    --el-button-hover-border-color: #1d4ed8;
+    --el-button-active-bg-color: #1e40af;
+    --el-button-active-border-color: #1e40af;
+    --el-button-disabled-bg-color: #2a2a2a;
+    --el-button-disabled-border-color: #303030;
+    --el-button-disabled-text-color: #8c8c8c;
   }
 
-  // 输入、分页、标签、面包屑、菜单等
-  .el-input__wrapper,
-  .el-pagination,
-  .el-tag,
-  .el-breadcrumb__inner,
-  .el-menu,
-  .el-sub-menu__title {
-    background-color: var(--bg-color) !important;
-    color: var(--text-primary) !important;
-    border-color: var(--border-base) !important;
-  }
-
-  // 追加：暗色主题下，统一覆盖项目内各页面的白底区块为深色背景（除文字与按钮外）
-  [data-theme='dark'] {
-    // 1) 页面级容器包裹，设为页面级深色
-    .menu-management,
-    .role-management,
-    .permission-management,
-    .task-management,
-    .log-management,
-    .redis-management,
-    .oss-management,
-    .sms-management,
-    .email-management,
-    .agent-management,
-    .message-center,
-    .profile-center,
-    .chat-interface,
-    .chat-container {
-      background-color: var(--bg-color-page) !important;
-      color: var(--text-primary) !important;
-    }
-  
-    // 2) 常见卡片/区块容器，设为组件级深色
-    .search-section,
-    .table-section,
-    .pagination-section,
-    .list-header,
-    .pagination-container,
-    .stat-card,
-    .message-list-container,
-    .profile-card,
-    .info-section,
-    .section-header,
-    .icon-grid,
-    .icon-item,
-    .icon-selector,
-    .page-header,
-    .content-card,
-    .content-section,
-    .panel,
-    .card,
-    .section {
-      background-color: var(--bg-color) !important;
-      color: var(--text-primary) !important;
-      border-color: var(--border-lighter) !important;
-    }
-  
-    // 3) 细节：浅灰背景区在暗色下同样转为深色
-    .list-header,
-    .pagination-container {
-      background-color: var(--bg-color) !important; // 覆盖 #fafbfc
-    }
-  
-    // 4) 图标选择器与图标项
-    .icon-item:hover {
-      background-color: rgba(255, 255, 255, 0.04) !important; // 替代 #f0f9ff
-      border-color: var(--primary-color) !important;
-      box-shadow: 0 4px 12px rgba(64, 158, 255, 0.12) !important;
-    }
-  
-    // 5) 文字强化，防止局部仍为深色
-    .page-header h1,
-    .page-header h2,
-    .page-title,
-    .section-title,
-    .stat-content .stat-value,
-    .info-item .info-value {
-      color: var(--text-primary) !important;
-    }
-  
-    .page-header p,
-    .page-description,
-    .stat-content .stat-label,
-    .message-time,
-    .message-content-preview,
-    .user-username,
-    .info-item .info-label {
-      color: var(--text-secondary) !important;
-    }
-  
-    // 6) 分隔线和边框
-    .section-header,
-    .edit-actions,
-    .profile-stats,
-    .list-header,
-    .pagination-section,
-    .pagination-container {
-      border-color: var(--border-lighter) !important;
-    }
-  
-    // 7) 聊天等特殊区域（兜底）
-    .chat-sidebar,
-    .chat-main,
-    .chat-messages,
-    .chat-input-area,
-    .chat-message-list,
-    .chat-message-item {
-      background-color: var(--bg-color) !important;
-      color: var(--text-primary) !important;
-      border-color: var(--border-lighter) !important;
-    }
+  .el-radio-button {
+    --el-radio-button-checked-bg-color: #2563eb;
+    --el-radio-button-checked-border-color: #2563eb;
   }
 }

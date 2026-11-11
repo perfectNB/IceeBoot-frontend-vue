@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { getSMSProviders, sendSms, querySmsStatus, querySmsBalance, type SMSProvider, type SmsResponse, type SmsSendDTO, type SmsStatusQuery, type SmsBalanceQuery } from '@/api'
+
+import { ChatDotSquare, Refresh } from '@element-plus/icons-vue'
+import '../third/third-management.scss'
 
 const { t } = useI18n()
 
@@ -11,6 +14,7 @@ defineOptions({
 })
 
 const activeTab = ref('send')
+const advancedPanels = ref<string[]>([])
 const loadingProviders = ref(false)
 const sending = ref(false)
 const queryingStatus = ref(false)
@@ -50,6 +54,10 @@ const balanceForm = reactive({
   keyId: undefined as number | undefined,
   provider: ''
 })
+
+watch(() => sendForm.provider, () => { sendForm.keyId = undefined })
+watch(() => statusForm.provider, () => { statusForm.keyId = undefined })
+watch(() => balanceForm.provider, () => { balanceForm.keyId = undefined })
 
 const sendResult = ref<SmsResponse | null>(null)
 const statusResult = ref<SmsResponse | null>(null)
@@ -100,7 +108,7 @@ const formatResult = (value: SmsResponse | null): string => {
 
 const validatePhoneTarget = (_rule: unknown, _value: string, callback: (error?: Error) => void) => {
   if (!sendForm.phoneNumber && !sendForm.phoneNumbers) {
-    callback(new Error(t('smsManagement.phoneRequired')))
+    callback(new Error(t('smsManagement.phoneNumberRequired')))
     return
   }
   callback()
@@ -135,7 +143,7 @@ const loadProviders = async () => {
   try {
     providerList.value = await getSMSProviders()
   } catch {
-    ElMessage.error(t('smsManagement.loadProvidersError'))
+    ElMessage.error(t('smsManagement.loadProvidersFailed'))
   } finally {
     loadingProviders.value = false
   }
@@ -259,129 +267,171 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="sms-management">
-    <div class="page-header">
-      <h2>{{ t('smsManagement.title') }}</h2>
-      <p>{{ t('smsManagement.description') }}</p>
-    </div>
-
-    <el-tabs v-model="activeTab" type="card">
+  <main class="third-workbench operation-workbench">
+    <header class="third-heading">
+      <div class="third-title">
+        <span class="third-title-icon">
+          <el-icon aria-hidden="true">
+            <ChatDotSquare />
+          </el-icon>
+        </span>
+        <div>
+          <p class="third-eyebrow">{{ t('thirdCommon.category') }}</p>
+          <h1>{{ t('smsManagement.title') }}</h1>
+          <p class="third-description">{{ t('smsManagement.description') }}</p>
+        </div>
+      </div>
+      <el-button :icon="Refresh" :loading="loadingProviders" @click="loadProviders">{{ t('thirdCommon.refresh') }}</el-button>
+    </header>
+    <el-tabs v-model="activeTab" class="operation-tabs">
       <el-tab-pane :label="t('smsManagement.sendSms')" name="send">
         <div class="panel-card" v-loading="loadingProviders">
           <el-form
             ref="sendFormRef"
             :model="sendForm"
             :rules="sendRules"
-            label-width="110px"
+            label-position="top"
           >
-            <el-row :gutter="16">
-              <el-col :span="12">
-                <el-form-item :label="t('smsManagement.provider')" prop="provider">
-                  <el-select v-model="sendForm.provider" :placeholder="t('smsManagement.providerPlaceholder')" filterable>
-                    <el-option
-                      v-for="provider in providerOptions"
-                      :key="provider.providerName"
-                      :label="provider.displayName"
-                      :value="provider.providerName"
+            <section class="operation-section">
+              <div class="operation-section-heading">
+                <span>01</span>
+                <div>
+                  <h2>{{ t('thirdCommon.serviceSection') }}</h2>
+                  <p>{{ t('thirdCommon.serviceHint') }}</p>
+                </div>
+              </div>
+              <el-row :gutter="20">
+                <el-col :xs="24" :sm="12">
+                  <el-form-item :label="t('smsManagement.provider')" prop="provider">
+                    <el-select v-model="sendForm.provider" :placeholder="t('smsManagement.providerPlaceholder')" filterable>
+                      <el-option
+                        v-for="provider in providerOptions"
+                        :key="provider.providerName"
+                        :label="provider.displayName"
+                        :value="provider.providerName"
+                      />
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+                <el-col :xs="24" :sm="12">
+                  <el-form-item :label="t('smsManagement.keyId')">
+                    <el-select v-model="sendForm.keyId"
+                               clearable
+                               :disabled="!sendForm.provider"
+                               :placeholder="t('smsManagement.keyIdPlaceholder')"
+                    >
+                      <el-option
+                        v-for="key in keyOptions"
+                        :key="key.id"
+                        :label="`${key.id} - ${key.remark || key.accessKeyId}`"
+                        :value="key.id"
+                      />
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </section>
+            <section class="operation-section">
+              <div class="operation-section-heading">
+                <span>02</span>
+                <div>
+                  <h2>{{ t('thirdCommon.smsContentSection') }}</h2>
+                  <p>{{ t('thirdCommon.smsContentHint') }}</p>
+                </div>
+              </div>
+              <el-row :gutter="20">
+                <el-col :xs="24" :sm="12">
+                  <el-form-item :label="t('smsManagement.phoneNumber')" prop="phoneNumber">
+                    <el-input v-model="sendForm.phoneNumber" :placeholder="t('smsManagement.phoneNumberPlaceholder')" />
+                  </el-form-item>
+                </el-col>
+                <el-col :xs="24" :sm="12">
+                  <el-form-item :label="t('smsManagement.phoneNumberList')" prop="phoneNumbers">
+                    <el-input
+                      v-model="sendForm.phoneNumbers"
+                      :placeholder="t('smsManagement.phoneNumberListPlaceholder')"
+                      type="textarea"
+                      :rows="2"
                     />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('smsManagement.keyId')">
-                  <el-select v-model="sendForm.keyId" :placeholder="t('smsManagement.keyPlaceholder')">
-                    <el-option
-                      v-for="key in keyOptions"
-                      :key="key.id"
-                      :label="`${key.id} - ${key.remark || key.accessKeyId}`"
-                      :value="key.id"
+                  </el-form-item>
+                </el-col>
+                <el-col :span="24">
+                  <el-form-item :label="t('smsManagement.content')" prop="content">
+                    <el-input
+                      v-model="sendForm.content"
+                      type="textarea"
+                      :rows="3"
+                      :placeholder="t('smsManagement.contentPlaceholder')"
                     />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('smsManagement.phoneNumber')" prop="phoneNumber">
-                  <el-input v-model="sendForm.phoneNumber" :placeholder="t('smsManagement.phoneNumberPlaceholder')" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('smsManagement.phoneNumbers')" prop="phoneNumbers">
-                  <el-input
-                    v-model="sendForm.phoneNumbers"
-                    :placeholder="t('smsManagement.phoneNumbersPlaceholder')"
-                    type="textarea"
-                    :rows="2"
-                  />
-                </el-form-item>
-              </el-col>
-              <el-col :span="24">
-                <el-form-item :label="t('smsManagement.content')" prop="content">
-                  <el-input
-                    v-model="sendForm.content"
-                    type="textarea"
-                    :rows="3"
-                    :placeholder="t('smsManagement.contentPlaceholder')"
-                  />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('smsManagement.templateId')">
-                  <el-input v-model="sendForm.templateId" :placeholder="t('smsManagement.templateIdPlaceholder')" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('smsManagement.signName')">
-                  <el-input v-model="sendForm.signName" :placeholder="t('smsManagement.signNamePlaceholder')" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('smsManagement.smsType')">
-                  <el-input v-model="sendForm.smsType" :placeholder="t('smsManagement.smsTypePlaceholder')" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('smsManagement.countryCode')">
-                  <el-input v-model="sendForm.countryCode" :placeholder="t('smsManagement.countryCodePlaceholder')" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('smsManagement.scheduleTime')">
-                  <el-input-number v-model="sendForm.scheduleTime" :min="0" style="width: 100%" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('smsManagement.validityPeriod')">
-                  <el-input-number v-model="sendForm.validityPeriod" :min="0" style="width: 100%" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('smsManagement.callbackUrl')">
-                  <el-input v-model="sendForm.callbackUrl" :placeholder="t('smsManagement.callbackUrlPlaceholder')" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('smsManagement.sendType')">
-                  <el-input v-model="sendForm.sendType" :placeholder="t('smsManagement.sendTypePlaceholder')" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('smsManagement.userData')">
-                  <el-input v-model="sendForm.userData" :placeholder="t('smsManagement.userDataPlaceholder')" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="24">
-                <el-form-item :label="t('smsManagement.templateParams')">
-                  <el-input
-                    v-model="sendForm.templateParamsJson"
-                    :placeholder="t('smsManagement.templateParamsPlaceholder')"
-                    type="textarea"
-                    :rows="3"
-                  />
-                </el-form-item>
-              </el-col>
-            </el-row>
+                  </el-form-item>
+                </el-col>
+                <el-col :xs="24" :sm="12">
+                  <el-form-item :label="t('smsManagement.templateId')">
+                    <el-input v-model="sendForm.templateId" :placeholder="t('smsManagement.templateIdPlaceholder')" />
+                  </el-form-item>
+                </el-col>
+                <el-col :xs="24" :sm="12">
+                  <el-form-item :label="t('smsManagement.signName')">
+                    <el-input v-model="sendForm.signName" :placeholder="t('smsManagement.signNamePlaceholder')" />
+                  </el-form-item>
+                </el-col>
+                <el-col :span="24">
+                  <el-form-item :label="t('smsManagement.templateParams')">
+                    <el-input
+                      v-model="sendForm.templateParamsJson"
+                      :placeholder="t('smsManagement.templateParamsPlaceholder')"
+                      type="textarea"
+                      :rows="3"
+                    />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </section>
+            <el-collapse v-model="advancedPanels" class="operation-advanced">
+              <el-collapse-item :title="t('thirdCommon.advancedTitle')" name="options">
+                <p class="advanced-description">{{ t('thirdCommon.smsAdvancedHint') }}</p>
+                <el-row :gutter="20">
+                  <el-col :xs="24" :sm="12">
+                    <el-form-item :label="t('smsManagement.smsType')">
+                      <el-input v-model="sendForm.smsType" :placeholder="t('smsManagement.smsTypePlaceholder')" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :xs="24" :sm="12">
+                    <el-form-item :label="t('smsManagement.countryCode')">
+                      <el-input v-model="sendForm.countryCode" :placeholder="t('smsManagement.countryCodePlaceholder')" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :xs="24" :sm="12">
+                    <el-form-item :label="t('smsManagement.scheduleTime')">
+                      <el-input-number v-model="sendForm.scheduleTime" :min="0" style="width: 100%" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :xs="24" :sm="12">
+                    <el-form-item :label="t('smsManagement.validityPeriod')">
+                      <el-input-number v-model="sendForm.validityPeriod" :min="0" style="width: 100%" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :xs="24" :sm="12">
+                    <el-form-item :label="t('smsManagement.callbackUrl')">
+                      <el-input v-model="sendForm.callbackUrl" :placeholder="t('smsManagement.callbackUrlPlaceholder')" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :xs="24" :sm="12">
+                    <el-form-item :label="t('smsManagement.sendType')">
+                      <el-input v-model="sendForm.sendType" :placeholder="t('smsManagement.sendTypePlaceholder')" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :xs="24" :sm="12">
+                    <el-form-item :label="t('smsManagement.userData')">
+                      <el-input v-model="sendForm.userData" :placeholder="t('smsManagement.userDataPlaceholder')" />
+                    </el-form-item>
+                  </el-col>
+                </el-row>
+              </el-collapse-item>
+            </el-collapse>
             <div class="action-row">
-              <el-button type="primary" :loading="sending" @click="handleSend">{{ t('smsManagement.send') }}</el-button>
+              <span class="action-hint">{{ t('thirdCommon.operationHint') }}</span>
+              <el-button type="primary" :loading="sending" @click="handleSend">{{ t('smsManagement.sendSms') }}</el-button>
               <el-button @click="resetSendForm">{{ t('smsManagement.reset') }}</el-button>
             </div>
           </el-form>
@@ -391,12 +441,15 @@ onMounted(() => {
           <pre class="result-content">{{ formatResult(sendResult) }}</pre>
         </div>
       </el-tab-pane>
-
       <el-tab-pane :label="t('smsManagement.queryStatus')" name="status">
         <div class="panel-card" v-loading="loadingProviders">
-          <el-form ref="statusFormRef" :model="statusForm" :rules="statusRules" label-width="110px">
+          <el-form ref="statusFormRef"
+                   :model="statusForm"
+                   :rules="statusRules"
+                   label-position="top"
+          >
             <el-row :gutter="16">
-              <el-col :span="12">
+              <el-col :xs="24" :sm="12">
                 <el-form-item :label="t('smsManagement.provider')" prop="provider">
                   <el-select v-model="statusForm.provider" :placeholder="t('smsManagement.providerPlaceholder')" filterable>
                     <el-option
@@ -408,9 +461,13 @@ onMounted(() => {
                   </el-select>
                 </el-form-item>
               </el-col>
-              <el-col :span="12">
+              <el-col :xs="24" :sm="12">
                 <el-form-item :label="t('smsManagement.keyId')">
-                  <el-select v-model="statusForm.keyId" :placeholder="t('smsManagement.keyPlaceholder')">
+                  <el-select v-model="statusForm.keyId"
+                             clearable
+                             :disabled="!statusForm.provider"
+                             :placeholder="t('smsManagement.keyIdPlaceholder')"
+                  >
                     <el-option
                       v-for="key in statusKeyOptions"
                       :key="key.id"
@@ -427,7 +484,7 @@ onMounted(() => {
               </el-col>
             </el-row>
             <div class="action-row">
-              <el-button type="primary" :loading="queryingStatus" @click="handleQueryStatus">{{ t('smsManagement.query') }}</el-button>
+              <el-button type="primary" :loading="queryingStatus" @click="handleQueryStatus">{{ t('smsManagement.queryStatus') }}</el-button>
               <el-button @click="resetStatusForm">{{ t('smsManagement.reset') }}</el-button>
             </div>
           </el-form>
@@ -437,12 +494,15 @@ onMounted(() => {
           <pre class="result-content">{{ formatResult(statusResult) }}</pre>
         </div>
       </el-tab-pane>
-
       <el-tab-pane :label="t('smsManagement.queryBalance')" name="balance">
         <div class="panel-card" v-loading="loadingProviders">
-          <el-form ref="balanceFormRef" :model="balanceForm" :rules="balanceRules" label-width="110px">
+          <el-form ref="balanceFormRef"
+                   :model="balanceForm"
+                   :rules="balanceRules"
+                   label-position="top"
+          >
             <el-row :gutter="16">
-              <el-col :span="12">
+              <el-col :xs="24" :sm="12">
                 <el-form-item :label="t('smsManagement.provider')">
                   <el-select v-model="balanceForm.provider" :placeholder="t('smsManagement.providerPlaceholder')" filterable>
                     <el-option
@@ -454,9 +514,13 @@ onMounted(() => {
                   </el-select>
                 </el-form-item>
               </el-col>
-              <el-col :span="12">
+              <el-col :xs="24" :sm="12">
                 <el-form-item :label="t('smsManagement.keyId')">
-                  <el-select v-model="balanceForm.keyId" :placeholder="t('smsManagement.keyPlaceholder')">
+                  <el-select v-model="balanceForm.keyId"
+                             clearable
+                             :disabled="!balanceForm.provider"
+                             :placeholder="t('smsManagement.keyIdPlaceholder')"
+                  >
                     <el-option
                       v-for="key in balanceKeyOptions"
                       :key="key.id"
@@ -479,75 +543,5 @@ onMounted(() => {
         </div>
       </el-tab-pane>
     </el-tabs>
-  </div>
+  </main>
 </template>
-
-<style scoped>
-.sms-management {
-  padding: 20px;
-}
-
-.page-header {
-  margin-bottom: 20px;
-}
-
-.page-header h2 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.page-header p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.panel-card {
-  padding: 20px;
-  border-radius: 8px;
-  background: var(--bg-color);
-  border: 1px solid var(--border-lighter);
-}
-
-.action-row {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.result-card {
-  margin-top: 16px;
-  padding: 16px;
-  border-radius: 8px;
-  background: var(--bg-color);
-  border: 1px solid var(--border-lighter);
-}
-
-.result-title {
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 12px;
-}
-
-.result-content {
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 12px;
-  background: var(--bg-color-overlay);
-  padding: 12px;
-  border-radius: 6px;
-  border: 1px solid var(--border-light);
-}
-
-@media (max-width: 768px) {
-  .action-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-</style>

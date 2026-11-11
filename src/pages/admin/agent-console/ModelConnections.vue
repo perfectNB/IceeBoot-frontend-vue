@@ -6,6 +6,17 @@ import { agentConsole, providers, type ModelConfig, type Provider } from '@/api/
 import { hasPermission } from '@/utils/permission'
 import JsonField from './components/JsonField.vue'
 import './console.scss'
+
+const providerBaseUrls: Record<Provider, string> = {
+  GPT: 'https://api.openai.com/v1',
+  CLAUDE: 'https://api.anthropic.com',
+  GEMINI: 'https://generativelanguage.googleapis.com',
+  QWEN: 'https://dashscope.aliyuncs.com/compatible-mode/v1',
+  DEEPSEEK: 'https://api.deepseek.com',
+  GLM: 'https://open.bigmodel.cn/api/paas/v4',
+  KIMI: 'https://api.moonshot.cn/v1',
+  MINIMAX: 'https://api.minimax.cn/v1',
+}
 const rows = ref<ModelConfig[]>([]),
   loading = ref(false),
   saving = ref(false),
@@ -25,7 +36,7 @@ function empty(): ModelConfig {
     name: '',
     provider: 'GPT',
     protocol: 'OPENAI_CHAT',
-    baseUrl: '',
+    baseUrl: providerBaseUrls.GPT,
     apiKey: '',
     model: '',
     enabled: true,
@@ -59,8 +70,10 @@ function edit(row?: ModelConfig) {
   visible.value = true
 }
 function providerChanged(value: Provider) {
+  form.value.baseUrl = providerBaseUrls[value]
   form.value.protocol =
     value === 'CLAUDE' ? 'ANTHROPIC' : value === 'GEMINI' ? 'GEMINI' : 'OPENAI_CHAT'
+  formRef.value?.clearValidate('baseUrl')
 }
 async function save() {
   if (!jsonValid.value || !(await formRef.value?.validate().catch(() => false))) return
@@ -174,7 +187,7 @@ onMounted(load)
           <el-option v-if="form.provider === 'CLAUDE'" label="Anthropic" value="ANTHROPIC" /><el-option v-else-if="form.provider === 'GEMINI'" label="Gemini" value="GEMINI" />
           <template v-else><el-option label="OpenAI Chat Completions / 兼容接口" value="OPENAI_CHAT" /><el-option v-if="form.provider === 'GPT'" label="OpenAI Responses" value="OPENAI_RESPONSES" /></template>
         </el-select><p class="field-help">按服务提供方的接口协议选择；兼容接口也可以填写自己的代理地址。</p></el-form-item>
-        <el-form-item label="接入地址 · Base URL" prop="baseUrl" :rules="[{ required: true, message: '请填写接入地址', trigger: 'blur' }, { pattern: /^https?:\/\//, message: '请填写以 https:// 或 http:// 开头的地址', trigger: 'blur' }]"><el-input v-model="form.baseUrl" type="url" placeholder="填写服务提供方的 API Base URL" /><p class="field-help">由你自行填写，需与选定协议匹配；不要填写单次请求的完整接口地址。</p></el-form-item>
+        <el-form-item label="接入地址 · Base URL" prop="baseUrl" :rules="[{ required: true, message: '请填写接入地址', trigger: 'blur' }, { pattern: /^https?:\/\//, message: '请填写以 https:// 或 http:// 开头的地址', trigger: 'blur' }]"><el-input v-model="form.baseUrl" type="url" placeholder="选择供应商后自动填入，也可填写自定义地址" /><p class="field-help">选择供应商后自动填入官方地址，可修改为代理或其他地域地址；不要填写单次请求的完整接口地址。</p></el-form-item>
         <div class="form-section-label"><span>02</span><div><h3>模型与凭据</h3><p>使用接入服务提供的模型标识和 API Key。</p></div></div>
         <div class="form-grid">
           <el-form-item label="模型名称" prop="model" :rules="[{ required: true, whitespace: true, message: '请填写实际模型名称', trigger: 'blur' }]"><el-input v-model="form.model" placeholder="填写服务提供方的实际模型名称" /><p class="field-help">这是请求中的模型标识，不是上方的连接名称。</p></el-form-item>

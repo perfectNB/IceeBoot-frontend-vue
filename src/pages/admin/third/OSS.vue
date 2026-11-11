@@ -1,109 +1,133 @@
 <template>
-  <div class="oss-management">
-    <div class="page-header">
-      <h1 class="page-title">{{ t('thirdOss.title') }}</h1>
-      <p class="page-description">{{ t('thirdOss.description') }}</p>
-    </div>
-
-    <!-- 服务商卡片区域 -->
-    <div class="providers-grid" v-loading="loading">
-      <div
-        v-for="provider in providerList"
-        :key="provider.providerName"
-        class="provider-card"
-      >
-        <div class="provider-header">
-          <div class="provider-info">
-            <div class="provider-icon">
-              <div class="icon-text" :style="{ backgroundColor: getProviderColor(provider.displayName) }">
-                {{ getProviderInitials(provider.displayName) }}
-              </div>
-            </div>
-            <div class="provider-details">
-              <h3 class="provider-name">{{ provider.displayName }}</h3>
-              <p class="provider-description">{{ provider.description }}</p>
-            </div>
-          </div>
-<!--          <div class="provider-status">-->
-<!--            <el-switch-->
-<!--              v-model="provider.status"-->
-<!--              :active-value="'active'"-->
-<!--              :inactive-value="'inactive'"-->
-<!--              @change="handleStatusChange(provider)"-->
-<!--            />-->
-<!--          </div>-->
-        </div>
-
-        <div class="provider-stats">
-          <div class="stat-item">
-            <span class="stat-label">{{ t('thirdOss.keyCount') }}</span>
-            <span class="stat-value">{{ provider.keys?.length || 0 }}</span>
-          </div>
-        </div>
-
-        <div class="provider-actions">
-          <el-button
-            type="primary"
-            :icon="Key"
-            @click="handleManageKeys(provider)"
-            class="manage-keys-btn"
-            v-if="hasPermission('third:oss:view')"
-          >
-            {{ t('thirdOss.manageKeys') }}
-          </el-button>
+  <main class="third-workbench provider-workbench">
+    <header class="third-heading">
+      <div class="third-title">
+        <span class="third-title-icon">
+          <el-icon aria-hidden="true">
+            <Cloudy />
+          </el-icon>
+        </span>
+        <div>
+          <p class="third-eyebrow">{{ t('thirdCommon.category') }}</p>
+          <h1>{{ t('thirdOss.title') }}</h1>
+          <p class="third-description">{{ t('thirdOss.description') }}</p>
         </div>
       </div>
+      <el-button :icon="Refresh" :loading="loading" @click="loadProviders">{{ t('thirdCommon.refresh') }}</el-button>
+    </header>
+    <section class="third-stats" :aria-label="t('thirdCommon.category')">
+      <div>
+        <span>{{ t('thirdCommon.providers') }}</span>
+        <strong>{{ providerList.length }}</strong>
+      </div>
+      <div>
+        <span>{{ t('thirdCommon.credentials') }}</span>
+        <strong>{{ totalKeys }}</strong>
+      </div>
+      <div>
+        <span>{{ t('thirdCommon.activeCredentials') }}</span>
+        <strong>{{ activeKeys }}</strong>
+      </div>
+    </section>
+    <div class="provider-toolbar">
+      <el-input v-model="providerQuery"
+                :prefix-icon="Search"
+                clearable
+                :placeholder="t('thirdCommon.searchProviders')"
+                :aria-label="t('thirdCommon.searchProviders')"
+      />
+      <span>{{ visibleProviders.length }} {{ t('thirdCommon.providers') }}</span>
     </div>
-
+    <div class="providers-grid" v-loading="loading">
+      <article v-for="provider in visibleProviders" :key="provider.providerName" class="provider-card">
+        <div class="provider-header">
+          <div class="provider-info">
+            <span class="provider-icon">
+              <span class="icon-text" :style="{ '--provider-accent': getProviderColor(provider.displayName) }">{{ getProviderInitials(provider.displayName) }}</span>
+            </span>
+            <div class="provider-details">
+              <h2 class="provider-name">{{ provider.displayName }}</h2>
+              <p class="provider-description">{{ provider.description || provider.providerName }}</p>
+            </div>
+          </div>
+          <el-tag :type="provider.keys?.length ? 'success' : 'info'" effect="plain" size="small">{{ t(provider.keys?.length ? 'thirdCommon.configured' : 'thirdCommon.notConfigured') }}</el-tag>
+        </div>
+        <div class="provider-footer">
+          <div class="provider-stats">
+            <span>{{ t('thirdOss.keyCount') }}</span>
+            <strong>{{ provider.keys?.length || 0 }}</strong>
+          </div>
+          <el-button v-if="hasPermission('third:oss:view')"
+                     type="primary"
+                     plain
+                     :icon="Key"
+                     @click="handleManageKeys(provider)"
+          >{{ t('thirdOss.manageKeys') }}</el-button>
+        </div>
+      </article>
+      <el-empty v-if="!loading && !visibleProviders.length"
+                class="provider-empty"
+                :description="t('thirdCommon.noProviders')"
+                :image-size="76"
+      >
+        <p>{{ t('thirdCommon.noProvidersHint') }}</p>
+      </el-empty>
+    </div>
     <!-- 密钥管理对话框 -->
     <el-dialog
       v-model="keyDialogVisible"
       :title="t('thirdOss.keyManagementTitle')"
-      width="900px"
+      width="min(1120px,96vw)"
+      class="third-key-dialog"
       :close-on-click-modal="false"
     >
       <div class="key-management">
         <div class="key-header">
-          <h3>{{ currentProvider?.displayName }} - {{ t('thirdOss.ossKeys') }}</h3>
-          <el-button type="primary" size="small" @click="handleAddKey" v-if="hasPermission('third:oss:create')">
-            <el-icon><Plus /></el-icon>
+          <h3>{{ currentProvider?.displayName }} - {{ t('thirdOss.keyManagementSubtitle') }}</h3>
+          <el-button type="primary"
+                     size="small"
+                     @click="handleAddKey"
+                     v-if="hasPermission('third:oss:create')"
+          >
+            <el-icon>
+              <Plus />
+            </el-icon>
             {{ t('thirdOss.addKey') }}
           </el-button>
         </div>
-
-        <el-table :data="currentProvider?.keys || []" stripe border>
-          <el-table-column prop="id" :label="t('thirdOss.table.id')" width="80" />
-          <el-table-column :label="t('thirdOss.table.accessKeyId')" min-width="200">
+        <el-table :data="currentProvider?.keys || []" stripe>
+          <el-table-column prop="id" :label="t('thirdOss.id')" width="80" />
+          <el-table-column :label="t('thirdOss.accessKeyId')" min-width="200">
             <template #default="{ row }">
               <span class="key-display">
                 {{ maskKey(row.accessKeyId) }}
               </span>
             </template>
           </el-table-column>
-          <el-table-column :label="t('thirdOss.table.accessKeySecret')" min-width="200">
+          <el-table-column :label="t('thirdOss.accessKeySecret')" min-width="200">
             <template #default="{ row }">
               <span class="key-display">
                 {{ maskKey(row.accessKeySecret) }}
               </span>
             </template>
           </el-table-column>
-
-          <el-table-column prop="customDomain" :label="t('thirdOss.table.customDomain')" min-width="150" />
-          <el-table-column prop="endpoint" :label="t('thirdOss.table.endpoint')" min-width="200" />
-          <el-table-column prop="region" :label="t('thirdOss.table.region')" width="120" />
-          <el-table-column prop="remark" :label="t('thirdOss.table.remark')" min-width="150" />
-          <el-table-column :label="t('thirdOss.table.status')" width="100">
+          <el-table-column prop="customDomain" :label="t('thirdOss.customDomain')" min-width="150" />
+          <el-table-column prop="endpoint" :label="t('thirdOss.endpoint')" min-width="200" />
+          <el-table-column prop="region" :label="t('thirdOss.region')" width="120" />
+          <el-table-column prop="remark" :label="t('thirdOss.remark')" min-width="150" />
+          <el-table-column :label="t('thirdOss.status')" width="100">
             <template #default="{ row }">
               <el-switch
                 v-model="row.status"
+                :disabled="!hasPermission('third:oss:edit')"
                 :active-value="'active'"
                 :inactive-value="'inactive'"
                 @change="handleKeyStatusChange(row)"
               />
             </template>
           </el-table-column>
-          <el-table-column prop="createTime" :label="t('thirdOss.table.createTime')" width="160" />
-          <el-table-column :label="t('thirdOss.table.actions')" width="180">
+          <el-table-column prop="createTime" :label="t('thirdOss.createTime')" width="160" />
+          <el-table-column :label="t('thirdOss.operation')" width="180" fixed="right">
             <template #default="{ row }">
               <el-button
                 type="primary"
@@ -112,7 +136,9 @@
                 @click="handleEditKey(row)"
                 v-if="hasPermission('third:oss:edit')"
               >
-                <el-icon><Edit /></el-icon>
+                <el-icon>
+                  <Edit />
+                </el-icon>
                 {{ t('thirdOss.edit') }}
               </el-button>
               <el-button
@@ -122,75 +148,75 @@
                 @click="handleDeleteKey(row)"
                 v-if="hasPermission('third:oss:delete')"
               >
-                <el-icon><Delete /></el-icon>
+                <el-icon>
+                  <Delete />
+                </el-icon>
                 {{ t('thirdOss.delete') }}
               </el-button>
             </template>
           </el-table-column>
         </el-table>
       </div>
-
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="keyDialogVisible = false">{{ t('thirdOss.close') }}</el-button>
         </div>
       </template>
     </el-dialog>
-
     <!-- 添加密钥对话框 -->
     <el-dialog
       v-model="addKeyDialogVisible"
       :title="t('thirdOss.addKeyTitle')"
-      width="600px"
+      width="min(640px,94vw)"
+      class="third-key-dialog"
       :close-on-click-modal="false"
     >
       <el-form
         ref="keyFormRef"
         :model="keyForm"
         :rules="keyFormRules"
-        label-width="120px"
+        label-position="top"
+        class="key-form"
       >
-        <el-form-item :label="t('thirdOss.form.remark')" prop="remark">
+        <el-form-item :label="t('thirdOss.remark')" prop="remark">
           <el-input
             v-model="keyForm.remark"
-            :placeholder="t('thirdOss.form.remarkPlaceholder')"
+            :placeholder="t('thirdOss.placeholderKeyRemark')"
           />
         </el-form-item>
-        <el-form-item :label="t('thirdOss.form.accessKeyId')" prop="accessKeyId">
+        <el-form-item :label="t('thirdOss.accessKeyId')" prop="accessKeyId">
           <el-input
             v-model="keyForm.accessKeyId"
-            :placeholder="t('thirdOss.form.accessKeyIdPlaceholder')"
+            :placeholder="t('thirdOss.placeholderAccessKeyId')"
           />
         </el-form-item>
-        <el-form-item :label="t('thirdOss.form.accessKeySecret')" prop="accessKeySecret">
+        <el-form-item :label="t('thirdOss.accessKeySecret')" prop="accessKeySecret">
           <el-input
             v-model="keyForm.accessKeySecret"
             type="password"
             show-password
-            :placeholder="t('thirdOss.form.accessKeySecretPlaceholder')"
+            :placeholder="t('thirdOss.placeholderAccessKeySecret')"
           />
         </el-form-item>
-
-        <el-form-item :label="t('thirdOss.form.customDomain')" prop="customDomain">
+        <el-form-item :label="t('thirdOss.customDomain')" prop="customDomain">
           <el-input
             v-model="keyForm.customDomain"
-            :placeholder="t('thirdOss.form.customDomainPlaceholder')"
+            :placeholder="t('thirdOss.placeholderCustomDomain')"
           />
         </el-form-item>
-        <el-form-item :label="t('thirdOss.form.endpoint')" prop="endpoint">
+        <el-form-item :label="t('thirdOss.endpoint')" prop="endpoint">
           <el-input
             v-model="keyForm.endpoint"
-            :placeholder="t('thirdOss.form.endpointPlaceholder')"
+            :placeholder="t('thirdOss.placeholderEndpoint')"
           />
         </el-form-item>
-        <el-form-item :label="t('thirdOss.form.region')" prop="region">
+        <el-form-item :label="t('thirdOss.region')" prop="region">
           <el-input
             v-model="keyForm.region"
-            :placeholder="t('thirdOss.form.regionPlaceholder')"
+            :placeholder="t('thirdOss.placeholderRegion')"
           />
         </el-form-item>
       </el-form>
-
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="addKeyDialogVisible = false">{{ t('thirdOss.cancel') }}</el-button>
@@ -200,11 +226,13 @@
         </div>
       </template>
     </el-dialog>
-  </div>
+  </main>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { computed, ref, reactive, onMounted } from 'vue'
+import { Cloudy, Refresh, Search } from '@element-plus/icons-vue'
+import './third-management.scss'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import {
   Plus,
@@ -237,6 +265,13 @@ const currentProvider = ref<OSSProvider | null>(null)
 
 // OSS服务商列表
 const providerList = ref<OSSProvider[]>([])
+const providerQuery = ref('')
+const visibleProviders = computed(() => {
+  const query = providerQuery.value.trim().toLowerCase()
+  return providerList.value.filter(provider => `${provider.displayName} ${provider.description} ${provider.providerName}`.toLowerCase().includes(query))
+})
+const totalKeys = computed(() => providerList.value.reduce((sum, provider) => sum + (provider.keys?.length || 0), 0))
+const activeKeys = computed(() => providerList.value.reduce((sum, provider) => sum + (provider.keys?.filter(key => key.status === 'active').length || 0), 0))
 
 // 密钥表单
 const keyForm = reactive<{
@@ -258,19 +293,12 @@ const keyForm = reactive<{
 
 // 表单验证规则
 const keyFormRules = {
-  accessKeyId: [{ required: true, message: () => t('thirdOss.form.accessKeyIdRequired'), trigger: 'blur' }],
-  accessKeySecret: [{ required: true, message: () => t('thirdOss.form.accessKeySecretRequired'), trigger: 'blur' }]
+  accessKeyId: [{ required: true, message: () => t('thirdOss.validationAccessKeyId'), trigger: 'blur' }],
+  accessKeySecret: [{ required: true, message: () => t('thirdOss.validationAccessKeySecret'), trigger: 'blur' }]
 }
 
 // 获取服务商首字母
-const getProviderInitials = (name: string) => {
-  if (!name) return ''
-  const words = name.split(' ')
-  if (words.length === 1) {
-    return name.substring(0, 2).toUpperCase()
-  }
-  return words.map(word => word.charAt(0)).join('').substring(0, 2).toUpperCase()
-}
+const getProviderInitials = (name: string) => name.trim().slice(0, 2).toUpperCase()
 
 // 获取服务商颜色
 const getProviderColor = (name: string) => {
@@ -288,10 +316,7 @@ const getProviderColor = (name: string) => {
 }
 
 // 掩码显示密钥
-const maskKey = (key: string) => {
-  if (!key || key.length < 8) return key
-  return key.substring(0, 4) + '****' + key.substring(key.length - 4)
-}
+const maskKey = (key: string) => key ? '••••••••' : '—'
 
 // 状态变更
 // const handleStatusChange = async (provider: OSSProvider) => {
@@ -333,7 +358,7 @@ const handleDeleteKey = async (key: OSSKey) => {
     )
 
     await deleteOSSKey(key.id)
-    ElMessage.success(t('thirdOss.deleteSuccess'))
+    ElMessage.success(t('thirdOss.keyDeleteSuccess'))
 
     // 重新加载所有服务商数据
     await loadProviders()
@@ -346,7 +371,7 @@ const handleDeleteKey = async (key: OSSKey) => {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除密钥失败:', error)
-      ElMessage.error(t('thirdOss.deleteFailed'))
+      ElMessage.error(t('thirdOss.keyDeleteFailed'))
     }
   }
 }
@@ -355,10 +380,10 @@ const handleDeleteKey = async (key: OSSKey) => {
 const handleKeyStatusChange = async (key: OSSKey) => {
   try {
     await updateOSSKeyStatus(currentProvider.value!.providerName, key.id, key.status)
-    ElMessage.success(t('thirdOss.statusUpdateSuccess'))
+    ElMessage.success(t('thirdOss.keyStatusUpdateSuccess'))
   } catch (error) {
     console.error('密钥状态更新失败:', error)
-    ElMessage.error(t('thirdOss.statusUpdateFailed'))
+    ElMessage.error(t('thirdOss.keyStatusUpdateFailed'))
     key.status = key.status === 'active' ? 'inactive' : 'active'
   }
 }
@@ -384,7 +409,7 @@ const handleSubmitKey = async () => {
         customDomain: keyForm.customDomain
       }
       await updateOSSKey(keyForm.id, keyData)
-      ElMessage.success(t('thirdOss.updateSuccess'))
+      ElMessage.success(t('thirdOss.keyUpdateSuccess'))
 
       // 重新加载所有服务商数据
       await loadProviders()
@@ -402,7 +427,7 @@ const handleSubmitKey = async () => {
         status: 'active' as const
       }
       await addOSSKey(keyData)
-      ElMessage.success(t('thirdOss.addSuccess'))
+      ElMessage.success(t('thirdOss.keyAddSuccess'))
     }
 
     // 重新加载所有服务商数据
@@ -418,7 +443,7 @@ const handleSubmitKey = async () => {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('操作密钥失败:', error)
-      ElMessage.error(t('thirdOss.operationFailed'))
+      ElMessage.error(t('thirdOss.keyOperationFailed'))
     }
   } finally {
     submitting.value = false
@@ -464,7 +489,7 @@ const loadProviders = async () => {
     providerList.value = providers
   } catch (error) {
     console.error('加载服务商数据失败:', error)
-    ElMessage.error(t('thirdOss.loadFailed'))
+    ElMessage.error(t('thirdOss.loadProvidersFailed'))
   } finally {
     loading.value = false
   }
@@ -475,232 +500,3 @@ onMounted(() => {
   loadProviders()
 })
 </script>
-
-<style scoped>
-.oss-management {
-  padding: 20px;
-  background: var(--bg-color-page);
-  min-height: 100vh;
-}
-
-.page-header {
-  margin-bottom: 32px;
-  text-align: left;
-}
-
-.page-header h1 {
-  margin: 0 0 12px 0;
-  color: var(--text-primary);
-  font-size: 32px;
-  font-weight: 700;
-}
-
-.page-header p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 16px;
-}
-
-.providers-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
-  gap: 24px;
-  margin-bottom: 32px;
-}
-
-.provider-card {
-  background: var(--bg-color);
-  border-radius: 16px;
-  padding: 24px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid var(--border-light);
-  transition: all 0.3s ease;
-  position: relative;
-  overflow: hidden;
-}
-
-.provider-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-}
-
-.provider-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 20px;
-}
-
-.provider-info {
-  display: flex;
-  align-items: center;
-  flex: 1;
-}
-
-.provider-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  overflow: hidden;
-  margin-right: 16px;
-  flex-shrink: 0;
-}
-
-.provider-icon .icon-text {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-weight: 600;
-  font-size: 16px;
-  border-radius: 12px;
-}
-
-.provider-details {
-  flex: 1;
-}
-
-.provider-name {
-  margin: 0 0 8px 0;
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--text-primary);
-  line-height: 1.2;
-}
-
-.provider-description {
-  margin: 0;
-  font-size: 14px;
-  color: var(--text-regular);
-  line-height: 1.4;
-}
-
-.provider-status {
-  flex-shrink: 0;
-}
-
-.provider-stats {
-  margin-bottom: 20px;
-  padding: 16px;
-  background: var(--bg-color-overlay);
-  border-radius: 12px;
-}
-
-.stat-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.stat-label {
-  font-size: 14px;
-  color: var(--text-regular);
-  font-weight: 500;
-}
-
-.stat-value {
-  font-size: 18px;
-  font-weight: 700;
-  color: #409eff;
-}
-
-.provider-actions {
-  display: flex;
-  justify-content: center;
-}
-
-.manage-keys-btn {
-  width: 100%;
-  height: 44px;
-  font-size: 16px;
-  font-weight: 600;
-  border-radius: 12px;
-}
-
-.key-management .key-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.key-management .key-header h3 {
-  margin: 0;
-  color: var(--text-primary);
-  font-size: 20px;
-  font-weight: 600;
-}
-
-.key-management .key-display {
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 12px;
-  color: var(--text-regular);
-  background: var(--bg-color-overlay);
-  padding: 4px 8px;
-  border-radius: 4px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: inline-block;
-  max-width: 100%;
-}
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 24px;
-}
-
-:deep(.el-table .el-table__cell) {
-  padding: 16px 12px;
-}
-
-:deep(.el-dialog) {
-  border-radius: 16px;
-}
-
-:deep(.el-dialog__header) {
-  padding: 24px 24px 0;
-}
-
-:deep(.el-dialog__body) {
-  padding: 24px;
-}
-
-:deep(.el-dialog__footer) {
-  padding: 0 24px 24px;
-}
-
-:deep(.el-form-item) {
-  margin-bottom: 20px;
-}
-
-:deep(.el-input), :deep(.el-textarea) {
-  border-radius: 8px;
-}
-
-:deep(.el-button) {
-  border-radius: 8px;
-  font-weight: 500;
-}
-
-@media (max-width: 768px) {
-  .providers-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .provider-card {
-    padding: 20px;
-  }
-
-  .page-header h1 {
-    font-size: 24px;
-  }
-}
-</style>

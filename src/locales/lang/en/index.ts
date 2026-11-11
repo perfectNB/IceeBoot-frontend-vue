@@ -28,6 +28,7 @@ import workflowDiagram from './workflowDiagram'
 import workflowInstances from './workflowInstances'
 import workflowTasks from './workflowTasks'
 import thirdEmail from './thirdEmail'
+import thirdCommon from './thirdCommon'
 import thirdOss from './thirdOss'
 import thirdSms from './thirdSms'
 import payConfig from './payConfig'
@@ -65,6 +66,7 @@ export default {
   workflowInstances,
   workflowTasks,
   thirdEmail,
+  thirdCommon,
   thirdOss,
   thirdSms,
   payConfig,

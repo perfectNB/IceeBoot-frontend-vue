@@ -62,68 +62,7 @@
   --section-gap: 160px;
 }
 
-/* Dark Theme Overrides */
-:root.dark {
-  /* Dark Theme Colors */
-  --bg-color: #0f172a;
-  --bg-color-page: #020617;
-  --bg-color-soft: #1e293b;
-  --bg-surface: #1e293b;
-
-  --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-tertiary: #64748b;
-
-  --border-color: #1e293b;
-  --border-light: #334155;
-  --border-extra-light: rgba(255, 255, 255, 0.05);
-
-  --card-bg: rgba(30, 41, 59, 0.7);
-  --glass-bg: rgba(15, 23, 42, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.05);
-
-  --color-background: var(--bg-color);
-  --color-background-soft: var(--bg-color-soft);
-  --color-background-mute: var(--bg-color-page);
-
-  --color-border: var(--border-color);
-  --color-border-hover: var(--border-light);
-
-  --color-heading: var(--text-primary);
-  --color-text: var(--text-secondary);
-}
-
-@media (prefers-color-scheme: dark) {
-  /* Only apply if no theme class is present (fallback) */
-  :root:not([class*="dark"]):not([data-theme="light"]) {
-    --bg-color: #0f172a;
-    --bg-color-page: #020617;
-    --bg-color-soft: #1e293b;
-    --bg-surface: #1e293b;
-
-    --text-primary: #f8fafc;
-    --text-secondary: #cbd5e1;
-    --text-tertiary: #64748b;
-
-    --border-color: #1e293b;
-    --border-light: #334155;
-    --border-extra-light: rgba(255, 255, 255, 0.05);
-
-    --card-bg: rgba(30, 41, 59, 0.7);
-    --glass-bg: rgba(15, 23, 42, 0.7);
-    --glass-border: rgba(255, 255, 255, 0.05);
-
-    --color-background: var(--bg-color);
-    --color-background-soft: var(--bg-color-soft);
-    --color-background-mute: var(--bg-color-page);
-
-    --color-border: var(--border-color);
-    --color-border-hover: var(--border-light);
-
-    --color-heading: var(--text-primary);
-    --color-text: var(--text-secondary);
-  }
-}
+/* Theme overrides are defined centrally in styles/variables.scss. */
 
 *,
 *::before,

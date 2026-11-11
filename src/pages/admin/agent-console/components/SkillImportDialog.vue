@@ -172,7 +172,7 @@ function close() { if (!loading.value && !saving.value) emit('close') }
           <p class="source-footnote">分支名含 / 时，请分别填写完整分支和子目录。</p>
         </el-form>
       </section>
-      <p class="format-note">支持技能说明、脚本和参考文档等 UTF-8 文本，暂不支持二进制附件。</p>
+      <p class="format-note">支持技能说明、脚本和参考文档等 UTF-8 文本，暂不支持二进制附件。每个技能最多 500 个配套资源，UTF-8 内容总量不超过 20MB。</p>
       <p v-if="loading" class="parsing-status" role="status">{{ mode === 'github' ? '正在读取仓库并解析技能，请稍候…' : '正在解析压缩包，请稍候…' }}</p>
     </template>
 

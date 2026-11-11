@@ -15,23 +15,23 @@ const applyTheme = (dark: boolean) => {
     html.setAttribute('data-theme', 'light')
     html.classList.remove('dark')
   }
-  // 同时保存到localStorage
-  localStorage.setItem('iceeboot-theme', dark ? 'dark' : 'light')
 }
 
 // 监听主题变化
 watch(isDark, (newValue) => {
   applyTheme(newValue)
-})
+}, { flush: 'sync' })
 
 // 切换主题
 export const toggleTheme = (): void => {
-  isDark.value = !isDark.value
+  setTheme(isDark.value ? 'light' : 'dark')
 }
 
 // 设置主题
 export const setTheme = (theme: ThemeMode): void => {
   isDark.value = theme === 'dark'
+  applyTheme(isDark.value)
+  localStorage.setItem('iceeboot-theme', theme)
 }
 
 // 获取当前主题
@@ -43,13 +43,13 @@ export const getTheme = (): ThemeMode => {
 export const initTheme = (): void => {
   const savedTheme = localStorage.getItem('iceeboot-theme')
   if (savedTheme && (savedTheme === 'dark' || savedTheme === 'light')) {
-    // 直接设置isDark的值，而不是通过setTheme函数
     isDark.value = savedTheme === 'dark'
   } else {
     // 默认跟随系统主题
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
     isDark.value = prefersDark
   }
+  applyTheme(isDark.value)
 }
 
 // 监听系统主题变化
@@ -60,7 +60,7 @@ export const watchSystemTheme = (): (() => void) => {
     // 只有在没有手动设置主题时才跟随系统
     const savedTheme = localStorage.getItem('iceeboot-theme')
     if (!savedTheme) {
-      setTheme(e.matches ? 'dark' : 'light')
+      isDark.value = e.matches
     }
   }
 

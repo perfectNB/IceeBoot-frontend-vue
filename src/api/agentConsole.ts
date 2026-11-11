@@ -115,6 +115,20 @@ export interface AgentMessage {
   status: string
   createTime: string
 }
+export interface AgentProgress {
+  sequence: number
+  type: 'RUN_STARTED' | 'PHASE' | 'MODEL_STARTED' | 'REASONING_DELTA' | 'REASONING_FINISHED' | 'TEXT_DELTA' | 'TOOL_STARTED' | 'TOOL_FINISHED' | 'AGENT_FINISHED' | 'RUN_FINISHED' | 'ERROR' | 'HEARTBEAT'
+  rootRunId: string
+  runId: string
+  parentRunId: string
+  agentCode: string
+  title: string
+  text: string
+  callId: string
+  toolName: string
+  status: string
+  timestamp: number
+}
 export interface InvokeResult {
   sessionId: string
   runId: string
@@ -317,6 +331,16 @@ export const agentConsole = {
       { input, sessionId },
       { timeout: 330000, _skipAuthRefresh: true },
     ),
+  invokeStream: async (code: string, input: string, sessionId: string, onEvent: (event: AgentProgress) => void, signal?: AbortSignal) => {
+    let terminal = false
+    await request.stream<AgentProgress>(`${root}/agents/by-code/${encodeURIComponent(code)}/stream`, { input, sessionId }, event => {
+      if (event.type === 'RUN_FINISHED' || event.type === 'ERROR') terminal = true
+      onEvent(event)
+    }, signal)
+    if (!terminal) throw new Error('连接已中断，请查看本轮执行状态后重试')
+  },
+  progress: (agentId: number, sessionId: string, runId: string) =>
+    request.get<AgentProgress[]>(`${root}/agents/${agentId}/sessions/${encodeURIComponent(sessionId)}/events`, { runId }),
   sessions: (agentId: number, offset = 0) =>
     request.get<AgentSession[]>(`${root}/agents/${agentId}/sessions`, { offset }),
   createSession: (agentId: number, title = '新对话') =>

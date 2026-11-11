@@ -1,8 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { getEmailProviders, sendEmail, queryEmailStatus, type EmailProvider, type EmailResponse, type EmailSendDTO, type EmailStatusQuery } from '@/api'
+
+import { Message, Refresh } from '@element-plus/icons-vue'
+import '../third/third-management.scss'
 
 const { t } = useI18n()
 
@@ -11,6 +14,8 @@ defineOptions({
 })
 
 const activeTab = ref('send')
+const advancedPanels = ref<string[]>([])
+const contentTab = ref('text')
 const loadingProviders = ref(false)
 const sending = ref(false)
 const queryingStatus = ref(false)
@@ -48,6 +53,9 @@ const statusForm = reactive({
   keyId: undefined as number | undefined,
   provider: ''
 })
+
+watch(() => sendForm.provider, () => { sendForm.keyId = undefined })
+watch(() => statusForm.provider, () => { statusForm.keyId = undefined })
 
 const sendResult = ref<EmailResponse | null>(null)
 const statusResult = ref<EmailResponse | null>(null)
@@ -107,7 +115,7 @@ const formatResult = (value: EmailResponse | null): string => {
 
 const validateReceiver = (_rule: unknown, _value: string, callback: (error?: Error) => void) => {
   if (!sendForm.toEmail && !sendForm.toEmails) {
-    callback(new Error(t('emailManagement.receiverRequired')))
+    callback(new Error(t('emailManagement.recipientRequired')))
     return
   }
   callback()
@@ -129,7 +137,7 @@ const loadProviders = async () => {
   try {
     providerList.value = await getEmailProviders()
   } catch {
-    ElMessage.error(t('emailManagement.loadProvidersError'))
+    ElMessage.error(t('emailManagement.loadProvidersFailed'))
   } finally {
     loadingProviders.value = false
   }
@@ -243,159 +251,217 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="email-management">
-    <div class="page-header">
-      <h2>{{ t('emailManagement.title') }}</h2>
-      <p>{{ t('emailManagement.description') }}</p>
-    </div>
-
-    <el-tabs v-model="activeTab" type="card">
+  <main class="third-workbench operation-workbench">
+    <header class="third-heading">
+      <div class="third-title">
+        <span class="third-title-icon">
+          <el-icon aria-hidden="true">
+            <Message />
+          </el-icon>
+        </span>
+        <div>
+          <p class="third-eyebrow">{{ t('thirdCommon.category') }}</p>
+          <h1>{{ t('emailManagement.title') }}</h1>
+          <p class="third-description">{{ t('emailManagement.description') }}</p>
+        </div>
+      </div>
+      <el-button :icon="Refresh" :loading="loadingProviders" @click="loadProviders">{{ t('thirdCommon.refresh') }}</el-button>
+    </header>
+    <el-tabs v-model="activeTab" class="operation-tabs">
       <el-tab-pane :label="t('emailManagement.sendEmail')" name="send">
         <div class="panel-card" v-loading="loadingProviders">
           <el-form
             ref="sendFormRef"
             :model="sendForm"
             :rules="sendRules"
-            label-width="110px"
+            label-position="top"
           >
-            <el-row :gutter="16">
-              <el-col :span="12">
-                <el-form-item :label="t('emailManagement.provider')" prop="provider">
-                  <el-select v-model="sendForm.provider" :placeholder="t('emailManagement.providerPlaceholder')" filterable>
-                    <el-option
-                      v-for="provider in providerOptions"
-                      :key="provider.providerName"
-                      :label="provider.displayName"
-                      :value="provider.providerName"
+            <section class="operation-section">
+              <div class="operation-section-heading">
+                <span>01</span>
+                <div>
+                  <h2>{{ t('thirdCommon.serviceSection') }}</h2>
+                  <p>{{ t('thirdCommon.serviceHint') }}</p>
+                </div>
+              </div>
+              <el-row :gutter="20">
+                <el-col :xs="24" :sm="12">
+                  <el-form-item :label="t('emailManagement.provider')" prop="provider">
+                    <el-select v-model="sendForm.provider" :placeholder="t('emailManagement.providerPlaceholder')" filterable>
+                      <el-option
+                        v-for="provider in providerOptions"
+                        :key="provider.providerName"
+                        :label="provider.displayName"
+                        :value="provider.providerName"
+                      />
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+                <el-col :xs="24" :sm="12">
+                  <el-form-item :label="t('emailManagement.keyId')">
+                    <el-select v-model="sendForm.keyId"
+                               clearable
+                               :disabled="!sendForm.provider"
+                               :placeholder="t('emailManagement.keyIdPlaceholder')"
+                    >
+                      <el-option
+                        v-for="key in keyOptions"
+                        :key="key.id"
+                        :label="`${key.id} - ${key.remark || key.emailAddress}`"
+                        :value="key.id"
+                      />
+                    </el-select>
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </section>
+            <section class="operation-section">
+              <div class="operation-section-heading">
+                <span>02</span>
+                <div>
+                  <h2>{{ t('thirdCommon.emailContentSection') }}</h2>
+                  <p>{{ t('thirdCommon.emailContentHint') }}</p>
+                </div>
+              </div>
+              <el-row :gutter="20">
+                <el-col :xs="24" :sm="12">
+                  <el-form-item :label="t('emailManagement.recipient')" prop="toEmail">
+                    <el-input v-model="sendForm.toEmail" :placeholder="t('emailManagement.recipientPlaceholder')" />
+                  </el-form-item>
+                </el-col>
+                <el-col :xs="24" :sm="12">
+                  <el-form-item :label="t('emailManagement.recipientList')" prop="toEmails">
+                    <el-input
+                      v-model="sendForm.toEmails"
+                      :placeholder="t('emailManagement.recipientListPlaceholder')"
+                      type="textarea"
+                      :rows="2"
                     />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('emailManagement.keyId')">
-                  <el-select v-model="sendForm.keyId" :placeholder="t('emailManagement.keyPlaceholder')">
-                    <el-option
-                      v-for="key in keyOptions"
-                      :key="key.id"
-                      :label="`${key.id} - ${key.remark || key.emailAddress}`"
-                      :value="key.id"
-                    />
-                  </el-select>
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('emailManagement.toEmail')" prop="toEmail">
-                  <el-input v-model="sendForm.toEmail" :placeholder="t('emailManagement.toEmailPlaceholder')" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('emailManagement.toEmails')" prop="toEmails">
-                  <el-input
-                    v-model="sendForm.toEmails"
-                    :placeholder="t('emailManagement.toEmailsPlaceholder')"
-                    type="textarea"
-                    :rows="2"
-                  />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('emailManagement.ccEmails')">
-                  <el-input v-model="sendForm.ccEmails" :placeholder="t('emailManagement.ccEmailsPlaceholder')" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('emailManagement.bccEmails')">
-                  <el-input v-model="sendForm.bccEmails" :placeholder="t('emailManagement.bccEmailsPlaceholder')" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="24">
-                <el-form-item :label="t('emailManagement.subject')" prop="subject">
-                  <el-input v-model="sendForm.subject" :placeholder="t('emailManagement.subjectPlaceholder')" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="24">
-                <el-form-item :label="t('emailManagement.textContent')">
-                  <el-input v-model="sendForm.textContent" type="textarea" :rows="3" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="24">
-                <el-form-item :label="t('emailManagement.htmlContent')">
-                  <el-input v-model="sendForm.htmlContent" type="textarea" :rows="3" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('emailManagement.templateId')">
-                  <el-input v-model="sendForm.templateId" :placeholder="t('emailManagement.templateIdPlaceholder')" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('emailManagement.fromName')">
-                  <el-input v-model="sendForm.fromName" :placeholder="t('emailManagement.fromNamePlaceholder')" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('emailManagement.emailType')">
-                  <el-input v-model="sendForm.emailType" :placeholder="t('emailManagement.emailTypePlaceholder')" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('emailManagement.priority')">
-                  <el-input-number v-model="sendForm.priority" :min="0" style="width: 100%" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('emailManagement.needReceipt')">
-                  <el-switch v-model="sendForm.needReceipt" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('emailManagement.replyTo')">
-                  <el-input v-model="sendForm.replyTo" :placeholder="t('emailManagement.replyToPlaceholder')" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('emailManagement.charset')">
-                  <el-input v-model="sendForm.charset" :placeholder="t('emailManagement.charsetPlaceholder')" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="12">
-                <el-form-item :label="t('emailManagement.async')">
-                  <el-switch v-model="sendForm.async" />
-                </el-form-item>
-              </el-col>
-              <el-col :span="24">
-                <el-form-item :label="t('emailManagement.templateParams')">
-                  <el-input
-                    v-model="sendForm.templateParamsJson"
-                    :placeholder="t('emailManagement.templateParamsPlaceholder')"
-                    type="textarea"
-                    :rows="3"
-                  />
-                </el-form-item>
-              </el-col>
-              <el-col :span="24">
-                <el-form-item :label="t('emailManagement.customHeaders')">
-                  <el-input
-                    v-model="sendForm.customHeadersJson"
-                    :placeholder="t('emailManagement.customHeadersPlaceholder')"
-                    type="textarea"
-                    :rows="3"
-                  />
-                </el-form-item>
-              </el-col>
-              <el-col :span="24">
-                <el-form-item :label="t('emailManagement.attachments')">
-                  <el-input
-                    v-model="sendForm.attachmentsJson"
-                    :placeholder="t('emailManagement.attachmentsPlaceholder')"
-                    type="textarea"
-                    :rows="3"
-                  />
-                </el-form-item>
-              </el-col>
-            </el-row>
+                  </el-form-item>
+                </el-col>
+                <el-col :span="24">
+                  <el-form-item :label="t('emailManagement.subject')" prop="subject">
+                    <el-input v-model="sendForm.subject" :placeholder="t('emailManagement.subjectPlaceholder')" />
+                  </el-form-item>
+                </el-col>
+              </el-row>
+            </section>
+            <div class="content-editor">
+              <el-tabs v-model="contentTab">
+                <el-tab-pane :label="t('thirdCommon.textTab')" name="text">
+                  <el-col :span="24">
+                    <el-form-item :label="t('emailManagement.textContent')">
+                      <el-input v-model="sendForm.textContent"
+                                :aria-label="t('emailManagement.textContent')"
+                                type="textarea"
+                                :autosize="{ minRows: 6, maxRows: 14 }"
+                      />
+                    </el-form-item>
+                  </el-col>
+                </el-tab-pane>
+                <el-tab-pane :label="t('thirdCommon.htmlTab')" name="html">
+                  <el-col :span="24">
+                    <el-form-item :label="t('emailManagement.htmlContent')">
+                      <el-input v-model="sendForm.htmlContent"
+                                :aria-label="t('emailManagement.htmlContent')"
+                                type="textarea"
+                                :autosize="{ minRows: 6, maxRows: 14 }"
+                      />
+                    </el-form-item>
+                  </el-col>
+                </el-tab-pane>
+              </el-tabs>
+            </div>
+            <el-collapse v-model="advancedPanels" class="operation-advanced">
+              <el-collapse-item :title="t('thirdCommon.advancedTitle')" name="options">
+                <p class="advanced-description">{{ t('thirdCommon.advancedHint') }}</p>
+                <el-row :gutter="20">
+                  <el-col :xs="24" :sm="12">
+                    <el-form-item :label="t('emailManagement.cc')">
+                      <el-input v-model="sendForm.ccEmails" :placeholder="t('emailManagement.ccPlaceholder')" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :xs="24" :sm="12">
+                    <el-form-item :label="t('emailManagement.bcc')">
+                      <el-input v-model="sendForm.bccEmails" :placeholder="t('emailManagement.bccPlaceholder')" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :xs="24" :sm="12">
+                    <el-form-item :label="t('emailManagement.templateId')">
+                      <el-input v-model="sendForm.templateId" :placeholder="t('emailManagement.templateIdPlaceholder')" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :xs="24" :sm="12">
+                    <el-form-item :label="t('emailManagement.fromName')">
+                      <el-input v-model="sendForm.fromName" :placeholder="t('emailManagement.fromNamePlaceholder')" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :xs="24" :sm="12">
+                    <el-form-item :label="t('emailManagement.emailType')">
+                      <el-input v-model="sendForm.emailType" :placeholder="t('emailManagement.emailTypePlaceholder')" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :xs="24" :sm="12">
+                    <el-form-item :label="t('emailManagement.priority')">
+                      <el-input-number v-model="sendForm.priority" :min="0" style="width: 100%" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :xs="24" :sm="12">
+                    <el-form-item :label="t('emailManagement.needReceipt')">
+                      <el-switch v-model="sendForm.needReceipt" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :xs="24" :sm="12">
+                    <el-form-item :label="t('emailManagement.replyTo')">
+                      <el-input v-model="sendForm.replyTo" :placeholder="t('emailManagement.replyToPlaceholder')" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :xs="24" :sm="12">
+                    <el-form-item :label="t('emailManagement.charset')">
+                      <el-input v-model="sendForm.charset" :placeholder="t('emailManagement.charsetPlaceholder')" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :xs="24" :sm="12">
+                    <el-form-item :label="t('emailManagement.async')">
+                      <el-switch v-model="sendForm.async" />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :span="24">
+                    <el-form-item :label="t('emailManagement.templateParams')">
+                      <el-input
+                        v-model="sendForm.templateParamsJson"
+                        :placeholder="t('emailManagement.templateParamsPlaceholder')"
+                        type="textarea"
+                        :rows="3"
+                      />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :span="24">
+                    <el-form-item :label="t('emailManagement.customHeaders')">
+                      <el-input
+                        v-model="sendForm.customHeadersJson"
+                        :placeholder="t('emailManagement.customHeadersPlaceholder')"
+                        type="textarea"
+                        :rows="3"
+                      />
+                    </el-form-item>
+                  </el-col>
+                  <el-col :span="24">
+                    <el-form-item :label="t('emailManagement.attachments')">
+                      <el-input
+                        v-model="sendForm.attachmentsJson"
+                        :placeholder="t('emailManagement.attachmentsPlaceholder')"
+                        type="textarea"
+                        :rows="3"
+                      />
+                    </el-form-item>
+                  </el-col>
+                </el-row>
+              </el-collapse-item>
+            </el-collapse>
             <div class="action-row">
-              <el-button type="primary" :loading="sending" @click="handleSend">{{ t('emailManagement.send') }}</el-button>
+              <span class="action-hint">{{ t('thirdCommon.operationHint') }}</span>
+              <el-button type="primary" :loading="sending" @click="handleSend">{{ t('emailManagement.sendEmail') }}</el-button>
               <el-button @click="resetSendForm">{{ t('emailManagement.reset') }}</el-button>
             </div>
           </el-form>
@@ -405,12 +471,15 @@ onMounted(() => {
           <pre class="result-content">{{ formatResult(sendResult) }}</pre>
         </div>
       </el-tab-pane>
-
       <el-tab-pane :label="t('emailManagement.queryStatus')" name="status">
         <div class="panel-card" v-loading="loadingProviders">
-          <el-form ref="statusFormRef" :model="statusForm" :rules="statusRules" label-width="110px">
+          <el-form ref="statusFormRef"
+                   :model="statusForm"
+                   :rules="statusRules"
+                   label-position="top"
+          >
             <el-row :gutter="16">
-              <el-col :span="12">
+              <el-col :xs="24" :sm="12">
                 <el-form-item :label="t('emailManagement.provider')" prop="provider">
                   <el-select v-model="statusForm.provider" :placeholder="t('emailManagement.providerPlaceholder')" filterable>
                     <el-option
@@ -422,9 +491,13 @@ onMounted(() => {
                   </el-select>
                 </el-form-item>
               </el-col>
-              <el-col :span="12">
+              <el-col :xs="24" :sm="12">
                 <el-form-item :label="t('emailManagement.keyId')">
-                  <el-select v-model="statusForm.keyId" :placeholder="t('emailManagement.keyPlaceholder')">
+                  <el-select v-model="statusForm.keyId"
+                             clearable
+                             :disabled="!statusForm.provider"
+                             :placeholder="t('emailManagement.keyIdPlaceholder')"
+                  >
                     <el-option
                       v-for="key in statusKeyOptions"
                       :key="key.id"
@@ -441,7 +514,7 @@ onMounted(() => {
               </el-col>
             </el-row>
             <div class="action-row">
-              <el-button type="primary" :loading="queryingStatus" @click="handleQueryStatus">{{ t('emailManagement.query') }}</el-button>
+              <el-button type="primary" :loading="queryingStatus" @click="handleQueryStatus">{{ t('emailManagement.queryStatus') }}</el-button>
               <el-button @click="resetStatusForm">{{ t('emailManagement.reset') }}</el-button>
             </div>
           </el-form>
@@ -452,75 +525,5 @@ onMounted(() => {
         </div>
       </el-tab-pane>
     </el-tabs>
-  </div>
+  </main>
 </template>
-
-<style scoped>
-.email-management {
-  padding: 20px;
-}
-
-.page-header {
-  margin-bottom: 20px;
-}
-
-.page-header h2 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.page-header p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.panel-card {
-  padding: 20px;
-  border-radius: 8px;
-  background: var(--bg-color);
-  border: 1px solid var(--border-lighter);
-}
-
-.action-row {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.result-card {
-  margin-top: 16px;
-  padding: 16px;
-  border-radius: 8px;
-  background: var(--bg-color);
-  border: 1px solid var(--border-lighter);
-}
-
-.result-title {
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 12px;
-}
-
-.result-content {
-  margin: 0;
-  white-space: pre-wrap;
-  word-break: break-word;
-  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-  font-size: 12px;
-  background: var(--bg-color-overlay);
-  padding: 12px;
-  border-radius: 6px;
-  border: 1px solid var(--border-light);
-}
-
-@media (max-width: 768px) {
-  .action-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-}
-</style>

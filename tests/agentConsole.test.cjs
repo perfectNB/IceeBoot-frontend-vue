@@ -9,13 +9,13 @@ const routes = { SKILL: 'skills', TOOL: 'tools', MCP: 'mcps', SANDBOX: 'sandbox-
 const clean = (value) => JSON.parse(JSON.stringify(value))
 function apiWithMock(respond) {
   const calls = []
-  const request = Object.fromEntries(['get', 'post', 'put', 'delete'].map((method) => [method, async (url, body) => {
+  const request = Object.fromEntries(['get', 'post', 'put', 'delete'].map((method) => [method, async (url, body, config) => {
     calls.push({ method, url, body: body && clean(body) })
-    return respond(method, url, body)
+    return respond(method, url, body, config)
   }]))
   const source = fs.readFileSync(path.join(__dirname, '../src/api/agentConsole.ts'), 'utf8')
   const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
-  const context = { exports: {}, require: (name) => {
+  const context = { exports: {}, FormData, require: (name) => {
     assert.equal(name, '@/utils/request')
     return { request }
   } }
@@ -91,4 +91,35 @@ test('operations expose quota, cancellation and server-side secret rotation with
   assert.equal(calls.at(-1).url, '/api/v1/agent-console/secrets/rotate')
   assert.equal(calls.at(-1).method, 'post')
   assert.equal(calls.at(-1).body, undefined)
+})
+
+test('conversation endpoints scope histories by agent/session and retain sessionId on invoke', async () => {
+  const { api, calls } = apiWithMock(() => [])
+  await api.sessions(7, 50)
+  await api.createSession(7, 'hello')
+  await api.messages(7, 'thread_1', 30)
+  await api.invoke('chat', 'next question', 'thread_1')
+  assert.deepEqual(clean(calls), [
+    {method:'get',url:'/api/v1/agent-console/agents/7/sessions',body:{offset:50}},
+    {method:'post',url:'/api/v1/agent-console/agents/7/sessions',body:{title:'hello'}},
+    {method:'get',url:'/api/v1/agent-console/agents/7/sessions/thread_1/messages',body:{beforeId:30}},
+    {method:'post',url:'/api/v1/agent-console/agents/by-code/chat/invoke',body:{input:'next question',sessionId:'thread_1'}},
+  ])
+})
+
+test('skill import uses multipart upload and JSON preview/commit contracts', async () => {
+  const requests = []
+  const { api } = apiWithMock((method, url, body, config) => { requests.push({ method, url, body, config }); return [] })
+  const file = new File(['zip'], 'skills.zip', { type: 'application/zip' })
+  await api.previewSkillArchive(file)
+  assert.equal(requests[0].body.get('file').name, 'skills.zip')
+  assert.equal(requests[0].config.headers['Content-Type'], undefined)
+  assert.equal(requests[0].config.skipErrorMessage, true)
+  assert.equal(requests[0].url, '/api/v1/agent-console/skills/import/archive')
+  await api.previewGithubSkills({ url: 'https://github.com/owner/repo', ref: 'v1', path: 'skills/pdf' })
+  assert.equal(requests[1].url, '/api/v1/agent-console/skills/import/github')
+  assert.deepEqual(clean(requests[1].body), { url: 'https://github.com/owner/repo', ref: 'v1', path: 'skills/pdf' })
+  await api.importSkills([{ code: 'pdf', content: '# PDF', resources: {} }])
+  assert.equal(requests[2].url, '/api/v1/agent-console/skills/import')
+  assert.equal(requests[2].body.skills[0].code, 'pdf')
 })

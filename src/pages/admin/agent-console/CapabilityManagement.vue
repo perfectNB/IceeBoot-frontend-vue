@@ -5,6 +5,7 @@ import { ElMessage, ElMessageBox, type FormInstance, type FormItemRule, type For
 import { Collection, Connection, Document, Files, Plus, Refresh, Search, Tools } from '@element-plus/icons-vue'
 import { agentConsole, type Capability, type CapabilityKind } from '@/api/agentConsole'
 import { hasPermission } from '@/utils/permission'
+import SkillImportDialog from './components/SkillImportDialog.vue'
 import JsonField from './components/JsonField.vue'
 import KeyValueField from './components/KeyValueField.vue'
 import './console.scss'
@@ -21,6 +22,7 @@ const page = computed(() => catalog[route.path.split('/').pop() as keyof typeof 
 const all = ref<Capability[]>([])
 const loading = ref(false)
 const visible = ref(false)
+const importVisible = ref(false)
 const saving = ref(false)
 const keyword = ref('')
 const advanced = ref<string[]>([])
@@ -159,6 +161,7 @@ async function remove(capability: Capability) {
 }
 watch(() => page.value.kind, () => {
   visible.value = false
+  importVisible.value = false
   keyword.value = ''
   return load()
 }, { immediate: true })
@@ -167,7 +170,7 @@ watch(() => page.value.kind, () => {
   <main class="agent-console capability-page">
     <header class="console-heading">
       <div class="page-intro"><span class="page-symbol" aria-hidden="true"><el-icon><component :is="page.icon" /></el-icon></span><div><h1>{{ page.title }}</h1><p class="subtitle">{{ page.description }}</p></div></div>
-      <div class="console-actions"><el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button><el-button v-if="hasPermission('ai:capability:write')" type="primary" :icon="Plus" @click="edit()">新建{{ page.title }}</el-button></div>
+      <div class="console-actions"><el-button v-if="page.kind === 'SKILL' && (hasPermission('ai:skill:import:archive:api') || hasPermission('ai:skill:import:github:api'))" @click="importVisible = true">导入技能</el-button><el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button><el-button v-if="hasPermission('ai:capability:write')" type="primary" :icon="Plus" @click="edit()">新建{{ page.title }}</el-button></div>
     </header>
     <section class="console-panel capability-panel" :aria-label="`${page.title}列表`">
       <div class="list-toolbar"><span class="list-count">全部{{ page.title }} <strong>{{ rows.length }}</strong></span><el-input v-model="keyword" :prefix-icon="Search" placeholder="搜索名称、编码或说明" clearable aria-label="搜索能力配置" /></div>
@@ -180,6 +183,8 @@ watch(() => page.value.kind, () => {
       </el-table>
     </section>
 
+    <SkillImportDialog v-if="page.kind === 'SKILL' && importVisible" :existing-codes="rows.map(row => row.code)"
+      @close="importVisible = false" @imported="load" />
     <el-dialog v-model="visible" :title="`${form.id ? '编辑' : '新建'}${page.title}`" width="min(920px,94vw)" class="agent-settings capability-settings" :close-on-click-modal="false" destroy-on-close>
       <template #header><div class="dialog-heading"><span class="dialog-symbol" aria-hidden="true"><el-icon><component :is="page.icon" /></el-icon></span><div><h2>{{ form.id ? '编辑' : '新建' }}{{ page.title }}</h2><p>{{ page.hint }}</p></div></div></template>
       <el-form ref="formRef" :model="form" :rules="rules" label-position="top" class="capability-form" :disabled="saving" @submit.prevent="save">

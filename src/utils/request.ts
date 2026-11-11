@@ -321,7 +321,7 @@ export const request = {
 
   async post<T = Record<string, unknown>>(
     url: string,
-    data?: Record<string, unknown> | unknown[],
+    data?: Record<string, unknown> | unknown[] | FormData,
     config?: RequestConfig
   ): Promise<T> {
     const response = await service.post<ApiResponse<T>>(url, data, config)

@@ -10,9 +10,9 @@ import {
   type CapabilityKind,
   type ModelConfig,
   type ReleaseView,
-  type InvokeResult,
 } from '@/api/agentConsole'
 import { hasPermission } from '@/utils/permission'
+import AgentConversation from './components/AgentConversation.vue'
 import JsonField from './components/JsonField.vue'
 import KeyValueField from './components/KeyValueField.vue'
 import BoundCapabilityPicker from './components/BoundCapabilityPicker.vue'
@@ -35,10 +35,7 @@ const loading = ref(false),
 const formRef = ref<FormInstance>(),
   current = ref<AgentView>(),
   runVisible = ref(false),
-  running = ref(false),
-  selected = ref<AgentView>(),
-  input = ref(''),
-  result = ref<InvokeResult>()
+  selected = ref<AgentView>()
 const sections = [
   ['basic', '基础信息'],
   ['prompt', '提示词'],
@@ -210,20 +207,7 @@ async function remove() {
 }
 function openRun(value: AgentView) {
   selected.value = value
-  input.value = ''
-  result.value = undefined
   runVisible.value = true
-}
-async function invoke() {
-  if (!selected.value || !input.value.trim()) return
-  running.value = true
-  result.value = undefined
-  try {
-    result.value = await agentConsole.invoke(selected.value.draft.code, input.value)
-    await load()
-  } finally {
-    running.value = false
-  }
 }
 onMounted(load)
 </script>
@@ -573,29 +557,9 @@ onMounted(load)
         </div>
       </template>
     </el-dialog>
-    <el-dialog
-      v-model="runVisible"
-      :title="`运行 · ${selected?.draft.name || ''} · v${selected?.activeVersion || 0}`"
-      width="min(860px,94vw)"
-      :close-on-click-modal="!running"
-    >
-      <el-form label-position="top">
-        <el-form-item label="输入">
-          <el-input v-model="input" type="textarea" :rows="5" :disabled="running" />
-        </el-form-item>
-      </el-form>
-      <el-button type="primary" :loading="running" :disabled="!input.trim()" @click="invoke">
-        开始执行
-      </el-button>
-      <p v-if="running" role="status">正在执行，工具调用与模型消耗将记录到执行记录中。</p>
-      <template v-if="result">
-        <p class="run-summary">
-          输入 {{ result.inputTokens }} / 输出 {{ result.outputTokens }} Token ·
-          {{ result.usageKnown ? '包含父子智能体合计' : '部分模型未返回用量' }} · 记录
-          {{ result.runId }}
-        </p>
-        <pre class="agent-output">{{ result.output }}</pre>
-      </template>
+    <el-dialog v-model="runVisible" :title="`对话 · ${selected?.draft.name || ''}`"
+      width="min(1100px,96vw)" destroy-on-close :close-on-click-modal="false">
+      <AgentConversation v-if="selected && runVisible" :key="selected.draft.id" :agent="selected" />
     </el-dialog>
   </main>
 </template>

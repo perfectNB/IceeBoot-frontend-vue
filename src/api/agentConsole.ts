@@ -52,6 +52,18 @@ export interface Capability {
   mcp?: { url: string; headers: Record<string, string>; allowedTools: string[] }
   sandbox?: { templateId: string; timeoutSeconds: number }
 }
+export interface SkillImportDraft {
+  code: string
+  name: string
+  description: string
+  enabled: boolean
+  content: string
+  resources: Record<string, string>
+  toolIds: number[]
+}
+export interface SkillImportItem extends SkillImportDraft { sourcePath: string }
+export interface SkillImportPreview { skills: SkillImportItem[]; warnings: string[] }
+export interface SkillGithubRequest { url: string; ref?: string; path?: string }
 export interface AgentSpec {
   id?: number
   code: string
@@ -87,7 +99,24 @@ export interface ReleaseView {
   createdAt: string
   createdBy: string
 }
+export interface AgentSession {
+  agentId: number
+  sessionId: string
+  releaseId: string
+  version: number
+  title: string
+  updateTime: string
+}
+export interface AgentMessage {
+  id: number
+  runId: string
+  role: 'user' | 'assistant'
+  content: string
+  status: string
+  createTime: string
+}
 export interface InvokeResult {
+  sessionId: string
   runId: string
   output: string
   inputTokens: number
@@ -288,6 +317,23 @@ export const agentConsole = {
       { input, sessionId },
       { timeout: 330000, _skipAuthRefresh: true },
     ),
+  sessions: (agentId: number, offset = 0) =>
+    request.get<AgentSession[]>(`${root}/agents/${agentId}/sessions`, { offset }),
+  createSession: (agentId: number, title = '新对话') =>
+    request.post<AgentSession>(`${root}/agents/${agentId}/sessions`, { title }),
+  messages: (agentId: number, sessionId: string, beforeId?: number) =>
+    request.get<AgentMessage[]>(`${root}/agents/${agentId}/sessions/${encodeURIComponent(sessionId)}/messages`,
+      beforeId === undefined ? {} : { beforeId }),
+  previewSkillArchive: (file: File) => {
+    const form = new FormData()
+    form.append('file', file)
+    return request.post<SkillImportPreview>(`${root}/skills/import/archive`, form,
+      { headers: { 'Content-Type': undefined }, timeout: 120000, skipErrorMessage: true })
+  },
+  previewGithubSkills: (value: SkillGithubRequest) =>
+    request.post<SkillImportPreview>(`${root}/skills/import/github`, { ...value }, { timeout: 270000, skipErrorMessage: true }),
+  importSkills: (skills: SkillImportDraft[]) =>
+    request.post<{ id: number; code: string; name: string }[]>(`${root}/skills/import`, { skills }, { timeout: 120000, skipErrorMessage: true }),
   quota: () => request.get<AgentQuota>(`${root}/quota`),
   cancelRun: (id: string) => request.post<void>(`${root}/runs/${encodeURIComponent(id)}/cancel`),
   rotateSecrets: () => request.post<SecretRotation>(`${root}/secrets/rotate`, undefined, { timeout: 300000, _skipAuthRefresh: true }),

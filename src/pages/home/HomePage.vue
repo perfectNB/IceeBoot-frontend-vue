@@ -300,18 +300,29 @@ onBeforeUnmount(() => { if (mockTimer) clearTimeout(mockTimer) })
   color-scheme: light;
   background: var(--site-bg); color: var(--text); font-family: 'Avenir Next', 'PingFang SC', 'Microsoft YaHei', sans-serif; -webkit-font-smoothing: antialiased;
   &.is-dark {
-    --paper: #10191a; --ink: #e7efea; --muted: #9cafa5; --line: #2c3a34; --accent: #b1ebd2;
-    --site-bg: #090f11; --stage: #0d1516; --stage-alt: #101b1b; --stage-model: #0b1216; --header-bg: #090f11eb;
-    --text: #eff5f1; --secondary: #a9bdb1; --subtle: #96b0a1; --highlight: #b9e6d0; --accent-ink: #b5efd8;
-    --hairline: #c4efdb24; --wash: #ffffff06; --halo: #457c6230; --watermark: #c9f5e310;
-    --button-bg: #d6f3df; --button-ink: #163022; --button-hover: #edfff3; --selected-bg: #d7ecdf; --selected-ink: #1b3a2c;
-    --editor-bg: #142120; --editor-ink: #d8e9dc; --editor-muted: #92b29f; --editor-border: #829f8d;
+    --paper: #0d1023; --ink: #edf0ff; --muted: #a8b0cd; --line: #2a3050; --accent: #b69aff;
+    --site-bg: #080a16; --stage: #0c1022; --stage-alt: #101025; --stage-model: #090e20; --header-bg: #080a16ed;
+    --text: #f0f2ff; --secondary: #adb5d0; --subtle: #929fbe; --highlight: #b49aff; --accent-ink: #7dcfff;
+    --hairline: #879cff30; --wash: #7688ff09; --halo: #714dff29; --watermark: #9994ff0e;
+    --button-bg: #7546df; --button-ink: #ffffff; --button-hover: #8757ec; --selected-bg: #7546df; --selected-ink: #ffffff;
+    --editor-bg: #101329; --editor-ink: #e0e7ff; --editor-muted: #9eacd0; --editor-border: #6875be5c;
     color-scheme: dark;
   }
   a { color: inherit; text-decoration: none; } button { font: inherit; cursor: pointer; } button:disabled { opacity: .4; cursor: default; }
   button, a { -webkit-tap-highlight-color: transparent; } .el-icon { flex-shrink: 0; }
   a:focus-visible, button:focus-visible, [tabindex='0']:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 5px; }
   h1, h2, h3, p { margin: 0; } h1, h2, h3 { text-wrap: balance; } p { text-wrap: pretty; }
+}
+// 夜间光色集中在交互与模型周围，正文保持清晰，避免全屏光污染。
+.launch-site.is-dark {
+  .hero-section { background: radial-gradient(ellipse at 79% 35%, #7350ff20, transparent 45%), radial-gradient(ellipse at 61% 70%, #258bff12, transparent 42%), var(--site-bg); }
+  .hero-copy h1 span, .finale-content h2 span { color: #b6a0ff; background: linear-gradient(110deg, #77cfff 0%, #b49aff 54%, #ed9bdf 100%); background-clip: text; -webkit-text-fill-color: transparent; }
+  .nav-cta, .launch-button.primary { background: linear-gradient(115deg, #6249da, #9138c7); border-color: #bfa0ff40; box-shadow: 0 4px 24px #7846e72b; &:hover { background: linear-gradient(115deg, #7358e8, #a445d7); box-shadow: 0 6px 30px #7846e745; } }
+  .provider-list button[aria-pressed='true'], .capability-buttons button[aria-pressed='true'] { background: #34245d; border-color: #b08aff; color: #f1eaff; box-shadow: inset 0 0 18px #9b64ff16, 0 0 18px #8751ff18; }
+  .feature-agent .scene-halo { background: radial-gradient(ellipse, #ba42dd20, transparent 70%); }
+  .feature-models .scene-halo { background: radial-gradient(ellipse, #286cff24, transparent 70%); }
+  .feature-sandbox .scene-halo { background: radial-gradient(ellipse, #7550ed28, transparent 70%); }
+  .brand-symbol { filter: drop-shadow(0 0 7px #58aeff40); }
 }
 .launch-header, .hero-section, .feature-scene, .integration-section, .launch-footer { transition: background-color .28s ease, color .28s ease, border-color .28s ease; }
 .launch-width { width: min(1200px, calc(100% - clamp(64px, 16vw, 320px))); margin-inline: auto; }

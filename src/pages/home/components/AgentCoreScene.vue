@@ -172,7 +172,7 @@ onBeforeUnmount(() => {
 .is-ready .engine-canvas { opacity: 1; }
 .engine-vignette { position: absolute; inset: 0; pointer-events: none; }
 .engine-fallback { position: absolute; inset: 0; display: grid; place-items: center; overflow: hidden; }
-.fallback-orbit { position: relative; width: 60%; aspect-ratio: 1; display: grid; place-items: center; perspective: 800px; i { position: absolute; inset: 0; border: 4px solid #bbd9cc; border-radius: 50%; transform: rotateX(55deg) rotateY(-25deg); box-shadow: 0 0 25px #afe3c422; } i:nth-child(2) { inset: 10%; transform: rotateY(65deg) rotateZ(40deg); border-color: #5eab90; } i:nth-child(3) { inset: 20%; transform: rotateX(-35deg); border-width: 12px; } span { position: relative; font: 12px monospace; letter-spacing: .15em; color: #c0e6ce; } }
-.is-light .fallback-orbit { i { border-color: #3d79cc; box-shadow: 0 0 25px #326ddd22; } span { color: #284b7b; } }
+.fallback-orbit { position: relative; width: 60%; aspect-ratio: 1; display: grid; place-items: center; perspective: 800px; i { position: absolute; inset: 0; border: 4px solid #9aaeff; border-radius: 50%; transform: rotateX(55deg) rotateY(-25deg); box-shadow: 0 0 25px #8e58ff30; } i:nth-child(2) { inset: 10%; transform: rotateY(65deg) rotateZ(40deg); border-color: #a267f1; } i:nth-child(3) { inset: 20%; transform: rotateX(-35deg); border-width: 12px; } span { position: relative; font: 12px monospace; letter-spacing: .15em; color: #d8dfff; } }
+.is-light .fallback-orbit { i, i:nth-child(2) { border-color: #3d79cc; box-shadow: 0 0 25px #326ddd22; } span { color: #284b7b; } }
 @media (prefers-reduced-motion: reduce) { .engine-canvas { transition: none; } }
 </style>

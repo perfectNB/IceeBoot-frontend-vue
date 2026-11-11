@@ -41,12 +41,12 @@ export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement,
     studio.width = 1024; studio.height = 512
     const context = studio.getContext('2d')
     if (context) {
-      context.fillStyle = '#10161b'; context.fillRect(0, 0, 1024, 512)
+      context.fillStyle = '#101322'; context.fillRect(0, 0, 1024, 512)
       const glow = context.createLinearGradient(0, 0, 0, 512)
-      glow.addColorStop(0, '#6b858d'); glow.addColorStop(.45, '#13262c'); glow.addColorStop(1, '#05080b')
+      glow.addColorStop(0, '#79829d'); glow.addColorStop(.45, '#171c32'); glow.addColorStop(1, '#050711')
       context.fillStyle = glow; context.fillRect(0, 0, 1024, 512)
       context.fillStyle = '#ffffff'; context.fillRect(50, 40, 120, 290); context.fillRect(440, 70, 350, 65)
-      context.fillStyle = '#a3f3e0'; context.fillRect(850, 160, 55, 270)
+      context.fillStyle = '#b4c9ff'; context.fillRect(850, 160, 55, 270)
       const texture = new THREE.CanvasTexture(studio)
       texture.mapping = THREE.EquirectangularReflectionMapping
       texture.colorSpace = THREE.SRGBColorSpace
@@ -54,18 +54,18 @@ export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement,
       try { scene.environment = keep(generator.fromEquirectangular(texture)).texture }
       finally { texture.dispose(); generator.dispose() }
     }
-    const ambient = new THREE.HemisphereLight(0xd9f5f2, 0x11161f, 2)
+    const ambient = new THREE.HemisphereLight(0xdde4ff, 0x11161f, 2)
     scene.add(ambient)
     const key = new THREE.DirectionalLight(0xffffff, 3.4); key.position.set(-3, 6, 7)
-    const rim = new THREE.DirectionalLight(0x80e9d1, 2.5); rim.position.set(6, 2, -4)
+    const rim = new THREE.DirectionalLight(0xc763ff, 2.5); rim.position.set(6, 2, -4)
     scene.add(key, rim)
-    const chrome = keep(new THREE.MeshStandardMaterial({ color: 0xc1ccce, metalness: 1, roughness: .17 }))
-    const graphite = keep(new THREE.MeshStandardMaterial({ color: 0x182025, metalness: .87, roughness: .26 }))
-    const porcelain = keep(new THREE.MeshStandardMaterial({ color: 0xe4eceb, metalness: .62, roughness: .23 }))
-    const mint = keep(new THREE.MeshPhysicalMaterial({ color: 0x52ba9e, metalness: .4, roughness: .18, clearcoat: 1 }))
-    const glass = keep(new THREE.MeshPhysicalMaterial({ color: 0x92e5d4, metalness: .08, roughness: .12, transparent: true, opacity: .15, depthWrite: false, side: THREE.DoubleSide }))
-    const glow = keep(new THREE.MeshBasicMaterial({ color: 0xa6ffe2, toneMapped: false }))
-    const lineMaterial = keep(new THREE.LineBasicMaterial({ color: 0x77b4a9, transparent: true, opacity: .35 }))
+    const chrome = keep(new THREE.MeshStandardMaterial({ color: 0xc5cee9, metalness: 1, roughness: .17 }))
+    const graphite = keep(new THREE.MeshStandardMaterial({ color: 0x171d38, metalness: .87, roughness: .26 }))
+    const porcelain = keep(new THREE.MeshStandardMaterial({ color: 0xe6eaff, metalness: .62, roughness: .23 }))
+    const accentMaterial = keep(new THREE.MeshPhysicalMaterial({ color: 0x793cf2, metalness: .4, roughness: .18, clearcoat: 1 }))
+    const glass = keep(new THREE.MeshPhysicalMaterial({ color: 0x9671f5, metalness: .08, roughness: .12, transparent: true, opacity: .15, depthWrite: false, side: THREE.DoubleSide }))
+    const glow = keep(new THREE.MeshBasicMaterial({ color: 0x61caff, toneMapped: false }))
+    const lineMaterial = keep(new THREE.LineBasicMaterial({ color: 0x9a8af0, transparent: true, opacity: .35 }))
     const nodes: Three.Group[] = []
     const rings: Three.Mesh[] = []
     const wires: Three.BufferGeometry[] = []
@@ -89,7 +89,7 @@ export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement,
       geometry.center()
       return mesh(parent, geometry, material)
     }
-    function label(parent: Three.Object3D, text: string, width: number, color = '#d3eee7') {
+    function label(parent: Three.Object3D, text: string, width: number, color = '#edf0ff') {
       const surface = document.createElement('canvas'); surface.width = 512; surface.height = 128
       const ctx = surface.getContext('2d')
       if (ctx) { ctx.font = '500 82px sans-serif'; ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(text, 256, 64, 470) }
@@ -107,7 +107,7 @@ export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement,
     if (kind === 'hero') {
       mesh(orb, new THREE.IcosahedronGeometry(1.03, 5), chrome)
       for (let i = 0; i < 3; i++) {
-        const hoop = ring(rig, 1.65 + i * .38, i === 0 ? .12 : .065, i === 1 ? mint : chrome)
+        const hoop = ring(rig, 1.65 + i * .38, i === 0 ? .12 : .065, i === 1 ? accentMaterial : chrome)
         hoop.rotation.set(.7 + i * .5, -.6 + i * .55, i * .8)
         rings.push(hoop)
       }
@@ -117,10 +117,10 @@ export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement,
       for (let i = 0; i < 3; i++) {
         const group = new THREE.Group(); rig.add(group); nodes.push(group)
         const body = slab(group, 3.6, 2.65, .16, i === 1 ? chrome : graphite); body.rotation.x = -Math.PI / 2
-        const edge = slab(group, 3.5, 2.55, .025, i === 1 ? mint : porcelain); edge.rotation.x = -Math.PI / 2; edge.position.y = -.1
+        const edge = slab(group, 3.5, 2.55, .025, i === 1 ? accentMaterial : porcelain); edge.rotation.x = -Math.PI / 2; edge.position.y = -.1
         const title = label(group, ['IDENTITY / RBAC', 'SERVICES', 'APPLICATION'][i]!, 2.4); title.rotation.x = -Math.PI / 2; title.position.set(0, .14, .8)
         for (let j = 0; j < 3; j++) {
-          const block = slab(group, .72, .7, .16, j === i ? mint : chrome); block.rotation.x = -Math.PI / 2; block.position.set((j - 1) * .95, .19, -.35)
+          const block = slab(group, .72, .7, .16, j === i ? accentMaterial : chrome); block.rotation.x = -Math.PI / 2; block.position.set((j - 1) * .95, .19, -.35)
         }
       }
     } else if (kind === 'agent') {
@@ -138,7 +138,7 @@ export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement,
       })
     } else if (kind === 'models') {
       const disk = mesh(orb, new THREE.CylinderGeometry(1, 1, .24, 64), chrome); disk.rotation.x = Math.PI / 2
-      const face = mesh(orb, new THREE.CircleGeometry(.91, 64), mint); face.position.z = .14
+      const face = mesh(orb, new THREE.CircleGeometry(.91, 64), accentMaterial); face.position.z = .14
       const text = label(orb, 'LLM', 1.45); text.position.z = .16
       const modelOrbit = ring(rig, 2.45, .025, chrome)
       modelOrbit.position.z = -.65
@@ -159,7 +159,7 @@ export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement,
       }
       ;['> python', '$ curl', '{ ENV }'].forEach((name, i) => {
         const node = new THREE.Group(); rig.add(node); nodes.push(node)
-        slab(node, 2.1, .56, .09, i === 1 ? mint : graphite)
+        slab(node, 2.1, .56, .09, i === 1 ? accentMaterial : graphite)
         const text = label(node, name, 1.45); text.position.z = .085
       })
       const title = label(rig, 'E2B', 1.1); title.position.set(0, 1.77, .3); title.rotation.x = -Math.PI / 2
@@ -216,7 +216,7 @@ export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement,
             const positions = wires[i]!.attributes.position!
             positions.setXYZ(1, node.position.x, node.position.y, node.position.z)
             positions.needsUpdate = true
-            ;(node.children[0] as Three.Mesh).material = active ? mint : graphite
+            ;(node.children[0] as Three.Mesh).material = active ? accentMaterial : graphite
             wireLines[i]!.visible = active
             const pulse = (time * .25 + i * .23) % 1
             sparks[i]!.position.copy(node.position).multiplyScalar(pulse)
@@ -232,7 +232,7 @@ export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement,
             node.position.set(Math.cos(a) * 2.45, Math.sin(a) * 2.45, Math.sin(a) * .32 + emphasis * .48)
             node.scale.setScalar(1 + emphasis * .12)
             node.rotation.y = Math.sin(time * .5 + i) * .06
-            plates[i]!.material = selection === i ? mint : graphite
+            plates[i]!.material = selection === i ? accentMaterial : graphite
           })
           orb.rotation.set(0, 0, 0)
           orb.scale.setScalar(1 + Math.sin(time * .8) * .015)
@@ -256,16 +256,18 @@ export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement,
       setTheme(dark) {
         if (disposed) return
         // 复用现有场景与 GPU 资源，主题切换不重建 canvas，也不重置动画。
-        ambient.color.set(dark ? 0xd9f5f2 : 0xe7efff)
-        rim.color.set(dark ? 0x80e9d1 : 0x88afff)
-        chrome.color.set(dark ? 0xc1ccce : 0xd7e3f7)
+        ambient.color.set(dark ? 0xdde4ff : 0xe7efff)
+        rim.color.set(dark ? 0xc763ff : 0x88afff)
+        chrome.color.set(dark ? 0xc5cee9 : 0xd7e3f7)
         chrome.metalness = dark ? 1 : .82
-        graphite.color.set(dark ? 0x182025 : 0x233959)
-        mint.color.set(dark ? 0x52ba9e : 0x245cda)
-        glow.color.set(dark ? 0xa6ffe2 : 0x2879ed)
-        lineMaterial.color.set(dark ? 0x77b4a9 : 0x5086ca)
+        graphite.color.set(dark ? 0x171d38 : 0x233959)
+        accentMaterial.color.set(dark ? 0x793cf2 : 0x245cda)
+        accentMaterial.emissive.set(dark ? 0x4b16c4 : 0x000000)
+        accentMaterial.emissiveIntensity = dark ? .22 : 0
+        glow.color.set(dark ? 0x61caff : 0x2879ed)
+        lineMaterial.color.set(dark ? 0x9a8af0 : 0x5086ca)
         lineMaterial.opacity = dark ? .35 : .45
-        glass.color.set(dark ? 0x92e5d4 : 0x7ca7ed)
+        glass.color.set(dark ? 0x9671f5 : 0x7ca7ed)
         glass.opacity = dark ? .15 : .12
       },
       dispose,

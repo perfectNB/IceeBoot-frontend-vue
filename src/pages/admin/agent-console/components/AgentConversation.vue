@@ -555,8 +555,9 @@ onMounted(() => loadSessions())
 .message.user { flex-direction: row-reverse; margin-left: 20%; }
 .message.user .message-body { flex: initial; }
 .message.user .message-label { justify-content: flex-end; margin-bottom: 7px; }
-.message.user .message-avatar { color: var(--el-text-color-regular); background: var(--el-fill-color); border-color: transparent; }
-.message.user .message-bubble { padding: 11px 16px; background: var(--el-fill-color); border: 1px solid var(--el-border-color-lighter); border-radius: 14px 3px 14px 14px; }
+.message.user .message-avatar { color: var(--el-text-color-regular); background: var(--el-bg-color); border-color: var(--el-border-color-light); }
+.message.user .message-bubble { padding: 12px 17px; background: var(--el-color-primary-light-8); border: 1px solid var(--el-color-primary-light-5); border-radius: 16px 4px 16px 16px; box-shadow: 0 2px 6px rgb(0 0 0 / 4%); }
+html.dark .message.user .message-bubble, html[data-theme='dark'] .message.user .message-bubble { background: #303030; border-color: #606060; box-shadow: 0 2px 8px rgb(0 0 0 / 12%); }
 .message-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 9px; }
 .message-links button { display: inline-flex; align-items: center; gap: 5px; padding: 1px 0; border: 0; background: transparent; font: inherit; color: var(--el-text-color-secondary); font-size: 11px; cursor: pointer; }
 .message-links button:hover, .message-links button.active { color: var(--el-color-primary); }

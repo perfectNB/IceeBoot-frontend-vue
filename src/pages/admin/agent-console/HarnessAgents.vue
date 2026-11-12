@@ -565,7 +565,7 @@ onMounted(load)
     </el-dialog>
     <AgentPreflightDialog v-if="form.id && preflightVisible" v-model="preflightVisible" :key="form.id" :agent-id="form.id" :dirty="isDirty" />
     <el-dialog v-model="runVisible" :title="`与 ${selected?.draft.name || '智能体'} 对话`"
-      width="min(1140px,96vw)" class="agent-conversation-dialog" align-center destroy-on-close :close-on-click-modal="false">
+      width="min(1480px,96vw)" class="agent-conversation-dialog" align-center destroy-on-close :close-on-click-modal="false">
       <template #header="{ titleId, titleClass }">
         <div class="conversation-dialog-heading">
           <span class="conversation-dialog-avatar"><el-icon aria-hidden="true"><Cpu /></el-icon></span>

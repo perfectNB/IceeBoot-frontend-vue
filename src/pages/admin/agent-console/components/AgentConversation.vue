@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ChatLineSquare, CircleCheck, Clock, Cpu, Plus, Promotion, Search, User, VideoPause, ArrowDown } from '@element-plus/icons-vue'
+import { ChatLineSquare, CircleCheck, Clock, Cpu, Plus, Promotion, Search, User, VideoPause, ArrowDown, Fold, Expand } from '@element-plus/icons-vue'
 import MarkdownIt from 'markdown-it'
 import { agentConsole, type AgentView, type AgentSession, type AgentMessage, type AgentProgress, type AgentFile } from '@/api/agentConsole'
 import { hasPermission } from '@/utils/permission'
@@ -125,6 +125,7 @@ async function stop() {
   } catch { ElMessage.error('停止失败，请重试') }
   finally { if (alive) stopping.value = false }
 }
+const historyCollapsed = ref(false)
 const sessionQuery = ref('')
 const visibleSessions = computed(() => {
   const query = sessionQuery.value.trim().toLowerCase()
@@ -381,8 +382,8 @@ async function send() {
 onMounted(() => loadSessions())
 </script>
 <template>
-  <div class="conversation">
-    <aside class="history-panel" aria-label="历史会话">
+  <div class="conversation" :class="{ 'history-collapsed': historyCollapsed }">
+    <aside v-show="!historyCollapsed" class="history-panel" aria-label="历史会话">
       <div class="history-top">
         <el-button v-if="hasPermission('ai:session:create:api')" class="new-conversation" type="primary" :icon="Plus"
           :disabled="sending || loading || uploading || recovering" :loading="creating" @click="create">新建对话</el-button>
@@ -410,7 +411,7 @@ onMounted(() => loadSessions())
     </aside>
     <section class="chat" aria-label="对话内容">
       <header class="chat-heading">
-        <div class="chat-heading-title"><span>当前会话</span><strong :title="current?.title">{{ current?.title || '新对话' }}</strong></div>
+        <div class="chat-heading-main"><el-button class="history-toggle" text :icon="historyCollapsed ? Expand : Fold" :aria-expanded="!historyCollapsed" :aria-label="historyCollapsed ? '展开历史对话' : '收起历史对话'" :title="historyCollapsed ? '展开历史对话' : '收起历史对话'" @click="historyCollapsed = !historyCollapsed" /><div class="chat-heading-title"><span>当前会话</span><strong :title="current?.title">{{ current?.title || '新对话' }}</strong></div></div>
         <div class="chat-heading-meta"><span v-if="current" class="version-badge">v{{ current.version }}</span><span class="autosave-note"><el-icon aria-hidden="true"><CircleCheck /></el-icon>历史自动保存</span></div>
       </header>
       <div v-if="failed" role="alert" class="load-error"><span>对话记录暂时无法加载，请重试。</span><el-button text :disabled="sending" @click="current ? select(current) : loadSessions()">重新加载</el-button></div>
@@ -427,7 +428,6 @@ onMounted(() => loadSessions())
             <span class="message-avatar" aria-hidden="true"><el-icon><User v-if="message.role === 'user'" /><Cpu v-else /></el-icon></span>
             <div class="message-body">
               <div class="message-label"><strong>{{ message.role === 'user' ? '你' : agent.draft.name }}</strong><time :datetime="message.createTime" :title="message.createTime">{{ messageTime(message.createTime) }}</time></div>
-              <AgentRunSummary v-if="message.role === 'assistant'" :events="traces[message.runId] || []" />
               <details v-if="message.role === 'assistant' && showTrace(message)" class="execution-trace" :open="sending && message.runId === liveRunId"
                 @toggle="loadTrace(message, $event)">
                 <summary><el-icon aria-hidden="true"><ArrowDown /></el-icon><strong>执行过程</strong><span>{{ traces[message.runId]?.length || '' }}</span><small v-if="sending && message.runId === liveRunId">{{ phase }}</small></summary>
@@ -456,6 +456,7 @@ onMounted(() => loadSessions())
               </details>
               <div v-if="message.role === 'assistant' && ['FAILED','TIMED_OUT','CANCELLED','INTERRUPTED'].includes(message.status)" class="recovery-actions"><span>保留本轮记录，可带入上下文重新开始。</span><el-button v-if="hasPermission('ai:run:recovery:api')" text type="primary" :disabled="sending || pending || uploading" :loading="recovering" @click="recover(message)">准备重试</el-button></div>
               <span v-if="message.status !== 'SUCCEEDED'" class="message-status" :class="{ processing: message.status === 'RUNNING' }">{{ statusLabels[message.status] || '未完成' }}</span>
+              <AgentRunSummary v-if="message.role === 'assistant'" :events="traces[message.runId] || []" />
             </div>
           </article>
           <div v-if="sending || pending" class="thinking-note" role="status"><span class="thinking-dots" aria-hidden="true"><i /><i /><i /></span><span>{{ sending ? phase : '正在执行，自动同步状态' }}<time v-if="sending" class="elapsed">{{ elapsed }}秒</time></span></div>
@@ -465,11 +466,10 @@ onMounted(() => loadSessions())
       <div class="composer">
         <div class="composer-card" :class="{ 'is-disabled': sending || pending || loading || failed }">
           <label for="agent-chat-input">{{ current ? '继续对话' : '发送消息' }}</label>
-          <el-input id="agent-chat-input" v-model="input" type="textarea" :autosize="{ minRows: 2, maxRows: 5 }" :maxlength="100000"
+          <el-input id="agent-chat-input" v-model="input" type="textarea" :autosize="{ minRows: 1, maxRows: 5 }" :maxlength="100000"
             resize="none" :disabled="sending || pending || loading || failed" placeholder="输入你的问题，或描述需要完成的任务…" @keydown.ctrl.enter.prevent="send" @keydown.meta.enter.prevent="send" />
           <div v-if="pendingAttachments.length" class="pending-attachments"><span v-for="file in pendingAttachments" :key="file.id"><strong :title="file.name">{{ file.name }}</strong><small>{{ fileSize(file.sizeBytes) }}</small><button type="button" :disabled="sending || uploading || !hasPermission('ai:file:delete:api') && !file.reused" :aria-label="`移除 ${file.name}`" @click="removeAttachment(file)">×</button></span></div>
-          <div class="attachment-toolbar"><input ref="filePicker" type="file" multiple hidden aria-label="选择附件" :disabled="sending || pending || loading || uploading" @change="upload" /><el-button v-if="hasPermission('ai:file:upload:api')" text size="small" :loading="uploading" :disabled="sending || pending || loading || failed || recovering" @click="filePicker?.click()">{{ uploading ? `上传中 ${uploadPercent}%` : '＋ 添加附件' }}</el-button><small>本轮最多 5 个，共 20MiB；历史文件可加入本轮继续使用。</small></div>
-          <div class="composer-actions"><small><kbd>Ctrl / ⌘</kbd> + <kbd>Enter</kbd> 发送</small><el-button v-if="(sending || pending) && hasPermission('ai:run:cancel')" class="send-button" :icon="VideoPause" :loading="stopping" @click="stop">停止</el-button><el-button v-else-if="hasPermission('ai:agent:stream:api')" class="send-button" type="primary"
+          <div class="composer-actions"><div class="composer-tools"><input ref="filePicker" type="file" multiple hidden aria-label="选择附件" :disabled="sending || pending || loading || uploading" @change="upload" /><el-button v-if="hasPermission('ai:file:upload:api')" text size="small" :loading="uploading" :disabled="sending || pending || loading || failed || recovering" title="本轮最多 5 个附件，共 20MiB；历史文件可加入本轮继续使用" @click="filePicker?.click()">{{ uploading ? `上传中 ${uploadPercent}%` : '＋ 附件' }}</el-button><small><kbd>Ctrl / ⌘</kbd> + <kbd>Enter</kbd> 发送</small></div><el-button v-if="(sending || pending) && hasPermission('ai:run:cancel')" class="send-button" :icon="VideoPause" :loading="stopping" @click="stop">停止</el-button><el-button v-else-if="hasPermission('ai:agent:stream:api')" class="send-button" type="primary"
             :loading="sending" :disabled="sending || uploading || recovering || !input.trim() || pending || loading || failed" @click="send"><span>{{ sending || pending ? '处理中' : '发送' }}</span><el-icon v-if="!sending" aria-hidden="true"><Promotion /></el-icon></el-button></div>
         </div>
       </div>
@@ -492,11 +492,9 @@ onMounted(() => loadSessions())
 .pending-attachments strong { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
 .pending-attachments small { color: var(--el-text-color-secondary); font-size: 10px; }
 .pending-attachments button { border: 0; background: transparent; color: var(--el-text-color-regular); cursor: pointer; }
-.attachment-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
-.attachment-toolbar small { color: var(--el-text-color-secondary); font-size: 10px; line-height: 1.6; }
 .recovery-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 8px; font-size: 11px; color: var(--el-text-color-regular); }
 
-.execution-trace { margin-bottom: 12px; padding: 11px 14px; border: 1px solid var(--el-border-color-lighter); border-radius: 9px; background: var(--el-bg-color); }
+.execution-trace { margin-bottom: 9px; padding: 7px 12px; border: 1px solid var(--el-border-color-lighter); border-radius: 9px; background: var(--el-bg-color); }
 .execution-trace > summary { display: flex; align-items: center; gap: 8px; min-height: 24px; cursor: pointer; list-style: none; font-size: 12px; color: var(--el-text-color-regular); }
 .execution-trace > summary::-webkit-details-marker { display: none; }
 .execution-trace > summary > .el-icon { transition: transform .15s; transform: rotate(-90deg); }
@@ -522,7 +520,9 @@ onMounted(() => loadSessions())
 .elapsed { padding-left: 8px; color: var(--el-text-color-regular); font-size: 11px; font-variant-numeric: tabular-nums; }
 .message.assistant .message-body { width: 100%; }
 
-.conversation { display: grid; grid-template-columns: 240px minmax(0, 1fr); height: min(690px, calc(90dvh - 90px)); min-height: 0; overflow: hidden; color: var(--el-text-color-primary); background: var(--el-bg-color); font-family: var(--el-font-family); }
+.conversation { display: grid; grid-template-columns: 220px minmax(0, 1fr); height: calc(100dvh - 112px); min-height: 0; overflow: hidden; color: var(--el-text-color-primary); background: var(--el-bg-color); font-family: var(--el-font-family); }
+.conversation.history-collapsed { grid-template-columns: minmax(0, 1fr); }
+.history-collapsed .thread-content, .history-collapsed .composer-card { max-width: 1160px; }
 .history-panel { display: flex; flex-direction: column; min-height: 0; min-width: 0; border-right: 1px solid var(--el-border-color-lighter); background: var(--el-fill-color-lighter); }
 .history-top { padding: 22px 16px 12px; }
 .new-conversation { width: 100%; height: 40px; border-radius: 9px; font-weight: 500; }
@@ -550,16 +550,19 @@ onMounted(() => loadSessions())
 .more-sessions { width: 100%; margin-top: 8px; font-size: 12px; }
 .history-footer { display: flex; align-items: center; gap: 7px; padding: 16px; border-top: 1px solid var(--el-border-color-lighter); color: var(--el-text-color-regular); font-size: 11px; }
 .chat { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
-.chat-heading { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 16px; min-height: 72px; padding: 14px 28px; box-sizing: border-box; border-bottom: 1px solid var(--el-border-color-lighter); }
-.chat-heading-title { display: flex; flex-direction: column; min-width: 0; gap: 5px; }
+.chat-heading { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 12px; min-height: 48px; padding: 7px 20px; box-sizing: border-box; border-bottom: 1px solid var(--el-border-color-lighter); }
+.chat-heading-main { display: flex; align-items: center; min-width: 0; gap: 9px; }
+.history-toggle { flex-shrink: 0; width: 28px; height: 28px; padding: 0; }
+.chat-heading-title { display: flex; align-items: baseline; min-width: 0; gap: 10px; }
+.chat-heading-title > span { flex-shrink: 0; }
 .chat-heading-title > span { color: var(--el-text-color-regular); font-size: 11px; }
 .chat-heading-title strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; }
 .chat-heading-meta { display: flex; align-items: center; flex-shrink: 0; gap: 12px; }
 .version-badge { padding: 3px 7px; border: 1px solid var(--el-border-color-light); border-radius: 5px; color: var(--el-text-color-regular); font-size: 11px; line-height: 1.4; }
 .autosave-note { display: flex; align-items: center; gap: 5px; color: var(--el-text-color-regular); font-size: 11px; white-space: nowrap; }
 .autosave-note .el-icon { color: var(--el-color-success-dark-2); font-size: 14px; }
-.thread { flex: 1; min-height: 80px; overflow-y: auto; overscroll-behavior: contain; padding: 28px 30px; scrollbar-width: thin; }
-.thread-content { display: flex; flex-direction: column; min-height: 100%; max-width: 760px; margin: 0 auto; }
+.thread { flex: 1; min-height: 80px; overflow-y: auto; overscroll-behavior: contain; padding: 18px 24px; scrollbar-width: thin; }
+.thread-content { display: flex; flex-direction: column; min-height: 100%; max-width: 980px; margin: 0 auto; }
 .older-messages { text-align: center; margin: -10px 0 18px; }
 .older-messages .el-button { font-size: 12px; }
 .chat-welcome { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; padding: 32px 16px 56px; text-align: center; }
@@ -567,7 +570,7 @@ onMounted(() => loadSessions())
 .welcome-caption { color: var(--el-text-color-regular); font-size: 12px; }
 .chat-welcome h3 { margin: 10px 0 12px; color: var(--el-text-color-primary); font-size: 24px; font-weight: 600; letter-spacing: -.5px; }
 .chat-welcome p { max-width: 100%; margin: 0; color: var(--el-text-color-regular); font-size: 13px; line-height: 1.9; overflow-wrap: anywhere; }
-.message { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 25px; }
+.message { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 20px; }
 .message-avatar { display: grid; flex-shrink: 0; place-items: center; width: 32px; height: 32px; margin-top: 23px; border: 1px solid var(--el-border-color-light); border-radius: 10px; background: var(--el-bg-color); color: var(--el-color-primary); font-size: 17px; }
 .message-body { min-width: 0; max-width: calc(100% - 43px); }
 .message-label { display: flex; align-items: center; gap: 9px; margin: 0 2px 8px; line-height: 1.3; }
@@ -604,22 +607,24 @@ onMounted(() => loadSessions())
 .thinking-dots i:nth-child(3) { animation-delay: .3s; }
 @keyframes thinking { 0%, 70%, 100% { opacity: .35; transform: translateY(0); } 35% { opacity: 1; transform: translateY(-3px); } }
 .load-error { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 24px; background: var(--el-color-danger-light-9); color: var(--el-color-danger); font-size: 12px; }
-.composer { flex-shrink: 0; padding: 6px 28px 22px; }
-.composer-card { max-width: 760px; margin: 0 auto; padding: 13px 16px 12px; border: 1px solid var(--el-border-color); border-radius: 13px; background: var(--el-bg-color); box-shadow: 0 3px 12px rgb(0 0 0 / 3%); transition: border-color .15s, box-shadow .15s; }
+.composer { flex-shrink: 0; padding: 4px 24px 12px; }
+.composer-card { max-width: 980px; margin: 0 auto; padding: 10px 14px 8px; border: 1px solid var(--el-border-color); border-radius: 13px; background: var(--el-bg-color); box-shadow: 0 3px 12px rgb(0 0 0 / 3%); transition: border-color .15s, box-shadow .15s; }
 .composer-card:focus-within { border-color: var(--el-color-primary); box-shadow: 0 0 0 3px var(--el-color-primary-light-9); }
 .composer-card.is-disabled { background: var(--el-fill-color-lighter); }
-.composer label { display: block; margin: 0 0 8px; color: var(--el-text-color-regular); font-size: 12px; font-weight: 500; }
+.composer label { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .composer :deep(.el-textarea__inner) { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: var(--el-text-color-primary); font-family: inherit; font-size: 14px; line-height: 1.7; }
 .composer :deep(.el-textarea__inner:focus), .composer :deep(.el-textarea__inner:hover) { box-shadow: none; }
 .composer :deep(.el-textarea.is-disabled .el-textarea__inner) { background: transparent; }
-.composer-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
-.composer-actions > small { color: var(--el-text-color-regular); font-size: 11px; }
+.composer-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 7px; }
+.composer-tools { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.composer-tools > small { color: var(--el-text-color-secondary); font-size: 10px; white-space: nowrap; }
 .composer-actions kbd { padding: 2px 4px; border: 1px solid var(--el-border-color-light); border-radius: 4px; font: inherit; }
 .send-button { height: 34px; min-width: 78px; padding: 0 12px; border-radius: 7px; }
 .send-button .el-icon { margin-left: 6px; font-size: 15px; }
-@media (max-width: 900px) { .conversation { grid-template-columns: 210px minmax(0, 1fr); } .thread { padding: 24px 20px; } .chat-heading { padding: 14px 20px; } .composer { padding: 6px 20px 18px; } .autosave-note { display: none; } }
+@media (max-width: 900px) { .conversation { grid-template-columns: 210px minmax(0, 1fr); } .thread { padding: 16px 18px; } .chat-heading { padding: 7px 16px; } .composer { padding: 4px 18px 10px; } .autosave-note { display: none; } }
 @media (max-width: 640px) {
-  .conversation { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); height: calc(94dvh - 78px); }
+  .conversation { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); height: calc(100dvh - 88px); }
+  .conversation.history-collapsed { grid-template-rows: minmax(0, 1fr); }
   .history-panel { border-right: 0; border-bottom: 1px solid var(--el-border-color-lighter); }
   .history-top { display: flex; align-items: center; gap: 10px; padding: 12px 14px 8px; }
   .new-conversation { flex-shrink: 0; width: auto; height: 36px; }
@@ -633,10 +638,11 @@ onMounted(() => loadSessions())
   .history-empty .el-icon, .history-empty > span { display: none; }
   .history-empty p { margin: 0; font-size: 12px; }
   .more-sessions { width: auto; flex-shrink: 0; align-self: center; margin: 0; }
-  .chat-heading { min-height: 58px; padding: 10px 16px; }
-  .chat-heading-title { gap: 4px; }
-  .thread { padding: 20px 14px; }
-  .message { gap: 8px; margin-bottom: 22px; }
+  .chat-heading { min-height: 44px; padding: 6px 12px; }
+  .chat-heading-title { gap: 6px; }
+  .chat-heading-title > span { display: none; }
+  .thread { padding: 14px 12px; }
+  .message { gap: 8px; margin-bottom: 18px; }
   .message-avatar { width: 28px; height: 28px; border-radius: 9px; font-size: 15px; }
   .message-body, .message.user .message-body { max-width: calc(100% - 36px); }
   .message.user { margin-left: 5%; }
@@ -644,9 +650,9 @@ onMounted(() => loadSessions())
   .message-label { gap: 6px; }
   .message-label strong, .message-label time { font-size: 11px; }
   .composer { padding: 4px 12px 12px; }
-  .composer-card { padding: 11px 12px; border-radius: 11px; }
+  .composer-card { padding: 9px 12px 7px; border-radius: 11px; }
   .composer :deep(.el-textarea__inner) { font-size: 16px; }
-  .composer-actions > small { font-size: 10px; }
+  .composer-tools > small { display: none; }
   .send-button { height: 38px; }
   .chat-welcome { padding: 28px 8px; }
   .chat-welcome h3 { font-size: 21px; }

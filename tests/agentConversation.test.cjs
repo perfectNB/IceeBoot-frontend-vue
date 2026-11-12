@@ -5,16 +5,16 @@ const vm = require('node:vm')
 const ts = require('typescript')
 const vue = require('vue')
 function page(api, permissions=()=>true) {
- api = { sessions: async()=>[], ...api }
+ api = { sessions: async()=>[], files: async()=>[], ...api }
  if (!api.invokeStream) api.invokeStream = (code, text, session) => api.invoke?.(code, text, session)
  const unmount=[]
  const source=fs.readFileSync(__dirname+'/../src/pages/admin/agent-console/components/AgentConversation.vue','utf8').match(/<script setup lang="ts">([\s\S]*?)<\/script>/)[1]+`
- export const state={select,send,create,loadSessions,older,input,current,messages,failed,sending,sessionQuery,visibleSessions,renderMarkdown,traces,liveRunId,phase,loadTrace,stop,streamError,showTrace,eventFailed,flushStreaming:()=>flushStreaming()}`
+ export const state={select,send,create,loadSessions,older,input,current,messages,failed,sending,sessionQuery,visibleSessions,renderMarkdown,traces,liveRunId,phase,loadTrace,stop,streamError,showTrace,eventFailed,upload,recover,reuseFile,removeAttachment,pendingAttachments,runFiles,uploading,flushStreaming:()=>flushStreaming()}`
  const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText
  const context={exports:{},AbortController,setInterval:()=>0,clearInterval:()=>{},defineProps:()=>({agent:{draft:{id:7,code:'chat'}}}),setTimeout:()=>0,clearTimeout:()=>{},require:(name)=>{
   if(name==='vue') return {...vue,onMounted:()=>{},onBeforeUnmount:(fn)=>unmount.push(fn)}
   if(name==='markdown-it') return {default:require('markdown-it')}
-  if(name==='element-plus') return {ElMessage:{error:()=>{}}}
+  if(name==='element-plus') return {ElMessage:{error:()=>{},warning:()=>{}},ElMessageBox:{confirm:async()=>{}}}
   if(name==='@/api/agentConsole') return {agentConsole:api}
   if(name==='@/utils/permission') return {hasPermission:permissions}
   throw Error(name)
@@ -140,4 +140,47 @@ test('provider analysis streams separately and remains visible when history perm
  await s.loadTrace({runId:'run1'});assert.equal(queries,0)
  assert.equal(s.eventFailed(progress('TOOL_FINISHED',5,{status:'DENIED'})),true)
  emit(progress('ERROR',6,{status:'FAILED',text:'智能体达到最大执行轮次'}));finish();await pending
+})
+
+test('uploads stay in the selected session and oversized batches are rejected before transport',async()=>{
+ const calls=[]
+ const {s}=page({messages:async()=>[],uploadFile:async(id,sid,file)=>{calls.push([id,sid,file.name]);return {id:'file-1',name:file.name,sizeBytes:file.size,kind:'ATTACHMENT'}}})
+ await s.select(session('files'))
+ const picker={files:[{name:'data.csv',size:1024}],value:'selected'}
+ await s.upload({target:picker})
+ assert.deepEqual(calls,[[7,'files','data.csv']])
+ assert.equal(s.pendingAttachments.value[0].id,'file-1')
+ assert.equal(picker.value,'')
+ await s.upload({target:{files:[{name:'big',size:21*1024*1024}],value:'selected'}})
+ assert.equal(calls.length,1)
+})
+test('a conversation cannot switch during an attachment upload',async()=>{
+ let resolve
+ const {s}=page({messages:async()=>[],uploadFile:()=>new Promise(r=>resolve=r)})
+ await s.select(session('original'))
+ const pending=s.upload({target:{files:[{name:'file',size:1}],value:'selected'}})
+ await s.select(session('other'))
+ assert.equal(s.current.value.sessionId,'original')
+ resolve({id:'a',name:'file',sizeBytes:1,kind:'ATTACHMENT'});await pending
+ assert.equal(s.current.value.sessionId,'original')
+})
+test('recovery prepares an editable fresh session without invoking the model',async()=>{
+ let invokes=0
+ const {s}=page({messages:async()=>[],recover:async()=>({session:{...session('retry'),version:1},input:'task plus previous context',attachments:[{id:'copy',name:'data',sizeBytes:10,kind:'ATTACHMENT'}]}),invoke:async()=>invokes++})
+ await s.select(session('failed'))
+ await s.recover({runId:'failed-run'})
+ assert.equal(s.current.value.sessionId,'retry')
+ assert.equal(s.current.value.version,1)
+ assert.equal(s.input.value,'task plus previous context')
+ assert.equal(s.pendingAttachments.value[0].id,'copy')
+ assert.equal(invokes,0)
+})
+test('reused generated files are removed from the next request without deleting history',async()=>{
+ let deletes=0
+ const {s}=page({messages:async()=>[],deleteFile:async()=>deletes++})
+ await s.select(session('files'))
+ s.reuseFile({id:'artifact',name:'report',sizeBytes:100,kind:'ARTIFACT'})
+ await s.removeAttachment(s.pendingAttachments.value[0])
+ assert.equal(s.pendingAttachments.value.length,0)
+ assert.equal(deletes,0)
 })

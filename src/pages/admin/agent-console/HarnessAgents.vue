@@ -13,6 +13,9 @@ import {
 } from '@/api/agentConsole'
 import { hasPermission } from '@/utils/permission'
 import AgentConversation from './components/AgentConversation.vue'
+import AgentVersions from './components/AgentVersions.vue'
+import AgentPreflightDialog from './components/AgentPreflightDialog.vue'
+const preflightVisible = ref(false)
 import JsonField from './components/JsonField.vue'
 import KeyValueField from './components/KeyValueField.vue'
 import BoundCapabilityPicker from './components/BoundCapabilityPicker.vue'
@@ -204,6 +207,12 @@ async function remove() {
   await agentConsole.deleteAgent(form.value.id)
   visible.value = false
   await load()
+}
+async function refreshVersions() {
+  if (!form.value.id) return
+  versions.value = await agentConsole.releases(form.value.id)
+  await load()
+  current.value = agents.value.find(agent => agent.draft.id === form.value.id)
 }
 function openRun(value: AgentView) {
   selected.value = value
@@ -513,11 +522,7 @@ onMounted(load)
               :type="current?.activeVersion ? 'success' : 'info'"
               :closable="false"
             />
-            <el-table :data="versions" empty-text="保存草稿后点击发布，生成第一个不可变版本。">
-              <el-table-column prop="version" label="版本" width="80" />
-              <el-table-column prop="createdAt" label="发布时间" min-width="180" />
-              <el-table-column prop="createdBy" label="发布人" width="100" />
-            </el-table>
+            <AgentVersions v-if="form.id" :agent-id="form.id" :versions="versions" :active-release-id="current?.activeReleaseId" @changed="refreshVersions" />
             <p class="field-help">
               模型配置、能力内容、环境变量和子智能体版本均保存为快照。再次修改不会改变已发布版本。
             </p>
@@ -536,6 +541,7 @@ onMounted(load)
           </el-button>
           <div class="footer-state"><strong>{{ !form.id ? '尚未保存' : isDirty ? '草稿有未保存的更改' : '草稿已保存' }}</strong><span v-if="validationMessage" role="alert" class="footer-validation">{{ validationMessage }}</span><span v-else>发布后通过唯一编码调用</span></div>
           <span class="spacer" />
+          <el-button v-if="form.id && hasPermission('ai:agent:preflight:api')" :disabled="saving || publishing" @click="preflightVisible = true">技能与环境预检</el-button>
           <el-button @click="visible = false">关闭</el-button>
           <el-button
             v-if="hasPermission('ai:agent:write')"
@@ -557,6 +563,7 @@ onMounted(load)
         </div>
       </template>
     </el-dialog>
+    <AgentPreflightDialog v-if="form.id && preflightVisible" v-model="preflightVisible" :key="form.id" :agent-id="form.id" :dirty="isDirty" />
     <el-dialog v-model="runVisible" :title="`与 ${selected?.draft.name || '智能体'} 对话`"
       width="min(1140px,96vw)" class="agent-conversation-dialog" align-center destroy-on-close :close-on-click-modal="false">
       <template #header="{ titleId, titleClass }">

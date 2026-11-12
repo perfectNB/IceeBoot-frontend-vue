@@ -181,6 +181,10 @@ service.interceptors.request.use(
 // 响应拦截器
 service.interceptors.response.use(
   async (response: AxiosResponse<ApiResponse<unknown>>) => {
+    if (response.config.responseType === 'blob' && response.data instanceof Blob) {
+      if (!String(response.headers['content-type'] || '').includes('json')) return response
+      response.data = JSON.parse(await response.data.text()) as ApiResponse<unknown>
+    }
     response.data = normalizeApiResponse(response.data) as ApiResponse<unknown>
     const { data } = response
     const { code, message, success } = data
@@ -347,6 +351,10 @@ export const request = {
       clearTimeout(idle)
       signal?.removeEventListener('abort', abort)
     }
+  },
+  async download(url: string): Promise<Blob> {
+    const response = await service.get<Blob>(url, { responseType: 'blob', timeout: 120000 })
+    return response.data
   },
   async get<T = Record<string, unknown>>(
     url: string,

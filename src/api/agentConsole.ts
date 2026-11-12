@@ -117,7 +117,7 @@ export interface AgentMessage {
 }
 export interface AgentProgress {
   sequence: number
-  type: 'RUN_STARTED' | 'PHASE' | 'MODEL_STARTED' | 'REASONING_DELTA' | 'REASONING_FINISHED' | 'TEXT_DELTA' | 'TOOL_STARTED' | 'TOOL_FINISHED' | 'AGENT_FINISHED' | 'RUN_FINISHED' | 'ERROR' | 'HEARTBEAT'
+  type: 'RUN_STARTED' | 'PHASE' | 'PHASE_FINISHED' | 'MODEL_STARTED' | 'MODEL_FIRST_TOKEN' | 'MODEL_FINISHED' | 'ARTIFACT' | 'REASONING_DELTA' | 'REASONING_FINISHED' | 'TEXT_DELTA' | 'TOOL_STARTED' | 'TOOL_FINISHED' | 'AGENT_FINISHED' | 'RUN_FINISHED' | 'ERROR' | 'HEARTBEAT'
   rootRunId: string
   runId: string
   parentRunId: string
@@ -128,6 +128,34 @@ export interface AgentProgress {
   toolName: string
   status: string
   timestamp: number
+  durationMs?: number | null
+  inputTokens?: number | null
+  outputTokens?: number | null
+  usageKnown?: boolean | null
+}
+export interface AgentFile {
+  id: string
+  kind: 'ATTACHMENT' | 'ARTIFACT'
+  name: string
+  sizeBytes: number
+  sha256: string
+  createTime: string
+}
+export interface AgentPreflight {
+  passed: boolean
+  durationMs: number
+  checks: { name: string; status: 'PASS' | 'WARN' | 'ERROR'; detail: string; durationMs: number }[]
+}
+export interface ReleaseDiff {
+  fromVersion: number
+  toVersion: number
+  changes: { path: string; before: string; after: string; sensitive: boolean }[]
+}
+export interface AgentRecovery {
+  session: AgentSession
+  input: string
+  attachments: AgentFile[]
+  sourceRunId: string
 }
 export interface InvokeResult {
   sessionId: string
@@ -325,15 +353,28 @@ export const agentConsole = {
   deleteAgent: (id: number) => request.delete(`${root}/agents/${id}`),
   releases: (id: number) => request.get<ReleaseView[]>(`${root}/agents/${id}/releases`),
   publish: (id: number) => request.post<ReleaseView>(`${root}/agents/${id}/publish`),
+  preflight: (id: number) => request.post<AgentPreflight>(`${root}/agents/${id}/preflight`, undefined, { timeout: 180000 }),
+  releaseDiff: (id: number, from: string, to: string) => request.get<ReleaseDiff>(`${root}/agents/${id}/releases/diff`, { from, to }),
+  rollback: (id: number, releaseId: string) => request.post<ReleaseView>(`${root}/agents/${id}/releases/${encodeURIComponent(releaseId)}/rollback`),
+  uploadFile: (id: number, session: string, file: File, onProgress?: (percent: number) => void) => {
+    const form = new FormData()
+    form.append('file', file)
+    return request.post<AgentFile>(`${root}/agents/${id}/sessions/${encodeURIComponent(session)}/files`, form,
+      { headers: { 'Content-Type': undefined }, timeout: 120000, onUploadProgress: event => onProgress?.(Math.min(100, Math.round(event.loaded * 100 / (event.total || file.size)))) })
+  },
+  files: (id: number, session: string, runId: string) => request.get<AgentFile[]>(`${root}/agents/${id}/sessions/${encodeURIComponent(session)}/files`, { runId }),
+  downloadFile: (id: number, session: string, fileId: string) => request.download(`${root}/agents/${id}/sessions/${encodeURIComponent(session)}/files/${encodeURIComponent(fileId)}`),
+  deleteFile: (id: number, session: string, fileId: string) => request.delete(`${root}/agents/${id}/sessions/${encodeURIComponent(session)}/files/${encodeURIComponent(fileId)}`),
+  recover: (id: number, session: string, runId: string) => request.post<AgentRecovery>(`${root}/agents/${id}/sessions/${encodeURIComponent(session)}/runs/${encodeURIComponent(runId)}/recovery`),
   invoke: (code: string, input: string, sessionId?: string) =>
     request.post<InvokeResult>(
       `${root}/agents/by-code/${encodeURIComponent(code)}/invoke`,
       { input, sessionId },
       { timeout: 330000, _skipAuthRefresh: true },
     ),
-  invokeStream: async (code: string, input: string, sessionId: string, onEvent: (event: AgentProgress) => void, signal?: AbortSignal) => {
+  invokeStream: async (code: string, input: string, sessionId: string, onEvent: (event: AgentProgress) => void, signal?: AbortSignal, attachmentIds: string[] = []) => {
     let terminal = false
-    await request.stream<AgentProgress>(`${root}/agents/by-code/${encodeURIComponent(code)}/stream`, { input, sessionId }, event => {
+    await request.stream<AgentProgress>(`${root}/agents/by-code/${encodeURIComponent(code)}/stream`, { input, sessionId, attachmentIds }, event => {
       if (event.type === 'RUN_FINISHED' || event.type === 'ERROR') terminal = true
       onEvent(event)
     }, signal)

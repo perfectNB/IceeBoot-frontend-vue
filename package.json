@@ -13,7 +13,7 @@
     "build-only": "vite build",
     "type-check": "vue-tsc --build",
     "lint": "eslint . --fix",
-    "test:agent-console": "node --test tests/agentConsole.test.cjs tests/modelConnections.test.cjs tests/agentConversation.test.cjs tests/skillImport.test.cjs tests/agentStream.test.cjs",
+    "test:agent-console": "node --test tests/agentConsole.test.cjs tests/modelConnections.test.cjs tests/agentConversation.test.cjs tests/skillImport.test.cjs tests/agentStream.test.cjs tests/agentMetrics.test.cjs",
     "test:third-management": "node --test tests/thirdManagement.test.cjs",
     "test:theme": "node --test tests/theme.test.cjs",
     "test:role-authorization": "node --test tests/roleAuthorization.test.cjs",

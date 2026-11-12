@@ -9,7 +9,7 @@ const routes = { SKILL: 'skills', TOOL: 'tools', MCP: 'mcps', SANDBOX: 'sandbox-
 const clean = (value) => JSON.parse(JSON.stringify(value))
 function apiWithMock(respond) {
   const calls = []
-  const request = Object.fromEntries(['get', 'post', 'put', 'delete'].map((method) => [method, async (url, body, config) => {
+  const request = Object.fromEntries(['get', 'post', 'put', 'delete', 'download'].map((method) => [method, async (url, body, config) => {
     calls.push({ method, url, body: body && clean(body) })
     return respond(method, url, body, config)
   }]))
@@ -122,4 +122,25 @@ test('skill import uses multipart upload and JSON preview/commit contracts', asy
   await api.importSkills([{ code: 'pdf', content: '# PDF', resources: {} }])
   assert.equal(requests[2].url, '/api/v1/agent-console/skills/import')
   assert.equal(requests[2].body.skills[0].code, 'pdf')
+})
+
+test('workbench APIs preserve method, session scope and encoded identifiers', async () => {
+  const { api, calls } = apiWithMock(() => ({}))
+  await api.preflight(7)
+  assert.equal(calls.at(-1).method, 'post')
+  assert.equal(calls.at(-1).url, '/api/v1/agent-console/agents/7/preflight')
+  await api.releaseDiff(7, 'old', 'new')
+  assert.equal(calls.at(-1).method, 'get')
+  assert.deepEqual(calls.at(-1).body, { from: 'old', to: 'new' })
+  await api.rollback(7, 'release/a')
+  assert.equal(calls.at(-1).url, '/api/v1/agent-console/agents/7/releases/release%2Fa/rollback')
+  await api.files(7, 'session/a', 'run')
+  assert.equal(calls.at(-1).url, '/api/v1/agent-console/agents/7/sessions/session%2Fa/files')
+  assert.deepEqual(calls.at(-1).body, { runId: 'run' })
+  await api.downloadFile(7, 'session', 'file/a')
+  assert.equal(calls.at(-1).method, 'download')
+  assert.equal(calls.at(-1).url, '/api/v1/agent-console/agents/7/sessions/session/files/file%2Fa')
+  await api.recover(7, 'session', 'failed/a')
+  assert.equal(calls.at(-1).method, 'post')
+  assert.equal(calls.at(-1).url, '/api/v1/agent-console/agents/7/sessions/session/runs/failed%2Fa/recovery')
 })

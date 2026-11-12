@@ -1,15 +1,88 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { ChatLineSquare, CircleCheck, Clock, Cpu, Plus, Promotion, Search, User, VideoPause, ArrowDown } from '@element-plus/icons-vue'
 import MarkdownIt from 'markdown-it'
-import { agentConsole, type AgentView, type AgentSession, type AgentMessage, type AgentProgress } from '@/api/agentConsole'
+import { agentConsole, type AgentView, type AgentSession, type AgentMessage, type AgentProgress, type AgentFile } from '@/api/agentConsole'
 import { hasPermission } from '@/utils/permission'
+import AgentRunSummary from './AgentRunSummary.vue'
+import { formatDuration } from './runMetrics'
 const props = defineProps<{ agent: AgentView }>()
 const sessions = ref<AgentSession[]>([])
 const current = ref<AgentSession>()
 const messages = ref<AgentMessage[]>([])
 const input = ref('')
+const pendingAttachments = ref<(AgentFile & { reused?: boolean })[]>([])
+const runFiles = ref<Record<string, AgentFile[]>>({})
+const fileLoading = ref<Record<string, boolean>>({})
+const fileErrors = ref<Record<string, string>>({})
+const uploading = ref(false), uploadPercent = ref(0), recovering = ref(false)
+const filePicker = ref<HTMLInputElement>()
+function fileSize(bytes: number) { return bytes < 1024 * 1024 ? `${Math.ceil(bytes / 1024)} KiB` : `${(bytes / 1024 / 1024).toFixed(1)} MiB` }
+async function loadFiles(runId: string, event?: Event, refresh = false) {
+  if (event && !(event.target as HTMLDetailsElement).open) return
+  if (!current.value || !hasPermission('ai:file:list:api') || fileLoading.value[runId] || (!refresh && runFiles.value[runId])) return
+  const token = generation, session = current.value.sessionId
+  fileLoading.value[runId] = true; fileErrors.value[runId] = ''
+  try { const rows = await agentConsole.files(agentId(), session, runId); if (alive && token === generation) runFiles.value[runId] = rows }
+  catch { if (alive && token === generation) fileErrors.value[runId] = '文件加载失败，收起后展开可重试。' }
+  finally { if (alive && token === generation) fileLoading.value[runId] = false }
+}
+async function download(file: AgentFile) {
+  if (!current.value) return
+  const bytes = await agentConsole.downloadFile(agentId(), current.value.sessionId, file.id)
+  if (!alive) return
+  const url = URL.createObjectURL(bytes)
+  const link = document.createElement('a'); link.href = url; link.download = file.name
+  document.body.appendChild(link); link.click(); link.remove()
+  setTimeout(() => URL.revokeObjectURL(url), 1000)
+}
+function reuseFile(file: AgentFile) {
+  if (pendingAttachments.value.some(row => row.id === file.id)) return
+  if (pendingAttachments.value.length >= 5 || pendingAttachments.value.reduce((sum, row) => sum + row.sizeBytes, file.sizeBytes) > 20 * 1024 * 1024) { ElMessage.warning('本轮最多 5 个附件，总量不超过 20MiB'); return }
+  pendingAttachments.value.push({ ...file, reused: true })
+}
+async function removeAttachment(file: AgentFile & { reused?: boolean }) {
+  if (uploading.value || sending.value || !current.value) return
+  if (!file.reused) await agentConsole.deleteFile(agentId(), current.value.sessionId, file.id)
+  pendingAttachments.value = pendingAttachments.value.filter(row => row.id !== file.id)
+}
+async function upload(event: Event) {
+  const picker = event.target as HTMLInputElement
+  const files = [...(picker.files || [])]
+  if (!files.length || uploading.value || sending.value || loading.value || pending.value) return
+  const total = files.reduce((sum, file) => sum + file.size, 0) + pendingAttachments.value.reduce((sum, file) => sum + file.sizeBytes, 0)
+  if (files.some(file => !file.size || file.size > 20 * 1024 * 1024) || total > 20 * 1024 * 1024 || files.length + pendingAttachments.value.length > 5) { ElMessage.warning('本轮最多 5 个附件，总量不超过 20MiB'); picker.value = ''; return }
+  uploading.value = true
+  try {
+    if (!current.value) {
+      const session = await agentConsole.createSession(agentId())
+      if (!alive) return
+      current.value = session; sessions.value.unshift(session)
+    }
+    const session = current.value.sessionId
+    for (const file of files) {
+      uploadPercent.value = 0
+      const saved = await agentConsole.uploadFile(agentId(), session, file, percent => { if (alive) uploadPercent.value = percent })
+      if (!alive) return
+      pendingAttachments.value.push(saved)
+    }
+  } finally { if (alive) uploading.value = false; picker.value = '' }
+}
+async function recover(message: AgentMessage) {
+  if (!current.value || sending.value || pending.value || uploading.value || recovering.value) return
+  try { await ElMessageBox.confirm('创建独立的重试会话，沿用原发布版本，带入可见的历史上下文和本轮附件。确认内容后再发送，可能重新执行工具操作。', '准备重新执行', { confirmButtonText: '创建重试会话', type: 'warning' }) }
+  catch { return }
+  recovering.value = true
+  try {
+    const recovery = await agentConsole.recover(agentId(), current.value.sessionId, message.runId)
+    if (!alive) return
+    sessions.value.unshift(recovery.session)
+    await select(recovery.session)
+    if (!alive) return
+    input.value = recovery.input; pendingAttachments.value = recovery.attachments
+  } finally { if (alive) recovering.value = false }
+}
 const traces = ref<Record<string, AgentProgress[]>>({})
 const traceErrors = ref<Record<string, string>>({})
 const traceLoading = ref<Record<string, boolean>>({})
@@ -109,11 +182,13 @@ async function bottom(force = false) {
   if (follow) thread.value?.scrollTo({ top: thread.value.scrollHeight })
 }
 async function select(session: AgentSession) {
-  if (sending.value) return
+  if (sending.value || uploading.value) return
   const token = ++generation
   current.value = session
   messages.value = []
   traces.value = {}
+  runFiles.value = {}; fileErrors.value = {}; fileLoading.value = {}
+  pendingAttachments.value = []
   traceErrors.value = {}
   streamError.value = ''
   input.value = ''
@@ -123,6 +198,12 @@ async function select(session: AgentSession) {
     const rows = await agentConsole.messages(agentId(), session.sessionId)
     if (!alive || token !== generation) return
     messages.value = rows
+    const lastReply = [...rows].reverse().find(row => row.role === 'assistant')
+    if (lastReply) void loadTrace(lastReply)
+    if (hasPermission('ai:file:list:api') && agentConsole.files) {
+      try { const files = await agentConsole.files(agentId(), session.sessionId, ''); if (alive && token === generation) pendingAttachments.value = files }
+      catch { /* 附件列表失败不覆盖对话状态，上传时仍会校验归属。 */ }
+    }
     scheduleRefresh()
     moreMessages.value = rows.length === 100
     await bottom()
@@ -143,7 +224,7 @@ async function loadSessions(append = false) {
   finally { if (alive) loading.value = false }
 }
 async function create() {
-  if (sending.value || creating.value) return
+  if (sending.value || creating.value || uploading.value || recovering.value) return
   creating.value = true
   try {
     const session = await agentConsole.createSession(agentId())
@@ -165,7 +246,7 @@ async function older() {
   } finally { if (alive && token === generation) loading.value = false }
 }
 async function send() {
-  if (sending.value || loading.value || pending.value || failed.value || !input.value.trim()) return
+  if (sending.value || loading.value || uploading.value || recovering.value || pending.value || failed.value || !input.value.trim()) return
   sending.value = true
   streamError.value = ''
   liveRunId.value = ''
@@ -173,6 +254,7 @@ async function send() {
   phase.value = '正在建立连接'
   const token = generation
   const text = input.value
+  const attached = [...pendingAttachments.value]
   const now = new Date().toISOString()
   const user: AgentMessage = { id: optimisticId--, runId: '', role: 'user', content: text, status: 'SUCCEEDED', createTime: now }
   const reply: AgentMessage = { id: optimisticId--, runId: '', role: 'assistant', content: '', status: 'RUNNING', createTime: now }
@@ -220,6 +302,8 @@ async function send() {
       }
       if (event.type === 'RUN_STARTED' && !event.parentRunId) {
         input.value = ''
+        pendingAttachments.value = []
+        if (attached.length) runFiles.value[event.rootRunId] = attached
         if (current.value?.title === '新对话') current.value.title = text.slice(0, 120)
       }
       if (event.type === 'REASONING_DELTA') {
@@ -258,7 +342,8 @@ async function send() {
         const rows = traces.value[event.rootRunId] ||= []
         if (!rows.some(row => row.sequence === event.sequence)) rows.push(event)
       }
-      phase.value = event.title
+      if (event.type === 'ARTIFACT') void loadFiles(event.rootRunId, undefined, true)
+      if (!['PHASE_FINISHED', 'MODEL_FIRST_TOKEN', 'MODEL_FINISHED', 'ARTIFACT'].includes(event.type)) phase.value = event.title
       if (event.type === 'RUN_FINISHED') {
         flushStreaming(); terminal = true
         updateReply({ content: event.text, status: 'SUCCEEDED' })
@@ -270,7 +355,7 @@ async function send() {
         input.value = text
       }
       void bottom()
-    }, streamController.signal)
+    }, streamController.signal, attached.map(file => file.id))
   } catch (error) {
     if (alive) {
       flushStreaming()
@@ -282,7 +367,7 @@ async function send() {
     if (alive && current.value) {
       try {
         const rows = await agentConsole.messages(agentId(), current.value.sessionId)
-        if (alive) { messages.value = rows; moreMessages.value = rows.length === 100; await bottom() }
+        if (alive) { messages.value = rows; moreMessages.value = rows.length === 100; if (liveRunId.value && hasPermission('ai:file:list:api')) void loadFiles(liveRunId.value, undefined, true); await bottom() }
       } catch { if (alive) failed.value = true }
     }
     if (alive) {
@@ -300,14 +385,14 @@ onMounted(() => loadSessions())
     <aside class="history-panel" aria-label="历史会话">
       <div class="history-top">
         <el-button v-if="hasPermission('ai:session:create:api')" class="new-conversation" type="primary" :icon="Plus"
-          :disabled="sending || loading" :loading="creating" @click="create">新建对话</el-button>
+          :disabled="sending || loading || uploading || recovering" :loading="creating" @click="create">新建对话</el-button>
         <div class="history-label"><span>历史对话</span><span>{{ sessions.length }}</span></div>
         <el-input v-model="sessionQuery" class="history-search" :prefix-icon="Search" clearable
           placeholder="搜索对话" aria-label="搜索历史对话" />
       </div>
       <nav class="session-list" aria-label="选择对话">
         <button v-for="session in visibleSessions" :key="session.sessionId" class="session"
-          :class="{ active: current?.sessionId === session.sessionId }" :disabled="sending || creating || loading"
+          :class="{ active: current?.sessionId === session.sessionId }" :disabled="sending || creating || loading || uploading || recovering"
           :aria-current="current?.sessionId === session.sessionId ? 'true' : undefined" :title="session.title" @click="select(session)">
           <el-icon class="session-icon" aria-hidden="true"><ChatLineSquare /></el-icon>
           <span class="session-details"><strong>{{ session.title }}</strong><span class="session-meta">
@@ -342,6 +427,7 @@ onMounted(() => loadSessions())
             <span class="message-avatar" aria-hidden="true"><el-icon><User v-if="message.role === 'user'" /><Cpu v-else /></el-icon></span>
             <div class="message-body">
               <div class="message-label"><strong>{{ message.role === 'user' ? '你' : agent.draft.name }}</strong><time :datetime="message.createTime" :title="message.createTime">{{ messageTime(message.createTime) }}</time></div>
+              <AgentRunSummary v-if="message.role === 'assistant'" :events="traces[message.runId] || []" />
               <details v-if="message.role === 'assistant' && showTrace(message)" class="execution-trace" :open="sending && message.runId === liveRunId"
                 @toggle="loadTrace(message, $event)">
                 <summary><el-icon aria-hidden="true"><ArrowDown /></el-icon><strong>执行过程</strong><span>{{ traces[message.runId]?.length || '' }}</span><small v-if="sending && message.runId === liveRunId">{{ phase }}</small></summary>
@@ -351,7 +437,7 @@ onMounted(() => loadSessions())
                 <ol v-else class="trace-list">
                   <li v-for="event in traces[message.runId]" :key="event.sequence" :class="{ 'trace-error': eventFailed(event) }">
                     <span class="trace-dot" aria-hidden="true" />
-                    <div><header><strong>{{ event.title }}</strong><time>{{ eventTime(event.timestamp) }}</time></header>
+                    <div><header><strong>{{ event.title }}<small v-if="event.durationMs != null" class="trace-duration">{{ formatDuration(event.durationMs) }}</small></strong><time>{{ eventTime(event.timestamp) }}</time></header>
                       <small v-if="event.parentRunId" class="trace-agent">子智能体 · {{ event.agentCode }}</small>
                       <details v-if="event.text && event.type !== 'RUN_FINISHED'" class="trace-result" :open="event.type === 'REASONING_DELTA'"><summary>{{ event.type.startsWith('REASONING_') ? '模型返回的分析内容' : event.type === 'TOOL_STARTED' ? '调用参数摘要' : '查看结果摘要' }}</summary><pre>{{ event.text }}</pre></details>
                     </div>
@@ -362,6 +448,13 @@ onMounted(() => loadSessions())
                 <div v-if="message.content && message.role === 'assistant'" class="markdown-content" v-html="message.html" />
                 <p v-else class="message-text">{{ message.content || (message.status === 'RUNNING' ? '正在处理，执行进度会实时显示…' : '本轮未返回内容') }}</p>
               </div>
+              <details v-if="message.role === 'assistant' && message.runId && hasPermission('ai:file:list:api')" class="message-files" :open="Boolean(runFiles[message.runId]?.length)" @toggle="loadFiles(message.runId, $event)">
+                <summary>附件与生成文件 <span>{{ runFiles[message.runId]?.length || '' }}</span></summary>
+                <p v-if="fileLoading[message.runId]">正在加载文件…</p><p v-else-if="fileErrors[message.runId]" role="alert">{{ fileErrors[message.runId] }}</p>
+                <p v-else-if="runFiles[message.runId] && !runFiles[message.runId].length">本轮暂无文件。生成文件需由智能体调用交付工具保存。</p>
+                <ul><li v-for="file in runFiles[message.runId]" :key="file.id"><div><strong :title="file.name">{{ file.name }}</strong><small>{{ file.kind === 'ARTIFACT' ? '生成文件' : '用户附件' }} · {{ fileSize(file.sizeBytes) }}</small></div><el-button v-if="hasPermission('ai:file:download:api')" size="small" text @click="download(file)">下载</el-button><el-button v-if="hasPermission('ai:file:upload:api')" size="small" text :disabled="sending || pending || uploading" @click="reuseFile(file)">加入本轮</el-button></li></ul>
+              </details>
+              <div v-if="message.role === 'assistant' && ['FAILED','TIMED_OUT','CANCELLED','INTERRUPTED'].includes(message.status)" class="recovery-actions"><span>保留本轮记录，可带入上下文重新开始。</span><el-button v-if="hasPermission('ai:run:recovery:api')" text type="primary" :disabled="sending || pending || uploading" :loading="recovering" @click="recover(message)">准备重试</el-button></div>
               <span v-if="message.status !== 'SUCCEEDED'" class="message-status" :class="{ processing: message.status === 'RUNNING' }">{{ statusLabels[message.status] || '未完成' }}</span>
             </div>
           </article>
@@ -374,14 +467,35 @@ onMounted(() => loadSessions())
           <label for="agent-chat-input">{{ current ? '继续对话' : '发送消息' }}</label>
           <el-input id="agent-chat-input" v-model="input" type="textarea" :autosize="{ minRows: 2, maxRows: 5 }" :maxlength="100000"
             resize="none" :disabled="sending || pending || loading || failed" placeholder="输入你的问题，或描述需要完成的任务…" @keydown.ctrl.enter.prevent="send" @keydown.meta.enter.prevent="send" />
+          <div v-if="pendingAttachments.length" class="pending-attachments"><span v-for="file in pendingAttachments" :key="file.id"><strong :title="file.name">{{ file.name }}</strong><small>{{ fileSize(file.sizeBytes) }}</small><button type="button" :disabled="sending || uploading || !hasPermission('ai:file:delete:api') && !file.reused" :aria-label="`移除 ${file.name}`" @click="removeAttachment(file)">×</button></span></div>
+          <div class="attachment-toolbar"><input ref="filePicker" type="file" multiple hidden aria-label="选择附件" :disabled="sending || pending || loading || uploading" @change="upload" /><el-button v-if="hasPermission('ai:file:upload:api')" text size="small" :loading="uploading" :disabled="sending || pending || loading || failed || recovering" @click="filePicker?.click()">{{ uploading ? `上传中 ${uploadPercent}%` : '＋ 添加附件' }}</el-button><small>本轮最多 5 个，共 20MiB；历史文件可加入本轮继续使用。</small></div>
           <div class="composer-actions"><small><kbd>Ctrl / ⌘</kbd> + <kbd>Enter</kbd> 发送</small><el-button v-if="(sending || pending) && hasPermission('ai:run:cancel')" class="send-button" :icon="VideoPause" :loading="stopping" @click="stop">停止</el-button><el-button v-else-if="hasPermission('ai:agent:stream:api')" class="send-button" type="primary"
-            :loading="sending" :disabled="sending || !input.trim() || pending || loading || failed" @click="send"><span>{{ sending || pending ? '处理中' : '发送' }}</span><el-icon v-if="!sending" aria-hidden="true"><Promotion /></el-icon></el-button></div>
+            :loading="sending" :disabled="sending || uploading || recovering || !input.trim() || pending || loading || failed" @click="send"><span>{{ sending || pending ? '处理中' : '发送' }}</span><el-icon v-if="!sending" aria-hidden="true"><Promotion /></el-icon></el-button></div>
         </div>
       </div>
     </section>
   </div>
 </template>
 <style scoped>
+.trace-duration { display: inline-block; margin-left: 8px; font-size: 10px; font-variant-numeric: tabular-nums; color: var(--el-text-color-secondary); }
+.message-files { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--el-border-color-lighter); border-radius: 9px; font-size: 12px; color: var(--el-text-color-regular); }
+.message-files > summary { cursor: pointer; font-weight: 500; }
+.message-files > summary span { color: var(--el-text-color-secondary); margin-left: 6px; }
+.message-files p { font-size: 11px; line-height: 1.7; }
+.message-files ul { list-style: none; padding: 0; margin: 8px 0 0; }
+.message-files li { display: flex; align-items: center; gap: 8px; padding: 9px 0; }
+.message-files li > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.message-files li strong { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.message-files li small { font-size: 10px; color: var(--el-text-color-secondary); }
+.pending-attachments { display: flex; gap: 7px; flex-wrap: wrap; margin: 6px 0; }
+.pending-attachments > span { display: flex; align-items: center; gap: 7px; max-width: 100%; border: 1px solid var(--el-border-color-lighter); padding: 5px 8px; border-radius: 6px; background: var(--el-fill-color-light); font-size: 11px; }
+.pending-attachments strong { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.pending-attachments small { color: var(--el-text-color-secondary); font-size: 10px; }
+.pending-attachments button { border: 0; background: transparent; color: var(--el-text-color-regular); cursor: pointer; }
+.attachment-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 5px; margin-top: 5px; }
+.attachment-toolbar small { color: var(--el-text-color-secondary); font-size: 10px; line-height: 1.6; }
+.recovery-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 8px; font-size: 11px; color: var(--el-text-color-regular); }
+
 .execution-trace { margin-bottom: 12px; padding: 11px 14px; border: 1px solid var(--el-border-color-lighter); border-radius: 9px; background: var(--el-bg-color); }
 .execution-trace > summary { display: flex; align-items: center; gap: 8px; min-height: 24px; cursor: pointer; list-style: none; font-size: 12px; color: var(--el-text-color-regular); }
 .execution-trace > summary::-webkit-details-marker { display: none; }

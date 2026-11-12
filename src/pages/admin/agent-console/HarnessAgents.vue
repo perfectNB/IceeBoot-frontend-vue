@@ -565,11 +565,11 @@ onMounted(load)
     </el-dialog>
     <AgentPreflightDialog v-if="form.id && preflightVisible" v-model="preflightVisible" :key="form.id" :agent-id="form.id" :dirty="isDirty" />
     <el-dialog v-model="runVisible" :title="`与 ${selected?.draft.name || '智能体'} 对话`"
-      width="min(1480px,96vw)" class="agent-conversation-dialog" align-center destroy-on-close :close-on-click-modal="false">
+      class="agent-conversation-dialog" fullscreen destroy-on-close :close-on-click-modal="false">
       <template #header="{ titleId, titleClass }">
         <div class="conversation-dialog-heading">
           <span class="conversation-dialog-avatar"><el-icon aria-hidden="true"><Cpu /></el-icon></span>
-          <div><h2 :id="titleId" :class="titleClass">{{ selected?.draft.name || '智能体' }}</h2><p>智能体对话<span>·</span>历史记录与连续对话</p></div>
+          <div><h2 :id="titleId" :class="titleClass">{{ selected?.draft.name || '智能体' }}</h2><p>智能体工作区</p></div>
         </div>
       </template>
       <AgentConversation v-if="selected && runVisible" :key="selected.draft.id" :agent="selected" />

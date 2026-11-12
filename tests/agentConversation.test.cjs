@@ -9,7 +9,7 @@ function page(api, permissions=()=>true) {
  if (!api.invokeStream) api.invokeStream = (code, text, session) => api.invoke?.(code, text, session)
  const unmount=[]
  const source=fs.readFileSync(__dirname+'/../src/pages/admin/agent-console/components/AgentConversation.vue','utf8').match(/<script setup lang="ts">([\s\S]*?)<\/script>/)[1]+`
- export const state={select,send,create,loadSessions,older,input,current,messages,failed,sending,sessionQuery,visibleSessions,renderMarkdown,traces,liveRunId,phase,loadTrace,stop,streamError,showTrace,eventFailed,upload,recover,reuseFile,removeAttachment,pendingAttachments,runFiles,uploading,flushStreaming:()=>flushStreaming()}`
+ export const state={select,send,create,loadSessions,older,input,current,messages,failed,sending,sessionQuery,visibleSessions,renderMarkdown,traces,liveRunId,phase,loadTrace,stop,streamError,showTrace,eventFailed,upload,recover,reuseFile,removeAttachment,pendingAttachments,runFiles,uploading,historyVisible,historyError,chooseSession,inspectorOpen,inspectorTab,openInspector,inspectedRun,inspectedFiles,focusedRunId,flushStreaming:()=>flushStreaming()}`
  const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText
  const context={exports:{},AbortController,setInterval:()=>0,clearInterval:()=>{},defineProps:()=>({agent:{draft:{id:7,code:'chat'}}}),setTimeout:()=>0,clearTimeout:()=>{},require:(name)=>{
   if(name==='vue') return {...vue,onMounted:()=>{},onBeforeUnmount:(fn)=>unmount.push(fn)}
@@ -183,4 +183,51 @@ test('reused generated files are removed from the next request without deleting 
  await s.removeAttachment(s.pendingAttachments.value[0])
  assert.equal(s.pendingAttachments.value.length,0)
  assert.equal(deletes,0)
+})
+
+test('inspector opens the requested historical turn using the selected session scope',async()=>{
+ const calls=[]
+ const rows=[{id:1,runId:'older',role:'assistant',createTime:'2026-11-12T12:00:00Z'},{id:2,runId:'latest',role:'assistant',createTime:'2026-11-12T12:01:00Z'}]
+ const {s}=page({messages:async()=>rows,progress:async()=>[],files:async(id,sid,run)=>{calls.push([id,sid,run]);return run?[{id:run+'-file',name:'report',sizeBytes:1,kind:'ARTIFACT'}]:[]}})
+ await s.select(session('owned'))
+ await s.openInspector('files',rows[0])
+ assert.equal(s.inspectorOpen.value,true)
+ assert.equal(s.inspectorTab.value,'files')
+ assert.equal(s.inspectedRun.value.runId,'older')
+ assert.equal(s.inspectedFiles.value[0].id,'older-file')
+ assert.deepEqual(calls.at(-1),[7,'owned','older'])
+})
+test('late inspector data from a previous session cannot populate the new session',async()=>{
+ let finish
+ const {s}=page({messages:async(id,sid)=>[{id:1,runId:sid+'-run',role:'assistant',createTime:'2026-11-12T12:00:00Z'}],progress:async()=>[],files:async(id,sid,run)=>sid==='old'&&run?new Promise(resolve=>finish=resolve):[]})
+ await s.select(session('old'))
+ const loading=s.openInspector('files',s.messages.value[0])
+ await s.select(session('new'))
+ finish([{id:'old-private-file',name:'private',sizeBytes:1,kind:'ARTIFACT'}]);await loading
+ assert.equal(s.inspectedRun.value.runId,'new-run')
+ assert.equal(s.inspectedFiles.value.length,0)
+ assert.equal(s.runFiles.value['old-run'],undefined)
+})
+test('selecting the current history row closes history without clearing its draft',async()=>{
+ let loads=0
+ const {s}=page({messages:async()=>{loads++;return []}})
+ await s.select(session('same'));s.input.value='unsent draft';s.historyVisible.value=true
+ await s.chooseSession(session('same'))
+ assert.equal(s.historyVisible.value,false)
+ assert.equal(s.input.value,'unsent draft')
+ assert.equal(loads,1)
+})
+test('history refresh failure does not invalidate a loaded chat',async()=>{
+ const {s}=page({messages:async()=>[],sessions:async()=>{throw Error('offline')}})
+ await s.select(session('owned'));await s.loadSessions()
+ assert.equal(s.failed.value,false)
+ assert.ok(s.historyError.value.includes('无法加载'))
+ assert.equal(s.current.value.sessionId,'owned')
+})
+test('the file inspector cannot request files without list permission',async()=>{
+ let calls=0
+ const {s}=page({messages:async()=>[],files:async()=>{calls++;return []}},()=>false)
+ await s.select(session('owned'));await s.openInspector('files')
+ assert.equal(s.inspectorOpen.value,false)
+ assert.equal(calls,0)
 })

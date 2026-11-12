@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ChatLineSquare, CircleCheck, Clock, Cpu, Plus, Promotion, Search, User, VideoPause, ArrowDown, Fold, Expand } from '@element-plus/icons-vue'
+import { ChatLineSquare, CircleCheck, Clock, Cpu, Plus, Promotion, Search, User, VideoPause, Close, Document, Operation, Refresh, Paperclip } from '@element-plus/icons-vue'
 import MarkdownIt from 'markdown-it'
 import { agentConsole, type AgentView, type AgentSession, type AgentMessage, type AgentProgress, type AgentFile } from '@/api/agentConsole'
 import { hasPermission } from '@/utils/permission'
@@ -25,7 +25,7 @@ async function loadFiles(runId: string, event?: Event, refresh = false) {
   const token = generation, session = current.value.sessionId
   fileLoading.value[runId] = true; fileErrors.value[runId] = ''
   try { const rows = await agentConsole.files(agentId(), session, runId); if (alive && token === generation) runFiles.value[runId] = rows }
-  catch { if (alive && token === generation) fileErrors.value[runId] = '文件加载失败，收起后展开可重试。' }
+  catch { if (alive && token === generation) fileErrors.value[runId] = '文件加载失败，请重试。' }
   finally { if (alive && token === generation) fileLoading.value[runId] = false }
 }
 async function download(file: AgentFile) {
@@ -111,7 +111,7 @@ async function loadTrace(message: AgentMessage, event?: Event, refresh = false) 
   try {
     const rows = await agentConsole.progress(agentId(), current.value!.sessionId, message.runId)
     if (alive && token === generation) traces.value[message.runId] = rows
-  } catch { if (alive && token === generation) traceErrors.value[message.runId] = '过程加载失败，收起后展开可重试' }
+  } catch { if (alive && token === generation) traceErrors.value[message.runId] = '过程加载失败，请重试' }
   finally { if (alive) traceLoading.value[message.runId] = false }
 }
 async function stop() {
@@ -125,7 +125,51 @@ async function stop() {
   } catch { ElMessage.error('停止失败，请重试') }
   finally { if (alive) stopping.value = false }
 }
-const historyCollapsed = ref(false)
+const historyVisible = ref(false)
+const historyLoading = ref(false), historyError = ref('')
+const inspectorOpen = ref(false)
+const inspectorTab = ref<'activity' | 'files'>('activity')
+const focusedRunId = ref('')
+const activityTabButton = ref<HTMLButtonElement>(), filesTabButton = ref<HTMLButtonElement>()
+function focusInspectorTab(tab: 'activity' | 'files') {
+  if (tab === 'activity' && !canViewActivity.value || tab === 'files' && !hasPermission('ai:file:list:api')) return
+  void openInspector(tab)
+  void nextTick(() => (tab === 'activity' ? activityTabButton.value : filesTabButton.value)?.focus())
+}
+const assistantMessages = computed(() => messages.value.filter(message => message.role === 'assistant' && message.runId))
+const inspectedRun = computed(() => assistantMessages.value.find(message => message.runId === focusedRunId.value)
+  || assistantMessages.value.find(message => message.runId === liveRunId.value)
+  || assistantMessages.value[assistantMessages.value.length - 1])
+const inspectedEvents = computed(() => (traces.value[inspectedRun.value?.runId || ''] || []).filter(event => event.type !== 'HEARTBEAT'))
+const inspectedFiles = computed(() => runFiles.value[inspectedRun.value?.runId || ''] || [])
+const canViewActivity = computed(() => hasPermission('ai:session:events:api') || Object.values(traces.value).some(events => events.length > 0))
+const canInspect = computed(() => canViewActivity.value || hasPermission('ai:file:list:api'))
+function runLabel(message: AgentMessage) {
+  return `第 ${assistantMessages.value.findIndex(row => row.runId === message.runId) + 1} 轮 · ${messageTime(message.createTime)}`
+}
+async function openInspector(tab: 'activity' | 'files', message?: AgentMessage, refresh = false) {
+  if (tab === 'files' && !hasPermission('ai:file:list:api')) return
+  if (tab === 'activity' && !canViewActivity.value) return
+  inspectorTab.value = tab
+  inspectorOpen.value = true
+  const target = message || inspectedRun.value
+  if (!target || !current.value) return
+  focusedRunId.value = target.runId
+  if (tab === 'files') await loadFiles(target.runId, undefined, refresh)
+  else await loadTrace(target, undefined, refresh)
+}
+function toggleInspector() {
+  if (inspectorOpen.value) inspectorOpen.value = false
+  else void openInspector(canViewActivity.value ? inspectorTab.value : 'files')
+}
+async function chooseSession(session: AgentSession) {
+  if (sending.value || uploading.value || creating.value || recovering.value) return
+  if (current.value?.sessionId !== session.sessionId) await select(session)
+  if (alive) historyVisible.value = false
+}
+function historyRowClass({ row }: { row: AgentSession }) {
+  return current.value?.sessionId === row.sessionId ? 'is-current-session' : ''
+}
 const sessionQuery = ref('')
 const visibleSessions = computed(() => {
   const query = sessionQuery.value.trim().toLowerCase()
@@ -167,7 +211,11 @@ function scheduleRefresh() {
   poll = setTimeout(async () => {
     try {
       const rows = await agentConsole.messages(agentId(), current.value!.sessionId)
-      if (alive && token === generation) { messages.value = rows; await bottom() }
+      if (alive && token === generation) {
+        messages.value = rows
+        if (inspectorOpen.value && inspectedRun.value) await openInspector(inspectorTab.value, inspectedRun.value, true)
+        await bottom()
+      }
     } catch { if (alive && token === generation) failed.value = true }
     if (alive && token === generation) scheduleRefresh()
   }, 2000)
@@ -188,6 +236,8 @@ async function select(session: AgentSession) {
   current.value = session
   messages.value = []
   traces.value = {}
+  focusedRunId.value = ''
+  liveRunId.value = ''
   runFiles.value = {}; fileErrors.value = {}; fileLoading.value = {}
   pendingAttachments.value = []
   traceErrors.value = {}
@@ -200,7 +250,10 @@ async function select(session: AgentSession) {
     if (!alive || token !== generation) return
     messages.value = rows
     const lastReply = [...rows].reverse().find(row => row.role === 'assistant')
-    if (lastReply) void loadTrace(lastReply)
+    if (lastReply) {
+      void loadTrace(lastReply)
+      if (inspectorOpen.value && inspectorTab.value === 'files') void loadFiles(lastReply.runId)
+    }
     if (hasPermission('ai:file:list:api') && agentConsole.files) {
       try { const files = await agentConsole.files(agentId(), session.sessionId, ''); if (alive && token === generation) pendingAttachments.value = files }
       catch { /* 附件列表失败不覆盖对话状态，上传时仍会校验归属。 */ }
@@ -212,8 +265,10 @@ async function select(session: AgentSession) {
   finally { if (alive && token === generation) loading.value = false }
 }
 async function loadSessions(append = false) {
-  loading.value = true
-  failed.value = false
+  const initial = !current.value
+  historyLoading.value = true
+  historyError.value = ''
+  if (initial) { loading.value = true; failed.value = false }
   try {
     const rows = await agentConsole.sessions(agentId(), append ? sessions.value.length : 0)
     if (!alive) return
@@ -221,8 +276,14 @@ async function loadSessions(append = false) {
     moreSessions.value = rows.length === 50
     current.value = rows.find(session => session.sessionId === current.value?.sessionId) || current.value
     if (!current.value && rows[0]) await select(rows[0])
-  } catch { if (alive) failed.value = true }
-  finally { if (alive) loading.value = false }
+  } catch {
+    if (alive) {
+      historyError.value = '会话历史暂时无法加载，请刷新重试。'
+      if (initial) failed.value = true
+    }
+  } finally {
+    if (alive) { historyLoading.value = false; if (initial) loading.value = false }
+  }
 }
 async function create() {
   if (sending.value || creating.value || uploading.value || recovering.value) return
@@ -251,6 +312,7 @@ async function send() {
   sending.value = true
   streamError.value = ''
   liveRunId.value = ''
+  focusedRunId.value = ''
   elapsed.value = 0
   phase.value = '正在建立连接'
   const token = generation
@@ -382,281 +444,228 @@ async function send() {
 onMounted(() => loadSessions())
 </script>
 <template>
-  <div class="conversation" :class="{ 'history-collapsed': historyCollapsed }">
-    <aside v-show="!historyCollapsed" class="history-panel" aria-label="历史会话">
-      <div class="history-top">
-        <el-button v-if="hasPermission('ai:session:create:api')" class="new-conversation" type="primary" :icon="Plus"
-          :disabled="sending || loading || uploading || recovering" :loading="creating" @click="create">新建对话</el-button>
-        <div class="history-label"><span>历史对话</span><span>{{ sessions.length }}</span></div>
-        <el-input v-model="sessionQuery" class="history-search" :prefix-icon="Search" clearable
-          placeholder="搜索对话" aria-label="搜索历史对话" />
-      </div>
-      <nav class="session-list" aria-label="选择对话">
-        <button v-for="session in visibleSessions" :key="session.sessionId" class="session"
-          :class="{ active: current?.sessionId === session.sessionId }" :disabled="sending || creating || loading || uploading || recovering"
-          :aria-current="current?.sessionId === session.sessionId ? 'true' : undefined" :title="session.title" @click="select(session)">
-          <el-icon class="session-icon" aria-hidden="true"><ChatLineSquare /></el-icon>
-          <span class="session-details"><strong>{{ session.title }}</strong><span class="session-meta">
-            <time :datetime="session.updateTime" :title="session.updateTime">{{ sessionDate(session.updateTime) }}</time><span>v{{ session.version }}</span>
-          </span></span>
-        </button>
-        <div v-if="!visibleSessions.length && !loading" class="history-empty">
-          <el-icon aria-hidden="true"><ChatLineSquare /></el-icon>
-          <p>{{ sessionQuery.trim() ? '没有匹配的对话' : '还没有历史对话' }}</p>
-          <span>{{ sessionQuery.trim() ? '试试其他关键词' : '发送消息，开启第一段对话' }}</span>
-        </div>
-        <el-button v-if="moreSessions" class="more-sessions" :disabled="sending" :loading="loading" text @click="loadSessions(true)">加载更多对话</el-button>
-      </nav>
-      <div class="history-footer"><el-icon aria-hidden="true"><Clock /></el-icon><span>随时回来，继续上次的对话</span></div>
-    </aside>
+  <div class="conversation" :class="{ 'inspector-open': inspectorOpen }">
     <section class="chat" aria-label="对话内容">
       <header class="chat-heading">
-        <div class="chat-heading-main"><el-button class="history-toggle" text :icon="historyCollapsed ? Expand : Fold" :aria-expanded="!historyCollapsed" :aria-label="historyCollapsed ? '展开历史对话' : '收起历史对话'" :title="historyCollapsed ? '展开历史对话' : '收起历史对话'" @click="historyCollapsed = !historyCollapsed" /><div class="chat-heading-title"><span>当前会话</span><strong :title="current?.title">{{ current?.title || '新对话' }}</strong></div></div>
-        <div class="chat-heading-meta"><span v-if="current" class="version-badge">v{{ current.version }}</span><span class="autosave-note"><el-icon aria-hidden="true"><CircleCheck /></el-icon>历史自动保存</span></div>
+        <div class="chat-heading-title"><strong :title="current?.title">{{ current?.title || '新对话' }}</strong><span v-if="current" class="version-badge">v{{ current.version }}</span><span class="autosave-note"><el-icon aria-hidden="true"><CircleCheck /></el-icon>自动保存</span></div>
+        <div class="workspace-actions">
+          <el-button text :icon="Clock" @click="historyVisible = true">会话历史</el-button>
+          <el-button v-if="hasPermission('ai:session:create:api')" :icon="Plus" class="new-session-button" :disabled="sending || loading || uploading || recovering" :loading="creating" @click="create">新会话</el-button>
+          <el-button v-if="canInspect" text :icon="Operation" :class="{ 'is-selected': inspectorOpen }" :aria-expanded="inspectorOpen" @click="toggleInspector">过程与文件</el-button>
+        </div>
       </header>
-      <div v-if="failed" role="alert" class="load-error"><span>对话记录暂时无法加载，请重试。</span><el-button text :disabled="sending" @click="current ? select(current) : loadSessions()">重新加载</el-button></div>
-      <div ref="thread" v-loading="loading" class="thread" role="log" aria-label="消息历史" aria-live="polite" :aria-busy="loading">
-        <div class="thread-content">
-          <div v-if="moreMessages" class="older-messages"><el-button :icon="Clock" :disabled="sending" :loading="loading" text @click="older">加载更早的消息</el-button></div>
-          <div v-if="!messages.length && !loading && !failed" class="chat-welcome">
-            <span class="welcome-avatar"><el-icon aria-hidden="true"><Cpu /></el-icon></span>
-            <span class="welcome-caption">与 {{ agent.draft.name }} 对话</span>
-            <h3>有什么可以帮你？</h3>
-            <p>分享一个问题或任务，从这里开始。<br />对话会自动保存，方便你随时继续。</p>
-          </div>
-          <article v-for="message in displayMessages" :key="message.id" class="message" :class="message.role">
-            <span class="message-avatar" aria-hidden="true"><el-icon><User v-if="message.role === 'user'" /><Cpu v-else /></el-icon></span>
-            <div class="message-body">
-              <div class="message-label"><strong>{{ message.role === 'user' ? '你' : agent.draft.name }}</strong><time :datetime="message.createTime" :title="message.createTime">{{ messageTime(message.createTime) }}</time></div>
-              <details v-if="message.role === 'assistant' && showTrace(message)" class="execution-trace" :open="sending && message.runId === liveRunId"
-                @toggle="loadTrace(message, $event)">
-                <summary><el-icon aria-hidden="true"><ArrowDown /></el-icon><strong>执行过程</strong><span>{{ traces[message.runId]?.length || '' }}</span><small v-if="sending && message.runId === liveRunId">{{ phase }}</small></summary>
-                <p v-if="traceLoading[message.runId]" class="trace-hint">正在加载过程…</p>
-                <p v-else-if="traceErrors[message.runId]" class="trace-hint trace-error">{{ traceErrors[message.runId] }}</p>
-                <p v-else-if="!traces[message.runId]?.length" class="trace-hint">这轮对话暂无过程记录。</p>
-                <ol v-else class="trace-list">
-                  <li v-for="event in traces[message.runId]" :key="event.sequence" :class="{ 'trace-error': eventFailed(event) }">
-                    <span class="trace-dot" aria-hidden="true" />
-                    <div><header><strong>{{ event.title }}<small v-if="event.durationMs != null" class="trace-duration">{{ formatDuration(event.durationMs) }}</small></strong><time>{{ eventTime(event.timestamp) }}</time></header>
-                      <small v-if="event.parentRunId" class="trace-agent">子智能体 · {{ event.agentCode }}</small>
-                      <details v-if="event.text && event.type !== 'RUN_FINISHED'" class="trace-result" :open="event.type === 'REASONING_DELTA'"><summary>{{ event.type.startsWith('REASONING_') ? '模型返回的分析内容' : event.type === 'TOOL_STARTED' ? '调用参数摘要' : '查看结果摘要' }}</summary><pre>{{ event.text }}</pre></details>
-                    </div>
-                  </li>
-                </ol>
-              </details>
-              <div class="message-bubble">
-                <div v-if="message.content && message.role === 'assistant'" class="markdown-content" v-html="message.html" />
-                <p v-else class="message-text">{{ message.content || (message.status === 'RUNNING' ? '正在处理，执行进度会实时显示…' : '本轮未返回内容') }}</p>
-              </div>
-              <details v-if="message.role === 'assistant' && message.runId && hasPermission('ai:file:list:api')" class="message-files" :open="Boolean(runFiles[message.runId]?.length)" @toggle="loadFiles(message.runId, $event)">
-                <summary>附件与生成文件 <span>{{ runFiles[message.runId]?.length || '' }}</span></summary>
-                <p v-if="fileLoading[message.runId]">正在加载文件…</p><p v-else-if="fileErrors[message.runId]" role="alert">{{ fileErrors[message.runId] }}</p>
-                <p v-else-if="runFiles[message.runId] && !runFiles[message.runId].length">本轮暂无文件。生成文件需由智能体调用交付工具保存。</p>
-                <ul><li v-for="file in runFiles[message.runId]" :key="file.id"><div><strong :title="file.name">{{ file.name }}</strong><small>{{ file.kind === 'ARTIFACT' ? '生成文件' : '用户附件' }} · {{ fileSize(file.sizeBytes) }}</small></div><el-button v-if="hasPermission('ai:file:download:api')" size="small" text @click="download(file)">下载</el-button><el-button v-if="hasPermission('ai:file:upload:api')" size="small" text :disabled="sending || pending || uploading" @click="reuseFile(file)">加入本轮</el-button></li></ul>
-              </details>
-              <div v-if="message.role === 'assistant' && ['FAILED','TIMED_OUT','CANCELLED','INTERRUPTED'].includes(message.status)" class="recovery-actions"><span>保留本轮记录，可带入上下文重新开始。</span><el-button v-if="hasPermission('ai:run:recovery:api')" text type="primary" :disabled="sending || pending || uploading" :loading="recovering" @click="recover(message)">准备重试</el-button></div>
-              <span v-if="message.status !== 'SUCCEEDED'" class="message-status" :class="{ processing: message.status === 'RUNNING' }">{{ statusLabels[message.status] || '未完成' }}</span>
-              <AgentRunSummary v-if="message.role === 'assistant'" :events="traces[message.runId] || []" />
+      <div class="workspace-main">
+        <section class="chat-main" aria-label="聊天记录与输入">
+          <div v-if="failed" role="alert" class="load-error"><span>对话记录暂时无法加载。</span><el-button text :disabled="sending" @click="current ? select(current) : loadSessions()">重新加载</el-button></div>
+          <div ref="thread" v-loading="loading" class="thread" role="log" aria-label="消息历史" aria-live="polite" :aria-busy="loading">
+            <div class="thread-content">
+              <div v-if="moreMessages" class="older-messages"><el-button :icon="Clock" :disabled="sending" :loading="loading" text @click="older">加载更早的消息</el-button></div>
+              <div v-if="!messages.length && !loading && !failed" class="chat-welcome"><span class="welcome-symbol"><el-icon aria-hidden="true"><ChatLineSquare /></el-icon></span><h3>与 {{ agent.draft.name }} 开始对话</h3><p>发送一个问题或任务，从这里开始。</p><small>会话自动保存，可随时从历史中继续。</small></div>
+              <article v-for="message in displayMessages" :key="message.id" class="message" :class="message.role">
+                <span class="message-avatar" aria-hidden="true"><el-icon><User v-if="message.role === 'user'" /><Cpu v-else /></el-icon></span>
+                <div class="message-body">
+                  <div class="message-label"><strong>{{ message.role === 'user' ? '你' : agent.draft.name }}</strong><time :datetime="message.createTime" :title="message.createTime">{{ messageTime(message.createTime) }}</time></div>
+                  <div class="message-bubble">
+                    <div v-if="message.content && message.role === 'assistant'" class="markdown-content" v-html="message.html" />
+                    <p v-else class="message-text">{{ message.content || (message.status === 'RUNNING' ? '正在处理，执行进展可在右侧查看…' : '本轮未返回内容') }}</p>
+                  </div>
+                  <div v-if="message.role === 'assistant' && message.runId" class="message-links">
+                    <button v-if="showTrace(message)" type="button" :class="{ active: inspectorOpen && inspectorTab === 'activity' && inspectedRun?.runId === message.runId }" @click="openInspector('activity', message)"><el-icon aria-hidden="true"><Operation /></el-icon>执行过程<span v-if="traces[message.runId]?.length">{{ traces[message.runId]?.length }}</span></button>
+                    <button v-if="hasPermission('ai:file:list:api')" type="button" :class="{ active: inspectorOpen && inspectorTab === 'files' && inspectedRun?.runId === message.runId }" @click="openInspector('files', message)"><el-icon aria-hidden="true"><Document /></el-icon>文件<span v-if="runFiles[message.runId]?.length">{{ runFiles[message.runId]?.length }}</span></button>
+                  </div>
+                  <div v-if="message.role === 'assistant' && ['FAILED','TIMED_OUT','CANCELLED','INTERRUPTED'].includes(message.status)" class="recovery-actions"><span>保留本轮记录，可带入上下文重新开始。</span><el-button v-if="hasPermission('ai:run:recovery:api')" text type="primary" :disabled="sending || pending || uploading" :loading="recovering" @click="recover(message)">准备重试</el-button></div>
+                  <span v-if="message.status !== 'SUCCEEDED'" class="message-status" :class="{ processing: message.status === 'RUNNING' }">{{ statusLabels[message.status] || '未完成' }}</span>
+                  <AgentRunSummary v-if="message.role === 'assistant'" :events="traces[message.runId] || []" />
+                </div>
+              </article>
+              <div v-if="sending || pending" class="thinking-note" role="status"><span class="thinking-dots" aria-hidden="true"><i /><i /><i /></span><span>{{ sending ? phase : '正在执行，自动同步状态' }}<time v-if="sending" class="elapsed">{{ elapsed }}秒</time></span></div>
             </div>
-          </article>
-          <div v-if="sending || pending" class="thinking-note" role="status"><span class="thinking-dots" aria-hidden="true"><i /><i /><i /></span><span>{{ sending ? phase : '正在执行，自动同步状态' }}<time v-if="sending" class="elapsed">{{ elapsed }}秒</time></span></div>
-        </div>
-      </div>
-      <p v-if="streamError" class="stream-error" role="alert">{{ streamError }}</p>
-      <div class="composer">
-        <div class="composer-card" :class="{ 'is-disabled': sending || pending || loading || failed }">
-          <label for="agent-chat-input">{{ current ? '继续对话' : '发送消息' }}</label>
-          <el-input id="agent-chat-input" v-model="input" type="textarea" :autosize="{ minRows: 1, maxRows: 5 }" :maxlength="100000"
-            resize="none" :disabled="sending || pending || loading || failed" placeholder="输入你的问题，或描述需要完成的任务…" @keydown.ctrl.enter.prevent="send" @keydown.meta.enter.prevent="send" />
-          <div v-if="pendingAttachments.length" class="pending-attachments"><span v-for="file in pendingAttachments" :key="file.id"><strong :title="file.name">{{ file.name }}</strong><small>{{ fileSize(file.sizeBytes) }}</small><button type="button" :disabled="sending || uploading || !hasPermission('ai:file:delete:api') && !file.reused" :aria-label="`移除 ${file.name}`" @click="removeAttachment(file)">×</button></span></div>
-          <div class="composer-actions"><div class="composer-tools"><input ref="filePicker" type="file" multiple hidden aria-label="选择附件" :disabled="sending || pending || loading || uploading" @change="upload" /><el-button v-if="hasPermission('ai:file:upload:api')" text size="small" :loading="uploading" :disabled="sending || pending || loading || failed || recovering" title="本轮最多 5 个附件，共 20MiB；历史文件可加入本轮继续使用" @click="filePicker?.click()">{{ uploading ? `上传中 ${uploadPercent}%` : '＋ 附件' }}</el-button><small><kbd>Ctrl / ⌘</kbd> + <kbd>Enter</kbd> 发送</small></div><el-button v-if="(sending || pending) && hasPermission('ai:run:cancel')" class="send-button" :icon="VideoPause" :loading="stopping" @click="stop">停止</el-button><el-button v-else-if="hasPermission('ai:agent:stream:api')" class="send-button" type="primary"
-            :loading="sending" :disabled="sending || uploading || recovering || !input.trim() || pending || loading || failed" @click="send"><span>{{ sending || pending ? '处理中' : '发送' }}</span><el-icon v-if="!sending" aria-hidden="true"><Promotion /></el-icon></el-button></div>
-        </div>
+          </div>
+          <p v-if="streamError" class="stream-error" role="alert">{{ streamError }}</p>
+          <div class="composer">
+            <div class="composer-card" :class="{ 'is-disabled': sending || pending || loading || failed }">
+              <label for="agent-chat-input">{{ current ? '继续对话' : '发送消息' }}</label>
+              <el-input id="agent-chat-input" v-model="input" type="textarea" :autosize="{ minRows: 2, maxRows: 5 }" :maxlength="100000" resize="none" :disabled="sending || pending || loading || failed" placeholder="输入消息，描述你想完成的任务…" @keydown.ctrl.enter.prevent="send" @keydown.meta.enter.prevent="send" />
+              <div v-if="pendingAttachments.length" class="pending-attachments"><span v-for="file in pendingAttachments" :key="file.id"><el-icon aria-hidden="true"><Document /></el-icon><strong :title="file.name">{{ file.name }}</strong><small>{{ fileSize(file.sizeBytes) }}</small><button type="button" :disabled="sending || uploading || !hasPermission('ai:file:delete:api') && !file.reused" :aria-label="`移除 ${file.name}`" @click="removeAttachment(file)">×</button></span></div>
+              <div class="composer-actions"><small><kbd>Ctrl / ⌘</kbd> + <kbd>Enter</kbd> 发送</small><div class="composer-tools"><input ref="filePicker" type="file" multiple hidden aria-label="选择附件" :disabled="sending || pending || loading || uploading" @change="upload" /><el-button v-if="hasPermission('ai:file:upload:api')" text circle :icon="Paperclip" :loading="uploading" :disabled="sending || pending || loading || failed || recovering" :aria-label="uploading ? `上传中 ${uploadPercent}%` : '添加附件'" title="最多 5 个附件，共 20MiB" @click="filePicker?.click()" /><el-button v-if="(sending || pending) && hasPermission('ai:run:cancel')" class="send-button" :icon="VideoPause" :loading="stopping" @click="stop">停止</el-button><el-button v-else-if="hasPermission('ai:agent:stream:api')" class="send-button" type="primary" circle :icon="Promotion" :disabled="sending || uploading || recovering || !input.trim() || pending || loading || failed" aria-label="发送消息" title="发送消息" @click="send" /></div></div>
+            </div>
+          </div>
+        </section>
+        <aside v-if="inspectorOpen" class="run-inspector" aria-label="执行过程与文件面板">
+          <header class="inspector-heading"><div class="inspector-tabs" role="tablist" aria-label="查看执行信息"><button v-if="canViewActivity" id="activity-tab" ref="activityTabButton" type="button" role="tab" :tabindex="inspectorTab === 'activity' ? 0 : -1" @keydown.right.prevent="focusInspectorTab('files')" @keydown.left.prevent="focusInspectorTab('files')" :aria-selected="inspectorTab === 'activity'" aria-controls="inspector-content" @click="openInspector('activity')"><el-icon aria-hidden="true"><Operation /></el-icon>执行过程<span>{{ inspectedEvents.length }}</span></button><button v-if="hasPermission('ai:file:list:api')" id="files-tab" ref="filesTabButton" type="button" role="tab" :tabindex="inspectorTab === 'files' ? 0 : -1" @keydown.left.prevent="focusInspectorTab('activity')" @keydown.right.prevent="focusInspectorTab('activity')" :aria-selected="inspectorTab === 'files'" aria-controls="inspector-content" @click="openInspector('files')"><el-icon aria-hidden="true"><Document /></el-icon>文件<span>{{ inspectedFiles.length }}</span></button></div><el-button text circle :icon="Close" aria-label="关闭执行面板" @click="inspectorOpen = false" /></header>
+          <div v-if="assistantMessages.length" class="inspector-run"><span>查看轮次</span><el-select :model-value="inspectedRun?.runId" size="small" aria-label="选择对话轮次" @change="(id: string) => openInspector(inspectorTab, assistantMessages.find(message => message.runId === id))"><el-option v-for="message in assistantMessages" :key="message.runId" :value="message.runId" :label="runLabel(message)" /></el-select></div>
+          <div id="inspector-content" class="inspector-content" role="tabpanel" :aria-labelledby="inspectorTab === 'activity' ? 'activity-tab' : 'files-tab'">
+            <div v-if="!inspectedRun" class="inspector-empty"><el-icon aria-hidden="true"><Document /></el-icon><strong>还没有执行记录</strong><p>开始一轮对话后，在这里查看过程和文件。</p></div>
+            <template v-else-if="inspectorTab === 'activity'">
+              <p v-if="traceLoading[inspectedRun.runId]" class="panel-hint" role="status">正在加载执行过程…</p>
+              <div v-else-if="traceErrors[inspectedRun.runId]" class="panel-error" role="alert"><p>{{ traceErrors[inspectedRun.runId] }}</p><el-button text size="small" @click="openInspector('activity', inspectedRun, true)">重新加载</el-button></div>
+              <div v-else-if="!inspectedEvents.length" class="inspector-empty"><el-icon aria-hidden="true"><Operation /></el-icon><strong>暂无过程记录</strong><p>执行进展会实时出现在这里。</p></div>
+              <ol v-else class="trace-list"><li v-for="event in inspectedEvents" :key="event.sequence" :class="{ 'trace-error': eventFailed(event) }"><span class="trace-dot" aria-hidden="true" /><div><header><strong>{{ event.title }}</strong><time :title="eventTime(event.timestamp)">{{ event.durationMs == null ? eventTime(event.timestamp) : formatDuration(event.durationMs) }}</time></header><small v-if="event.parentRunId" class="trace-agent">子智能体 · {{ event.agentCode }}</small><details v-if="event.text && event.type !== 'RUN_FINISHED'" class="trace-result" :open="event.type === 'REASONING_DELTA'"><summary>{{ event.type.startsWith('REASONING_') ? '模型返回的分析内容' : event.type === 'TOOL_STARTED' ? '调用参数摘要' : '查看结果摘要' }}</summary><pre>{{ event.text }}</pre></details></div></li></ol>
+            </template>
+            <template v-else>
+              <p v-if="fileLoading[inspectedRun.runId]" class="panel-hint" role="status">正在加载文件…</p>
+              <div v-else-if="fileErrors[inspectedRun.runId]" class="panel-error" role="alert"><p>{{ fileErrors[inspectedRun.runId] }}</p><el-button text size="small" @click="openInspector('files', inspectedRun, true)">重新加载</el-button></div>
+              <div v-else-if="!inspectedFiles.length" class="inspector-empty"><el-icon aria-hidden="true"><Document /></el-icon><strong>本轮暂无文件</strong><p>上传的附件和智能体交付的文件会显示在这里。</p></div>
+              <ul v-else class="artifact-list"><li v-for="file in inspectedFiles" :key="file.id"><span class="artifact-icon"><el-icon aria-hidden="true"><Document /></el-icon></span><div class="artifact-details"><strong :title="file.name">{{ file.name }}</strong><small>{{ file.kind === 'ARTIFACT' ? '生成文件' : '用户附件' }} · {{ fileSize(file.sizeBytes) }}</small><div><el-button v-if="hasPermission('ai:file:download:api')" size="small" text type="primary" @click="download(file)">下载</el-button><el-button v-if="hasPermission('ai:file:upload:api')" size="small" text :disabled="sending || pending || uploading" @click="reuseFile(file)">加入本轮</el-button></div></div></li></ul>
+            </template>
+          </div>
+        </aside>
       </div>
     </section>
+    <el-dialog v-model="historyVisible" title="会话历史" width="min(960px,94vw)" class="conversation-history-dialog" append-to-body align-center :close-on-click-modal="false">
+      <template #header="{ titleId, titleClass }"><div class="history-dialog-heading"><h2 :id="titleId" :class="titleClass">会话历史</h2><p>{{ agent.draft.name }}</p></div></template>
+      <div class="history-toolbar"><el-input v-model="sessionQuery" :prefix-icon="Search" clearable placeholder="搜索已加载的会话标题" aria-label="搜索历史会话" /><el-button :icon="Refresh" :loading="historyLoading" aria-label="刷新会话历史" title="刷新会话历史" @click="loadSessions()" /></div>
+      <p v-if="historyError" class="panel-error" role="alert">{{ historyError }}</p>
+      <el-table v-loading="historyLoading" :data="visibleSessions" :row-class-name="historyRowClass" class="session-history-table" max-height="min(52dvh,520px)" empty-text="暂无匹配的会话" @row-click="chooseSession"><el-table-column label="会话" min-width="260"><template #default="{row}"><div class="history-title"><el-icon aria-hidden="true"><ChatLineSquare /></el-icon><strong :title="row.title">{{ row.title }}</strong><el-tag v-if="current?.sessionId === row.sessionId" size="small" effect="plain">当前</el-tag></div></template></el-table-column><el-table-column label="发布版本" width="100"><template #default="{row}"><span class="history-version">v{{ row.version }}</span></template></el-table-column><el-table-column label="最近活动" min-width="150"><template #default="{row}"><time :datetime="row.updateTime" :title="row.updateTime">{{ sessionDate(row.updateTime) }}</time></template></el-table-column><el-table-column label="" width="90"><template #default="{row}"><el-button text type="primary" :disabled="sending || uploading || creating || recovering" @click.stop="chooseSession(row)">继续对话</el-button></template></el-table-column></el-table>
+      <template #footer><div class="history-dialog-footer"><span>已加载 {{ sessions.length }} 个会话</span><el-button v-if="moreSessions" :loading="historyLoading" @click="loadSessions(true)">加载更多</el-button><el-button @click="historyVisible = false">关闭</el-button></div></template>
+    </el-dialog>
   </div>
 </template>
 <style scoped>
-.trace-duration { display: inline-block; margin-left: 8px; font-size: 10px; font-variant-numeric: tabular-nums; color: var(--el-text-color-secondary); }
-.message-files { margin-top: 10px; padding: 10px 12px; border: 1px solid var(--el-border-color-lighter); border-radius: 9px; font-size: 12px; color: var(--el-text-color-regular); }
-.message-files > summary { cursor: pointer; font-weight: 500; }
-.message-files > summary span { color: var(--el-text-color-secondary); margin-left: 6px; }
-.message-files p { font-size: 11px; line-height: 1.7; }
-.message-files ul { list-style: none; padding: 0; margin: 8px 0 0; }
-.message-files li { display: flex; align-items: center; gap: 8px; padding: 9px 0; }
-.message-files li > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
-.message-files li strong { font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.message-files li small { font-size: 10px; color: var(--el-text-color-secondary); }
-.pending-attachments { display: flex; gap: 7px; flex-wrap: wrap; margin: 6px 0; }
-.pending-attachments > span { display: flex; align-items: center; gap: 7px; max-width: 100%; border: 1px solid var(--el-border-color-lighter); padding: 5px 8px; border-radius: 6px; background: var(--el-fill-color-light); font-size: 11px; }
-.pending-attachments strong { max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
-.pending-attachments small { color: var(--el-text-color-secondary); font-size: 10px; }
-.pending-attachments button { border: 0; background: transparent; color: var(--el-text-color-regular); cursor: pointer; }
-.recovery-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 8px; font-size: 11px; color: var(--el-text-color-regular); }
-
-.execution-trace { margin-bottom: 9px; padding: 7px 12px; border: 1px solid var(--el-border-color-lighter); border-radius: 9px; background: var(--el-bg-color); }
-.execution-trace > summary { display: flex; align-items: center; gap: 8px; min-height: 24px; cursor: pointer; list-style: none; font-size: 12px; color: var(--el-text-color-regular); }
-.execution-trace > summary::-webkit-details-marker { display: none; }
-.execution-trace > summary > .el-icon { transition: transform .15s; transform: rotate(-90deg); }
-.execution-trace[open] > summary > .el-icon { transform: rotate(0); }
-.execution-trace > summary strong { white-space: nowrap; font-weight: 500; }
-.execution-trace > summary > span { color: var(--el-text-color-secondary); font-variant-numeric: tabular-nums; }
-.execution-trace > summary small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-left: auto; color: var(--el-color-primary); }
-.trace-list { display: flex; flex-direction: column; gap: 15px; max-height: 220px; overflow-y: auto; list-style: none; padding: 16px 0 2px; margin: 0; }
-.trace-list > li { display: flex; gap: 11px; font-size: 12px; color: var(--el-text-color-regular); }
-.trace-dot { flex-shrink: 0; width: 6px; height: 6px; margin: 6px 1px 0; border-radius: 50%; background: var(--el-color-primary); }
-.trace-list > li > div { flex: 1; min-width: 0; }
-.trace-list header { display: flex; align-items: baseline; gap: 12px; justify-content: space-between; }
-.trace-list header strong { font-weight: 500; overflow-wrap: anywhere; }
-.trace-list time { flex-shrink: 0; color: var(--el-text-color-regular); font-size: 11px; font-variant-numeric: tabular-nums; }
-.trace-agent { display: block; margin: 4px 0; color: var(--el-text-color-secondary); }
-.trace-result { margin-top: 5px; }
-.trace-result summary { cursor: pointer; color: var(--el-text-color-regular); padding: 3px 0; }
-.trace-result pre { max-height: 220px; overflow: auto; margin: 7px 0 0; padding: 10px; background: var(--el-fill-color-lighter); border-radius: 6px; white-space: pre-wrap; overflow-wrap: anywhere; font: 11px/1.7 'SFMono-Regular', Consolas, monospace; }
-.trace-hint { margin: 14px 0 3px; color: var(--el-text-color-regular); font-size: 12px; }
-.trace-error, .stream-error { color: var(--el-color-danger); }
-.trace-error .trace-dot { background: var(--el-color-danger); }
-.stream-error { margin: 0; padding: 8px 28px; font-size: 12px; }
-.elapsed { padding-left: 8px; color: var(--el-text-color-regular); font-size: 11px; font-variant-numeric: tabular-nums; }
-.message.assistant .message-body { width: 100%; }
-
-.conversation { display: grid; grid-template-columns: 220px minmax(0, 1fr); height: calc(100dvh - 112px); min-height: 0; overflow: hidden; color: var(--el-text-color-primary); background: var(--el-bg-color); font-family: var(--el-font-family); }
-.conversation.history-collapsed { grid-template-columns: minmax(0, 1fr); }
-.history-collapsed .thread-content, .history-collapsed .composer-card { max-width: 1160px; }
-.history-panel { display: flex; flex-direction: column; min-height: 0; min-width: 0; border-right: 1px solid var(--el-border-color-lighter); background: var(--el-fill-color-lighter); }
-.history-top { padding: 22px 16px 12px; }
-.new-conversation { width: 100%; height: 40px; border-radius: 9px; font-weight: 500; }
-.history-label { display: flex; align-items: center; justify-content: space-between; margin: 27px 4px 12px; font-size: 12px; font-weight: 600; color: var(--el-text-color-regular); }
-.history-label > span:last-child { display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; box-sizing: border-box; border-radius: 6px; background: var(--el-fill-color); font-size: 11px; font-variant-numeric: tabular-nums; }
-.history-search :deep(.el-input__wrapper) { min-height: 32px; border-radius: 7px; box-shadow: 0 0 0 1px var(--el-border-color-lighter) inset; }
-.history-search :deep(.el-input__inner) { font-size: 12px; }
-.session-list { flex: 1; min-height: 0; overflow-y: auto; padding: 0 12px 16px; scrollbar-width: thin; }
-.session { position: relative; display: flex; align-items: flex-start; gap: 10px; width: 100%; margin: 4px 0; padding: 13px 12px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: var(--el-text-color-regular); text-align: left; cursor: pointer; font: inherit; transition: background-color .15s, border-color .15s; }
-.session:hover:not(:disabled) { background: var(--el-fill-color); }
-.session.active { border-color: var(--el-border-color-light); background: var(--el-bg-color); box-shadow: 0 2px 5px rgb(0 0 0 / 3%); color: var(--el-text-color-primary); }
-.session.active::before { position: absolute; top: 16px; bottom: 16px; left: -1px; width: 3px; border-radius: 0 3px 3px 0; background: var(--el-color-primary); content: ''; }
-.session-icon { margin-top: 2px; font-size: 16px; color: var(--el-text-color-secondary); }
-.session.active .session-icon { color: var(--el-color-primary); }
-.session-details { flex: 1; min-width: 0; }
-.session strong { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 500; line-height: 1.6; }
-.session-meta { display: flex; align-items: center; justify-content: space-between; gap: 6px; margin-top: 7px; color: var(--el-text-color-regular); font-size: 11px; line-height: 1.4; font-variant-numeric: tabular-nums; }
-.session-meta > span { color: var(--el-text-color-secondary); }
-.session:focus-visible { outline: 2px solid var(--el-color-primary); outline-offset: -2px; }
-.session:disabled { cursor: not-allowed; }
-.history-empty { padding: 34px 4px; color: var(--el-text-color-regular); text-align: center; }
-.history-empty .el-icon { font-size: 24px; color: var(--el-text-color-secondary); }
-.history-empty p { margin: 12px 0 6px; font-size: 13px; }
-.history-empty > span { font-size: 12px; }
-.more-sessions { width: 100%; margin-top: 8px; font-size: 12px; }
-.history-footer { display: flex; align-items: center; gap: 7px; padding: 16px; border-top: 1px solid var(--el-border-color-lighter); color: var(--el-text-color-regular); font-size: 11px; }
-.chat { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
-.chat-heading { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 12px; min-height: 48px; padding: 7px 20px; box-sizing: border-box; border-bottom: 1px solid var(--el-border-color-lighter); }
-.chat-heading-main { display: flex; align-items: center; min-width: 0; gap: 9px; }
-.history-toggle { flex-shrink: 0; width: 28px; height: 28px; padding: 0; }
-.chat-heading-title { display: flex; align-items: baseline; min-width: 0; gap: 10px; }
-.chat-heading-title > span { flex-shrink: 0; }
-.chat-heading-title > span { color: var(--el-text-color-regular); font-size: 11px; }
-.chat-heading-title strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; font-weight: 600; }
-.chat-heading-meta { display: flex; align-items: center; flex-shrink: 0; gap: 12px; }
-.version-badge { padding: 3px 7px; border: 1px solid var(--el-border-color-light); border-radius: 5px; color: var(--el-text-color-regular); font-size: 11px; line-height: 1.4; }
-.autosave-note { display: flex; align-items: center; gap: 5px; color: var(--el-text-color-regular); font-size: 11px; white-space: nowrap; }
-.autosave-note .el-icon { color: var(--el-color-success-dark-2); font-size: 14px; }
-.thread { flex: 1; min-height: 80px; overflow-y: auto; overscroll-behavior: contain; padding: 18px 24px; scrollbar-width: thin; }
-.thread-content { display: flex; flex-direction: column; min-height: 100%; max-width: 980px; margin: 0 auto; }
-.older-messages { text-align: center; margin: -10px 0 18px; }
+.conversation { height: calc(100dvh - 72px); min-height: 0; overflow: hidden; color: var(--el-text-color-primary); background: var(--el-bg-color-page); font-family: var(--el-font-family); }
+.chat { display: flex; flex-direction: column; height: 100%; min-width: 0; min-height: 0; }
+.chat-heading { display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; gap: 20px; min-height: 54px; padding: 8px 26px; border-bottom: 1px solid var(--el-border-color-lighter); }
+.chat-heading-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.chat-heading-title > strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 500; }
+.version-badge { flex-shrink: 0; padding: 2px 6px; border: 1px solid var(--el-border-color-lighter); border-radius: 5px; font-size: 10px; color: var(--el-text-color-regular); }
+.autosave-note { display: inline-flex; align-items: center; flex-shrink: 0; gap: 4px; color: var(--el-text-color-secondary); font-size: 11px; }
+.autosave-note .el-icon { color: var(--el-color-success); }
+.workspace-actions { display: flex; align-items: center; flex-shrink: 0; gap: 8px; }
+.workspace-actions .el-button { margin: 0; height: 30px; padding: 0 10px; font-size: 12px; border-radius: 7px; }
+.workspace-actions .new-session-button, .workspace-actions .is-selected { color: var(--el-color-primary); border-color: transparent; background: var(--el-color-primary-light-9); }
+.workspace-main { display: flex; flex: 1; min-height: 0; min-width: 0; position: relative; }
+.chat-main { display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; }
+.thread { flex: 1; min-height: 80px; overflow-y: auto; overscroll-behavior: contain; padding: 26px 40px 12px; scrollbar-width: thin; }
+.thread-content { display: flex; flex-direction: column; min-height: 100%; max-width: 1120px; margin: 0 auto; }
+.older-messages { text-align: center; margin: 0 0 20px; }
 .older-messages .el-button { font-size: 12px; }
-.chat-welcome { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; padding: 32px 16px 56px; text-align: center; }
-.welcome-avatar { display: grid; place-items: center; width: 56px; height: 56px; margin-bottom: 20px; border: 1px solid var(--el-color-primary-light-8); border-radius: 17px; background: var(--el-color-primary-light-9); color: var(--el-color-primary); font-size: 27px; }
-.welcome-caption { color: var(--el-text-color-regular); font-size: 12px; }
-.chat-welcome h3 { margin: 10px 0 12px; color: var(--el-text-color-primary); font-size: 24px; font-weight: 600; letter-spacing: -.5px; }
-.chat-welcome p { max-width: 100%; margin: 0; color: var(--el-text-color-regular); font-size: 13px; line-height: 1.9; overflow-wrap: anywhere; }
-.message { display: flex; align-items: flex-start; gap: 11px; margin-bottom: 20px; }
-.message-avatar { display: grid; flex-shrink: 0; place-items: center; width: 32px; height: 32px; margin-top: 23px; border: 1px solid var(--el-border-color-light); border-radius: 10px; background: var(--el-bg-color); color: var(--el-color-primary); font-size: 17px; }
-.message-body { min-width: 0; max-width: calc(100% - 43px); }
-.message-label { display: flex; align-items: center; gap: 9px; margin: 0 2px 8px; line-height: 1.3; }
+.chat-welcome { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; min-height: 170px; padding: 24px 16px 64px; text-align: center; }
+.welcome-symbol { color: var(--el-text-color-placeholder); font-size: 28px; opacity: .7; }
+.chat-welcome h3 { margin: 18px 0 10px; color: var(--el-text-color-regular); font-size: 17px; font-weight: 500; }
+.chat-welcome p { margin: 0; color: var(--el-text-color-secondary); font-size: 13px; line-height: 1.8; }
+.chat-welcome small { margin-top: 7px; color: var(--el-text-color-secondary); font-size: 11px; }
+.message { display: flex; align-items: flex-start; gap: 12px; margin-bottom: 28px; }
+.message-avatar { display: grid; place-items: center; flex-shrink: 0; width: 30px; height: 30px; margin-top: 1px; border: 1px solid var(--el-border-color-lighter); border-radius: 9px; background: var(--el-bg-color); color: var(--el-color-primary); font-size: 16px; }
+.message-body { flex: 1; min-width: 0; max-width: calc(100% - 42px); }
+.message-label { display: flex; align-items: baseline; gap: 9px; margin: 3px 0 10px; line-height: 1.3; }
 .message-label strong { font-size: 12px; font-weight: 500; color: var(--el-text-color-regular); overflow-wrap: anywhere; }
-.message-label time { flex-shrink: 0; color: var(--el-text-color-regular); font-size: 11px; font-variant-numeric: tabular-nums; }
-.message-bubble { padding: 14px 18px; border: 1px solid var(--el-border-color-lighter); border-radius: 3px 14px 14px; background: var(--el-fill-color-lighter); font-size: 14px; line-height: 1.8; overflow-wrap: anywhere; }
+.message-label time { color: var(--el-text-color-secondary); font-size: 10px; font-variant-numeric: tabular-nums; }
+.message-bubble { font-size: 14px; line-height: 1.85; overflow-wrap: anywhere; }
 .message-text { white-space: pre-wrap; margin: 0; }
-.message.user { flex-direction: row-reverse; margin-left: 15%; }
-.message.user .message-body { max-width: calc(100% - 43px); }
-.message.user .message-label { justify-content: flex-end; }
-.message.user .message-avatar { background: var(--el-fill-color); color: var(--el-text-color-regular); border-color: transparent; }
-.message.user .message-bubble { border-color: var(--el-color-primary-light-8); background: var(--el-color-primary-light-9); border-radius: 14px 3px 14px 14px; }
-.message-status { display: inline-block; margin: 7px 2px 0; font-size: 12px; color: var(--el-color-danger); }
+.message.user { flex-direction: row-reverse; margin-left: 20%; }
+.message.user .message-body { flex: initial; }
+.message.user .message-label { justify-content: flex-end; margin-bottom: 7px; }
+.message.user .message-avatar { color: var(--el-text-color-regular); background: var(--el-fill-color); border-color: transparent; }
+.message.user .message-bubble { padding: 11px 16px; background: var(--el-fill-color); border: 1px solid var(--el-border-color-lighter); border-radius: 14px 3px 14px 14px; }
+.message-links { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 9px; }
+.message-links button { display: inline-flex; align-items: center; gap: 5px; padding: 1px 0; border: 0; background: transparent; font: inherit; color: var(--el-text-color-secondary); font-size: 11px; cursor: pointer; }
+.message-links button:hover, .message-links button.active { color: var(--el-color-primary); }
+.message-links button:focus-visible { outline: 2px solid var(--el-color-primary); outline-offset: 3px; border-radius: 3px; }
+.message-links button > span { padding: 0 4px; border-radius: 3px; background: var(--el-fill-color); font-size: 10px; }
+.message-status { display: inline-block; margin-top: 6px; color: var(--el-color-danger); font-size: 11px; }
 .message-status.processing { color: var(--el-text-color-regular); }
+.recovery-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 8px; color: var(--el-text-color-regular); font-size: 11px; }
 .markdown-content { min-width: 0; }
 .markdown-content :deep(> :first-child) { margin-top: 0; }
 .markdown-content :deep(> :last-child) { margin-bottom: 0; }
 .markdown-content :deep(p) { margin: 0 0 12px; }
 .markdown-content :deep(h1), .markdown-content :deep(h2), .markdown-content :deep(h3), .markdown-content :deep(h4) { margin: 18px 0 9px; font-size: 16px; line-height: 1.6; font-weight: 600; }
 .markdown-content :deep(ul), .markdown-content :deep(ol) { padding-left: 22px; margin: 10px 0; }
-.markdown-content :deep(li + li) { margin-top: 5px; }
+.markdown-content :deep(li + li) { margin-top: 4px; }
 .markdown-content :deep(pre) { max-width: 100%; padding: 14px 16px; overflow-x: auto; border: 1px solid var(--el-border-color-lighter); border-radius: 8px; background: var(--el-bg-color); white-space: pre; line-height: 1.6; }
 .markdown-content :deep(code) { padding: 2px 5px; border-radius: 4px; background: var(--el-fill-color); font-family: 'SFMono-Regular', Consolas, monospace; font-size: .9em; }
 .markdown-content :deep(pre code) { padding: 0; background: transparent; }
 .markdown-content :deep(blockquote) { margin: 12px 0; padding-left: 12px; border-left: 3px solid var(--el-border-color); color: var(--el-text-color-regular); }
-.markdown-content :deep(a) { color: var(--el-color-primary-dark-2); text-decoration: underline; text-underline-offset: 3px; }
+.markdown-content :deep(a) { color: var(--el-color-primary); text-decoration: underline; text-underline-offset: 3px; }
 .markdown-content :deep(table) { display: block; max-width: 100%; overflow-x: auto; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
 .markdown-content :deep(th), .markdown-content :deep(td) { padding: 7px 10px; border: 1px solid var(--el-border-color); text-align: left; }
-.markdown-content :deep(img) { max-width: 100%; height: auto; }
-.thinking-note { display: flex; align-items: center; gap: 10px; margin: 0 0 16px 43px; color: var(--el-text-color-regular); font-size: 12px; }
+.thinking-note { display: flex; align-items: center; gap: 9px; margin: 0 0 12px 42px; color: var(--el-text-color-regular); font-size: 11px; }
 .thinking-dots { display: inline-flex; align-items: center; gap: 4px; height: 16px; }
 .thinking-dots i { width: 4px; height: 4px; border-radius: 50%; background: var(--el-color-primary); animation: thinking 1.2s ease-in-out infinite; }
 .thinking-dots i:nth-child(2) { animation-delay: .15s; }
 .thinking-dots i:nth-child(3) { animation-delay: .3s; }
-@keyframes thinking { 0%, 70%, 100% { opacity: .35; transform: translateY(0); } 35% { opacity: 1; transform: translateY(-3px); } }
-.load-error { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 24px; background: var(--el-color-danger-light-9); color: var(--el-color-danger); font-size: 12px; }
-.composer { flex-shrink: 0; padding: 4px 24px 12px; }
-.composer-card { max-width: 980px; margin: 0 auto; padding: 10px 14px 8px; border: 1px solid var(--el-border-color); border-radius: 13px; background: var(--el-bg-color); box-shadow: 0 3px 12px rgb(0 0 0 / 3%); transition: border-color .15s, box-shadow .15s; }
-.composer-card:focus-within { border-color: var(--el-color-primary); box-shadow: 0 0 0 3px var(--el-color-primary-light-9); }
+@keyframes thinking { 0%,70%,100% { opacity: .35; transform: translateY(0); } 35% { opacity: 1; transform: translateY(-3px); } }
+.elapsed { margin-left: 8px; font-variant-numeric: tabular-nums; }
+.load-error { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 6px 24px; background: var(--el-color-danger-light-9); color: var(--el-color-danger); font-size: 12px; }
+.stream-error { margin: 0; padding: 6px 28px; color: var(--el-color-danger); font-size: 12px; }
+.composer { flex-shrink: 0; padding: 8px 28px 20px; }
+.composer-card { max-width: 1120px; margin: 0 auto; padding: 14px 18px 10px; border: 1px solid var(--el-border-color-light); border-radius: 14px; background: var(--el-bg-color); box-shadow: 0 2px 8px rgb(0 0 0 / 3%); transition: border-color .15s, box-shadow .15s; }
+.composer-card:focus-within { border-color: var(--el-color-primary); box-shadow: 0 0 0 2px var(--el-color-primary-light-9); }
 .composer-card.is-disabled { background: var(--el-fill-color-lighter); }
 .composer label { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .composer :deep(.el-textarea__inner) { padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; color: var(--el-text-color-primary); font-family: inherit; font-size: 14px; line-height: 1.7; }
 .composer :deep(.el-textarea__inner:focus), .composer :deep(.el-textarea__inner:hover) { box-shadow: none; }
 .composer :deep(.el-textarea.is-disabled .el-textarea__inner) { background: transparent; }
-.composer-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 7px; }
-.composer-tools { display: flex; align-items: center; gap: 12px; min-width: 0; }
-.composer-tools > small { color: var(--el-text-color-secondary); font-size: 10px; white-space: nowrap; }
-.composer-actions kbd { padding: 2px 4px; border: 1px solid var(--el-border-color-light); border-radius: 4px; font: inherit; }
-.send-button { height: 34px; min-width: 78px; padding: 0 12px; border-radius: 7px; }
-.send-button .el-icon { margin-left: 6px; font-size: 15px; }
-@media (max-width: 900px) { .conversation { grid-template-columns: 210px minmax(0, 1fr); } .thread { padding: 16px 18px; } .chat-heading { padding: 7px 16px; } .composer { padding: 4px 18px 10px; } .autosave-note { display: none; } }
-@media (max-width: 640px) {
-  .conversation { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); height: calc(100dvh - 88px); }
-  .conversation.history-collapsed { grid-template-rows: minmax(0, 1fr); }
-  .history-panel { border-right: 0; border-bottom: 1px solid var(--el-border-color-lighter); }
-  .history-top { display: flex; align-items: center; gap: 10px; padding: 12px 14px 8px; }
-  .new-conversation { flex-shrink: 0; width: auto; height: 36px; }
-  .history-label, .history-footer { display: none; }
-  .history-search { min-width: 0; }
-  .session-list { display: flex; gap: 6px; padding: 0 14px 9px; overflow-x: auto; }
-  .session { width: 156px; min-width: 156px; margin: 0; padding: 9px 10px; }
-  .session-icon { display: none; }
-  .session-meta { margin-top: 4px; font-size: 10px; }
-  .history-empty { padding: 6px 0; font-size: 12px; text-align: left; }
-  .history-empty .el-icon, .history-empty > span { display: none; }
-  .history-empty p { margin: 0; font-size: 12px; }
-  .more-sessions { width: auto; flex-shrink: 0; align-self: center; margin: 0; }
-  .chat-heading { min-height: 44px; padding: 6px 12px; }
-  .chat-heading-title { gap: 6px; }
-  .chat-heading-title > span { display: none; }
-  .thread { padding: 14px 12px; }
-  .message { gap: 8px; margin-bottom: 18px; }
-  .message-avatar { width: 28px; height: 28px; border-radius: 9px; font-size: 15px; }
-  .message-body, .message.user .message-body { max-width: calc(100% - 36px); }
-  .message.user { margin-left: 5%; }
-  .message-bubble { padding: 11px 13px; font-size: 15px; }
-  .message-label { gap: 6px; }
-  .message-label strong, .message-label time { font-size: 11px; }
-  .composer { padding: 4px 12px 12px; }
-  .composer-card { padding: 9px 12px 7px; border-radius: 11px; }
-  .composer :deep(.el-textarea__inner) { font-size: 16px; }
-  .composer-tools > small { display: none; }
-  .send-button { height: 38px; }
-  .chat-welcome { padding: 28px 8px; }
-  .chat-welcome h3 { font-size: 21px; }
-  .load-error { padding: 6px 14px; }
-}
-@media (prefers-reduced-motion: reduce) { .session, .composer-card { transition: none; } .thinking-dots i { animation: none; } }
+.composer-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 8px; }
+.composer-actions > small { color: var(--el-text-color-secondary); font-size: 10px; }
+.composer-actions kbd { font: inherit; }
+.composer-tools { display: flex; align-items: center; gap: 10px; }
+.composer-tools .el-button { margin: 0; }
+.send-button { min-width: 32px; height: 32px; }
+.pending-attachments { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 10px; }
+.pending-attachments > span { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; padding: 6px 9px; border: 1px solid var(--el-border-color-lighter); border-radius: 7px; background: var(--el-fill-color-light); font-size: 11px; }
+.pending-attachments strong { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+.pending-attachments small { color: var(--el-text-color-secondary); font-size: 10px; }
+.pending-attachments button { border: 0; background: transparent; color: var(--el-text-color-regular); cursor: pointer; }
+.run-inspector { display: flex; flex-direction: column; flex-shrink: 0; width: 360px; min-width: 0; margin: 14px 18px 20px 0; border: 1px solid var(--el-border-color-lighter); border-radius: 10px; background: var(--el-bg-color); overflow: hidden; }
+.inspector-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 10px 10px 12px; border-bottom: 1px solid var(--el-border-color-lighter); }
+.inspector-heading > .el-button { margin: 0; width: 26px; height: 26px; }
+.inspector-tabs { display: flex; gap: 4px; }
+.inspector-tabs > button { display: inline-flex; align-items: center; gap: 5px; padding: 7px 9px; border: 0; border-radius: 6px; background: transparent; color: var(--el-text-color-regular); font: inherit; font-size: 12px; cursor: pointer; }
+.inspector-tabs > button[aria-selected='true'] { background: var(--el-color-primary-light-9); color: var(--el-color-primary); }
+.inspector-tabs > button:focus-visible { outline: 2px solid var(--el-color-primary); outline-offset: 1px; }
+.inspector-tabs > button > span { font-size: 10px; opacity: .8; }
+.inspector-run { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-bottom: 1px solid var(--el-border-color-lighter); }
+.inspector-run > span { flex-shrink: 0; font-size: 11px; color: var(--el-text-color-secondary); }
+.inspector-run .el-select { flex: 1; min-width: 0; }
+.inspector-content { flex: 1; min-height: 0; overflow-y: auto; padding: 18px 16px; scrollbar-width: thin; }
+.inspector-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 11px; padding: 52px 10px; text-align: center; color: var(--el-text-color-secondary); }
+.inspector-empty > .el-icon { color: var(--el-text-color-placeholder); font-size: 27px; }
+.inspector-empty strong { font-size: 13px; font-weight: 500; color: var(--el-text-color-regular); }
+.inspector-empty p { margin: 0; max-width: 230px; font-size: 12px; line-height: 1.8; }
+.panel-hint { margin: 0; color: var(--el-text-color-regular); font-size: 12px; }
+.panel-error { color: var(--el-color-danger); font-size: 12px; line-height: 1.7; }
+.trace-list { display: flex; flex-direction: column; gap: 20px; list-style: none; padding: 0 0 6px; margin: 0; }
+.trace-list > li { display: flex; gap: 10px; color: var(--el-text-color-regular); font-size: 12px; }
+.trace-dot { flex-shrink: 0; width: 6px; height: 6px; margin-top: 5px; border-radius: 50%; background: var(--el-color-primary); }
+.trace-list > li > div { flex: 1; min-width: 0; }
+.trace-list header { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.trace-list header strong { font-weight: 500; overflow-wrap: anywhere; }
+.trace-list time { flex-shrink: 0; color: var(--el-text-color-secondary); font-size: 10px; font-variant-numeric: tabular-nums; }
+.trace-agent { display: block; margin-top: 5px; color: var(--el-text-color-secondary); font-size: 10px; }
+.trace-result { margin-top: 6px; }
+.trace-result summary { padding: 3px 0; cursor: pointer; color: var(--el-text-color-regular); font-size: 11px; }
+.trace-result pre { max-height: 320px; overflow: auto; margin: 7px 0 0; padding: 10px; border-radius: 6px; background: var(--el-fill-color-lighter); white-space: pre-wrap; overflow-wrap: anywhere; font: 11px/1.7 'SFMono-Regular', Consolas, monospace; }
+.trace-error { color: var(--el-color-danger) !important; }
+.trace-error .trace-dot { background: var(--el-color-danger); }
+.artifact-list { list-style: none; margin: 0; padding: 0; }
+.artifact-list > li { display: flex; gap: 11px; padding: 14px 0; border-bottom: 1px solid var(--el-border-color-lighter); }
+.artifact-list > li:first-child { padding-top: 0; }
+.artifact-icon { display: grid; place-items: center; width: 34px; height: 38px; flex-shrink: 0; border-radius: 7px; background: var(--el-fill-color-light); color: var(--el-color-primary); font-size: 19px; }
+.artifact-details { flex: 1; min-width: 0; }
+.artifact-details > strong { display: block; overflow-wrap: anywhere; font-size: 12px; color: var(--el-text-color-primary); font-weight: 500; }
+.artifact-details > small { display: block; margin-top: 6px; color: var(--el-text-color-secondary); font-size: 10px; }
+.artifact-details > div { display: flex; gap: 8px; margin-top: 6px; }
+.artifact-details .el-button { margin: 0; height: 22px; padding: 0 3px; font-size: 11px; }
+.history-dialog-heading h2 { margin: 0; font-size: 17px; font-weight: 600; color: var(--el-text-color-primary); }
+.history-dialog-heading p { margin: 6px 0 0; color: var(--el-text-color-secondary); font-size: 12px; }
+.history-toolbar { display: flex; gap: 10px; margin-bottom: 18px; }
+.history-toolbar .el-input { flex: 1; min-width: 0; }
+.history-toolbar .el-button { margin: 0; }
+.history-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.history-title > .el-icon { color: var(--el-text-color-secondary); font-size: 16px; flex-shrink: 0; }
+.history-title > strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-weight: 500; }
+.history-title .el-tag { flex-shrink: 0; }
+.history-version { color: var(--el-text-color-regular); font-size: 12px; }
+.session-history-table { --el-table-header-bg-color: var(--el-fill-color-lighter); }
+.session-history-table :deep(.el-table__row) { cursor: pointer; }
+.session-history-table :deep(.is-current-session > td) { background: var(--el-color-primary-light-9); }
+.session-history-table time { color: var(--el-text-color-regular); font-size: 12px; }
+.history-dialog-footer { display: flex; align-items: center; justify-content: flex-end; gap: 10px; }
+.history-dialog-footer > span { margin-right: auto; color: var(--el-text-color-secondary); font-size: 12px; }
+@media(min-width: 1800px) { .thread-content, .composer-card { max-width: 1360px; } }
+@media(max-width: 1100px) { .autosave-note { display: none; } .run-inspector { width: 320px; margin-right: 12px; } .thread { padding: 22px 26px 12px; } .composer { padding: 8px 20px 16px; } }
+@media(max-width: 820px) { .run-inspector { position: absolute; z-index: 2; inset: 8px 8px 12px auto; width: min(360px,calc(100% - 16px)); margin: 0; box-shadow: 0 8px 30px rgb(0 0 0 / 10%); } .chat-heading { gap: 10px; padding: 7px 14px; } .chat-heading-title { max-width: 35%; } .workspace-actions { gap: 4px; } .workspace-actions .el-button { padding: 0 7px; } }
+@media(max-width: 640px) { .chat-heading { flex-wrap: wrap; gap: 9px; padding: 10px 12px; } .chat-heading-title { max-width: 100%; flex: 1 1 100%; } .workspace-actions { width: 100%; justify-content: flex-end; } .thread { padding: 20px 14px 10px; } .message { gap: 9px; margin-bottom: 24px; } .message-avatar { width: 26px; height: 26px; font-size: 14px; } .message-body { max-width: calc(100% - 35px); } .message.user { margin-left: 8%; } .message-bubble { font-size: 14px; } .composer { padding: 6px 12px 12px; } .composer-card { padding: 12px 14px 8px; border-radius: 12px; } .composer :deep(.el-textarea__inner) { font-size: 16px; } .chat-welcome { padding-bottom: 32px; } .chat-welcome h3 { font-size: 16px; } .history-title { gap: 6px; } }
+@media(prefers-reduced-motion: reduce) { .composer-card { transition: none; } .thinking-dots i { animation: none; } }
 </style>

@@ -138,35 +138,33 @@
 
 .agent-conversation-dialog {
   --el-dialog-padding-primary: 0;
-  padding: 0;
   display: flex;
   flex-direction: column;
-  height: calc(100dvh - 32px);
-  max-height: calc(100dvh - 32px);
-  margin: 16px auto;
-  border: 1px solid var(--el-border-color-light);
-  border-radius: 16px;
+  padding: 0;
+  height: 100dvh;
+  max-height: 100dvh;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
   overflow: hidden;
-  box-shadow: 0 24px 80px rgb(0 0 0 / 15%);
-  .el-dialog__header { flex-shrink: 0; padding: 12px 20px; margin: 0; border-bottom: 1px solid var(--el-border-color-lighter); }
+  background: var(--el-bg-color-page);
+  .el-dialog__header { flex-shrink: 0; padding: 12px 26px; margin: 0; border-bottom: 1px solid var(--el-border-color-lighter); background: var(--el-bg-color); }
   .el-dialog__body { flex: 1; min-height: 0; padding: 0; overflow: hidden; }
   .el-dialog__body > .conversation { height: 100%; }
-  .el-dialog__headerbtn { top: 13px; right: 14px; width: 32px; height: 32px; border-radius: 8px; }
+  .el-dialog__headerbtn { top: 12px; right: 20px; width: 32px; height: 32px; border-radius: 7px; }
   .el-dialog__headerbtn:hover { background: var(--el-fill-color-light); }
-  .conversation-dialog-heading { display: flex; align-items: center; gap: 12px; padding-right: 32px; }
-  .conversation-dialog-avatar { display: grid; flex-shrink: 0; place-items: center; width: 34px; height: 34px; border: 1px solid var(--el-color-primary-light-8); border-radius: 10px; background: var(--el-color-primary-light-9); color: var(--el-color-primary); font-size: 19px; }
-  .conversation-dialog-heading > div { display: flex; align-items: baseline; min-width: 0; gap: 12px; }
-  .conversation-dialog-heading h2 { margin: 0; color: var(--el-text-color-primary); font-size: 17px; line-height: 1.4; font-weight: 600; overflow-wrap: anywhere; }
-  .conversation-dialog-heading p { display: flex; flex-wrap: wrap; gap: 7px; margin: 0; color: var(--el-text-color-regular); font-size: 12px; line-height: 1.5; }
-  @media (max-width: 640px) {
-    height: calc(100dvh - 16px);
-    max-height: calc(100dvh - 16px);
-    margin: 8px auto;
-    border-radius: 12px;
+  .conversation-dialog-heading { display: flex; align-items: center; gap: 11px; padding-right: 36px; }
+  .conversation-dialog-avatar { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 32px; border: 1px solid var(--el-border-color-lighter); border-radius: 9px; background: var(--el-fill-color-light); color: var(--el-color-primary); font-size: 18px; }
+  .conversation-dialog-heading > div { display: flex; align-items: baseline; min-width: 0; gap: 13px; }
+  .conversation-dialog-heading h2 { margin: 0; color: var(--el-text-color-primary); font-size: 15px; line-height: 1.5; font-weight: 600; overflow-wrap: anywhere; }
+  .conversation-dialog-heading p { margin: 0; color: var(--el-text-color-secondary); font-size: 11px; }
+  @media(max-width: 640px) {
     .el-dialog__header { padding: 10px 14px; }
-    .el-dialog__headerbtn { top: 10px; right: 10px; }
-    .conversation-dialog-avatar { width: 34px; height: 34px; border-radius: 10px; font-size: 19px; }
-    .conversation-dialog-heading h2 { font-size: 15px; }
+    .el-dialog__headerbtn { top: 10px; right: 12px; }
     .conversation-dialog-heading p { display: none; }
   }
+}
+.conversation-history-dialog {
+  border-radius: 12px;
+  .el-dialog__body { padding-top: 10px; }
 }

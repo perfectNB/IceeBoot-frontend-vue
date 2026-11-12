@@ -9,7 +9,7 @@ function page(api, permissions=()=>true) {
  if (!api.invokeStream) api.invokeStream = (code, text, session) => api.invoke?.(code, text, session)
  const unmount=[]
  const source=fs.readFileSync(__dirname+'/../src/pages/admin/agent-console/components/AgentConversation.vue','utf8').match(/<script setup lang="ts">([\s\S]*?)<\/script>/)[1]+`
- export const state={select,send,create,loadSessions,older,input,current,messages,failed,sending,sessionQuery,visibleSessions,renderMarkdown,traces,liveRunId,phase,loadTrace,stop,streamError,showTrace,eventFailed,upload,recover,reuseFile,removeAttachment,pendingAttachments,runFiles,uploading,historyVisible,historyError,chooseSession,inspectorOpen,inspectorTab,openInspector,inspectedRun,inspectedFiles,focusedRunId,flushStreaming:()=>flushStreaming()}`
+ export const state={select,send,create,loadSessions,older,input,current,messages,failed,sending,sessionQuery,visibleSessions,renderMarkdown,traces,liveRunId,phase,loadTrace,stop,streamError,showTrace,eventFailed,upload,recover,reuseFile,removeAttachment,pendingAttachments,runFiles,uploading,historyVisible,historyError,chooseSession,inspectorOpen,inspectorTab,openInspector,inspectedRun,inspectedFiles,focusedRunId,thread,following,unseenChanges,onThreadScroll,bottom,mergeStored,olderLoading,flushStreaming:()=>flushStreaming()}`
  const js=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText
  const context={exports:{},AbortController,setInterval:()=>0,clearInterval:()=>{},defineProps:()=>({agent:{draft:{id:7,code:'chat'}}}),setTimeout:()=>0,clearTimeout:()=>{},require:(name)=>{
   if(name==='vue') return {...vue,onMounted:()=>{},onBeforeUnmount:(fn)=>unmount.push(fn)}
@@ -230,4 +230,23 @@ test('the file inspector cannot request files without list permission',async()=>
  await s.select(session('owned'));await s.openInspector('files')
  assert.equal(s.inspectorOpen.value,false)
  assert.equal(calls,0)
+})
+
+test('stream updates preserve reading position until returning to latest', async () => {
+ const {s}=page({})
+ const positions=[]
+ s.thread.value={scrollHeight:2000,scrollTop:400,clientHeight:500,scrollTo:({top})=>positions.push(top)}
+ s.onThreadScroll()
+ await s.bottom()
+ assert.equal(positions.length,0)
+ assert.equal(s.unseenChanges.value,true)
+ await s.bottom(true)
+ assert.deepEqual(positions,[2000])
+ assert.equal(s.unseenChanges.value,false)
+})
+test('stored refresh retains older history and replaces completed live turn', () => {
+ const {s}=page({})
+ s.messages.value=[{id:1,content:'older'},{id:10,content:'partial'},{id:-1,content:'optimistic'}]
+ s.mergeStored([{id:10,content:'finished'},{id:11,content:'new'}])
+ assert.deepEqual(Array.from(s.messages.value,row=>[row.id,row.content]),[[1,'older'],[10,'finished'],[11,'new']])
 })

@@ -26,3 +26,20 @@ test('missing provider usage and old histories remain unknown instead of zero us
  assert.equal(runMetrics([event(1, 'MODEL_FINISHED', { usageKnown: true }), event(2, 'MODEL_FINISHED', { usageKnown: false })]).usageKnown, false)
  assert.equal(formatDuration(2300), '2.3秒')
 })
+
+test('preparation distinguishes nested repeated restores from total and provider first token', () => {
+ const result=runMetrics([
+  event(1,'RUN_STARTED',{timestamp:1000}),
+  event(2,'PHASE_FINISHED',{callId:'ENVIRONMENT',durationMs:20000}),
+  event(3,'PHASE_FINISHED',{callId:'ASSEMBLY',title:'装配',durationMs:4000,status:'SUCCEEDED'}),
+  event(4,'PHASE_FINISHED',{callId:'CONTEXT_RESTORE',title:'恢复',durationMs:2000,status:'SUCCEEDED'}),
+  event(5,'PHASE_FINISHED',{callId:'CONTEXT_RESTORE',title:'恢复',durationMs:9000,status:'SUCCEEDED'}),
+  event(6,'MODEL_FIRST_TOKEN',{timestamp:22500,durationMs:1500}),
+  event(7,'RUN_FINISHED',{timestamp:25000}),
+ ])
+ assert.equal(result.environmentMs,20000)
+ assert.equal(result.phases.find(row=>row.key==='CONTEXT_RESTORE').durationMs,11000)
+ assert.equal(result.totalMs,24000)
+ assert.equal(result.firstResponseMs,21500)
+ assert.equal(result.firstTokenMs,1500)
+})

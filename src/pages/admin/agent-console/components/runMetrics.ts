@@ -8,8 +8,23 @@ export function runMetrics(events: AgentProgress[]) {
   const root = unique.filter(event => !event.parentRunId)
   const environment = root.find(event => event.type === 'PHASE_FINISHED' && event.callId === 'ENVIRONMENT')
   const tools = unique.filter(event => event.type === 'PHASE_FINISHED' && event.callId.startsWith('tool:'))
+  const preparationPhases = root.filter(event => event.type === 'PHASE_FINISHED'
+    && !event.callId.startsWith('tool:') && event.callId !== 'ENVIRONMENT')
+  const phaseTotals = new Map<string, { key: string; title: string; durationMs: number; status: string }>()
+  for (const event of preparationPhases) {
+    const previous = phaseTotals.get(event.callId)
+    phaseTotals.set(event.callId, { key: event.callId, title: event.title,
+      durationMs: (previous?.durationMs || 0) + (event.durationMs || 0),
+      status: previous && previous.status !== 'SUCCEEDED' ? previous.status : event.status })
+  }
+  const start = root.find(event => event.type === 'RUN_STARTED')?.timestamp
+  const end = [...root].reverse().find(event => ['RUN_FINISHED', 'AGENT_FINISHED', 'ERROR'].includes(event.type))?.timestamp
+  const firstContent = root.find(event => event.type === 'MODEL_FIRST_TOKEN')?.timestamp
   return {
     environmentMs: environment?.durationMs,
+    phases: [...phaseTotals.values()],
+    totalMs: start != null && end != null ? Math.max(0, end - start) : undefined,
+    firstResponseMs: start != null && firstContent != null ? Math.max(0, firstContent - start) : undefined,
     modelMs: models.reduce((total, event) => total + (event.durationMs || 0), 0),
     toolMs: tools.reduce((total, event) => total + (event.durationMs || 0), 0),
     modelCalls: models.length,

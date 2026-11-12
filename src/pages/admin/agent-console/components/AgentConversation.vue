@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { ChatLineSquare, CircleCheck, Clock, Cpu, Plus, Promotion, Search, User, VideoPause, Close, Document, Operation, Refresh, Paperclip } from '@element-plus/icons-vue'
+import { ChatLineSquare, CircleCheck, Clock, Cpu, Plus, Promotion, Search, User, VideoPause, Close, Document, Operation, Refresh, Paperclip, CopyDocument, ArrowDown } from '@element-plus/icons-vue'
 import MarkdownIt from 'markdown-it'
 import { agentConsole, type AgentView, type AgentSession, type AgentMessage, type AgentProgress, type AgentFile } from '@/api/agentConsole'
 import { hasPermission } from '@/utils/permission'
@@ -71,7 +71,7 @@ async function upload(event: Event) {
 }
 async function recover(message: AgentMessage) {
   if (!current.value || sending.value || pending.value || uploading.value || recovering.value) return
-  try { await ElMessageBox.confirm('创建独立的重试会话，沿用原发布版本，带入可见的历史上下文和本轮附件。确认内容后再发送，可能重新执行工具操作。', '准备重新执行', { confirmButtonText: '创建重试会话', type: 'warning' }) }
+  try { await ElMessageBox.confirm('创建独立会话，沿用原发布版本，带入此前上下文和本轮附件。确认内容后再发送，可能重新执行工具操作。', message.status === 'SUCCEEDED' ? '准备重新生成' : '准备重新执行', { confirmButtonText: '创建独立会话', type: 'warning' }) }
   catch { return }
   recovering.value = true
   try {
@@ -200,6 +200,21 @@ function sessionDate(value: string) {
 const loading = ref(false), sending = ref(false), failed = ref(false), creating = ref(false)
 const moreSessions = ref(false), moreMessages = ref(false)
 const thread = ref<HTMLElement>()
+const following = ref(true), unseenChanges = ref(false), olderLoading = ref(false)
+function onThreadScroll() {
+  if (!thread.value) return
+  following.value = thread.value.scrollHeight - thread.value.scrollTop - thread.value.clientHeight < 80
+  if (following.value) unseenChanges.value = false
+}
+async function copyReply(message: AgentMessage) {
+  try { await navigator.clipboard.writeText(message.content); ElMessage.success('已复制回答') }
+  catch { ElMessage.error('复制失败，请手动选择内容复制') }
+}
+function mergeStored(rows: AgentMessage[]) {
+  const saved = new Map(messages.value.filter(row => row.id > 0).map(row => [row.id, row]))
+  rows.forEach(row => saved.set(row.id, row))
+  messages.value = [...saved.values()].sort((a, b) => a.id - b.id)
+}
 const statusLabels: Record<string, string> = { RUNNING: '处理中', FAILED: '执行失败', CANCELLED: '已取消', TIMED_OUT: '执行超时', INTERRUPTED: '执行已中断' }
 const pending = computed(() => messages.value.some(message => message.status === 'RUNNING'))
 let poll: ReturnType<typeof setTimeout> | undefined
@@ -212,7 +227,7 @@ function scheduleRefresh() {
     try {
       const rows = await agentConsole.messages(agentId(), current.value!.sessionId)
       if (alive && token === generation) {
-        messages.value = rows
+        mergeStored(rows)
         if (inspectorOpen.value && inspectedRun.value) await openInspector(inspectorTab.value, inspectedRun.value, true)
         await bottom()
       }
@@ -226,14 +241,16 @@ onBeforeUnmount(() => {
 })
 const agentId = () => props.agent.draft.id!
 async function bottom(force = false) {
-  const follow = force || !thread.value || thread.value.scrollHeight - thread.value.scrollTop - thread.value.clientHeight < 120
+  if (force) following.value = true
   await nextTick()
-  if (follow) thread.value?.scrollTo({ top: thread.value.scrollHeight })
+  if (following.value) { thread.value?.scrollTo({ top: thread.value.scrollHeight }); unseenChanges.value = false }
+  else unseenChanges.value = true
 }
 async function select(session: AgentSession) {
   if (sending.value || uploading.value) return
   const token = ++generation
   current.value = session
+  following.value = true; unseenChanges.value = false; olderLoading.value = false
   messages.value = []
   traces.value = {}
   focusedRunId.value = ''
@@ -297,15 +314,22 @@ async function create() {
   } finally { if (alive) creating.value = false }
 }
 async function older() {
-  if (!current.value || !messages.value[0]) return
+  if (!current.value || !messages.value[0] || olderLoading.value) return
   const token = generation
-  loading.value = true
+  olderLoading.value = true
+  following.value = false
   try {
     const rows = await agentConsole.messages(agentId(), current.value.sessionId, messages.value[0].id)
     if (!alive || token !== generation) return
-    messages.value = [...rows, ...messages.value]
+    const previousHeight = thread.value?.scrollHeight || 0
+    const previousTop = thread.value?.scrollTop || 0
+    const existing = new Set(messages.value.map(row => row.id))
+    messages.value = [...rows.filter(row => !existing.has(row.id)), ...messages.value]
     moreMessages.value = rows.length === 100
-  } finally { if (alive && token === generation) loading.value = false }
+    await nextTick()
+    if (thread.value) thread.value.scrollTop = previousTop + thread.value.scrollHeight - previousHeight
+  } catch { if (alive && token === generation) ElMessage.error('更早的消息加载失败，请重试') }
+  finally { if (alive && token === generation) olderLoading.value = false }
 }
 async function send() {
   if (sending.value || loading.value || uploading.value || recovering.value || pending.value || failed.value || !input.value.trim()) return
@@ -405,6 +429,7 @@ async function send() {
         const rows = traces.value[event.rootRunId] ||= []
         if (!rows.some(row => row.sequence === event.sequence)) rows.push(event)
       }
+      if (eventFailed(event) && canViewActivity.value) void openInspector('activity', messages.value.find(row => row.id === reply.id))
       if (event.type === 'ARTIFACT') void loadFiles(event.rootRunId, undefined, true)
       if (!['PHASE_FINISHED', 'MODEL_FIRST_TOKEN', 'MODEL_FINISHED', 'ARTIFACT'].includes(event.type)) phase.value = event.title
       if (event.type === 'RUN_FINISHED') {
@@ -430,7 +455,7 @@ async function send() {
     if (alive && current.value) {
       try {
         const rows = await agentConsole.messages(agentId(), current.value.sessionId)
-        if (alive) { messages.value = rows; moreMessages.value = rows.length === 100; if (liveRunId.value && hasPermission('ai:file:list:api')) void loadFiles(liveRunId.value, undefined, true); await bottom() }
+        if (alive) { mergeStored(rows); moreMessages.value ||= messages.value.length <= rows.length && rows.length === 100; if (liveRunId.value && hasPermission('ai:file:list:api')) void loadFiles(liveRunId.value, undefined, true); await bottom() }
       } catch { if (alive) failed.value = true }
     }
     if (alive) {
@@ -457,9 +482,9 @@ onMounted(() => loadSessions())
       <div class="workspace-main">
         <section class="chat-main" aria-label="聊天记录与输入">
           <div v-if="failed" role="alert" class="load-error"><span>对话记录暂时无法加载。</span><el-button text :disabled="sending" @click="current ? select(current) : loadSessions()">重新加载</el-button></div>
-          <div ref="thread" v-loading="loading" class="thread" role="log" aria-label="消息历史" aria-live="polite" :aria-busy="loading">
+          <div ref="thread" v-loading="loading" class="thread" tabindex="0" @scroll="onThreadScroll" role="log" aria-label="消息历史" aria-live="polite" :aria-busy="loading">
             <div class="thread-content">
-              <div v-if="moreMessages" class="older-messages"><el-button :icon="Clock" :disabled="sending" :loading="loading" text @click="older">加载更早的消息</el-button></div>
+              <div v-if="moreMessages" class="older-messages"><el-button :icon="Clock" :loading="olderLoading" text @click="older">加载更早的消息</el-button></div>
               <div v-if="!messages.length && !loading && !failed" class="chat-welcome"><span class="welcome-symbol"><el-icon aria-hidden="true"><ChatLineSquare /></el-icon></span><h3>与 {{ agent.draft.name }} 开始对话</h3><p>发送一个问题或任务，从这里开始。</p><small>会话自动保存，可随时从历史中继续。</small></div>
               <article v-for="message in displayMessages" :key="message.id" class="message" :class="message.role">
                 <span class="message-avatar" aria-hidden="true"><el-icon><User v-if="message.role === 'user'" /><Cpu v-else /></el-icon></span>
@@ -470,6 +495,8 @@ onMounted(() => loadSessions())
                     <p v-else class="message-text">{{ message.content || (message.status === 'RUNNING' ? '正在处理，执行进展可在右侧查看…' : '本轮未返回内容') }}</p>
                   </div>
                   <div v-if="message.role === 'assistant' && message.runId" class="message-links">
+                    <button v-if="message.content" type="button" @click="copyReply(message)"><el-icon aria-hidden="true"><CopyDocument /></el-icon>复制</button>
+                    <button v-if="message.status === 'SUCCEEDED' && hasPermission('ai:run:recovery:api')" type="button" :disabled="sending || pending || uploading || recovering" @click="recover(message)"><el-icon aria-hidden="true"><Refresh /></el-icon>重新生成</button>
                     <button v-if="showTrace(message)" type="button" :class="{ active: inspectorOpen && inspectorTab === 'activity' && inspectedRun?.runId === message.runId }" @click="openInspector('activity', message)"><el-icon aria-hidden="true"><Operation /></el-icon>执行过程<span v-if="traces[message.runId]?.length">{{ traces[message.runId]?.length }}</span></button>
                     <button v-if="hasPermission('ai:file:list:api')" type="button" :class="{ active: inspectorOpen && inspectorTab === 'files' && inspectedRun?.runId === message.runId }" @click="openInspector('files', message)"><el-icon aria-hidden="true"><Document /></el-icon>文件<span v-if="runFiles[message.runId]?.length">{{ runFiles[message.runId]?.length }}</span></button>
                   </div>
@@ -481,6 +508,7 @@ onMounted(() => loadSessions())
               <div v-if="sending || pending" class="thinking-note" role="status"><span class="thinking-dots" aria-hidden="true"><i /><i /><i /></span><span>{{ sending ? phase : '正在执行，自动同步状态' }}<time v-if="sending" class="elapsed">{{ elapsed }}秒</time></span></div>
             </div>
           </div>
+          <button v-if="!following" type="button" class="jump-latest" @click="bottom(true)"><el-icon aria-hidden="true"><ArrowDown /></el-icon>{{ unseenChanges ? '有新内容，回到最新' : '回到最新' }}</button>
           <p v-if="streamError" class="stream-error" role="alert">{{ streamError }}</p>
           <div class="composer">
             <div class="composer-card" :class="{ 'is-disabled': sending || pending || loading || failed }">
@@ -534,8 +562,10 @@ onMounted(() => loadSessions())
 .workspace-actions .el-button { margin: 0; height: 30px; padding: 0 10px; font-size: 12px; border-radius: 7px; }
 .workspace-actions .new-session-button, .workspace-actions .is-selected { color: var(--el-color-primary); border-color: transparent; background: var(--el-color-primary-light-9); }
 .workspace-main { display: flex; flex: 1; min-height: 0; min-width: 0; position: relative; }
-.chat-main { display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; }
+.chat-main { position: relative; display: flex; flex-direction: column; flex: 1; min-height: 0; min-width: 0; }
 .thread { flex: 1; min-height: 80px; overflow-y: auto; overscroll-behavior: contain; padding: 26px 40px 12px; scrollbar-width: thin; }
+.jump-latest { position: relative; z-index: 2; align-self: center; flex-shrink: 0; margin: -38px auto 8px; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid var(--el-border-color); border-radius: 20px; background: var(--el-bg-color-overlay); color: var(--el-text-color-primary); box-shadow: var(--el-box-shadow-light); cursor: pointer; font: inherit; font-size: 12px; }
+.message-links button:disabled { cursor: default; opacity: .45; }
 .thread-content { display: flex; flex-direction: column; min-height: 100%; max-width: 1120px; margin: 0 auto; }
 .older-messages { text-align: center; margin: 0 0 20px; }
 .older-messages .el-button { font-size: 12px; }

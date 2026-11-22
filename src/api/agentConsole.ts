@@ -216,6 +216,31 @@ export interface SecretRotation {
   activeKeyId: string
   updatedRows: number
 }
+export interface AgentScheduleRequest {
+  name: string
+  agentCode: string
+  input: string
+  scheduleType: 'ONCE' | 'CRON'
+  cronExpression?: string
+  zoneId: string
+  executeAt?: number
+  enabled: boolean
+}
+export interface AgentSchedule extends AgentScheduleRequest {
+  id: number
+  nextFireAt: number | null
+  running: boolean
+}
+export interface AgentScheduleExecution {
+  id: string
+  scheduledAt: number
+  startedAt: number
+  finishedAt: number | null
+  status: 'RUNNING' | 'SUCCEEDED' | 'FAILED' | 'CANCELLED' | 'TIMED_OUT' | 'INTERRUPTED' | 'SKIPPED_OVERLAP' | 'SKIPPED_MISFIRE'
+  message: string
+  runId: string | null
+  sessionId: string
+}
 const root = '/api/v1/agent-console'
 const capabilityRoutes: Record<CapabilityKind, string> = {
   SKILL: 'skills',
@@ -315,6 +340,12 @@ function capabilityPayload(value: Capability) {
 }
 
 export const agentConsole = {
+  schedules: () => request.get<AgentSchedule[]>(`${root}/schedules`),
+  createSchedule: (value: AgentScheduleRequest) => request.post<AgentSchedule>(`${root}/schedules`, { ...value }),
+  updateSchedule: (id: number, value: AgentScheduleRequest) => request.put<AgentSchedule>(`${root}/schedules`, { ...value, id }),
+  setScheduleEnabled: (id: number, enabled: boolean) => request.put<AgentSchedule>(`${root}/schedules/${id}/enabled`, { enabled }),
+  deleteSchedule: (id: number) => request.delete<void>(`${root}/schedules/${id}`),
+  scheduleExecutions: (id: number, offset = 0) => request.get<AgentScheduleExecution[]>(`${root}/schedules/${id}/executions`, { offset }),
   models: async () => {
     const values = await request.get<ModelConfig[]>(`${root}/models`)
     return values.map((value) => ({ ...value, generation: value.generation ?? { extra: {} } }))

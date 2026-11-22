@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { Cpu, Plus, Refresh, Search, VideoPlay } from '@element-plus/icons-vue'
+import { Cpu, Plus, Refresh, Search, VideoPlay, Clock } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import {
   agentConsole,
@@ -14,6 +14,8 @@ import {
 import { hasPermission } from '@/utils/permission'
 import AgentConversation from './components/AgentConversation.vue'
 import AgentVersions from './components/AgentVersions.vue'
+import AgentSchedules from './components/AgentSchedules.vue'
+const schedulesVisible = ref(false)
 import AgentPreflightDialog from './components/AgentPreflightDialog.vue'
 const preflightVisible = ref(false)
 import JsonField from './components/JsonField.vue'
@@ -229,6 +231,7 @@ onMounted(load)
           <p class="subtitle">从一个模型和一段提示词开始，按需挂载技能、工具与知识库。</p></div>
       </div>
       <div class="console-actions">
+        <el-button v-if="hasPermission('ai:schedule:read:api')" :icon="Clock" @click="schedulesVisible = true">定时任务</el-button>
         <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
         <el-button v-if="hasPermission('ai:agent:write')" type="primary" :icon="Plus" @click="edit()">
           新建智能体
@@ -574,6 +577,7 @@ onMounted(load)
       </template>
       <AgentConversation v-if="selected && runVisible" :key="selected.draft.id" :agent="selected" />
     </el-dialog>
+    <AgentSchedules v-if="schedulesVisible" v-model="schedulesVisible" :agents="agents" />
   </main>
 </template>
 <style scoped>

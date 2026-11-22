@@ -144,3 +144,22 @@ test('workbench APIs preserve method, session scope and encoded identifiers', as
   assert.equal(calls.at(-1).method, 'post')
   assert.equal(calls.at(-1).url, '/api/v1/agent-console/agents/7/sessions/session/runs/failed%2Fa/recovery')
 })
+
+test('schedule APIs preserve request methods, task identifiers and pagination contracts', async () => {
+  const { api, calls } = apiWithMock(() => [])
+  const value = { name: 'daily', agentCode: 'report', input: 'summarize', scheduleType: 'CRON', cronExpression: '0 0 9 ? * *', zoneId: 'Asia/Shanghai', enabled: true }
+  await api.schedules()
+  await api.createSchedule(value)
+  await api.updateSchedule(12, value)
+  await api.setScheduleEnabled(12, false)
+  await api.scheduleExecutions(12, 50)
+  await api.deleteSchedule(12)
+  assert.deepEqual(clean(calls), [
+    { method: 'get', url: '/api/v1/agent-console/schedules' },
+    { method: 'post', url: '/api/v1/agent-console/schedules', body: value },
+    { method: 'put', url: '/api/v1/agent-console/schedules', body: { ...value, id: 12 } },
+    { method: 'put', url: '/api/v1/agent-console/schedules/12/enabled', body: { enabled: false } },
+    { method: 'get', url: '/api/v1/agent-console/schedules/12/executions', body: { offset: 50 } },
+    { method: 'delete', url: '/api/v1/agent-console/schedules/12' },
+  ])
+})

@@ -1,93 +1,71 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { Notebook, User, Connection, Collection } from '@element-plus/icons-vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { Notebook, Search } from '@element-plus/icons-vue'
 import { hasPermission } from '@/utils/permission'
-import { memoryApi, type MemoryScope } from '@/api/agentMemory'
-import MemoryProfile from './components/MemoryProfile.vue'
+import { memoryApi, type MemoryUser } from '@/api/agentMemory'
 import MemoryPolicyEditor from './components/MemoryPolicyEditor.vue'
-import MemorySharing from './components/MemorySharing.vue'
+import MemoryProfile from './components/MemoryProfile.vue'
 import './console.scss'
 
-const agents = ref<{ id: number; name: string }[]>([])
-const agent = ref<number>()
-const scope = ref<MemoryScope>('AGENT_USER')
-const tab = ref('profile')
-const loading = ref(false)
-const scopeId = computed(() => scope.value === 'USER' ? 0 : agent.value)
-const canReadPolicy = computed(() => hasPermission(scope.value === 'USER' ? 'ai:memory:platform-policy-read:api' : 'ai:memory:policy-read:api'))
-watch(canReadPolicy, allowed => { if (!allowed && tab.value === 'policy') tab.value = 'profile' })
-const scopeLabels = [
-  { value: 'AGENT_USER', label: '我的专属画像', icon: User, description: '只在你与当前智能体之间使用' },
-  { value: 'USER', label: '我的通用画像', icon: Connection, description: '由你决定哪些智能体可以使用' },
-  { value: 'AGENT', label: '智能体公共经验', icon: Collection, description: '经审核后，为该智能体的用户共享' },
-]
+const canList = hasPermission('ai:memory:user-list:api')
+const canPolicy = hasPermission('ai:memory:platform-policy-read:api')
+const tab = ref(canList ? 'profiles' : 'policy')
+const policyOpened = ref(!canList && canPolicy)
+watch(tab, value => { if (value === 'policy' && canPolicy) policyOpened.value = true })
+const users = ref<MemoryUser[]>([]), selected = ref<MemoryUser>()
+const keyword = ref(''), page = ref(1), total = ref(0), loading = ref(false), error = ref('')
+const selectedName = computed(() => selected.value?.nickname || selected.value?.username || '')
+let generation = 0, alive = true
 async function load() {
-  if (!hasPermission('ai:memory:read-agents:api')) { scope.value = 'USER'; return }
-  loading.value = true
+  if (!canList) return
+  const token = ++generation
+  loading.value = true; error.value = ''
   try {
-    agents.value = await memoryApi.agents()
-    agent.value = agents.value[0]?.id
-    if (!agent.value) scope.value = 'USER'
-  } finally { loading.value = false }
+    const result = await memoryApi.users({ pageNum: page.value, pageSize: 20, keyword: keyword.value.trim() })
+    if (alive && token === generation) { users.value = result.records; total.value = result.total }
+  } catch { if (alive && token === generation) error.value = '用户列表加载失败，请重试。' }
+  finally { if (alive && token === generation) loading.value = false }
 }
+function search() { page.value = 1; selected.value = undefined; void load() }
+function changePage(value: number) { page.value = value; selected.value = undefined; void load() }
 onMounted(load)
+onBeforeUnmount(() => { alive = false; generation++ })
 </script>
 
 <template>
-  <main class="agent-console memory-page">
-    <header class="console-heading memory-heading">
-      <div class="console-title-block"><span class="console-title-icon"><el-icon><Notebook /></el-icon></span><div><p class="console-eyebrow">智能体的持续上下文</p><h1>长期记忆</h1><p class="subtitle">留下有用的信息，让下一次对话从了解你开始。</p></div></div>
-    </header>
-    <section v-if="tab !== 'sharing'" class="memory-scopes" aria-label="记忆范围">
-      <button v-for="item in scopeLabels" :key="item.value" type="button" :aria-pressed="scope === item.value" class="memory-scope" @click="scope = item.value as MemoryScope">
-        <span class="scope-icon"><el-icon><component :is="item.icon" /></el-icon></span><span class="scope-copy"><strong>{{ item.label }}</strong><span>{{ item.description }}</span></span><span class="scope-indicator" aria-hidden="true" />
-      </button>
-    </section>
-    <section class="memory-workspace">
-      <div class="memory-workspace-bar">
-        <el-tabs v-model="tab" class="memory-tabs">
-          <el-tab-pane label="记忆内容" name="profile" />
-          <el-tab-pane v-if="canReadPolicy" label="画像策略" name="policy" />
-          <el-tab-pane v-if="hasPermission('ai:memory:grant-read:api')" label="共享授权" name="sharing" />
-        </el-tabs>
-        <div class="memory-agent-picker"><label for="memory-agent">当前智能体</label><el-select id="memory-agent" v-model="agent" :loading="loading" :disabled="scope === 'USER' && tab !== 'sharing'" placeholder="选择智能体" filterable aria-label="当前智能体"><el-option v-for="item in agents" :key="item.id" :label="item.name" :value="item.id" /></el-select></div>
+  <main class="agent-console general-profiles">
+    <header class="console-heading"><div class="console-title-block"><span class="console-title-icon"><el-icon><Notebook /></el-icon></span><div><p class="console-eyebrow">跨智能体的用户信息</p><h1>通用画像</h1><p class="subtitle">统一配置提取规则，按用户管理画像内容。每位用户的记忆独立保存。</p></div></div></header>
+    <section class="profiles-workspace">
+      <el-tabs v-model="tab" class="profiles-tabs">
+        <el-tab-pane v-if="canList" label="用户画像" name="profiles" />
+        <el-tab-pane v-if="canPolicy" label="统一画像策略" name="policy" />
+      </el-tabs>
+      <div v-show="tab === 'profiles' && canList" class="profiles-layout">
+        <aside class="users-panel">
+          <div class="users-heading"><h2>全部用户 <span>{{ total }}</span></h2><el-button link type="primary" :loading="loading" @click="load">刷新</el-button></div>
+          <el-input v-model="keyword" placeholder="搜索账号或昵称" aria-label="搜索画像用户" clearable :prefix-icon="Search" maxlength="100" @keyup.enter="search" @clear="search"><template #append><el-button :icon="Search" aria-label="搜索" @click="search" /></template></el-input>
+          <p v-if="error" class="load-error" role="alert">{{ error }}</p>
+          <div v-loading="loading" class="users-list" aria-label="画像用户列表">
+            <button v-for="user in users" :key="user.userId" type="button" class="user-row" :aria-pressed="selected?.userId === user.userId" @click="selected = user"><span class="user-avatar">{{ (user.nickname || user.username).slice(0, 1) }}</span><span class="user-label"><strong>{{ user.nickname || user.username }}</strong><span>{{ user.username }}</span></span><el-tag v-if="user.status !== 'active'" type="info" size="small">已停用</el-tag></button>
+            <el-empty v-if="!users.length && !loading" description="没有匹配的用户" :image-size="70" />
+          </div>
+          <el-pagination small layout="prev, pager, next" :total="total" :page-size="20" :pager-count="5" :current-page="page" @current-change="changePage" />
+        </aside>
+        <section class="profile-detail">
+          <template v-if="selected"><header class="profile-owner"><div><h2>{{ selectedName }} 的通用画像</h2><p>账号 {{ selected.username }} · 用户 ID {{ selected.userId }}</p></div><el-tag effect="plain">按用户隔离</el-tag></header><MemoryProfile v-if="hasPermission('ai:memory:user-read:api')" :key="selected.userId" scope="USER" :agent="0" :user-id="selected.userId" /><el-empty v-else description="当前账号没有查看用户画像内容的权限" /></template>
+          <el-empty v-else description="从左侧选择一位用户，查看其通用画像" :image-size="110" />
+        </section>
       </div>
-      <div class="memory-workspace-body">
-        <MemorySharing v-if="tab === 'sharing' && agent" :key="agent" :agent="agent" />
-        <MemoryProfile v-else-if="tab === 'profile' && scopeId !== undefined" :key="scope + scopeId" :scope="scope" :agent="scopeId" />
-        <MemoryPolicyEditor v-else-if="tab === 'policy' && scopeId !== undefined" :key="scope + scopeId" :scope="scope" :agent="scopeId" />
-        <el-empty v-else :description="loading ? '正在加载智能体…' : '选择一个智能体，开始管理它的记忆'" />
-      </div>
+      <section v-if="policyOpened && canPolicy" v-show="tab === 'policy'" class="platform-policy"><div class="platform-policy-heading"><h2>所有用户共用的提取规则</h2><p>字段定义和提取规则统一配置；画像内容仍按用户分别保存，不会共享给其他用户。</p></div><MemoryPolicyEditor scope="USER" :agent="0" /></section>
+      <el-empty v-if="!canList && !canPolicy" description="当前账号没有通用画像管理权限" />
     </section>
   </main>
 </template>
-
 <style scoped>
-.memory-page { max-width: 1480px; padding: 14px 16px 28px; }
-.memory-heading { margin-bottom: 24px; }
-.memory-scopes { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 14px; margin-bottom: 24px; }
-.memory-scope { display: flex; align-items: center; gap: 14px; padding: 19px 20px; border: 1px solid var(--el-border-color-light); background: var(--el-bg-color); border-radius: 12px; text-align: left; cursor: pointer; color: var(--el-text-color-primary); font: inherit; transition: border-color .18s, background-color .18s; }
-.memory-scope:hover { border-color: var(--el-color-primary-light-5); }
-.memory-scope[aria-pressed='true'] { border-color: var(--el-color-primary); background: var(--el-color-primary-light-9); }
-.memory-scope:focus-visible { outline: 2px solid var(--el-color-primary); outline-offset: 3px; }
-.scope-icon { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border-radius: 10px; color: var(--el-text-color-regular); background: var(--el-fill-color-light); font-size: 19px; }
-.memory-scope[aria-pressed='true'] .scope-icon { color: var(--el-color-primary); background: var(--el-bg-color); }
-.scope-copy { display: grid; gap: 7px; min-width: 0; }
-.scope-copy strong { font-size: 14px; font-weight: 600; }
-.scope-copy > span { font-size: 12px; line-height: 1.5; color: var(--el-text-color-regular); }
-.scope-indicator { width: 12px; height: 12px; margin-left: auto; flex-shrink: 0; border: 1px solid var(--el-border-color); border-radius: 50%; }
-.memory-scope[aria-pressed='true'] .scope-indicator { background: var(--el-color-primary); border-color: var(--el-color-primary); box-shadow: inset 0 0 0 3px var(--el-bg-color); }
-.memory-workspace { border: 1px solid var(--el-border-color-light); background: var(--el-bg-color); border-radius: 14px; overflow: hidden; }
-.memory-workspace-bar { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding: 0 26px; border-bottom: 1px solid var(--el-border-color-lighter); }
-.memory-tabs { min-width: 0; }
-.memory-tabs :deep(.el-tabs__header) { margin: 0; }
-.memory-tabs :deep(.el-tabs__nav-wrap::after) { display: none; }
-.memory-tabs :deep(.el-tabs__item) { height: 66px; font-size: 14px; }
-.memory-agent-picker { display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
-.memory-agent-picker label { font-size: 12px; color: var(--el-text-color-secondary); }
-.memory-agent-picker .el-select { width: 190px; }
-.memory-workspace-body { padding: 28px; min-height: 350px; }
-@media(max-width:1100px) { .memory-scope { padding: 16px 14px; gap: 10px; } .scope-indicator { display: none; } }
-@media(max-width:760px) { .memory-page { padding: 6px 0 20px; } .memory-scopes { grid-template-columns: 1fr; gap: 8px; margin-bottom: 16px; } .memory-scope { padding: 12px 14px; } .scope-copy { gap: 3px; } .memory-workspace-bar { padding: 0 16px; flex-direction: column-reverse; align-items: stretch; gap: 0; } .memory-agent-picker { padding-top: 16px; } .memory-agent-picker .el-select { flex: 1; } .memory-tabs :deep(.el-tabs__item) { height: 54px; } .memory-workspace-body { padding: 20px 16px; } }
-@media(prefers-reduced-motion:reduce) { .memory-scope { transition: none; } }
+.general-profiles { max-width: 1480px; padding: 14px 16px 28px; }
+.profiles-workspace { border: 1px solid var(--el-border-color-light); border-radius: 14px; background: var(--el-bg-color); overflow: hidden; }
+.profiles-tabs { padding: 0 26px; border-bottom: 1px solid var(--el-border-color-lighter); }.profiles-tabs :deep(.el-tabs__header) { margin: 0; }.profiles-tabs :deep(.el-tabs__nav-wrap::after) { display: none; }.profiles-tabs :deep(.el-tabs__item) { height: 60px; }
+.profiles-layout { display: grid; grid-template-columns: 300px minmax(0,1fr); min-height: 520px; }.users-panel { padding: 20px; border-right: 1px solid var(--el-border-color-lighter); background: var(--el-fill-color-lighter); }.users-heading { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }.users-heading h2, .profile-owner h2, .platform-policy-heading h2 { margin: 0; font-size: 15px; font-weight: 600; color: var(--el-text-color-primary); }.users-heading h2 span { margin-left: 5px; color: var(--el-text-color-secondary); font-size: 12px; }.users-list { min-height: 180px; margin: 16px 0; max-height: 520px; overflow: auto; }.user-row { display: flex; align-items: center; gap: 10px; width: 100%; padding: 12px 10px; border: 1px solid transparent; border-radius: 8px; background: transparent; font: inherit; text-align: left; cursor: pointer; }.user-row:hover { background: var(--el-fill-color); }.user-row[aria-pressed='true'] { border-color: var(--el-color-primary-light-7); background: var(--el-color-primary-light-9); }.user-row:focus-visible { outline: 2px solid var(--el-color-primary); outline-offset: -2px; }.user-avatar { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; color: var(--el-color-primary); background: var(--el-color-primary-light-9); flex-shrink: 0; }.user-label { display: grid; gap: 4px; min-width: 0; flex: 1; }.user-label strong { font-size: 13px; font-weight: 500; color: var(--el-text-color-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }.user-label > span { font-size: 11px; color: var(--el-text-color-secondary); }.profile-detail { padding: 26px; min-width: 0; }.profile-owner { display: flex; gap: 16px; align-items: center; justify-content: space-between; padding-bottom: 22px; margin-bottom: 24px; border-bottom: 1px solid var(--el-border-color-lighter); }.profile-owner p, .platform-policy-heading p { margin: 8px 0 0; font-size: 12px; line-height: 1.7; color: var(--el-text-color-regular); }.platform-policy { padding: 26px; }.platform-policy-heading { margin-bottom: 24px; }.load-error { color: var(--el-color-danger); font-size: 12px; line-height: 1.7; }
+@media(max-width:900px) { .profiles-layout { grid-template-columns: 240px minmax(0,1fr); }.users-panel, .profile-detail { padding: 18px; } }
+@media(max-width:650px) { .general-profiles { padding: 6px 0 20px; }.profiles-layout { grid-template-columns: 1fr; }.users-panel { border-right: 0; border-bottom: 1px solid var(--el-border-color-lighter); }.users-list { max-height: 220px; }.profile-owner { align-items: flex-start; flex-wrap: wrap; }.profiles-tabs { padding: 0 18px; }.platform-policy { padding: 20px 16px; } }
 </style>

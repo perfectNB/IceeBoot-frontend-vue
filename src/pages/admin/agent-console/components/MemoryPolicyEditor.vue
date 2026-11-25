@@ -1,21 +1,27 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { hasPermission } from '@/utils/permission'
 import { memoryApi, type FieldType, type MemoryPolicyRequest, type MemoryScope } from '@/api/agentMemory'
 
-const props = defineProps<{ scope: MemoryScope; agent: number }>()
+const props = defineProps<{ scope: MemoryScope; agent: number; compact?: boolean }>()
 const form = ref<MemoryPolicyRequest>()
 const busy = ref(false)
 const newName = ref('')
 const newType = ref<FieldType>('TEXT')
 const error = ref('')
 const original = ref<string[]>([])
+const snapshot = ref('')
+const isDirty = computed(() => !!form.value && (JSON.stringify(form.value) !== snapshot.value || !!newName.value.trim()))
+let alive = true
+onBeforeUnmount(() => { alive = false })
 const editable = hasPermission(props.scope === 'USER' ? 'ai:memory:platform-policy-write:api' : 'ai:memory:policy-write:api')
 async function load() {
   const policy = await memoryApi.policy(props.scope, props.agent)
+  if (!alive) return
   form.value = { ...policy, fields: { ...policy.fields } }
   original.value = Object.keys(policy.fields)
+  snapshot.value = JSON.stringify(form.value)
 }
 function add() {
   const name = newName.value.trim()
@@ -29,19 +35,23 @@ function add() {
   error.value = ''
 }
 async function save() {
-  if (!form.value) return
+  if (!form.value || !editable || busy.value) return false
   if (!Object.keys(form.value.fields).length || !form.value.prompt.trim() || newName.value.trim()) {
     error.value = '请填写提取提示词，并将要保存的字段添加到列表。'
-    return
+    return false
   }
   busy.value = true
   try {
     await memoryApi.savePolicy(props.scope, props.agent, form.value)
     await load()
     error.value = ''
+    if (!alive) return false
     ElMessage.success('策略已保存')
+    return true
   } finally { busy.value = false }
 }
+async function savePending() { return !isDirty.value || await save() }
+defineExpose({ isDirty, busy, savePending })
 onMounted(async () => {
   busy.value = true
   try { await load() } finally { busy.value = false }
@@ -49,7 +59,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <el-form v-loading="busy" label-position="top" :disabled="!editable || busy" class="memory-policy">
+  <el-form v-loading="busy" label-position="top" :disabled="!editable || busy" class="memory-policy" :class="{ 'is-embedded': compact }">
     <template v-if="form">
       <div class="policy-layout">
         <div class="policy-main">
@@ -69,7 +79,7 @@ onMounted(async () => {
           </section>
           <section class="policy-review"><div><h3>生效前人工确认</h3><p>{{ scope === 'AGENT' ? '公共经验需经审核，才能对其他用户生效。' : '开启后，提取出的新记忆会先进入待确认列表。' }}</p></div><el-switch v-model="form.reviewRequired" :disabled="scope === 'AGENT'" aria-label="生效前人工确认" /></section>
         </div>
-        <aside class="policy-guide"><span class="guide-eyebrow">配置概览</span><h3>让记忆保持有用、可控</h3><dl><div><dt>记忆范围</dt><dd>{{ { USER: '我的通用画像', AGENT_USER: '我的专属画像', AGENT: '智能体公共经验' }[scope] }}</dd></div><div><dt>已定义字段</dt><dd>{{ Object.keys(form.fields).length }} 项</dd></div><div><dt>更新方式</dt><dd>{{ scope === 'AGENT' || form.reviewRequired ? '人工确认后保存' : '符合规则后自动保存' }}</dd></div></dl><div class="guide-divider" /><h4>什么时候生效？</h4><p>{{ scope === 'USER' ? '保存后从下一轮对话生效。各智能体仍只能使用你授权的字段。' : '保存后重新发布智能体，并创建新会话使用策略。停用会立即阻止后续轮次读取。' }}</p><h4>从少量字段开始</h4><p>优先记录稳定的偏好与背景。临时任务和不确定的信息，适合留在当前对话。</p></aside>
+        <aside class="policy-guide"><span class="guide-eyebrow">配置概览</span><h3>让记忆保持有用、可控</h3><dl><div><dt>记忆范围</dt><dd>{{ { USER: '通用画像（所有用户）', AGENT_USER: '我的专属画像', AGENT: '智能体公共经验' }[scope] }}</dd></div><div><dt>已定义字段</dt><dd>{{ Object.keys(form.fields).length }} 项</dd></div><div><dt>更新方式</dt><dd>{{ scope === 'AGENT' || form.reviewRequired ? '人工确认后保存' : '符合规则后自动保存' }}</dd></div></dl><div class="guide-divider" /><h4>什么时候生效？</h4><p>{{ scope === 'USER' ? '规则统一应用于所有用户，从下一轮对话生效。画像内容仍分别保存，智能体只能读取用户授权的字段。' : '保存后重新发布智能体，并创建新会话使用策略。停用会立即阻止后续轮次读取。' }}</p><h4>从少量字段开始</h4><p>优先记录稳定的偏好与背景。临时任务和不确定的信息，适合留在当前对话。</p></aside>
       </div>
       <el-alert v-if="error" :title="error" type="warning" :closable="false" class="policy-error" />
       <footer class="policy-footer"><span>{{ editable ? (scope === 'USER' ? '保存后从下一轮对话生效。' : '保存后重新发布智能体，并创建新会话生效。') : '当前为只读模式' }}</span><el-button v-if="editable" type="primary" :loading="busy" @click="save">保存策略</el-button></footer>
@@ -78,6 +88,9 @@ onMounted(async () => {
 </template>
 <style scoped>
 .memory-policy { width: 100%; }
+.is-embedded .policy-layout { grid-template-columns: minmax(0,1fr); }
+.is-embedded .policy-guide { display: none; }
+.is-embedded .policy-section { padding-block: 22px; }
 .policy-layout { display: grid; grid-template-columns: minmax(0,1fr) 250px; gap: 32px; align-items: start; }
 .policy-main { min-width: 0; }
 .policy-status { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 18px 20px; border: 1px solid var(--el-border-color-lighter); border-radius: 10px; background: var(--el-fill-color-lighter); }

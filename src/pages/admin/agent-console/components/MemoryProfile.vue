@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { hasPermission } from '@/utils/permission'
 import { memoryApi, type MemoryScope, type Profile, type Candidate } from '@/api/agentMemory'
 
-const props = defineProps<{ scope: MemoryScope; agent: number }>()
+const props = defineProps<{ scope: MemoryScope; agent: number; userId?: string }>()
 const profile = ref<Profile>()
 const candidates = ref<Candidate[]>([])
 const busy = ref(false)
@@ -12,13 +12,21 @@ const field = ref('')
 const value = ref('')
 const editing = ref(false)
 const shared = props.scope === 'AGENT'
-const can = (action: string) => hasPermission('ai:memory:' + (shared ? 'shared-' : '') + action + ':api')
+const administered = props.userId !== undefined
+let alive = true
+onBeforeUnmount(() => { alive = false })
+const can = (action: string) => hasPermission('ai:memory:' + (administered ? 'user-' : shared ? 'shared-' : '') + action + ':api')
 const rows = computed(() => Object.entries(profile.value?.fields ?? {}).map(([name, type]) =>
   ({ name, type, forgotten: profile.value?.forgottenFields.includes(name), value: profile.value?.values[name] })))
 
 async function load() {
-  profile.value = await memoryApi.profile(props.scope, props.agent)
-  if (can('review-read')) candidates.value = await memoryApi.pending(props.scope, props.agent)
+  const current = administered ? await memoryApi.userProfile(props.userId!) : await memoryApi.profile(props.scope, props.agent)
+  if (!alive) return
+  profile.value = current
+  if (can('review-read')) {
+    const pending = administered ? await memoryApi.userPending(props.userId!) : await memoryApi.pending(props.scope, props.agent)
+    if (alive) candidates.value = pending
+  }
 }
 async function refresh() {
   busy.value = true
@@ -33,7 +41,8 @@ async function save() {
   if (!profile.value || !value.value.trim()) return
   busy.value = true
   try {
-    await memoryApi.edit(props.scope, props.agent, field.value, value.value.trim(), profile.value.revision)
+    if (administered) await memoryApi.editUserProfile(props.userId!, field.value, value.value.trim(), profile.value.revision)
+    else await memoryApi.edit(props.scope, props.agent, field.value, value.value.trim(), profile.value.revision)
     editing.value = false
     await load()
   } finally { busy.value = false }
@@ -45,14 +54,16 @@ async function forget(name: string) {
   if (!confirmed) return
   busy.value = true
   try {
-    await memoryApi.forget(props.scope, props.agent, name, profile.value.revision)
+    if (administered) await memoryApi.forgetUserProfile(props.userId!, name, profile.value.revision)
+    else await memoryApi.forget(props.scope, props.agent, name, profile.value.revision)
     await load()
   } finally { busy.value = false }
 }
 async function review(id: number, approve: boolean) {
   busy.value = true
   try {
-    const applied = await memoryApi.review(props.scope, props.agent, id, approve)
+    const applied = administered ? await memoryApi.reviewUserProfile(props.userId!, id, approve)
+      : await memoryApi.review(props.scope, props.agent, id, approve)
     if (!applied) ElMessage.warning('候选已过期，保留当前画像。')
     await load()
   } finally { busy.value = false }

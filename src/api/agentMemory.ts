@@ -1,4 +1,5 @@
 import { request } from '@/utils/request'
+import type { PageResult } from '@/types'
 
 export type MemoryScope = 'AGENT_USER' | 'USER' | 'AGENT'
 export type FieldType = 'TEXT' | 'NUMBER' | 'BOOLEAN'
@@ -22,6 +23,8 @@ export interface GrantRequest {
   writeFields: string[]
 }
 export interface Grant extends GrantRequest { availableFields: string[] }
+export interface MemoryUser { userId: string; username: string; nickname: string; status: string }
+export interface MemoryUserQuery { pageNum: number; pageSize: number; keyword?: string }
 export interface Candidate {
   id: number
   values: Record<string, string>
@@ -36,6 +39,15 @@ const reviewPath = (scope: MemoryScope, agent: number) =>
   scope === 'AGENT' ? `${root}/shared/${agent}/reviews` : `${root}/reviews/${scope}/${agent}`
 
 export const memoryApi = {
+  users: (query: MemoryUserQuery) => request.get<PageResult<MemoryUser>>(`${root}/users`, { ...query }),
+  userProfile: (user: string) => request.get<Profile>(`${root}/users/${encodeURIComponent(user)}/profile`),
+  editUserProfile: (user: string, field: string, value: string, revision: number) =>
+    request.put<void>(`${root}/users/${encodeURIComponent(user)}/fields/${encodeURIComponent(field)}`, { value, revision }),
+  forgetUserProfile: (user: string, field: string, revision: number) =>
+    request.delete<void>(`${root}/users/${encodeURIComponent(user)}/fields/${encodeURIComponent(field)}`, { revision }),
+  userPending: (user: string) => request.get<Candidate[]>(`${root}/users/${encodeURIComponent(user)}/reviews`),
+  reviewUserProfile: (user: string, id: number, approve: boolean) =>
+    request.put<boolean>(`${root}/users/${encodeURIComponent(user)}/reviews/${id}`, { approve }),
   agents: () => request.get<{ id: number; name: string }[]>(`${root}/agents`),
   policy: (scope: MemoryScope, agent: number) => request.get<MemoryPolicy>(policyPath(scope, agent)),
   savePolicy: (scope: MemoryScope, agent: number, body: MemoryPolicyRequest) =>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { Cpu, Plus, Refresh, Search, VideoPlay, Clock } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import {
@@ -11,9 +11,10 @@ import {
   type ModelConfig,
   type ReleaseView,
 } from '@/api/agentConsole'
-import { hasPermission } from '@/utils/permission'
+import { hasPermission, hasAnyPermission } from '@/utils/permission'
 import AgentConversation from './components/AgentConversation.vue'
 import AgentVersions from './components/AgentVersions.vue'
+import AgentMemorySettings from './components/AgentMemorySettings.vue'
 import AgentSchedules from './components/AgentSchedules.vue'
 const schedulesVisible = ref(false)
 import AgentPreflightDialog from './components/AgentPreflightDialog.vue'
@@ -41,7 +42,11 @@ const formRef = ref<FormInstance>(),
   current = ref<AgentView>(),
   runVisible = ref(false),
   selected = ref<AgentView>()
-const sections = [
+const memoryMounted = ref(false)
+const memorySettings = ref<InstanceType<typeof AgentMemorySettings>>()
+const canReadMemory = computed(() => hasAnyPermission(['ai:memory:policy-read:api', 'ai:memory:read:api', 'ai:memory:grant-read:api']))
+watch(section, value => { if (value === 'memory') memoryMounted.value = true })
+const sections = computed(() => [
   ['basic', '基础信息'],
   ['prompt', '提示词'],
   ['output', '输出格式'],
@@ -51,8 +56,9 @@ const sections = [
   ['knowledge', '知识库'],
   ['children', '子智能体'],
   ['env', '环境变量'],
+  ...(canReadMemory.value ? [['memory', '长期记忆']] : []),
   ['versions', '版本'],
-]
+])
 const filtered = computed(() =>
   agents.value.filter((a) =>
     `${a.draft.name} ${a.draft.code}`.toLowerCase().includes(keyword.value.toLowerCase()) &&
@@ -63,7 +69,7 @@ const activeModels = computed(() => models.value.filter((model) => model.enabled
 const selectedModel = computed(() => models.value.find((model) => model.id === form.value.modelConfigId))
 const selectedChildren = computed(() => agents.value.filter((agent) => form.value.childAgentIds.includes(agent.draft.id!)))
 const boundCount = computed(() => form.value.skillIds.length + form.value.toolIds.length + form.value.mcpIds.length + form.value.knowledgeIds.length)
-const isDirty = computed(() => JSON.stringify(form.value) !== savedSnapshot.value)
+const isDirty = computed(() => JSON.stringify(form.value) !== savedSnapshot.value || !!memorySettings.value?.isDirty)
 const validationMessage = computed(() => !validEnvironment.value ? '环境变量名称有误，请到「环境变量」修正。' : !validSchema.value ? '输出 JSON 格式有误，请到「输出格式」修正。' : !validExtra.value ? '模型扩展参数格式有误，请在基础信息中修正。' : '')
 const sectionDescription: Record<string, string> = {
   basic: '先定义名称、编码和运行模型，再按需开启执行能力。',
@@ -75,6 +81,7 @@ const sectionDescription: Record<string, string> = {
   knowledge: '通过已有检索接口，为回答提供资料和来源。',
   children: '将专门的任务交给其他已发布的智能体。',
   env: '为当前智能体的沙箱提供运行时变量与凭据。',
+  memory: '配置当前智能体的专属记忆与公共经验；通用画像在独立菜单中统一管理。',
   versions: '查看当前生效版本；后续编辑保留为草稿，发布后才会生效。',
 }
 function modelName(id?: number) {
@@ -88,13 +95,13 @@ function sectionCount(key: string) {
 }
 function moveSection(event: KeyboardEvent, index: number) {
   let next = index
-  if (event.key === 'ArrowDown' || event.key === 'ArrowRight') next = (index + 1) % sections.length
-  else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') next = (index + sections.length - 1) % sections.length
+  if (event.key === 'ArrowDown' || event.key === 'ArrowRight') next = (index + 1) % sections.value.length
+  else if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') next = (index + sections.value.length - 1) % sections.value.length
   else if (event.key === 'Home') next = 0
-  else if (event.key === 'End') next = sections.length - 1
+  else if (event.key === 'End') next = sections.value.length - 1
   else return
   event.preventDefault()
-  section.value = sections[next]![0]!
+  section.value = sections.value[next]![0]!
   const button = event.currentTarget as HTMLButtonElement
   button.parentElement?.querySelectorAll<HTMLButtonElement>('button')[next]?.focus()
 }
@@ -143,6 +150,7 @@ async function edit(value?: AgentView) {
   form.value = value ? JSON.parse(JSON.stringify(value.draft)) : empty()
   form.value.generation ||= { extra: {} }
   form.value.outputSchema ||= { type: 'object', properties: {} }
+  memoryMounted.value = false
   section.value = 'basic'
   validSchema.value = true
   validExtra.value = true
@@ -174,6 +182,7 @@ async function save(close = true) {
   }
   saving.value = true
   try {
+    if (memorySettings.value && !await memorySettings.value.savePending()) { section.value = 'memory'; return false }
     current.value = await agentConsole.saveAgent(form.value)
     form.value = JSON.parse(JSON.stringify(current.value.draft))
     savedSnapshot.value = JSON.stringify(form.value)
@@ -314,13 +323,15 @@ onMounted(load)
             <span v-if="sectionCount(item[0]!)" class="nav-count">{{ sectionCount(item[0]!) }}</span>
           </button>
         </nav>
+        <div class="settings-content">
         <el-form
+          v-show="section !== 'memory'"
           ref="formRef"
           :model="form"
           label-position="top"
           class="settings-section"
           role="tabpanel"
-          :id="`agent-panel-${section}`"
+          :id="section === 'memory' ? undefined : `agent-panel-${section}`"
           :aria-labelledby="`agent-tab-${section}`"
         >
           <div class="settings-section-heading"><div><h3>{{ sections.find((item) => item[0] === section)?.[1] }}</h3><p>{{ sectionDescription[section] }}</p></div></div>
@@ -531,6 +542,12 @@ onMounted(load)
             </p>
           </section>
         </el-form>
+        <section v-if="memoryMounted" v-show="section === 'memory'" id="agent-panel-memory" class="settings-section" role="tabpanel" aria-labelledby="agent-tab-memory">
+          <div class="settings-section-heading"><h3>长期记忆</h3><p>{{ sectionDescription.memory }}</p></div>
+          <AgentMemorySettings v-if="form.id" :key="form.id" ref="memorySettings" :agent-id="form.id" :disabled="saving || publishing" />
+          <el-empty v-else description="请先保存智能体草稿，再配置长期记忆"><el-button v-if="hasPermission('ai:agent:write')" type="primary" :loading="saving" @click="save(false)">保存草稿</el-button></el-empty>
+        </section>
+        </div>
       </div>
       <template #footer>
         <div class="settings-footer">
@@ -542,14 +559,14 @@ onMounted(load)
           >
             删除
           </el-button>
-          <div class="footer-state"><strong>{{ !form.id ? '尚未保存' : isDirty ? '草稿有未保存的更改' : '草稿已保存' }}</strong><span v-if="validationMessage" role="alert" class="footer-validation">{{ validationMessage }}</span><span v-else>发布后通过唯一编码调用</span></div>
+          <div class="footer-state"><strong>{{ !form.id ? '尚未保存' : isDirty ? '有未保存的更改' : '草稿已保存' }}</strong><span v-if="validationMessage" role="alert" class="footer-validation">{{ validationMessage }}</span><span v-else>发布后通过唯一编码调用</span></div>
           <span class="spacer" />
           <el-button v-if="form.id && hasPermission('ai:agent:preflight:api')" :disabled="saving || publishing" @click="preflightVisible = true">技能与环境预检</el-button>
           <el-button @click="visible = false">关闭</el-button>
           <el-button
             v-if="hasPermission('ai:agent:write')"
             :loading="saving"
-            :disabled="publishing || !validSchema || !validExtra || !validEnvironment"
+            :disabled="publishing || memorySettings?.busy || !validSchema || !validExtra || !validEnvironment"
             @click="save()"
           >
             保存草稿
@@ -558,7 +575,7 @@ onMounted(load)
             v-if="hasPermission('ai:agent:publish')"
             type="primary"
             :loading="publishing"
-            :disabled="saving || !validSchema || !validExtra || !validEnvironment"
+            :disabled="saving || memorySettings?.busy || !validSchema || !validExtra || !validEnvironment"
             @click="publish"
           >
             保存并发布
@@ -581,6 +598,7 @@ onMounted(load)
   </main>
 </template>
 <style scoped>
+.settings-content { min-width: 0; }
 .agent-grid .console-empty { grid-column: 1 / -1; }
 .agent-model { display: flex; align-items: center; gap: 8px; color: var(--el-text-color-regular); font-size: 13px; margin: 4px 0; }
 .agent-model span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { hasPermission } from '@/utils/permission'
 import { memoryApi, type GrantRequest } from '@/api/agentMemory'
@@ -8,21 +8,31 @@ const props = defineProps<{ agent: number }>()
 const fields = ref<string[]>([])
 const grant = ref<GrantRequest>()
 const busy = ref(false)
+const snapshot = ref('')
+const isDirty = computed(() => !!grant.value && JSON.stringify(grant.value) !== snapshot.value)
+let alive = true
+onBeforeUnmount(() => { alive = false })
 const editable = hasPermission('ai:memory:grant-write:api')
 async function load() {
   const access = await memoryApi.grant(props.agent)
+  if (!alive) return
   grant.value = { revision: access.revision, readFields: access.readFields, writeFields: access.writeFields }
   fields.value = access.availableFields
+  snapshot.value = JSON.stringify(grant.value)
 }
 async function save() {
-  if (!grant.value) return
+  if (!grant.value || !editable || busy.value) return false
   busy.value = true
   try {
     await memoryApi.share(props.agent, grant.value)
     await load()
+    if (!alive) return false
     ElMessage.success('已更新共享授权')
+    return true
   } finally { busy.value = false }
 }
+async function savePending() { return !isDirty.value || await save() }
+defineExpose({ isDirty, busy, savePending })
 onMounted(async () => {
   busy.value = true
   try { await load() } finally { busy.value = false }

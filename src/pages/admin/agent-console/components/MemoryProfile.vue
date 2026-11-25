@@ -62,8 +62,8 @@ onMounted(refresh)
 
 <template>
   <section v-loading="busy">
-    <div class="section-title"><h3>已保存的字段</h3><el-button text @click="refresh">刷新</el-button></div>
-    <el-table :data="rows" empty-text="当前范围还没有配置画像字段">
+    <div class="section-title"><div><h3>已保存的记忆 <span class="memory-count">{{ rows.filter(row => row.value != null && !row.forgotten).length }}</span></h3><p class="hint">查看智能体保留的信息，随时编辑或选择忘记。</p></div><el-button @click="refresh">刷新记忆</el-button></div>
+    <el-table :data="rows" empty-text="当前范围还没有配置画像字段" class="memory-profile-table">
       <el-table-column prop="name" label="字段" min-width="140" />
       <el-table-column label="当前值" min-width="160"><template #default="{ row }">{{ row.forgotten ? '已忘记' : (row.value ?? '未记录') }}</template></el-table-column>
       <el-table-column label="操作" width="130"><template #default="{ row }">
@@ -72,8 +72,8 @@ onMounted(refresh)
       </template></el-table-column>
     </el-table>
     <template v-if="can('review-read')">
-      <h3>待确认记忆</h3>
-      <p v-if="!candidates.length" class="hint">暂无待确认内容</p>
+      <div class="review-heading"><h3>待确认记忆 <span class="memory-count">{{ candidates.length }}</span></h3><p class="hint">确认提取结果后，再将它加入长期记忆。</p></div>
+      <div v-if="!candidates.length" class="review-empty"><span class="review-empty-mark">✓</span><div><strong>暂无待确认内容</strong><p class="hint">新的记忆提议会显示在这里。</p></div></div>
       <article v-for="item in candidates" :key="item.id" class="candidate">
         <div v-for="(val, name) in item.values" :key="name"><strong>{{ name }}</strong> · {{ val }}<p class="hint">依据原文「{{ item.evidence[name] }}」</p></div>
         <template v-if="can('review')">
@@ -90,8 +90,20 @@ onMounted(refresh)
 </template>
 
 <style scoped>
-.section-title { display: flex; justify-content: space-between; align-items: center; }
-h3 { font-size: 15px; color: var(--el-text-color-primary); }
-.hint { color: var(--el-text-color-secondary); overflow-wrap: anywhere; }
-.candidate { padding: 14px 0; border-top: 1px solid var(--el-border-color-lighter); overflow-wrap: anywhere; }
+.section-title { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 22px; }
+h3 { margin: 0; font-size: 15px; font-weight: 600; color: var(--el-text-color-primary); }
+.hint { margin: 7px 0 0; color: var(--el-text-color-regular); font-size: 12px; line-height: 1.7; overflow-wrap: anywhere; }
+.memory-count { display: inline-block; margin-left: 7px; padding: 2px 7px; border-radius: 5px; background: var(--el-fill-color); font-size: 11px; color: var(--el-text-color-secondary); font-weight: 500; }
+.memory-profile-table { --el-table-header-bg-color: var(--el-fill-color-lighter); border: 1px solid var(--el-border-color-lighter); border-radius: 8px; }
+.memory-profile-table :deep(th.el-table__cell) { height: 44px; font-size: 12px; font-weight: 500; }
+.memory-profile-table :deep(.el-table__row .el-table__cell) { padding-block: 15px; }
+.memory-profile-table :deep(.el-table__empty-block) { min-height: 130px; }
+.review-heading { margin: 30px 0 18px; }
+.review-empty { display: flex; gap: 14px; align-items: center; padding: 23px; border: 1px dashed var(--el-border-color); border-radius: 9px; background: var(--el-fill-color-lighter); }
+.review-empty-mark { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; color: var(--el-color-success); background: var(--el-color-success-light-9); font-size: 16px; }
+.review-empty strong { color: var(--el-text-color-regular); font-size: 13px; font-weight: 500; }
+.review-empty .hint { margin-top: 4px; color: var(--el-text-color-secondary); }
+.candidate { margin-top: 12px; padding: 18px 20px; border: 1px solid var(--el-border-color-lighter); border-radius: 9px; overflow-wrap: anywhere; }
+.candidate strong { color: var(--el-text-color-primary); font-size: 13px; }
+.candidate .el-button { margin-top: 14px; }
 </style>

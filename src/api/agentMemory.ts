@@ -1,3 +1,5 @@
+import { isMockEnabled } from '@/config/mock'
+import { mockMemoryApi } from '@/mock/services/agentMemory'
 import { request } from '@/utils/request'
 
 export type MemoryScope = 'AGENT_USER' | 'USER' | 'AGENT'
@@ -35,7 +37,7 @@ const fieldPath = (scope: MemoryScope, agent: number, field: string) =>
 const reviewPath = (scope: MemoryScope, agent: number) =>
   scope === 'AGENT' ? `${root}/shared/${agent}/reviews` : `${root}/reviews/${scope}/${agent}`
 
-export const memoryApi = {
+const liveMemoryApi = {
   agents: () => request.get<{ id: number; name: string }[]>(`${root}/agents`),
   policy: (scope: MemoryScope, agent: number) => request.get<MemoryPolicy>(policyPath(scope, agent)),
   savePolicy: (scope: MemoryScope, agent: number, body: MemoryPolicyRequest) =>
@@ -51,3 +53,6 @@ export const memoryApi = {
   review: (scope: MemoryScope, agent: number, id: number, approve: boolean) =>
     request.put<boolean>(`${reviewPath(scope, agent)}/${id}`, { approve }),
 }
+
+export type MemoryApi = typeof liveMemoryApi
+export const memoryApi: typeof liveMemoryApi = isMockEnabled() ? mockMemoryApi : liveMemoryApi

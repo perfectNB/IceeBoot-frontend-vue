@@ -1,50 +1,31 @@
-/**
- * Mock认证服务
- */
+import type { LoginForm, LoginResponse, User } from '@/types'
+import { useUserStore } from '@/stores/user'
+import { mockLoginUsers, mockUsers } from '../data/user'
+import { mockDelay } from '@/config/mock'
 
-import type { LoginForm, LoginResponse } from '@/types'
-import { mockLoginUsers } from '../data/user'
-import { mockLog, mockDelay } from '@/config/mock'
+function userFromToken(token: string, kind: 'token' | 'refresh'): User {
+  const match = new RegExp('^mock-' + kind + '-(\\d+)-\\d+$').exec(token)
+  const user = match && mockUsers.find(row => Number(row.id) === Number(match[1]))
+  if (!user || user.status === 'inactive') throw new Error('演示登录已失效')
+  return user
+}
+export function demoUserId() {
+  return Number(userFromToken(useUserStore().getToken(), 'token').id)
+}
+function tokens(user: User): LoginResponse {
+  const suffix = user.id + '-' + Date.now()
+  return { accessToken: 'mock-token-' + suffix, refreshToken: 'mock-refresh-' + suffix,
+    user, tokenType: 'Bearer', expires: Date.now() + 24 * 60 * 60 * 1000 }
+}
 
-export class MockAuthService {
-  // 用户登录
-  static async login(loginForm: LoginForm): Promise<LoginResponse> {
+export const MockAuthService = {
+  async login(form: LoginForm) {
     await mockDelay()
-    mockLog('用户登录', loginForm)
-
-    const loginUser = mockLoginUsers.find(u => u.username === loginForm.username && u.password === loginForm.password)
-    if (!loginUser) {
-      throw new Error('用户名或密码错误')
-    }
-
-    const response: LoginResponse = {
-      accessToken: `mock-token-${loginUser.user.id}-${Date.now()}`,
-      refreshToken: `mock-refresh-${loginUser.user.id}-${Date.now()}`,
-      user: loginUser.user,
-      tokenType:"Bearer",
-      expires: Date.now() + 24 * 60 * 60 * 1000 // 24小时
-    }
-
-    return response
-  }
-
-  // 登出
-  static async logout(): Promise<boolean> {
-    await mockDelay()
-    mockLog('用户登出')
-    return true
-  }
-
-  // 刷新token
-  static async refreshToken(refreshToken: string): Promise<LoginResponse> {
-    await mockDelay()
-    mockLog('刷新token', { refreshToken })
-    return {
-      accessToken: `mock-token-refresh-${Date.now()}`,
-      refreshToken: `mock-refresh-${Date.now()}`,
-      tokenType: 'Bearer',
-      expires: Date.now() + 24 * 60 * 60 * 1000,
-      user: mockLoginUsers[0].user
-    }
-  }
+    const account = mockLoginUsers.find(row => row.username === form.username && row.password === form.password)
+    const user = account && mockUsers.find(row => row.id === account.user.id)
+    if (!user || user.status === 'inactive') throw new Error('用户名或密码错误')
+    return tokens(user)
+  },
+  async logout() { return true },
+  async refreshToken(token: string) { return tokens(userFromToken(token, 'refresh')) },
 }

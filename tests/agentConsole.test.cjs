@@ -16,6 +16,8 @@ function apiWithMock(respond) {
   const source = fs.readFileSync(path.join(__dirname, '../src/api/agentConsole.ts'), 'utf8')
   const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
   const context = { exports: {}, FormData, require: (name) => {
+    if (name === '@/config/mock') return { isMockEnabled: () => false }
+    if (name === '@/mock/services/agentConsole') return {}
     assert.equal(name, '@/utils/request')
     return { request }
   } }

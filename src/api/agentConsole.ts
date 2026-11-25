@@ -1,3 +1,5 @@
+import { isMockEnabled } from '@/config/mock'
+import { mockAgentConsole } from '@/mock/services/agentConsole'
 import { request } from '@/utils/request'
 
 export type Provider =
@@ -339,7 +341,7 @@ function capabilityPayload(value: Capability) {
   }
 }
 
-export const agentConsole = {
+const liveAgentConsole = {
   schedules: () => request.get<AgentSchedule[]>(`${root}/schedules`),
   createSchedule: (value: AgentScheduleRequest) => request.post<AgentSchedule>(`${root}/schedules`, { ...value }),
   updateSchedule: (id: number, value: AgentScheduleRequest) => request.put<AgentSchedule>(`${root}/schedules`, { ...value, id }),
@@ -395,7 +397,7 @@ export const agentConsole = {
   },
   files: (id: number, session: string, runId: string) => request.get<AgentFile[]>(`${root}/agents/${id}/sessions/${encodeURIComponent(session)}/files`, { runId }),
   downloadFile: (id: number, session: string, fileId: string) => request.download(`${root}/agents/${id}/sessions/${encodeURIComponent(session)}/files/${encodeURIComponent(fileId)}`),
-  deleteFile: (id: number, session: string, fileId: string) => request.delete(`${root}/agents/${id}/sessions/${encodeURIComponent(session)}/files/${encodeURIComponent(fileId)}`),
+  deleteFile: (id: number, session: string, fileId: string) => request.delete<void>(`${root}/agents/${id}/sessions/${encodeURIComponent(session)}/files/${encodeURIComponent(fileId)}`),
   recover: (id: number, session: string, runId: string) => request.post<AgentRecovery>(`${root}/agents/${id}/sessions/${encodeURIComponent(session)}/runs/${encodeURIComponent(runId)}/recovery`),
   invoke: (code: string, input: string, sessionId?: string) =>
     request.post<InvokeResult>(
@@ -446,3 +448,6 @@ export const providers: Provider[] = [
   'KIMI',
   'MINIMAX',
 ]
+
+export type AgentConsoleApi = typeof liveAgentConsole
+export const agentConsole: typeof liveAgentConsole = isMockEnabled() ? mockAgentConsole : liveAgentConsole

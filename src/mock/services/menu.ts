@@ -3,6 +3,8 @@
  */
 
 import type { MenuItem } from '@/types'
+import { demoUserId } from './auth'
+import { mockUsers } from '../data/user'
 import { mockMenus } from '../data'
 import { mockLog, mockDelay } from '@/config/mock'
 
@@ -13,9 +15,19 @@ export class MockMenuService {
     await mockDelay()
     mockLog('获取用户菜单', { userId })
 
-    // 这里可以根据用户ID返回不同的菜单
-    // 目前返回所有菜单
-    return [...mockMenus]
+    const user = mockUsers.find(row => Number(row.id) === demoUserId())
+    if (!user) return []
+    if (user.roles?.includes('admin')) return structuredClone(mockMenus)
+    const allowed = new Set(user.permissions)
+    function visible(rows: MenuItem[]): MenuItem[] {
+      return rows.flatMap(row => {
+        if (row.permissions?.length && !row.permissions.some(code => allowed.has(code))) return []
+        if (!row.children?.length) return [{ ...row }]
+        const children = visible(row.children)
+        return children.length ? [{ ...row, children }] : []
+      })
+    }
+    return visible(mockMenus)
   }
 
   // 获取所有菜单

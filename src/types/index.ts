@@ -259,26 +259,24 @@ export interface ChatSession {
 // 工作台统计数据类型
 export interface DashboardStats {
   totalUsers: number
-  todayVisits: number
-  totalArticles: number
-  systemStatus: string
-  userGrowth: number
-  visitGrowth: number
-  articleGrowth: number
+  newUsers: number
+  logCount: number
+  errorCount: number
 }
 
 // 访问趋势数据类型
 export interface VisitTrend {
   date: string
-  visits: number
-  users: number
+  logCount: number
+  errorCount: number
 }
 
 // 用户分布数据类型
+export type DashboardPeriod = 'week' | 'month'
+
 export interface UserDistribution {
-  name: string
+  name: 'active' | 'inactive' | 'other'
   value: number
-  percentage: number
 }
 
 // 学生相关类型定义

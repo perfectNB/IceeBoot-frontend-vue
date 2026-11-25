@@ -16,7 +16,7 @@ export const mockMenus: MenuItem[] = [
     type: 'menu',
     sort: 1,
     requiresAuth: true,
-    permissions: []
+    permissions: ['dashboard:view']
   },
   {
     id: 2,
@@ -40,7 +40,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 1,
         requiresAuth: true,
-        permissions: []
+        permissions: ['system:user:view']
       },
       {
         id: 7,
@@ -53,7 +53,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 2,
         requiresAuth: true,
-        permissions: []
+        permissions: ['system:role:view']
       },
       {
         id: 8,
@@ -66,7 +66,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 3,
         requiresAuth: true,
-        permissions: []
+        permissions: ['system:permission:view']
       },
       {
         id: 9,
@@ -79,7 +79,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 4,
         requiresAuth: true,
-        permissions: []
+        permissions: ['system:menu:view']
       },
       {
         id: 26,
@@ -92,7 +92,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 5,
         requiresAuth: true,
-        permissions: []
+        permissions: ['system:file:view']
       }
     ]
   },
@@ -118,21 +118,20 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 1,
         requiresAuth: true,
-        permissions: []
+        permissions: ['monitor:redis:view']
       },
       {
         id: 11,
         title: '接口文档',
         name: 'ApiDoc',
-        path: '',
+        path: '/admin/monitor/api-doc',
         component: 'ApiDocumentation',
         icon: 'Document',
         parentId: 3,
-        type: 'link',
+        type: 'menu',
         sort: 2,
         requiresAuth: true,
-        link: 'http://localhost:9000/iceeboot/api/doc.html#/home',
-        permissions: []
+        permissions: ['monitor:api-doc']
       },
       {
         id: 12,
@@ -145,7 +144,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 3,
         requiresAuth: true,
-        permissions: []
+        permissions: ['monitor:task:view']
       },
       {
         id: 13,
@@ -158,20 +157,61 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 4,
         requiresAuth: true,
-        permissions: []
+        permissions: ['monitor:log:view']
       }
     ]
   },
-  { id: 4, title: '智能体控制台', name: 'AgentConsoleRoot', path: '/admin/agent-console', icon: 'Cpu', type: 'menu', sort: 4, requiresAuth: true, permissions: ['ai:agent:read'], children: [
-    {id: 100, title: '智能体', name: 'AgentConsoleagents', path: '/admin/agent-console/agents', component: 'HarnessAgents', icon: 'Cpu', parentId:4, type:'menu', sort:1, requiresAuth:true, permissions:['ai:agent:read']},
-    {id: 101, title: '模型连接', name: 'AgentConsolemodels', path: '/admin/agent-console/models', component: 'ModelConnections', icon: 'Cpu', parentId:4, type:'menu', sort:2, requiresAuth:true, permissions:['ai:model:read']},
-    {id: 102, title: '技能', name: 'AgentConsoleskills', path: '/admin/agent-console/skills', component: 'CapabilityManagement', icon: 'Cpu', parentId:4, type:'menu', sort:3, requiresAuth:true, permissions:['ai:capability:read']},
-    {id: 103, title: '工具', name: 'AgentConsoletools', path: '/admin/agent-console/tools', component: 'CapabilityManagement', icon: 'Cpu', parentId:4, type:'menu', sort:4, requiresAuth:true, permissions:['ai:capability:read']},
-    {id: 104, title: 'MCP 服务', name: 'AgentConsolemcps', path: '/admin/agent-console/mcps', component: 'CapabilityManagement', icon: 'Cpu', parentId:4, type:'menu', sort:5, requiresAuth:true, permissions:['ai:capability:read']},
-    {id: 105, title: '知识库连接', name: 'AgentConsoleknowledge', path: '/admin/agent-console/knowledge', component: 'CapabilityManagement', icon: 'Cpu', parentId:4, type:'menu', sort:6, requiresAuth:true, permissions:['ai:capability:read']},
-    {id: 106, title: '沙箱模板', name: 'AgentConsolesandboxes', path: '/admin/agent-console/sandboxes', component: 'CapabilityManagement', icon: 'Cpu', parentId:4, type:'menu', sort:7, requiresAuth:true, permissions:['ai:capability:read']},
-    {id: 107, title: '执行记录', name: 'AgentConsoleruns', path: '/admin/agent-console/runs', component: 'AgentRuns', icon: 'Cpu', parentId:4, type:'menu', sort:8, requiresAuth:true, permissions:['ai:run:read']},
-  ] },
+  {
+    id: 4, title: '智能体控制台', name: 'AgentConsoleRoot', path: '/admin/agent-console', icon: 'Cpu',
+    type: 'menu', sort: 4, requiresAuth: true, permissions: ['ai:agent:read'],
+    children: [
+      {
+        id: 100, title: '智能体', name: 'HarnessAgents', path: '/admin/agent-console/agents',
+        component: 'HarnessAgents', icon: 'Cpu', parentId: 4, type: 'menu', sort: 1,
+        requiresAuth: true, permissions: ['ai:agent:read'],
+      },
+      {
+        id: 101, title: '模型连接', name: 'ModelConnections', path: '/admin/agent-console/models',
+        component: 'ModelConnections', icon: 'Cpu', parentId: 4, type: 'menu', sort: 2,
+        requiresAuth: true, permissions: ['ai:model:read'],
+      },
+      {
+        id: 102, title: '技能', name: 'AgentSkills', path: '/admin/agent-console/skills',
+        component: 'CapabilityManagement', icon: 'Cpu', parentId: 4, type: 'menu', sort: 3,
+        requiresAuth: true, permissions: ['ai:capability:read'],
+      },
+      {
+        id: 103, title: '工具', name: 'AgentTools', path: '/admin/agent-console/tools',
+        component: 'CapabilityManagement', icon: 'Cpu', parentId: 4, type: 'menu', sort: 4,
+        requiresAuth: true, permissions: ['ai:capability:read'],
+      },
+      {
+        id: 104, title: 'MCP 服务', name: 'AgentMcps', path: '/admin/agent-console/mcps',
+        component: 'CapabilityManagement', icon: 'Cpu', parentId: 4, type: 'menu', sort: 5,
+        requiresAuth: true, permissions: ['ai:capability:read'],
+      },
+      {
+        id: 105, title: '知识库连接', name: 'AgentKnowledge', path: '/admin/agent-console/knowledge',
+        component: 'CapabilityManagement', icon: 'Cpu', parentId: 4, type: 'menu', sort: 6,
+        requiresAuth: true, permissions: ['ai:capability:read'],
+      },
+      {
+        id: 106, title: '沙箱模板', name: 'AgentSandboxes', path: '/admin/agent-console/sandboxes',
+        component: 'CapabilityManagement', icon: 'Cpu', parentId: 4, type: 'menu', sort: 7,
+        requiresAuth: true, permissions: ['ai:capability:read'],
+      },
+      {
+        id: 107, title: '执行记录', name: 'AgentRuns', path: '/admin/agent-console/runs',
+        component: 'AgentRuns', icon: 'Cpu', parentId: 4, type: 'menu', sort: 8,
+        requiresAuth: true, permissions: ['ai:run:read'],
+      },
+      {
+        id: 108, title: '长期记忆', name: 'AgentMemory', path: '/admin/agent-console/memory',
+        component: 'AgentMemory', icon: 'Notebook', parentId: 4, type: 'menu', sort: 9,
+        requiresAuth: true, permissions: ['ai:memory:read:api'],
+      },
+    ],
+  },
   {
     id: 22,
     title: '三方管理',
@@ -194,7 +234,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 1,
         requiresAuth: true,
-        permissions: []
+        permissions: ['third:oss:view']
       },
       {
         id: 24,
@@ -207,7 +247,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 2,
         requiresAuth: true,
-        permissions: []
+        permissions: ['third:email:view']
       },
       {
         id: 25,
@@ -220,7 +260,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 3,
         requiresAuth: true,
-        permissions: []
+        permissions: ['third:sms:view']
       }
     ]
   },
@@ -246,7 +286,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 1,
         requiresAuth: true,
-        permissions: []
+        permissions: ['pay:config:view']
       },
       {
         id: 29,
@@ -259,7 +299,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 2,
         requiresAuth: true,
-        permissions: []
+        permissions: ['pay:record:view']
       }
     ]
   },
@@ -285,7 +325,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 1,
         requiresAuth: true,
-        permissions: []
+        permissions: ['workflow:definition']
       },
       {
         id: 32,
@@ -298,7 +338,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 2,
         requiresAuth: true,
-        permissions: []
+        permissions: ['workflow:design']
       },
       {
         id: 33,
@@ -311,7 +351,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 3,
         requiresAuth: true,
-        permissions: []
+        permissions: ['workflow:diagram']
       },
       {
         id: 34,
@@ -324,7 +364,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 4,
         requiresAuth: true,
-        permissions: []
+        permissions: ['workflow:instance']
       },
       {
         id: 35,
@@ -337,7 +377,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 5,
         requiresAuth: true,
-        permissions: []
+        permissions: ['workflow:task']
       }
     ]
   },
@@ -363,7 +403,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 1,
         requiresAuth: true,
-        permissions: []
+        permissions: ['codegen:frontend:view']
       },
       {
         id: 18,
@@ -376,7 +416,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 2,
         requiresAuth: true,
-        permissions: []
+        permissions: ['codegen:backend:view']
       },
       {
         id: 19,
@@ -389,7 +429,7 @@ export const mockMenus: MenuItem[] = [
         type: 'menu',
         sort: 3,
         requiresAuth: true,
-        permissions: []
+        permissions: ['codegen:test:view']
       }
     ]
   }

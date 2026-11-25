@@ -276,24 +276,15 @@ const envConfig: Record<string, string> = {
 
 ### 🎭 Mock 数据模式
 
-项目内置完整的 Mock 数据系统，支持前端独立开发：
+启动本地演示：
 
-```typescript
-// src/config/mock.ts
-export const mockConfig: MockConfig = {
-  enabled: true,  // true: 使用 Mock 数据, false: 调用真实 API
-  delay: 30,      // 模拟网络延迟(ms)
-  log: true       // 是否输出 Mock 日志
-}
+```sh
+npm run dev:mock
 ```
 
-**Mock 模式特点：**
-- ✅ 完整的 CRUD 操作模拟
-- ✅ 支持分页、搜索、排序
-- ✅ 数据持久化（内存中）
-- ✅ 真实的网络延迟模拟
-- ✅ 一键切换真实 API
+构建可独立部署的演示版使用 `npm run build:mock`。普通开发与构建默认连接后端。也可以在对应环境文件中设置 `VITE_USE_MOCK=true`，修改后重新启动或构建。
 
+演示账号 `admin` 的密码是 `111111`。看板和管理页共用演示账号及日志数据。智能体对话、技能导入和预检使用本地示例，计划任务仅演示配置。刷新页面会重置演示业务数据。
 
 ## 📁 项目结构
 

@@ -22,6 +22,7 @@ function sharedRequest(fetcher, clock={}){
  const axios={create:()=>({interceptors:{request:{use:()=>{}},response:{use:()=>{}}}})}
  const store={getToken:()=> 'test-token',getTokenType:()=> 'Bearer',getTokenExpires:()=>0,getRefreshToken:()=>'',logout:()=>loggedOut++}
  const ctx={exports:{},AbortController,setTimeout,clearTimeout,...clock,fetch:async(...args)=>{requests++;return fetcher(...args)},require:name=>{
+  if(name==='@/config/mock')return {isMockEnabled:()=>false}
   if(name==='axios')return {default:axios}
   if(name==='element-plus')return {ElMessage:{error:()=>{}},ElMessageBox:{alert:()=>Promise.resolve()}}
   if(name==='./env')return {getBaseURL:()=> 'https://example.invalid/iceeboot'}

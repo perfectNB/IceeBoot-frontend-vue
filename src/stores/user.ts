@@ -1,3 +1,4 @@
+import { isMockEnabled } from '@/config/mock'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import type { User, LoginForm, LoginResponse } from '@/types'
@@ -15,10 +16,11 @@ export const useUserStore = defineStore('user', () => {
   const expires = ref<number | null>(null)
 
   type TokenStorage = 'local' | 'session' | 'memory'
-  const TOKEN_KEY = 'accessToken'
-  const REFRESH_TOKEN_KEY = 'refreshToken'
-  const TOKEN_TYPE_KEY = 'tokenType'
-  const EXPIRES_KEY = 'tokenExpires'
+  const prefix = isMockEnabled() ? 'demo:' : ''
+  const TOKEN_KEY = prefix + 'accessToken'
+  const REFRESH_TOKEN_KEY = prefix + 'refreshToken'
+  const TOKEN_TYPE_KEY = prefix + 'tokenType'
+  const EXPIRES_KEY = prefix + 'tokenExpires'
   const rawStorageType = import.meta.env.VITE_TOKEN_STORAGE as string | undefined
   const tokenStorageType: TokenStorage =
     rawStorageType === 'session' || rawStorageType === 'memory' ? rawStorageType : 'local'

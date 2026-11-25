@@ -3,8 +3,16 @@
  */
 
 import type { Role, PageParams, PageResult } from '@/types'
-import { mockRoles } from '../data'
+import { MockPermissionService } from './permission'
+import { mockRoles, mockMenus } from '../data'
 import { mockLog, mockDelay } from '@/config/mock'
+
+function markGranted<T extends { id: string | number; children?: T[] }>(rows: T[], selected: Set<string>, all: boolean): T[] {
+  return rows.map(row => ({
+    ...row, hasPermission: all || selected.has(String(row.id)),
+    children: row.children ? markGranted(row.children, selected, all) : undefined,
+  }))
+}
 
 export class MockRoleService {
   
@@ -52,7 +60,7 @@ export class MockRoleService {
   }
   
   // 根据ID获取角色
-  static async getRoleById(roleId: number): Promise<Role> {
+  static async getRoleById(roleId: number, include?: 'permissions' | 'menus'): Promise<Role> {
     await mockDelay()
     mockLog('根据ID获取角色', { roleId })
     
@@ -61,7 +69,14 @@ export class MockRoleService {
       throw new Error('角色不存在')
     }
     
-    return role
+    if (include === 'permissions') {
+      const tree = await MockPermissionService.getAllPermissions()
+      return { ...role, permissionTree: markGranted(tree, new Set(role.permissions), role.code === 'superAdmin' && !role.permissions) }
+    }
+    if (include === 'menus') {
+      return { ...role, menuTree: markGranted(mockMenus, new Set(role.menus), role.code === 'superAdmin' && !role.menus) }
+    }
+    return { ...role }
   }
   
   // 创建角色
@@ -75,6 +90,7 @@ export class MockRoleService {
       code: roleData.code || '',
       description: roleData.description,
       permissions: roleData.permissions || [],
+      status: roleData.status ?? 'active',
       createTime: new Date().toISOString(),
       updateTime: new Date().toISOString()
     }

@@ -1,4 +1,5 @@
 export default {
+  toggleSidebar: '展开或收起菜单',
   messageCenter: '消息中心',
   markAllRead: '全部已读',
   profileCenter: '个人中心',

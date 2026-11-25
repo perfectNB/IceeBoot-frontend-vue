@@ -9,7 +9,7 @@ function api() {
   const request = Object.fromEntries(['get', 'put', 'delete'].map(method =>
     [method, (path, body) => calls.push([method, path.replace('/api/v1/agent-console/memory', ''), body])]))
   const source = fs.readFileSync(__dirname + '/../src/api/agentMemory.ts', 'utf8')
-  const ctx = { exports: {}, require: () => ({ request }) }
+  const ctx = { exports: {}, require: () => ({ request, isMockEnabled: () => false }) }
   vm.runInNewContext(ts.transpile(source, { module: ts.ModuleKind.CommonJS }), ctx)
   return { memory: ctx.exports.memoryApi, calls }
 }

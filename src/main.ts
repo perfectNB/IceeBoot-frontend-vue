@@ -63,48 +63,10 @@ app.use(router)
 app.use(i18n)
 app.use(ElementPlus)
 
-// 调试信息（仅开发环境输出）
-if (import.meta.env.DEV) {
-  const zhCNHome = i18n.global.getLocaleMessage('zh-CN')?.home as Record<string, unknown> | undefined
-  console.log('[i18n Debug] Available locales:', i18n.global.availableLocales)
-  console.log('[i18n Debug] Current locale:', i18n.global.locale.value)
-  console.log('[i18n Debug] home.heroTitle:', zhCNHome?.heroTitle)
-  console.log('[i18n Debug] Test translation:', i18n.global.t('home.heroTitle'))
-}
-
-// 初始化语言设置（在挂载前从 localStorage 恢复）
-if (typeof window !== 'undefined') {
-  const savedLocale = localStorage.getItem('app-locale')
-  if (import.meta.env.DEV) {
-    console.log('[i18n Debug] Saved locale from localStorage:', savedLocale)
-  }
-  if (savedLocale === 'zh-CN' || savedLocale === 'en') {
-    setLocale(savedLocale)
-    if (import.meta.env.DEV) {
-      console.log('[i18n Debug] Locale set to:', savedLocale)
-    }
-  } else {
-    // 根据浏览器语言设置默认语言
-    const browserLang = navigator.language
-    if (import.meta.env.DEV) {
-      console.log('[i18n Debug] Browser language:', browserLang)
-    }
-    if (browserLang.startsWith('zh')) {
-      setLocale('zh-CN')
-      if (import.meta.env.DEV) {
-        console.log('[i18n Debug] Locale set to zh-CN based on browser')
-      }
-    } else {
-      setLocale('en')
-      if (import.meta.env.DEV) {
-        console.log('[i18n Debug] Locale set to en based on browser')
-      }
-    }
-  }
-  if (import.meta.env.DEV) {
-    console.log('[i18n Debug] Final locale:', i18n.global.locale.value)
-  }
-}
+// Restore the explicit preference before mounting to avoid a language flash.
+const savedLocale = localStorage.getItem('app-locale')
+const defaultLocale = navigator.language.startsWith('zh') ? 'zh-CN' : 'en'
+setLocale(savedLocale === 'en' || savedLocale === 'zh-CN' ? savedLocale : defaultLocale)
 
 // 挂载应用
 app.mount('#app')

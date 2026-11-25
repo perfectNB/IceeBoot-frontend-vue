@@ -40,22 +40,6 @@
   }
 }
 
-// 页面过渡动画
-.page-enter-active,
-.page-leave-active {
-  transition: all 0.3s ease;
-}
-
-.page-enter-from {
-  opacity: 0;
-  transform: translateX(20px);
-}
-
-.page-leave-to {
-  opacity: 0;
-  transform: translateX(-20px);
-}
-
 // 工具类
 .text-center {
   text-align: center;

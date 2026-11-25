@@ -1,4 +1,5 @@
 export default {
+  toggleSidebar: 'Toggle navigation',
   messageCenter: 'Messages',
   markAllRead: 'Mark All Read',
   profileCenter: 'Profile',

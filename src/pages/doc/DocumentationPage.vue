@@ -3,7 +3,7 @@
     <iframe 
       src="/document/index.html" 
       class="doc-iframe"
-      frameborder="0"
+      :title="t('home.docs')"
     ></iframe>
   </div>
 </template>

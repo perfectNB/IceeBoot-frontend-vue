@@ -3,8 +3,13 @@
  */
 
 import type { User, PageParams, PageResult } from '@/types'
-import { mockUsers } from '../data'
+import { mockUsers, mockLoginUsers, mockRoles } from '../data'
 import { mockLog, mockDelay } from '@/config/mock'
+
+function roleCodes(items: NonNullable<User['roleIds']>) {
+  const ids = new Set(items.map(item => String(typeof item === 'object' ? item.id : item)))
+  return mockRoles.filter(role => ids.has(String(role.id))).map(role => role.code)
+}
 
 export class MockUserService {
   
@@ -38,6 +43,12 @@ export class MockUserService {
       )
     }
     
+    for (const field of ['username', 'nickname', 'email', 'phone'] as const) {
+      const filter = String(params[field] ?? '').trim().toLowerCase()
+      if (filter) filteredUsers = filteredUsers.filter(user => user[field]?.toLowerCase().includes(filter))
+    }
+    if (params.status) filteredUsers = filteredUsers.filter(user => user.status === params.status)
+
     // 分页参数默认值
     const pageNum = params.pageNum || 1
     const pageSize = params.pageSize || 10
@@ -46,7 +57,7 @@ export class MockUserService {
     const total = filteredUsers.length
     const start = (pageNum - 1) * pageSize
     const end = start + pageSize
-    const records = filteredUsers.slice(start, end)
+    const records = filteredUsers.slice(start, end).map(user => ({ ...user, roleList: mockRoles.filter(role => user.roles?.includes(role.code)) }))
     const pages = Math.ceil(total / pageSize)
     
     return {
@@ -63,10 +74,10 @@ export class MockUserService {
   // 创建用户
   static async createUser(userData: Partial<User> & { password?: string }): Promise<User> {
     await mockDelay()
-    mockLog('创建用户', userData)
+    mockLog('创建用户')
     
     const newUser: User = {
-      id: Math.max(...mockUsers.map(u => Number(u.id))) + 1,
+      id: Math.max(0, ...mockUsers.map(u => Number(u.id))) + 1,
       username: userData.username || '',
       nickname: userData.nickname,
       avatar: userData.avatar,
@@ -78,14 +89,17 @@ export class MockUserService {
       updateTime: new Date().toISOString()
     }
     
+    if (userData.roleIds) newUser.roles = roleCodes(userData.roleIds)
+    newUser.status = userData.status ?? 'active'
     mockUsers.push(newUser)
+    if (userData.password) mockLoginUsers.push({ username: newUser.username, password: userData.password, user: newUser })
     return newUser
   }
   
   // 更新用户
   static async updateUser(userId: number, userData: Partial<User>): Promise<User> {
     await mockDelay()
-    mockLog('更新用户', { userId, userData })
+    mockLog('更新用户', { userId })
     
     const userIndex = mockUsers.findIndex(u => u.id === userId)
     if (userIndex === -1) {
@@ -99,7 +113,10 @@ export class MockUserService {
       updateTime: new Date().toISOString()
     }
     
+    if (userData.roleIds) updatedUser.roles = roleCodes(userData.roleIds)
     mockUsers[userIndex] = updatedUser
+    const account = mockLoginUsers.find(row => row.user.id === userId)
+    if (account) account.username = updatedUser.username
     return updatedUser
   }
   
@@ -112,6 +129,8 @@ export class MockUserService {
       const userIndex = mockUsers.findIndex(u => u.id === userId)
       if (userIndex !== -1) {
         mockUsers.splice(userIndex, 1)
+        const accountIndex = mockLoginUsers.findIndex(row => row.user.id === userId)
+        if (accountIndex >= 0) mockLoginUsers.splice(accountIndex, 1)
       }
     }
     return true
@@ -125,15 +144,16 @@ export class MockUserService {
   // 重置用户密码
   static async resetPassword(userId: number, newPassword: string): Promise<void> {
     await mockDelay()
-    mockLog('重置用户密码', { userId, newPassword })
+    mockLog('重置用户密码', { userId })
     
     const user = mockUsers.find(u => u.id === userId)
     if (!user) {
       throw new Error('用户不存在')
     }
     
-    // 在实际应用中，这里会更新用户的密码
-    // 这里只是模拟，不实际存储密码
+    const account = mockLoginUsers.find(row => row.user.id === userId)
+    if (account) account.password = newPassword
+    else mockLoginUsers.push({ username: user.username, password: newPassword, user })
   }
 
   // 更新用户状态

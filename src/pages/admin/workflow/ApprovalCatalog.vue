@@ -38,7 +38,7 @@
           </el-button>
           <router-link
             v-if="row.live && canStart"
-            :to="{ path: '/admin/workflow/instance', query: { approval: row.code } }"
+            :to="{ name: 'WorkflowInstances', query: { approval: row.code } }"
             >发起审批</router-link
           >
         </div>
@@ -55,6 +55,8 @@
 </template>
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { canOpenWorkflowPage } from './approvalNavigation'
 import { EditPen, Refresh, Share } from '@element-plus/icons-vue'
 import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import ApprovalDesigner from './ApprovalDesigner.vue'
@@ -64,7 +66,8 @@ import { hasPermission } from '@/utils/permission'
 import type { ApprovalRole, Blueprint } from '@/types/approval'
 const props = defineProps<{ diagram?: boolean }>()
 const can = (p: string) => hasPermission('workflow:approval:' + p + ':api')
-const canStart = computed(() => can('start') && hasPermission('workflow:instance'))
+const router = useRouter()
+const canStart = computed(() => can('start') && can('list') && canOpenWorkflowPage(router, 'WorkflowInstances'))
 const busy = ref(false)
 const published = ref<Blueprint[]>([])
 const drafts = ref<Blueprint[]>([])

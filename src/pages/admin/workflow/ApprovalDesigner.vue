@@ -178,6 +178,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { onBeforeRouteLeave, useRouter } from 'vue-router'
+import { canOpenWorkflowPage } from './approvalNavigation'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { approvalApi } from '@/api/approval'
@@ -269,7 +270,7 @@ async function cancel() {
 }
 async function finish() {
   if (props.blueprint) emit('close')
-  else if (hasPermission('workflow:definition')) await router.push('/admin/workflow/definition')
+  else if (canOpenWorkflowPage(router, 'WorkflowDefinitions')) await router.push({ name: 'WorkflowDefinitions' })
   else {
     d.value = blankDesign()
     revision.value = 0

@@ -89,6 +89,14 @@
           </span>
           <span>结束</span>
         </div>
+        <template v-if="detail.tasks?.length">
+          <h3>当前待办</h3>
+          <div class="approval-path">
+            <span v-for="t in detail.tasks" :key="t.id"
+              >{{ nodeName(t.node) }} · {{ detail.roleNames?.[t.role] || t.role }}</span
+            >
+          </div>
+        </template>
         <h3>申请信息</h3>
         <ApprovalForm v-if="editing" v-model="values" :fields="detail.design.fields" />
         <dl v-else class="approval-data">
@@ -105,7 +113,10 @@
               <strong>{{ e.node }} · {{ actions[e.action] }}</strong>
               <time>{{ date(e.time) }}</time>
             </div>
-            <small>第 {{ e.round }} 轮 · {{ e.actor }}</small>
+            <small
+              >第 {{ e.round }} 轮 · {{ e.actor
+              }}{{ e.role ? ' · ' + (detail.roleNames?.[e.role] || e.role) : '' }}</small
+            >
             <p v-if="e.reason">{{ e.reason }}</p>
             <details v-if="e.values && detail.design.fields.length">
               <summary>查看本轮提交的表单</summary>
@@ -119,6 +130,17 @@
           </li>
         </ol>
         <div v-if="detail.canReview && can('review')" class="approval-decision">
+          <label v-if="myTasks.length > 1" class="approval-label">
+            以哪个角色办理
+            <el-select v-model="taskId" placeholder="请选择本次办理角色">
+              <el-option
+                v-for="t in myTasks"
+                :key="t.id"
+                :label="detail.roleNames?.[t.role] || t.role"
+                :value="t.id"
+              />
+            </el-select>
+          </label>
           <label class="approval-label">
             审批意见
             <el-input
@@ -182,6 +204,8 @@ const loading = ref(false),
   opened = ref(false),
   editing = ref(false)
 const chosen = computed(() => published.value.find((b) => b.design.code === code.value))
+const taskId = ref('')
+const myTasks = computed(() => detail.value?.tasks?.filter((t) => t.actionable) || [])
 const status = { PENDING: '审批中', APPROVED: '已通过', REJECTED: '已驳回', VOID: '已作废' }
 const empty = {
   inbox: '当前没有待你审批的任务',
@@ -213,6 +237,7 @@ async function show(id: string) {
   const result = await approvalApi.detail(id)
   if (seq !== detailRequest) return
   detail.value = result
+  taskId.value = myTasks.value.length === 1 ? myTasks.value[0].id : ''
   reason.value = ''
   editing.value = false
   opened.value = true
@@ -250,13 +275,21 @@ async function submit() {
 async function review(action: Decision) {
   const d = detail.value
   if (!d) return
+  if (myTasks.value.length && !taskId.value) {
+    ElMessage.warning('请选择本次办理角色')
+    return
+  }
   if (action === 'reject' && !reason.value.trim()) {
     ElMessage.warning('请填写驳回理由')
     return
   }
   await run(async () => {
-    await approvalApi.review(d.item.id, action, { revision: d.item.revision, reason: reason.value })
-    ElMessage.success(action === 'reject' ? '申请已驳回' : '审批已通过')
+    await approvalApi.review(d.item.id, action, {
+      revision: d.item.revision,
+      taskId: taskId.value || undefined,
+      reason: reason.value
+    })
+    ElMessage.success(action === 'reject' ? '本轮已驳回' : '已提交通过意见')
     await show(d.item.id)
     await load()
   })

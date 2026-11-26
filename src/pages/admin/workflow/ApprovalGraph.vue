@@ -36,7 +36,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Position, CircleCheck, User, Switch } from '@element-plus/icons-vue'
-import { end, branchLabel } from '@/utils/approval'
+import { end, branchLabel, reviewerRoles } from '@/utils/approval'
 import type { ApprovalDesign, ApprovalRole, Exit } from '@/types/approval'
 const props = defineProps<{ design: ApprovalDesign; roles: ApprovalRole[]; selected: string }>()
 const emit = defineEmits<{ select: [id: string]; branch: [source: string, index: number] }>()
@@ -71,7 +71,11 @@ const diagram = computed(() => {
       id: n.id,
       kind: 'review',
       label: n.name || '未命名节点',
-      caption: props.roles.find((r) => r.code === n.role)?.name || n.role || '待选择角色'
+      caption:
+        (n.coRoles?.length ? '会签 · ' : '') +
+        (reviewerRoles(n)
+          .map((role) => props.roles.find((r) => r.code === role)?.name || role)
+          .join('、') || '待选择角色')
     })
     connect(n.id, n.exit)
   }

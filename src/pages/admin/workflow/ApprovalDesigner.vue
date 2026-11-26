@@ -78,11 +78,21 @@
               <el-input v-model="node.name" maxlength="120" />
             </label>
             <label>
-              办理角色
-              <el-select v-model="node.role" filterable placeholder="选择角色">
+              办理角色 · 多选会签
+              <el-select
+                :model-value="reviewerRoles(node)"
+                multiple
+                filterable
+                :multiple-limit="50"
+                placeholder="选择一个或多个角色"
+                @update:model-value="setReviewers"
+              >
                 <el-option v-for="r in roles" :key="r.code" :label="r.name" :value="r.code" />
               </el-select>
             </label>
+            <p v-if="node.coRoles?.length" class="routing-note">
+              每个角色各派一份待办。全部通过后继续，任一方驳回即结束本轮。
+            </p>
           </div>
           <div class="rules-heading">
             <h3>条件分支</h3>
@@ -132,7 +142,7 @@
           <h3>申请人填写的字段</h3>
           <el-button @click="addField">＋ 新增字段</el-button>
         </div>
-        <p class="approval-hint">判断字段用于选择审批路径，业务字段随每次申请留档。</p>
+        <p class="approval-hint">判断字段用于选择审批路径。金额等数字业务字段也可以直接用于分支判断。</p>
         <el-empty v-if="!d.fields.length" description="还没有表单字段" :image-size="55" />
         <div v-for="(f, i) in d.fields" :key="i" class="approval-field-row">
           <label>
@@ -183,7 +193,7 @@ import { approvalApi } from '@/api/approval'
 import { hasPermission } from '@/utils/permission'
 import { Delete, EditPen, MoreFilled, Plus, Position, User } from '@element-plus/icons-vue'
 import ApprovalBranchEditor from './ApprovalBranchEditor.vue'
-import { branchLabel, blankDesign, end, newExit, validateDesign } from '@/utils/approval'
+import { branchLabel, reviewerRoles, blankDesign, end, newExit, validateDesign } from '@/utils/approval'
 import type { ApprovalField, ApprovalNode, ApprovalRole, Blueprint, Exit } from '@/types/approval'
 import ApprovalGraph from './ApprovalGraph.vue'
 const can = (p: string) => hasPermission('workflow:approval:' + p + ':api')
@@ -212,6 +222,11 @@ function selectNode(id: string) {
   selected.value = id
   if (window.matchMedia('(max-width:800px)').matches)
     nextTick(() => inspector.value?.scrollIntoView({ block: 'start' }))
+}
+function setReviewers(roles: string[]) {
+  if (!node.value) return
+  node.value.role = roles[0] || ''
+  node.value.coRoles = roles.slice(1)
 }
 function editBranch(source: string, index: number) {
   selected.value = source

@@ -329,7 +329,7 @@ export const mockMenus: MenuItem[] = [
       },
       {
         id: 32,
-        title: 'BPMN设计',
+        title: '流程设计',
         name: 'BPMNDesign',
         path: '/admin/workflow/design',
         component: 'BPMNDesign',

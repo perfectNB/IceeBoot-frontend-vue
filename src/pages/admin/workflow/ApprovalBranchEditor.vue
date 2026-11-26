@@ -9,16 +9,17 @@
     <div class="branch-editor">
       <h3>当以下条件全部满足</h3>
       <div v-for="(c, i) in conditions" :key="i" class="condition">
-        <el-select v-model="c.field" aria-label="判断字段" placeholder="选择字段">
-          <el-option
-            v-for="f in fields"
-            :key="f.key"
-            :label="f.label || f.key"
-            :value="f.key"
-            :disabled="conditions.some((other, j) => j !== i && other.field === f.key)"
-          />
+        <el-select v-model="c.field" aria-label="判断字段" placeholder="选择字段" @change="c.operator = 'eq'">
+          <el-option v-for="f in fields" :key="f.key" :label="f.label || f.key" :value="f.key" />
         </el-select>
-        <span>等于</span>
+        <el-select
+          v-if="fields.find((f) => f.key === c.field)?.type === 'number'"
+          v-model="c.operator"
+          aria-label="比较方式"
+        >
+          <el-option v-for="(label, op) in comparisons" :key="op" :value="op" :label="label" />
+        </el-select>
+        <span v-else>等于</span>
         <el-input v-model="c.value" aria-label="比较值" placeholder="填写值" maxlength="2000" />
         <el-button
           text
@@ -32,10 +33,10 @@
         <el-button
           link
           type="primary"
-          :disabled="!unused"
-          @click="conditions.push({ field: unused!.key, value: '' })"
+          :disabled="!fields.length"
+          @click="conditions.push({ field: unused?.key || fields[0].key, value: '', operator: 'eq' })"
         >
-          ＋ 添加且条件
+          ＋ 添加条件
         </el-button>
         <el-button link @click="addingField = true">新建判断字段</el-button>
       </div>
@@ -107,13 +108,14 @@ const emit = defineEmits<{
 }>()
 const pendingFields = ref<ApprovalField[]>([])
 const fields = computed(() => [
-  ...props.allFields.filter((f) => f.kind === 'routing'),
+  ...props.allFields.filter((f) => f.kind === 'routing' || f.type === 'number'),
   ...pendingFields.value
 ])
-const conditions = ref(
+const comparisons = { eq: '等于', gt: '大于', ge: '大于等于', lt: '小于', le: '小于等于' }
+const conditions = ref<Exit['branches'][number]['conditions']>(
   props.branch?.conditions.length
-    ? props.branch.conditions.map((c) => ({ ...c }))
-    : [{ field: fields.value[0]?.key || '', value: '' }]
+    ? props.branch.conditions.map((c) => ({ ...c, operator: c.operator || 'eq' }))
+    : [{ field: fields.value[0]?.key || '', value: '', operator: 'eq' }]
 )
 const unused = computed(() => fields.value.find((f) => !conditions.value.some((c) => c.field === f.key)))
 const target = ref(props.branch?.target || '')
@@ -139,7 +141,7 @@ function addField() {
   pendingFields.value.push({ key, label, kind: 'routing', type: fieldType.value, required: true })
   const empty = conditions.value.find((c) => !c.field)
   if (empty) empty.field = key
-  else conditions.value.push({ field: key, value: '' })
+  else conditions.value.push({ field: key, value: '', operator: 'eq' })
   fieldKey.value = ''
   fieldLabel.value = ''
   addingField.value = false
@@ -154,15 +156,15 @@ function confirm() {
   const used = new Set<string>()
   for (const c of conditions.value) {
     const f = fields.value.find((f) => f.key === c.field)
-    if (!f || !c.value.trim() || used.has(c.field)) {
-      error.value = '请为每项条件选择不同的字段并填写比较值'
+    if (!f || !c.value.trim() || used.has(c.field + ':' + (c.operator || 'eq'))) {
+      error.value = '请填写比较值，同一字段和比较方式不能重复'
       return
     }
     if (f.type === 'number' && !isApprovalNumber(c.value)) {
       error.value = f.label + ' 的比较值需要填写数字'
       return
     }
-    used.add(c.field)
+    used.add(c.field + ':' + (c.operator || 'eq'))
   }
   let next: ApprovalNode | undefined
   if (destination.value === 'new') {
@@ -205,7 +207,7 @@ function confirm() {
 }
 .condition {
   display: grid;
-  grid-template-columns: minmax(80px, 1fr) auto minmax(70px, 1fr) 32px;
+  grid-template-columns: minmax(65px, 1fr) minmax(74px, 0.8fr) minmax(60px, 1fr) 24px;
   gap: 8px;
   align-items: center;
 }

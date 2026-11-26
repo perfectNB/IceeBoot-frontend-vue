@@ -273,16 +273,57 @@ test('approval forms route by multiple fields, isolate role inboxes and retain b
   assert.equal((await api.detail(third)).item.node,'C')
 })
 
+test('parallel sign-off enforces amount boundaries and cancels stale tasks across rounds', async () => {
+  const { load, login } = demo()
+  const api = load('@/api/approval').approvalApi
+  const { blankDesign, newExit, approvalPath } = load('@/utils/approval')
+  const d = blankDesign()
+  d.code = 'budget'
+  d.fields = [{key:'price', label:'金额', type:'number', kind:'business', required:true}]
+  d.nodes = [
+    {id:'joint', name:'联合会签', role:'admin', coRoles:['test'], exit:newExit()},
+    {id:'ordinary', name:'主管审批', role:'test', exit:newExit()}
+  ]
+  d.start = { branches:[{ conditions:[{ field:'price', operator:'ge', value:'5000' },
+    {field:'price', operator:'lt', value:'9007199254740993.01'}], target:'joint'}], fallback:'ordinary' }
+  for (const [price, node] of [['4999.99','ordinary'], ['5e3','joint'],
+    ['9007199254740993.009','joint'], ['9007199254740993.01','ordinary']]) {
+    assert.equal(approvalPath(d,{price})[0].id,node)
+  }
+  await login('admin')
+  await api.save(d,0)
+  await api.publish(d.code,1)
+  const id = await api.submit(d.code,1,{price:'5000'})
+  const old = (await api.detail(id)).tasks
+  assert.equal(old.length,2)
+  await api.review(id,'reject',{revision:1,taskId:old[0].id,reason:'重新核价'})
+  await login('user_admin')
+  assert.equal((await api.list('inbox')).length,0)
+  await login('admin')
+  await api.revise(id,'resubmit',{revision:2,values:{price:'5100'}})
+  const tasks = (await api.detail(id)).tasks
+  await api.review(id,'approve',{revision:3,taskId:tasks[0].id})
+  assert.equal((await api.detail(id)).item.status,'PENDING')
+  await login('user_admin')
+  await assert.rejects(api.review(id,'approve',{revision:1,taskId:old[1].id}))
+  await api.review(id,'approve',{revision:3,taskId:tasks[1].id})
+  const result = await api.detail(id)
+  assert.equal(result.item.status,'APPROVED')
+  assert.equal(result.history[1].reason,'重新核价')
+  assert.equal(result.history[2].round,2)
+  assert.equal(result.history[4].role,'test')
+})
+
 test('approval API uses the published version and sends the observed revision with review actions', async () => {
   const calls = []
   const { load } = demo(new Proxy({}, {get: (_,method) => async (url,data) => calls.push([method,url,data])}))
   const api = load('@/api/approval').approvalApi
   await api.submit('travel',3,{price:'80'})
-  await api.review('id/1','reject',{revision:2,reason:'需凭证'})
+  await api.review('id/1','reject',{revision:2,taskId:'t1',reason:'需凭证'})
   await api.revise('id/1','resubmit',{revision:3,values:{price:'60'}})
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
     ['post','/api/v1/workflow/approvals/cases',{code:'travel',version:3,values:{price:'80'}}],
-    ['post','/api/v1/workflow/approvals/cases/id%2F1/review/reject',{revision:2,reason:'需凭证'}],
+    ['post','/api/v1/workflow/approvals/cases/id%2F1/review/reject',{revision:2,taskId:'t1',reason:'需凭证'}],
     ['post','/api/v1/workflow/approvals/cases/id%2F1/owner/resubmit',{revision:3,values:{price:'60'}}],
   ])
 })

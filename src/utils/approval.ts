@@ -1,4 +1,4 @@
-import type { ApprovalDesign, ApprovalNode, Exit, Values } from '@/types/approval'
+import type { ApprovalDesign, ApprovalNode, Comparison, Exit, Values } from '@/types/approval'
 
 export const end = '@end'
 export const newExit = (fallback = end): Exit => ({ branches: [], fallback })
@@ -13,12 +13,19 @@ export const blankDesign = (): ApprovalDesign => ({
 const numeric = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i
 export const isApprovalNumber = (value: string) => numeric.test(value)
 
+export const symbols: Record<Comparison, string> = { eq: '=', gt: '>', ge: '≥', lt: '<', le: '≤' }
+export const reviewerRoles = (n: ApprovalNode) => [n.role, ...(n.coRoles || [])].filter(Boolean)
+
 export function branchLabel(fields: ApprovalDesign['fields'], branch: Exit['branches'][number]) {
   return (
     branch.conditions
       .map(
         (c) =>
-          (fields.find((f) => f.key === c.field)?.label || c.field || '未选字段') + ' = ' + (c.value || '…')
+          (fields.find((f) => f.key === c.field)?.label || c.field || '未选字段') +
+          ' ' +
+          symbols[c.operator || 'eq'] +
+          ' ' +
+          (c.value || '…')
       )
       .join(' 且 ') || '待填写条件'
   )
@@ -52,7 +59,14 @@ export function validateDesign(d: ApprovalDesign, roles: string[]) {
   const nodes = new Map(d.nodes.map((n) => [n.id, n]))
   if (nodes.size !== d.nodes.length) throw Error('节点标识重复')
   for (const n of d.nodes) {
-    if (!identifier.test(n.id) || !n.name.trim() || !roles.includes(n.role))
+    if (
+      !identifier.test(n.id) ||
+      !n.name.trim() ||
+      !roles.includes(n.role) ||
+      reviewerRoles(n).some((r) => !roles.includes(r)) ||
+      new Set(reviewerRoles(n)).size !== reviewerRoles(n).length ||
+      reviewerRoles(n).length > 50
+    )
       throw Error('请为每个审批节点填写名称并选择角色')
   }
   const seen = new Set<string>()
@@ -63,15 +77,17 @@ export function validateDesign(d: ApprovalDesign, roles: string[]) {
       if (
         !b.conditions.length ||
         b.conditions.some((c) => {
-          const f = d.fields.find((f) => f.key === c.field && f.kind === 'routing')
+          const f = d.fields.find((f) => f.key === c.field && (f.kind === 'routing' || f.type === 'number'))
           if (
             !f ||
             !c.value.trim() ||
-            used.has(c.field) ||
+            used.has(c.field + ':' + (c.operator || 'eq')) ||
+            !Object.prototype.hasOwnProperty.call(symbols, c.operator || 'eq') ||
+            (f.type !== 'number' && c.operator && c.operator !== 'eq') ||
             (f.type === 'number' && !isApprovalNumber(c.value))
           )
             return true
-          used.add(c.field)
+          used.add(c.field + ':' + (c.operator || 'eq'))
           return false
         })
       )
@@ -107,6 +123,26 @@ function decimal(value: string) {
   )
 }
 
+function compareAmount(left: string, right: string) {
+  const a = decimal(left),
+    b = decimal(right)
+  if (a === b) return 0
+  const sign = (v: string) => (v === '0' ? 0 : v.startsWith('-') ? -1 : 1)
+  if (sign(a) !== sign(b)) return sign(a) - sign(b)
+  const [ad, ae] = a.replace(/^-/, '').split('e'),
+    [bd, be] = b.replace(/^-/, '').split('e')
+  const am = BigInt(ae) + BigInt(ad.length),
+    bm = BigInt(be) + BigInt(bd.length)
+  const width = Math.max(ad.length, bd.length)
+  const smaller = am === bm ? ad.padEnd(width, '0') < bd.padEnd(width, '0') : am < bm
+  return (smaller ? -1 : 1) * sign(a)
+}
+
+function amountMatches(actual: string, value: string, operator: Comparison = 'eq') {
+  const cmp = compareAmount(actual, value)
+  return { eq: cmp === 0, gt: cmp > 0, ge: cmp >= 0, lt: cmp < 0, le: cmp <= 0 }[operator]
+}
+
 export function approvalPath(d: ApprovalDesign, values: Values): ApprovalNode[] {
   validateForm(d, values)
   const path: ApprovalNode[] = []
@@ -115,7 +151,7 @@ export function approvalPath(d: ApprovalDesign, values: Values): ApprovalNode[] 
     const branch = exit.branches.find((b) =>
       b.conditions.every((c) =>
         d.fields.find((f) => f.key === c.field)?.type === 'number'
-          ? decimal(values[c.field]) === decimal(c.value)
+          ? !!values[c.field]?.trim() && amountMatches(values[c.field], c.value, c.operator)
           : values[c.field] === c.value
       )
     )

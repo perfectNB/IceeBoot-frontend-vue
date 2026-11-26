@@ -9,7 +9,7 @@ import type {
   Scope,
   Values
 } from '@/types/approval'
-import { approvalPath, validateDesign } from '@/utils/approval'
+import { approvalPath, reviewerRoles, validateDesign } from '@/utils/approval'
 import { mockRoles } from '../data/role'
 import { mockUsers } from '../data/user'
 import { demoUserId } from './auth'
@@ -30,14 +30,11 @@ function actor() {
 function requireAccess(action: string) {
   if (!actor().permissions?.includes('workflow:approval:' + action + ':api')) throw Error('缺少审批权限')
 }
+function canHandle(role: string) {
+  return !!actor().roles?.includes(role) && mockRoles.some((r) => r.code === role && r.status === 'active')
+}
 function allowed(c: Case) {
-  const role = c.design.nodes.find((n) => n.id === c.item.node)?.role
-  return (
-    c.item.status === 'PENDING' &&
-    !!role &&
-    !!actor().roles?.includes(role) &&
-    mockRoles.some((r) => r.code === role && r.status === 'active')
-  )
+  return c.item.status === 'PENDING' && c.tasks?.some((t) => canHandle(t.role))
 }
 function application(id: string, revision?: number) {
   const c = cases.get(id)
@@ -50,7 +47,8 @@ function event(
   action: ApprovalEvent['action'],
   node: string,
   reason = '',
-  values: Values | null = null
+  values: Values | null = null,
+  role?: string
 ) {
   const u = actor()
   c.item.updatedAt = time()
@@ -61,11 +59,16 @@ function event(
     reason,
     time: c.item.updatedAt,
     actor: u.username,
+    role,
     actorId: Number(u.id),
     values: copy(values)
   })
 }
 function move(c: Case, node?: string) {
+  const next = c.design.nodes.find((n) => n.id === node)
+  c.tasks = next
+    ? reviewerRoles(next).map((role) => ({ id: crypto.randomUUID(), role, node: next.id, actionable: false }))
+    : []
   c.item.node = node || ''
   c.item.status = node ? 'PENDING' : 'APPROVED'
 }
@@ -154,22 +157,37 @@ export const mockApproval = {
     const mine = c.owner === Number(actor().id)
     if (!mine && !allowed(c) && !c.history.some((e) => e.actorId === Number(actor().id)))
       throw Error('无权查看该申请')
-    return copy({ ...c, mine, canReview: allowed(c) })
+    return copy({
+      ...c,
+      mine,
+      canReview: !!allowed(c),
+      roleNames: Object.fromEntries(
+        mockRoles
+          .filter((r) => c.design.nodes.some((n) => reviewerRoles(n).includes(r.code)))
+          .map((r) => [r.code, r.name])
+      ),
+      tasks: c.tasks?.map((t) => ({ ...t, actionable: canHandle(t.role) }))
+    })
   },
   async review(id: string, action: Decision, change: Change) {
     requireAccess('review')
-    const c = application(id, change.revision)
-    if (!allowed(c) || change.values) throw Error('无法处理该任务')
+    const c = application(id, change.taskId ? undefined : change.revision)
+    const choices =
+      c.tasks?.filter((t) => canHandle(t.role) && (!change.taskId || change.taskId === t.id)) || []
+    if (choices.length !== 1 || !allowed(c) || change.values) throw Error('无法处理该任务')
     const reason = change.reason?.trim() || ''
     if ((action === 'reject' && !reason) || reason.length > 2000) throw Error('请检查审批意见')
     const node = c.design.nodes.find((n) => n.id === c.item.node)!
-    if (action === 'approve') move(c, c.route[c.route.indexOf(node.id) + 1])
-    else {
+    c.tasks = c.tasks!.filter((t) => t.id !== choices[0].id)
+    if (action === 'approve') {
+      if (!c.tasks.length) move(c, c.route[c.route.indexOf(node.id) + 1])
+    } else {
+      c.tasks = []
       c.item.status = 'REJECTED'
       c.item.node = ''
     }
     c.item.revision++
-    event(c, action === 'approve' ? 'APPROVE' : 'REJECT', node.name, reason)
+    event(c, action === 'approve' ? 'APPROVE' : 'REJECT', node.name, reason, null, choices[0].role)
   },
   async revise(id: string, action: OwnerAction, change: Change) {
     requireAccess('revise')

@@ -5,14 +5,16 @@ export interface ApprovalField {
   type: 'text' | 'number'
   required: boolean
 }
+export type Comparison = 'eq' | 'gt' | 'ge' | 'lt' | 'le'
 export interface Exit {
-  branches: { conditions: { field: string; value: string }[]; target: string }[]
+  branches: { conditions: { field: string; value: string; operator?: Comparison }[]; target: string }[]
   fallback: string
 }
 export interface ApprovalNode {
   id: string
   name: string
   role: string
+  coRoles?: string[]
   exit: Exit
 }
 export interface ApprovalDesign {
@@ -46,6 +48,7 @@ export interface ApprovalItem {
   updatedAt: string
 }
 export interface ApprovalEvent {
+  role?: string
   round: number
   action: 'SUBMIT' | 'RESUBMIT' | 'APPROVE' | 'REJECT' | 'VOID'
   node: string
@@ -63,9 +66,12 @@ export interface ApprovalDetail {
   history: ApprovalEvent[]
   route: string[]
   mine: boolean
+  roleNames?: Record<string, string>
+  tasks?: { id: string; node: string; role: string; actionable: boolean }[]
   canReview: boolean
 }
 export interface Change {
+  taskId?: string
   revision: number
   reason?: string
   values?: Values

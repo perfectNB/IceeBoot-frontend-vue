@@ -39,7 +39,7 @@
         <div v-if="exit" class="approval-rule">
           <strong>流转条件</strong>
           <p v-for="(b, i) in exit.branches" :key="i">
-            {{ b.conditions.map((c) => c.field + ' = ' + c.value).join(' 且 ') }} → {{ target(b.target) }}
+            {{ branchLabel(selected.design.fields, b) }} → {{ target(b.target) }}
           </p>
           <p>默认 → {{ target(exit.fallback) }}</p>
         </div>
@@ -55,6 +55,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { Share } from '@element-plus/icons-vue'
 import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
+import { branchLabel } from '@/utils/approval'
 import ApprovalGraph from './ApprovalGraph.vue'
 import { approvalApi } from '@/api/approval'
 import { hasPermission } from '@/utils/permission'

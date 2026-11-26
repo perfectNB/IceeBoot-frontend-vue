@@ -1,3 +1,4 @@
+import { mockUsageOverview } from './agentUsage'
 import type { AgentConsoleApi, AgentSchedule, AgentScheduleRequest, AgentSpec, SkillImportDraft } from '@/api/agentConsole'
 import { agents, agentById, capabilities, copy, models, nextId, publish, release, releases, removeRow, saveRow } from './agentCatalog'
 import { chat } from './agentConversation'
@@ -24,6 +25,7 @@ function importSkill(skill: SkillImportDraft) {
 }
 
 export const mockAgentConsole: AgentConsoleApi = {
+  usageOverview: mockUsageOverview,
   ...chat,
   models: async () => copy(models),
   saveModel: async body => saveRow(models, { ...body, apiKey: body.apiKey ? '********' : '' }),
@@ -50,7 +52,7 @@ export const mockAgentConsole: AgentConsoleApi = {
       agent.draft = copy(body)
       return copy(agent)
     }
-    const agent = { draft: copy({ ...body, id: nextId() }), activeVersion: 0, activeReleaseId: '', callCount: 0 }
+    const agent = { draft: copy({ ...body, id: nextId() }), activeVersion: 0, activeReleaseId: '', callCount: 0, totalInputTokens: 0, totalOutputTokens: 0, totalCachedTokens: null }
     agents.push(agent)
     return copy(agent)
   },

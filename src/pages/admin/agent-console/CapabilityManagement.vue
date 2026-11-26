@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { computed, nextTick, reactive, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox, type FormInstance, type FormItemRule, type FormRules } from 'element-plus'
@@ -167,11 +168,10 @@ watch(() => page.value.kind, () => {
 }, { immediate: true })
 </script>
 <template>
-  <main class="agent-console capability-page">
-    <header class="console-heading">
-      <div class="page-intro"><span class="page-symbol" aria-hidden="true"><el-icon><component :is="page.icon" /></el-icon></span><div><h1>{{ page.title }}</h1><p class="subtitle">{{ page.description }}</p></div></div>
-      <div class="console-actions"><el-button v-if="page.kind === 'SKILL' && (hasPermission('ai:skill:import:archive:api') || hasPermission('ai:skill:import:github:api'))" @click="importVisible = true">导入技能</el-button><el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button><el-button v-if="hasPermission('ai:capability:write')" type="primary" :icon="Plus" @click="edit()">新建{{ page.title }}</el-button></div>
-    </header>
+  <main class="agent-console capability-page admin-page">
+    <AdminPageHeader :title="page.title" :description="page.description">
+      <el-button v-if="page.kind === 'SKILL' && (hasPermission('ai:skill:import:archive:api') || hasPermission('ai:skill:import:github:api'))" @click="importVisible = true">导入技能</el-button><el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button><el-button v-if="hasPermission('ai:capability:write')" type="primary" :icon="Plus" @click="edit()">新建{{ page.title }}</el-button>
+    </AdminPageHeader>
     <section class="console-panel capability-panel" :aria-label="`${page.title}列表`">
       <div class="list-toolbar"><span class="list-count">全部{{ page.title }} <strong>{{ rows.length }}</strong></span><el-input v-model="keyword" :prefix-icon="Search" placeholder="搜索名称、编码或说明" clearable aria-label="搜索能力配置" /></div>
       <el-table v-loading="loading" :data="filteredRows">
@@ -229,8 +229,7 @@ watch(() => page.value.kind, () => {
   </main>
 </template>
 <style scoped lang="scss">
-.page-intro { display: flex; gap: 14px; align-items: center; }
-.page-symbol, .dialog-symbol { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; border: 1px solid var(--el-border-color-light); border-radius: 11px; background: var(--el-bg-color); color: var(--el-color-primary); font-size: 23px; }
+.dialog-symbol { display: grid; place-items: center; flex-shrink: 0; width: 44px; height: 44px; border: 1px solid var(--el-border-color-light); border-radius: 11px; background: var(--el-bg-color); color: var(--el-color-primary); font-size: 23px; }
 .capability-panel { padding: 0; overflow: hidden; }
 .list-toolbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; padding: 18px 20px; border-bottom: 1px solid var(--el-border-color-lighter); }
 .list-toolbar :deep(.el-input) { max-width: 280px; }
@@ -263,5 +262,5 @@ watch(() => page.value.kind, () => {
 .timeout-control { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; :deep(.el-input-number) { width: 160px; } > span { color: var(--el-text-color-regular); font-size: 12px; } .timeout-note { margin-left: 8px; color: var(--el-text-color-secondary); font-size: 11px; } }
 .template-note { display: flex; gap: 12px; padding: 16px; background: var(--el-fill-color-lighter); border: 1px solid var(--el-border-color-lighter); border-radius: 8px; > .el-icon { color: var(--el-color-primary); margin-top: 2px; font-size: 20px; flex-shrink: 0; } strong { font-size: 12px; font-weight: 550; } p { margin: 6px 0 0; color: var(--el-text-color-secondary); font-size: 11px; line-height: 1.8; } }
 .capability-footer { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; .save-note { font-size: 11px; color: var(--el-text-color-secondary); line-height: 1.7; } > div { display: flex; gap: 8px; } :deep(.el-button + .el-button) { margin-left: 0; } }
-@media (max-width: 600px) { .page-intro { align-items: flex-start; gap: 10px; } .page-symbol { width: 36px; height: 36px; font-size: 20px; } .list-toolbar { padding: 14px; } .list-toolbar :deep(.el-input) { max-width: none; } :global(.capability-settings .el-dialog__header) { padding: 18px; } :global(.capability-settings .el-dialog__footer) { padding: 14px 18px; } .form-section { padding: 20px 18px; } .dialog-symbol { display: none; } .request-grid { grid-template-columns: 1fr; gap: 0; } .capability-footer { justify-content: flex-end; } .capability-footer .save-note { width: 100%; } }
+@media (max-width: 600px) { .list-toolbar { padding: 14px; } .list-toolbar :deep(.el-input) { max-width: none; } :global(.capability-settings .el-dialog__header) { padding: 18px; } :global(.capability-settings .el-dialog__footer) { padding: 14px 18px; } .form-section { padding: 20px 18px; } .dialog-symbol { display: none; } .request-grid { grid-template-columns: 1fr; gap: 0; } .capability-footer { justify-content: flex-end; } .capability-footer .save-note { width: 100%; } }
 </style>

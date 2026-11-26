@@ -1,9 +1,6 @@
 <template>
-  <div class="message-center">
-    <div class="page-header">
-      <h1 class="page-title">{{ t('message.title') }}</h1>
-      <p class="page-description">{{ t('message.description') }}</p>
-    </div>
+  <div class="message-center admin-page">
+    <AdminPageHeader :title="t('message.title')" :description="t('message.description')" />
 
     <div class="message-content">
       <!-- 消息统计卡片 -->
@@ -238,6 +235,7 @@
 </template>
 
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -528,11 +526,6 @@ onMounted(() => {
   padding: 20px;
   background: var(--bg-color-page);
   min-height: 100vh;
-}
-
-.page-header {
-  margin-bottom: 32px;
-  text-align: left;
 }
 
 .page-title {

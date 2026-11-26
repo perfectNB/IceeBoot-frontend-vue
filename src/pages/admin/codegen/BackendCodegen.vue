@@ -1,9 +1,6 @@
 <template>
-  <div class="backend-codegen">
-    <div class="page-header">
-      <h1 class="page-title">{{ t('backendCodegen.pageTitle') }}</h1>
-      <p class="page-description">{{ t('backendCodegen.pageDescription') }}</p>
-    </div>
+  <div class="backend-codegen admin-page">
+    <AdminPageHeader :title="t('backendCodegen.pageTitle')" :description="t('backendCodegen.pageDescription')" />
 
     <!-- 基础配置 -->
     <div class="config-section">
@@ -159,6 +156,7 @@
 </template>
 
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Plus, Setting, View } from '@element-plus/icons-vue'

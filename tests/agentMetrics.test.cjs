@@ -43,3 +43,14 @@ test('preparation distinguishes nested repeated restores from total and provider
  assert.equal(result.firstResponseMs,21500)
  assert.equal(result.firstTokenMs,1500)
 })
+
+test('缓存命中按模型请求去重，部分上报时保留已知值并隐藏比例', () => {
+ const hit = event(1, 'MODEL_FINISHED', { inputTokens: 100, cachedTokens: 60 })
+ const unknown = event(2, 'MODEL_FINISHED', { inputTokens: 200 })
+ assert.equal(runMetrics([hit, hit]).cache.rate, 60)
+ const cache = runMetrics([hit, unknown]).cache
+ assert.equal(cache.hits, 60)
+ assert.equal(cache.coverage, '1/2')
+ assert.equal(cache.rate, null)
+ assert.equal(runMetrics([unknown]).cache.hits, null)
+})

@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./src/assets/logo.svg" alt="IceeBoot Logo" width="120" height="120">
+  <img src="./src/assets/logo.png" alt="IceeBoot Logo" width="120" height="120">
   <h1>🚀 IceeBoot 超级脚手架 - 前端</h1>
   <p><strong>基于 Vue 3 + TypeScript + Element Plus 的现代化企业级管理系统</strong></p>
   <p>集成 AI 大模型 + 工作流引擎 + 代码生成器的全栈开发框架</p>
@@ -316,7 +316,7 @@ zboot-frontend-vue/
 │   │   ├── student.ts               # 示例 CRUD 模块
 │   │   └── index.ts                 # API 统一导出
 │   ├── assets/                      # 静态资源
-│   │   ├── logo.svg                 # Logo
+│   │   ├── logo.png                 # Logo
 │   │   ├── img/                     # 图片资源
 │   │   ├── base.css                 # 基础样式
 │   │   └── main.css                 # 主样式

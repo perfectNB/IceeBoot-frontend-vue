@@ -21,5 +21,14 @@ export default {
   "other": "Other",
   "source": "Demo data",
   "date": "Date",
-  "details": "View daily breakdown"
+  "details": "View daily breakdown",
+  "periodLogs": "Logs in period",
+  "errorShare": "Error log share",
+  "peakDay": "Peak day",
+  "events": "{count} logs",
+  "enabledShare": "Accounts enabled",
+  "noAccounts": "No accounts",
+  "recentErrors": "Recent error logs",
+  "openLogs": "View error logs",
+  "noErrors": "No error logs"
 }

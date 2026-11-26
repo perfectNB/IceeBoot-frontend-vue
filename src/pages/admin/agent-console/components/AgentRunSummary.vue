@@ -16,6 +16,7 @@ const description = computed(() => '准备是首次模型调用前的总等待�
     <span>模型 <b>{{ metrics.modelCalls ? formatDuration(metrics.modelMs) : '—' }}</b><small>· {{ metrics.modelCalls }}次</small></span>
     <span>工具 <b>{{ metrics.toolCalls }}次</b><small v-if="metrics.toolCalls">· {{ formatDuration(metrics.toolMs) }}</small></span>
     <span>Token <b>{{ metrics.usageKnown ? `${metrics.inputTokens.toLocaleString()} / ${metrics.outputTokens.toLocaleString()}` : '未完整返回' }}</b></span>
+    <span v-if="metrics.modelCalls" :title="'缓存统计覆盖 ' + metrics.cache.coverage + ' 次模型请求'">缓存命中 <b>{{ metrics.cache.hits?.toLocaleString() ?? '未确认' }}</b><small v-if="metrics.cache.rate != null">· {{ metrics.cache.rate }}%</small></span>
     <el-tooltip :content="description" placement="top" :show-after="200">
       <button class="metrics-info" type="button" :aria-label="description">ⓘ</button>
     </el-tooltip>

@@ -46,7 +46,7 @@ const draft: AgentSpec = {
   modelConfigId: 1, maxRounds: 4, enabled: true, sandboxEnabled: false, planMode: false, outputFormat: 'TEXT', outputSchema: {},
   generation: {}, skillIds: [1], toolIds: [], mcpIds: [], knowledgeIds: [], childAgentIds: [], environment: {},
 }
-export const agents: AgentView[] = [{ draft, activeReleaseId: '', activeVersion: 0, callCount: 0 }]
+export const agents: AgentView[] = [{ draft, activeReleaseId: '', activeVersion: 0, callCount: 0, totalInputTokens: 0, totalOutputTokens: 0, totalCachedTokens: null }]
 interface Snapshot extends ReleaseView { spec: AgentSpec }
 const history = new Map<number, Snapshot[]>()
 

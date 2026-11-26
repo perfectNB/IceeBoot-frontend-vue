@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { Cpu, Plus, Refresh, Search, VideoPlay, Clock } from '@element-plus/icons-vue'
+import { computed, defineAsyncComponent, onMounted, ref, watch } from 'vue'
+import { Cpu } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import {
   agentConsole,
@@ -12,19 +12,22 @@ import {
   type ReleaseView,
 } from '@/api/agentConsole'
 import { hasPermission } from '@/utils/permission'
-import AgentConversation from './components/AgentConversation.vue'
+import AgentDirectory from './components/AgentDirectory.vue'
 import AgentVersions from './components/AgentVersions.vue'
-import AgentSchedules from './components/AgentSchedules.vue'
-const schedulesVisible = ref(false)
 import AgentPreflightDialog from './components/AgentPreflightDialog.vue'
-const preflightVisible = ref(false)
 import JsonField from './components/JsonField.vue'
 import KeyValueField from './components/KeyValueField.vue'
 import BoundCapabilityPicker from './components/BoundCapabilityPicker.vue'
 import './console.scss'
+
+const AgentConversation = defineAsyncComponent(() => import('./components/AgentConversation.vue'))
+const AgentSchedules = defineAsyncComponent(() => import('./components/AgentSchedules.vue'))
+const schedulesVisible = ref(false)
+const preflightVisible = ref(false)
+const listFailed = ref(false)
+const modelState = ref<'loading' | 'ready' | 'error'>('loading')
 const agents = ref<AgentView[]>([]),
   models = ref<ModelConfig[]>([]),
-  capabilities = ref<Capability[]>([]),
   versions = ref<ReleaseView[]>([])
 const loading = ref(false),
   saving = ref(false),
@@ -34,8 +37,6 @@ const loading = ref(false),
   validExtra = ref(true),
   validEnvironment = ref(true),
   section = ref('basic'),
-  keyword = ref(''),
-  statusFilter = ref('all'),
   savedSnapshot = ref('')
 const formRef = ref<FormInstance>(),
   current = ref<AgentView>(),
@@ -53,12 +54,6 @@ const sections = [
   ['env', '环境变量'],
   ['versions', '版本'],
 ]
-const filtered = computed(() =>
-  agents.value.filter((a) =>
-    `${a.draft.name} ${a.draft.code}`.toLowerCase().includes(keyword.value.toLowerCase()) &&
-    (statusFilter.value === 'all' || (statusFilter.value === 'published' ? a.activeVersion > 0 : !a.activeVersion)),
-  ),
-)
 const activeModels = computed(() => models.value.filter((model) => model.enabled))
 const selectedModel = computed(() => models.value.find((model) => model.id === form.value.modelConfigId))
 const selectedChildren = computed(() => agents.value.filter((agent) => form.value.childAgentIds.includes(agent.draft.id!)))
@@ -76,10 +71,6 @@ const sectionDescription: Record<string, string> = {
   children: '将专门的任务交给其他已发布的智能体。',
   env: '为当前智能体的沙箱提供运行时变量与凭据。',
   versions: '查看当前生效版本；后续编辑保留为草稿，发布后才会生效。',
-}
-function modelName(id?: number) {
-  const model = models.value.find((item) => item.id === id)
-  return model ? `${model.name} · ${model.model}` : '未选择模型'
 }
 function sectionCount(key: string) {
   return ({ skills: form.value.skillIds.length, tools: form.value.toolIds.length, mcp: form.value.mcpIds.length,
@@ -123,22 +114,66 @@ function empty(): AgentSpec {
   }
 }
 const form = ref<AgentSpec>(empty())
-function options(kind: CapabilityKind) {
-  return capabilities.value.filter((c) => c.kind === kind && c.enabled)
+const capabilitySections: Record<string, CapabilityKind> = {
+  skills: 'SKILL', tools: 'TOOL', mcp: 'MCP', knowledge: 'KNOWLEDGE',
 }
-async function load() {
-  loading.value = true
+const activeKind = computed(() => {
+  if (!visible.value) return undefined
+  if (section.value === 'basic' && form.value.sandboxEnabled) return 'SANDBOX'
+  return capabilitySections[section.value]
+})
+type OptionsEntry = { state: 'loading' | 'ready' | 'error'; values: Capability[] }
+const catalogs = ref<Partial<Record<CapabilityKind, OptionsEntry>>>({})
+function options(kind: CapabilityKind) {
+  return catalogs.value[kind]?.values ?? []
+}
+async function loadOptions(kind: CapabilityKind) {
+  const catalog = catalogs.value
+  if (catalog[kind] && catalog[kind]?.state !== 'error') return
+  catalog[kind] = { state: 'loading', values: [] }
   try {
-    ;[agents.value, models.value, capabilities.value] = await Promise.all([
-      agentConsole.agents(),
-      agentConsole.models(),
-      agentConsole.capabilities(),
-    ])
-  } finally {
-    loading.value = false
+    const values = await agentConsole.capabilities(kind)
+    catalog[kind] = { state: 'ready', values: values.filter(item => item.enabled) }
+  } catch {
+    catalog[kind] = { state: 'error', values: [] }
   }
 }
+watch(activeKind, kind => { if (kind) void loadOptions(kind) })
+
+let listRequest = 0
+async function load() {
+  const request = ++listRequest
+  loading.value = true
+  listFailed.value = false
+  try {
+    const result = await agentConsole.agents()
+    if (request === listRequest) agents.value = result
+  } catch {
+    if (request === listRequest) listFailed.value = true
+  } finally {
+    if (request === listRequest) loading.value = false
+  }
+}
+let modelRequest = 0
+async function loadModels() {
+  const request = ++modelRequest
+  modelState.value = 'loading'
+  try {
+    const result = await agentConsole.models()
+    if (request === modelRequest) {
+      models.value = result
+      modelState.value = 'ready'
+    }
+  } catch {
+    if (request === modelRequest) modelState.value = 'error'
+  }
+}
+function refreshDirectory() {
+  void load()
+  void loadModels()
+}
 async function edit(value?: AgentView) {
+  catalogs.value = {}
   current.value = value
   form.value = value ? JSON.parse(JSON.stringify(value.draft)) : empty()
   form.value.generation ||= { extra: {} }
@@ -220,68 +255,12 @@ function openRun(value: AgentView) {
   selected.value = value
   runVisible.value = true
 }
-onMounted(load)
+onMounted(refreshDirectory)
 </script>
 <template>
-  <main class="agent-console">
-    <header class="console-heading">
-      <div class="console-title-block">
-        <span class="console-title-icon"><el-icon><Cpu /></el-icon></span>
-        <div><p class="console-eyebrow">执行与能力编排</p><h1>智能体 <span class="console-count">{{ agents.length }}</span></h1>
-          <p class="subtitle">从一个模型和一段提示词开始，按需挂载技能、工具与知识库。</p></div>
-      </div>
-      <div class="console-actions">
-        <el-button v-if="hasPermission('ai:schedule:read:api')" :icon="Clock" @click="schedulesVisible = true">定时任务</el-button>
-        <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
-        <el-button v-if="hasPermission('ai:agent:write')" type="primary" :icon="Plus" @click="edit()">
-          新建智能体
-        </el-button>
-      </div>
-    </header>
-    <div class="console-toolbar">
-      <el-input v-model="keyword" placeholder="搜索智能体名称或编码" clearable aria-label="搜索智能体" :prefix-icon="Search" class="agent-search" />
-      <el-radio-group v-model="statusFilter" aria-label="按发布状态筛选">
-        <el-radio-button value="all">全部</el-radio-button><el-radio-button value="published">已发布</el-radio-button><el-radio-button value="draft">未发布</el-radio-button>
-      </el-radio-group>
-      <span class="toolbar-caption">{{ filtered.length }} 个智能体</span>
-    </div>
-    <section v-loading="loading" class="agent-grid">
-      <div v-if="!filtered.length && !loading" class="console-empty">
-        <el-empty :description="agents.length ? '没有匹配的智能体' : '创建你的第一个智能体'">
-          <p class="field-help">{{ agents.length ? '尝试其他关键词或发布状态。' : '先在「模型连接」配置并启用模型，再填写智能体职责并发布。' }}</p>
-          <el-button v-if="!agents.length && hasPermission('ai:agent:write')" type="primary" :icon="Plus" @click="edit()">新建智能体</el-button>
-        </el-empty>
-      </div>
-      <article v-for="agent in filtered" :key="agent.draft.id" class="agent-card">
-        <div class="agent-card-top">
-          <el-avatar class="agent-avatar" shape="square" :size="44" :src="agent.draft.avatar || undefined">{{ agent.draft.name.slice(0, 1) }}</el-avatar>
-          <el-tag :type="agent.activeVersion ? 'success' : 'info'">
-            {{ agent.activeVersion ? `已发布 v${agent.activeVersion}` : '未发布' }}
-          </el-tag>
-        </div>
-        <h2>{{ agent.draft.name }}</h2>
-        <p class="code">{{ agent.draft.code }}</p>
-        <p class="agent-description">{{ agent.draft.description || '暂无说明' }}</p>
-        <p class="agent-model"><el-icon><Cpu /></el-icon><span>{{ modelName(agent.draft.modelConfigId) }}</span></p>
-        <div class="agent-meta">
-          <span>调用 <strong>{{ agent.callCount }}</strong> 次</span>
-          <span>{{ agent.draft.sandboxEnabled ? 'E2B 沙箱' : '接口与工具' }}</span>
-        </div>
-        <footer>
-          <el-button v-if="hasPermission('ai:agent:write')" @click="edit(agent)">配置</el-button>
-          <el-button
-            v-if="hasPermission('ai:agent:invoke')"
-            type="primary"
-            plain
-            :icon="VideoPlay"
-            :disabled="!agent.activeVersion"
-            @click="openRun(agent)"
-          >
-            运行已发布版本
-          </el-button>
-        </footer>
-      </article>
-    </section>
+  <main class="agent-console admin-page">
+    <AgentDirectory :agents="agents" :models="models" :loading="loading" :failed="listFailed"
+      @refresh="refreshDirectory" @schedules="schedulesVisible = true" @edit="edit" @run="openRun" />
     <el-dialog
       v-model="visible"
       :title="form.id ? '配置智能体' : '新建智能体'"
@@ -324,6 +303,10 @@ onMounted(load)
           :aria-labelledby="`agent-tab-${section}`"
         >
           <div class="settings-section-heading"><div><h3>{{ sections.find((item) => item[0] === section)?.[1] }}</h3><p>{{ sectionDescription[section] }}</p></div></div>
+          <div v-if="activeKind && catalogs[activeKind]?.state === 'error'" role="alert" class="catalog-feedback">
+            资源列表加载失败。<el-button link type="primary" @click="loadOptions(activeKind)">重试</el-button>
+          </div>
+          <p v-else-if="activeKind && catalogs[activeKind]?.state !== 'ready'" class="catalog-feedback" role="status">正在加载资源…</p>
           <section v-show="section === 'basic'">
             <div class="form-grid">
               <el-form-item label="智能体名称" prop="name" :rules="[{ required: true, whitespace: true, message: '请填写智能体名称', trigger: 'blur' }]">
@@ -335,15 +318,17 @@ onMounted(load)
               </el-form-item>
             </div>
             <el-form-item label="运行模型" prop="modelConfigId" :rules="[{ required: true, message: '请选择运行模型', trigger: 'change' }]">
-              <el-select v-model="form.modelConfigId" filterable placeholder="选择模型连接">
+              <el-select v-model="form.modelConfigId" :loading="modelState === 'loading'" filterable placeholder="选择模型连接">
                 <el-option
-                  v-for="m in models.filter((m) => m.enabled)"
+                  v-for="m in activeModels"
                   :key="m.id"
                   :label="`${m.name} · ${m.model}`"
                   :value="m.id!"
                 />
               </el-select>
-              <p v-if="!activeModels.length" class="field-help">暂无可用模型，请先在「模型连接」新增并启用一个连接，再刷新此页。</p>
+              <p v-if="modelState === 'loading'" class="field-help">正在加载模型…</p>
+              <p v-else-if="modelState === 'error'" class="field-help">模型加载失败。<el-button link type="primary" @click="loadModels">重试</el-button></p>
+              <p v-else-if="!activeModels.length" class="field-help">暂无可用模型，请先在「模型连接」新增并启用一个连接，再刷新此页。</p>
               <p v-else class="field-help">{{ selectedModel ? `${selectedModel.provider} · ${selectedModel.model}` : '选择后台已配置的模型连接，无需重复填写密钥。' }}</p>
             </el-form-item>
             <div v-if="selectedModel" class="selection-summary"><el-icon><Cpu /></el-icon><div><strong>{{ selectedModel.name }}</strong><span>{{ selectedModel.model }} · 模型参数默认继承此连接</span></div></div>
@@ -432,7 +417,7 @@ onMounted(load)
                 <p class="field-help">执行代码、curl 和命令时必须开启。</p>
               </el-form-item>
               <el-form-item v-if="form.sandboxEnabled" label="沙箱模板" required>
-                <el-select v-model="form.sandboxTemplateId" filterable placeholder="搜索并选择 E2B 模板">
+                <el-select v-model="form.sandboxTemplateId" :disabled="catalogs.SANDBOX?.state !== 'ready'" filterable placeholder="搜索并选择 E2B 模板">
                   <el-option
                     v-for="c in options('SANDBOX')"
                     :key="c.id"
@@ -440,7 +425,7 @@ onMounted(load)
                     :value="c.id!"
                   />
                 </el-select>
-                <p v-if="!options('SANDBOX').length" class="field-help">暂无沙箱模板，请先在「沙箱模板」配置 E2B 模板。</p>
+                <p v-if="catalogs.SANDBOX?.state === 'ready' && !options('SANDBOX').length" class="field-help">暂无沙箱模板，请先在「沙箱模板」配置 E2B 模板。</p>
               </el-form-item>
               <el-form-item label="计划模式">
                 <el-switch v-model="form.planMode" />
@@ -478,16 +463,16 @@ onMounted(load)
             <p class="field-help">结构化结果会校验，不符合配置的输出不会作为成功结果返回。</p>
           </section>
           <section v-show="section === 'skills'">
-            <BoundCapabilityPicker v-model="form.skillIds" :options="options('SKILL')" title="技能" hint="按需读取技能说明，技能内的脚本、资源和关联工具会一起固定到发布版本。" empty-text="请先在「技能」创建并启用资源，再回到此处挂载。" />
+            <BoundCapabilityPicker v-if="catalogs.SKILL?.state === 'ready'" v-model="form.skillIds" :options="options('SKILL')" title="技能" hint="按需读取技能说明，技能内的脚本、资源和关联工具会一起固定到发布版本。" empty-text="请先在「技能」创建并启用资源，再回到此处挂载。" />
           </section>
           <section v-show="section === 'tools'">
-            <BoundCapabilityPicker v-model="form.toolIds" :options="options('TOOL')" title="工具" hint="可调用已挂载工具或 Skill 关联工具；脚本工具必须为此智能体开启 E2B。" empty-text="请先在「工具」配置 HTTP 接口或沙箱脚本，再回到此处挂载。" />
+            <BoundCapabilityPicker v-if="catalogs.TOOL?.state === 'ready'" v-model="form.toolIds" :options="options('TOOL')" title="工具" hint="可调用已挂载工具或 Skill 关联工具；脚本工具必须为此智能体开启 E2B。" empty-text="请先在「工具」配置 HTTP 接口或沙箱脚本，再回到此处挂载。" />
           </section>
           <section v-show="section === 'mcp'">
-            <BoundCapabilityPicker v-model="form.mcpIds" :options="options('MCP')" title="MCP 服务" hint="只开放每个服务配置中明确允许的远端工具。" empty-text="请先在「MCP 服务」配置连接地址与工具白名单。" />
+            <BoundCapabilityPicker v-if="catalogs.MCP?.state === 'ready'" v-model="form.mcpIds" :options="options('MCP')" title="MCP 服务" hint="只开放每个服务配置中明确允许的远端工具。" empty-text="请先在「MCP 服务」配置连接地址与工具白名单。" />
           </section>
           <section v-show="section === 'knowledge'">
-            <BoundCapabilityPicker v-model="form.knowledgeIds" :options="options('KNOWLEDGE')" title="知识库连接" hint="智能体按需调用已有知识库的 HTTP 检索接口。" empty-text="请先在「知识库连接」配置检索接口，再回到此处挂载。" />
+            <BoundCapabilityPicker v-if="catalogs.KNOWLEDGE?.state === 'ready'" v-model="form.knowledgeIds" :options="options('KNOWLEDGE')" title="知识库连接" hint="智能体按需调用已有知识库的 HTTP 检索接口。" empty-text="请先在「知识库连接」配置检索接口，再回到此处挂载。" />
           </section>
           <section v-show="section === 'children'">
             <el-form-item label="允许调用的子智能体">
@@ -581,76 +566,7 @@ onMounted(load)
   </main>
 </template>
 <style scoped>
-.agent-grid .console-empty { grid-column: 1 / -1; }
-.agent-model { display: flex; align-items: center; gap: 8px; color: var(--el-text-color-regular); font-size: 13px; margin: 4px 0; }
-.agent-model span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.agent-meta strong { color: var(--el-text-color-primary); font-weight: 600; }
-.agent-search {
-  max-width: 360px;
-  margin-bottom: 0;
-}
-.agent-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
-  gap: 20px;
-  min-height: 180px;
-}
-.agent-card {
-  border: 1px solid var(--el-border-color-light);
-  background: var(--el-bg-color);
-  border-radius: 14px;
-  padding: 22px;
-  box-shadow: 0 3px 12px color-mix(in srgb, var(--el-color-primary) 3%, transparent);
-  transition: border-color .18s ease, box-shadow .18s ease;
-  display: flex;
-  flex-direction: column;
-}
-.agent-card:hover { border-color: var(--el-color-primary-light-5); box-shadow: 0 8px 22px color-mix(in srgb, var(--el-color-primary) 7%, transparent); }
-.agent-card-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.agent-avatar {
-  width: 42px;
-  height: 42px;
-  display: grid;
-  place-items: center;
-  color: var(--el-color-primary);
-  background: var(--el-color-primary-light-9);
-  border-radius: 10px;
-  font-weight: 600;
-}
-.agent-card h2 {
-  font-size: 18px;
-  margin: 18px 0 6px;
-}
-.agent-card .code {
-  margin: 0;
-}
-.agent-description {
-  color: var(--el-text-color-regular);
-  font-size: 13px;
-  line-height: 1.7;
-  min-height: 44px;
-  flex: 1;
-}
-.agent-meta {
-  display: flex;
-  gap: 16px;
-  font-size: 12px;
-  color: var(--el-text-color-regular);
-  margin: 12px 0 20px;
-}
-.agent-card footer {
-  display: flex;
-  gap: 8px;
-  border-top: 1px solid var(--el-border-color-lighter);
-  padding-top: 16px;
-}
-.agent-card footer .el-button + .el-button {
-  margin: 0;
-}
+.catalog-feedback { margin: 12px 0; color: var(--el-text-color-regular); font-size: 13px; }
 .settings-subtitle {
   margin: 0 0 24px;
   color: var(--el-text-color-regular);

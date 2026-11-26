@@ -21,5 +21,14 @@ export default {
   "other": "其他状态",
   "source": "演示数据",
   "date": "日期",
-  "details": "查看每日明细"
+  "details": "查看每日明细",
+  "periodLogs": "时段日志量",
+  "errorShare": "错误日志占比",
+  "peakDay": "日志峰值日",
+  "events": "{count} 条",
+  "enabledShare": "账号启用率",
+  "noAccounts": "暂无账号",
+  "recentErrors": "最近错误日志",
+  "openLogs": "查看错误日志",
+  "noErrors": "暂无错误日志"
 }

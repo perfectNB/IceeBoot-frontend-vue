@@ -165,3 +165,54 @@ test('schedule APIs preserve request methods, task identifiers and pagination co
     { method: 'delete', url: '/api/v1/agent-console/schedules/12' },
   ])
 })
+
+test('agent directory renders while models are pending and fetches only the active capability tab', async () => {
+  const vue = require('vue')
+  const calls = []
+  let resolveModels, mount
+  const models = new Promise(resolve => { resolveModels = resolve })
+  const api = {
+    agents: async () => { calls.push('agents'); return [{ draft: { name: '助手' } }] },
+    models: () => { calls.push('models'); return models },
+    capabilities: async kind => { calls.push(kind); return [{ enabled: true, id: 5 }] },
+  }
+  const script = fs.readFileSync(path.join(__dirname, '../src/pages/admin/agent-console/HarnessAgents.vue'), 'utf8')
+    .match(/<script setup lang="ts">([\s\S]+?)<\/script>/)[1]
+  const source = script + '\nexport const state = { agents, loading, edit, section, options, modelState }'
+  const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
+  const context = { exports: {}, require(name) {
+    if (name === 'vue') return { ...vue, onMounted: callback => { mount = callback } }
+    if (name === '@/api/agentConsole') return { agentConsole: api }
+    return {}
+  } }
+  const scope = vue.effectScope()
+  try {
+    scope.run(() => vm.runInNewContext(compiled, context))
+    const state = context.exports.state
+    mount()
+    await new Promise(resolve => setImmediate(resolve))
+    assert.deepEqual(calls, ['agents', 'models'])
+    assert.equal(state.loading.value, false)
+    assert.equal(state.agents.value[0].draft.name, '助手')
+    assert.equal(state.modelState.value, 'loading')
+    await state.edit()
+    for (const tab of ['skills', 'tools', 'skills']) {
+      state.section.value = tab
+      await new Promise(resolve => setImmediate(resolve))
+    }
+    assert.deepEqual(calls, ['agents', 'models', 'SKILL', 'TOOL'])
+    assert.equal(state.options('SKILL')[0].id, 5)
+    resolveModels([])
+  } finally {
+    scope.stop()
+  }
+})
+
+test('usage overview requests the selected period and preserves provider totals', async () => {
+  const response = { updatedAt: '2026-11-01T00:05:00', models: [{ label: 'example', cachedTokens: null }], days: [] }
+  const { api, calls } = apiWithMock(() => response)
+  for (const period of ['TODAY', 'MONTH', 'ALL']) {
+    assert.deepEqual(await api.usageOverview(period), response)
+    assert.deepEqual(calls.at(-1), { method: 'get', url: '/api/v1/agent-console/usage', body: { period } })
+  }
+})

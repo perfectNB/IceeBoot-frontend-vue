@@ -96,6 +96,7 @@ export const mockUsers: User[] = [
       'ai:run:cancel:api',
       'ai:run:detail:api',
       'ai:run:list:api',
+      'ai:run:usage:api',
       'ai:run:read',
       'ai:run:recovery:api',
       'ai:sandbox',

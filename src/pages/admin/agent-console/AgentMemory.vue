@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { computed, onMounted, ref, watch } from 'vue'
 import { hasPermission } from '@/utils/permission'
 import { memoryApi, type MemoryScope } from '@/api/agentMemory'
@@ -33,8 +34,8 @@ onMounted(load)
 </script>
 
 <template>
-  <main class="agent-console memory-page">
-    <header class="console-heading"><div><h1>长期记忆</h1><p class="subtitle">管理对话中保留的画像，以及每个智能体可以使用的字段。</p></div></header>
+  <main class="agent-console memory-page admin-page">
+    <AdminPageHeader title="长期记忆" description="管理对话中保留的画像，以及每个智能体可以使用的字段。" />
     <el-card shadow="never">
       <el-form inline label-position="top" class="memory-filter">
         <el-form-item label="智能体">

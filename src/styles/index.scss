@@ -1,6 +1,7 @@
 // 全局样式入口文件
 @use './variables.scss';
 @use './global.scss';
+@use './admin-workspace.scss';
 
 // Element Plus 样式覆盖
 .el-button {
@@ -125,12 +126,6 @@ html.dark {
   .stat-content .stat-value, .info-item .info-value { color: var(--text-primary); }
   .page-description, .stat-content .stat-label, .message-time,
   .message-content-preview, .user-username, .info-item .info-label { color: var(--text-secondary); }
-
-  .sidebar-menu .el-menu-item.is-active {
-    background: var(--bg-color-soft) !important;
-    color: var(--el-color-primary) !important;
-    box-shadow: none !important;
-  }
 
   .el-button--primary:not(.is-plain):not(.is-text):not(.is-link) {
     --el-button-bg-color: #2563eb;

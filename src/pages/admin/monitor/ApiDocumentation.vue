@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { useI18n } from 'vue-i18n'
 import { isMockEnabled } from '@/config/mock'
 import { getBaseURL } from '@/utils/env'
@@ -9,9 +10,8 @@ const endpoints = ['stats', 'visit-trend', 'user-distribution']
 </script>
 
 <template>
-  <section>
-    <h1>{{ t('apiDocumentation.pageTitle') }}</h1>
-    <p>{{ t('apiDocumentation.pageDescription') }}</p>
+  <section class="admin-page">
+    <AdminPageHeader :title="t('apiDocumentation.pageTitle')" :description="t('apiDocumentation.pageDescription')" />
     <el-card v-if="isMockEnabled()" shadow="never">
       <h2>{{ t('dashboard.title') }}</h2>
       <ul><li v-for="endpoint in endpoints" :key="endpoint"><code>GET /api/v1/dashboard/{{ endpoint }}</code></li></ul>

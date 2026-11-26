@@ -2,6 +2,17 @@ import type { AgentProgress } from '@/api/agentConsole'
 export function formatDuration(milliseconds: number) {
   return milliseconds < 1000 ? `${Math.round(milliseconds)}ms` : `${(milliseconds / 1000).toFixed(1)}秒`
 }
+export function cacheSummary(calls: { cachedTokens?: number | null; inputTokens?: number | null }[]) {
+  const reported = calls.filter(call => call.cachedTokens != null)
+  const hits = reported.reduce((total, call) => total + (call.cachedTokens ?? 0), 0)
+  const input = reported.reduce((total, call) => total + (call.inputTokens ?? 0), 0)
+  return {
+    hits: reported.length ? hits : null,
+    coverage: `${reported.length}/${calls.length}`,
+    rate: reported.length === calls.length && input > 0 ? Math.round(hits / input * 100) : null,
+  }
+}
+
 export function runMetrics(events: AgentProgress[]) {
   const unique = [...new Map(events.map(event => [`${event.runId}:${event.sequence}`, event])).values()]
   const models = unique.filter(event => event.type === 'MODEL_FINISHED')
@@ -28,6 +39,7 @@ export function runMetrics(events: AgentProgress[]) {
     modelMs: models.reduce((total, event) => total + (event.durationMs || 0), 0),
     toolMs: tools.reduce((total, event) => total + (event.durationMs || 0), 0),
     modelCalls: models.length,
+    cache: cacheSummary(models),
     toolCalls: tools.length,
     inputTokens: models.reduce((total, event) => total + (event.inputTokens || 0), 0),
     outputTokens: models.reduce((total, event) => total + (event.outputTokens || 0), 0),

@@ -1,12 +1,6 @@
 <template>
-  <div class="menu-management">
-    <div class="page-header">
-      <h2>{{ t('menuManagement.title') }}</h2>
-      <p>{{ t('menuManagement.description') }}</p>
-    </div>
-
-    <!-- 操作区域 -->
-    <div class="action-section">
+  <div class="menu-management admin-page">
+    <AdminPageHeader :title="t('menuManagement.title')" :description="t('menuManagement.description')">
       <el-button
         type="primary"
         :icon="Plus"
@@ -38,7 +32,7 @@
         <el-icon><Sort /></el-icon>
         {{ t('menuManagement.collapseAll') }}
       </el-button>
-    </div>
+    </AdminPageHeader>
 
     <!-- 搜索区域 -->
     <div class="search-section">
@@ -272,6 +266,7 @@
 </template>
 
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox, type FormRules } from 'element-plus'
 import { Plus, Refresh, Edit, Delete, Search, Sort, Picture } from '@element-plus/icons-vue'
@@ -684,25 +679,6 @@ onMounted(() => {
 <style scoped>
 .menu-management {
   padding: 20px;
-}
-
-.page-header {
-  margin-bottom: 20px;
-}
-
-.page-header h2 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-}
-
-.page-header p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.action-section {
-  margin-bottom: 20px;
 }
 
 .search-section {

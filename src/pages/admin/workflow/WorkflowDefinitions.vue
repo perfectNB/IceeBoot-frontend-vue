@@ -1,18 +1,13 @@
 <template>
-  <div class="workflow-page">
-    <div class="page-header">
-      <h2>{{ t('workflowDefinitions.title') }}</h2>
-      <p>{{ t('workflowDefinitions.description') }}</p>
-    </div>
-
-    <div class="action-section">
+  <div class="workflow-page admin-page">
+    <AdminPageHeader :title="t('workflowDefinitions.title')" :description="t('workflowDefinitions.description')">
       <el-space wrap>
         <el-button type="primary" :icon="Refresh" :loading="loadingDefinitions" @click="loadDefinitions">
           {{ t('workflowDefinitions.refresh') }}
         </el-button>
         <el-switch v-model="latestOnly" :active-text="t('workflowDefinitions.latestVersionOnly')" :inactive-text="t('workflowDefinitions.allVersions')" @change="loadDefinitions" />
       </el-space>
-    </div>
+    </AdminPageHeader>
 
     <div class="table-section">
       <el-table :data="definitions" v-loading="loadingDefinitions" stripe border style="width: 100%">
@@ -105,6 +100,7 @@
 </template>
 
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Picture, Refresh, VideoPlay, View } from '@element-plus/icons-vue'
@@ -403,25 +399,6 @@ onUnmounted(() => {
 <style scoped>
 .workflow-page {
   padding: 20px;
-}
-
-.page-header {
-  margin-bottom: 20px;
-}
-
-.page-header h2 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-}
-
-.page-header p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.action-section {
-  margin-bottom: 20px;
 }
 
 .table-section {

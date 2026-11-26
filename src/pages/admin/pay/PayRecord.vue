@@ -1,12 +1,6 @@
 <template>
-  <div class="pay-record-management">
-    <div class="page-header">
-      <h1 class="page-title">{{ t('payRecord.title') }}</h1>
-      <p class="page-description">{{ t('payRecord.description') }}</p>
-    </div>
-
-    <!-- 操作区域 -->
-    <div class="action-section">
+  <div class="pay-record-management admin-page">
+    <AdminPageHeader :title="t('payRecord.title')" :description="t('payRecord.description')">
       <el-button
         type="danger"
         @click="handleBatchDelete"
@@ -19,7 +13,7 @@
         <el-icon><Download /></el-icon>
         {{ t('payRecord.export') }}
       </el-button>
-    </div>
+    </AdminPageHeader>
 
     <!-- 搜索区域 -->
     <div class="search-section">
@@ -230,6 +224,7 @@
 </template>
 
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -464,30 +459,6 @@ onMounted(() => {
   padding: 0;
 }
 
-.page-header {
-  margin-bottom: 24px;
-
-  h1 {
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 8px 0;
-  }
-
-  p {
-    color: var(--text-secondary);
-    margin: 0;
-  }
-}
-
-.action-section {
-  margin-bottom: 16px;
-
-  .el-button + .el-button {
-    margin-left: 12px;
-  }
-}
-
 .search-section {
   margin-bottom: 16px;
   padding: 20px;
@@ -532,8 +503,5 @@ onMounted(() => {
     flex-wrap: wrap;
   }
 
-  .action-section {
-    justify-content: center;
-  }
 }
 </style>

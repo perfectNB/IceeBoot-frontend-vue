@@ -1,6 +1,7 @@
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { computed, onMounted, ref } from 'vue'
-import { Connection, Plus, Refresh, Search } from '@element-plus/icons-vue'
+import { Plus, Refresh, Search } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import { agentConsole, providers, type ModelConfig, type Provider } from '@/api/agentConsole'
 import { hasPermission } from '@/utils/permission'
@@ -132,17 +133,11 @@ async function rotateSecrets() {
 onMounted(load)
 </script>
 <template>
-  <main class="agent-console model-workbench">
-    <header class="console-heading">
-      <div class="console-title-block"><span class="console-title-icon"><el-icon><Connection /></el-icon></span><div>
-        <p class="console-eyebrow">统一模型接入</p><h1>模型连接 <span class="console-count">{{ rows.length }}</span></h1>
-        <p class="subtitle">管理供应商、模型和自定义接入地址，供智能体与业务接口复用。</p>
-      </div></div>
-      <div class="console-actions">
-        <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
-        <el-button v-if="hasPermission('ai:model:write')" type="primary" :icon="Plus" @click="edit()">新建连接</el-button>
-      </div>
-    </header>
+  <main class="agent-console model-workbench admin-page">
+    <AdminPageHeader title="模型连接" :count="rows.length" description="管理供应商、模型和自定义接入地址，供智能体与业务接口复用。">
+      <el-button :icon="Refresh" :loading="loading" @click="load">刷新</el-button>
+      <el-button v-if="hasPermission('ai:model:write')" type="primary" :icon="Plus" @click="edit()">新建连接</el-button>
+    </AdminPageHeader>
     <div class="console-stats">
       <div><span>已配置连接</span><strong>{{ rows.length }}</strong></div>
       <div><span>启用连接</span><strong>{{ enabledCount }}</strong></div>

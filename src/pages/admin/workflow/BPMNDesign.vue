@@ -1,9 +1,6 @@
 <template>
-  <div class="workflow-page">
-    <div class="page-header">
-      <h2>{{ t('bpmnDesign.title') }}</h2>
-      <p>{{ t('bpmnDesign.description') }}</p>
-    </div>
+  <div class="workflow-page admin-page">
+    <AdminPageHeader :title="t('bpmnDesign.title')" :description="t('bpmnDesign.description')" />
 
     <div class="designer-section" :class="{ 'designer-fullscreen': isDesignerFullscreen }">
       <div class="designer-toolbar">
@@ -143,6 +140,7 @@
 </template>
 
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { ElMessage, type UploadFile, type UploadUserFile } from 'element-plus'
 import { Document, FullScreen, Plus, Upload, UploadFilled } from '@element-plus/icons-vue'
@@ -557,21 +555,6 @@ watch(
 <style scoped>
 .workflow-page {
   padding: 20px;
-}
-
-.page-header {
-  margin-bottom: 20px;
-}
-
-.page-header h2 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-}
-
-.page-header p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
 }
 
 .designer-section {

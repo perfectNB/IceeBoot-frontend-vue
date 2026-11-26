@@ -8,7 +8,7 @@
     >
       <div class="sidebar-header">
         <div class="logo">
-          <img src="@/assets/logo.svg" alt="IceeBoot" class="logo-img" />
+          <img src="@/assets/logo.png" :alt="isCollapsed ? 'IceeBoot' : ''" class="logo-img" />
           <span v-show="!isCollapsed" class="logo-text">IceeBoot</span>
         </div>
       </div>
@@ -329,15 +329,12 @@ onBeforeUnmount(() => {
       width: 32px;
       height: 32px;
       flex-shrink: 0;
-      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
     }
 
     .logo-text {
       font-size: 18px;
       font-weight: 700;
-      background: linear-gradient(120deg, var(--primary-color), var(--secondary-color));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: var(--el-text-color-primary);
       white-space: nowrap;
       letter-spacing: -0.5px;
       opacity: 1;

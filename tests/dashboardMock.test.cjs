@@ -124,3 +124,21 @@ test('role dialogs receive trees and reload the saved leaf selections', async ()
   const menus = (await roles.getRoleById(3, 'menus')).menuTree
   assert.equal(menus.find(row => row.name === 'AgentConsoleRoot').children.find(row => row.name === 'AgentMemory').hasPermission, true)
 })
+
+test('mock usage uses the same local calendar day for totals and daily trends at a month boundary', async () => {
+  const { load } = demo()
+  const { mockUsageOverview } = load('@/mock/services/agentUsage')
+  const previousTimezone = process.env.TZ
+  try {
+    process.env.TZ = 'Asia/Shanghai'
+    const now = new Date('2026-10-31T16:05:00Z')
+    for (const period of ['TODAY', 'MONTH']) {
+      const overview = await mockUsageOverview(period, now)
+      assert.equal(overview.updatedAt.slice(0, 10), '2026-11-01')
+      assert.deepEqual(Array.from(overview.days, row => row.label), ['2026-11-01'])
+    }
+  } finally {
+    if (previousTimezone === undefined) delete process.env.TZ
+    else process.env.TZ = previousTimezone
+  }
+})

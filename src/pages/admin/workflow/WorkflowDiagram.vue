@@ -1,9 +1,6 @@
 <template>
-  <div class="workflow-page">
-    <div class="page-header">
-      <h2>{{ t('workflowDiagram.title') }}</h2>
-      <p>{{ t('workflowDiagram.description') }}</p>
-    </div>
+  <div class="workflow-page admin-page">
+    <AdminPageHeader :title="t('workflowDiagram.title')" :description="t('workflowDiagram.description')" />
 
     <div class="search-section">
       <el-form :model="diagramForm" inline>
@@ -79,6 +76,7 @@
 </template>
 
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
 import { FullScreen } from '@element-plus/icons-vue'
@@ -338,21 +336,6 @@ watch(
 <style scoped>
 .workflow-page {
   padding: 20px;
-}
-
-.page-header {
-  margin-bottom: 20px;
-}
-
-.page-header h2 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-}
-
-.page-header p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
 }
 
 .search-section {

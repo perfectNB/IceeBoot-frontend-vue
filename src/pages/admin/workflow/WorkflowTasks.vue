@@ -1,9 +1,6 @@
 <template>
-  <div class="workflow-page">
-    <div class="page-header">
-      <h2>{{ t('workflowTasks.title') }}</h2>
-      <p>{{ t('workflowTasks.description') }}</p>
-    </div>
+  <div class="workflow-page admin-page">
+    <AdminPageHeader :title="t('workflowTasks.title')" :description="t('workflowTasks.description')" />
 
     <div class="search-section">
       <el-form :model="taskQueryForm" inline>
@@ -70,6 +67,7 @@
 </template>
 
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Check, Refresh, RefreshRight } from '@element-plus/icons-vue'
@@ -214,21 +212,6 @@ const parseJson = (value: string): Record<string, unknown> | undefined | null =>
 <style scoped>
 .workflow-page {
   padding: 20px;
-}
-
-.page-header {
-  margin-bottom: 20px;
-}
-
-.page-header h2 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-}
-
-.page-header p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
 }
 
 .search-section {

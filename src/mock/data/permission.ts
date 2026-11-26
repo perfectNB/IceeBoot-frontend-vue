@@ -1201,4 +1201,17 @@ export const mockPermissions: Permission[] = [
     createTime: '2024-01-01 00:00:00',
     updateTime: '2024-01-01 00:00:00'
   },
+  {"id": "930", "code": "workflow:definition", "type": "menu", "name": "审批模板", "sort": 0, "status": "active"},
+  {"id": "931", "code": "workflow:task", "type": "menu", "name": "审批任务", "sort": 1, "status": "active"},
+  {"id": "932", "code": "workflow:process", "type": "menu", "name": "审批申请", "sort": 2, "status": "active"},
+  {"id": "940", "code": "workflow:approval:drafts:api", "type": "api", "name": "审批草稿列表", "sort": 0, "status": "active", "parentId": "930", "path": "/v1/workflow/approvals/drafts", "method": "GET"},
+  {"id": "941", "code": "workflow:approval:roles:api", "type": "api", "name": "审批角色选项", "sort": 1, "status": "active", "parentId": "930", "path": "/v1/workflow/approvals/roles", "method": "GET"},
+  {"id": "942", "code": "workflow:approval:save:api", "type": "api", "name": "保存审批草稿", "sort": 2, "status": "active", "parentId": "930", "path": "/v1/workflow/approvals/drafts", "method": "PUT"},
+  {"id": "943", "code": "workflow:approval:publish:api", "type": "api", "name": "发布审批模板", "sort": 3, "status": "active", "parentId": "930", "path": "/v1/workflow/approvals/drafts/{code}/publish", "method": "POST"},
+  {"id": "944", "code": "workflow:approval:published:api", "type": "api", "name": "选择已发布审批", "sort": 4, "status": "active", "parentId": "932", "path": "/v1/workflow/approvals/published", "method": "GET"},
+  {"id": "945", "code": "workflow:approval:start:api", "type": "api", "name": "提交审批申请", "sort": 5, "status": "active", "parentId": "932", "path": "/v1/workflow/approvals/cases", "method": "POST"},
+  {"id": "946", "code": "workflow:approval:list:api", "type": "api", "name": "查看个人审批列表", "sort": 6, "status": "active", "parentId": "931", "path": "/v1/workflow/approvals/cases", "method": "GET"},
+  {"id": "947", "code": "workflow:approval:detail:api", "type": "api", "name": "查看审批轨迹", "sort": 7, "status": "active", "parentId": "931", "path": "/v1/workflow/approvals/cases/{id}", "method": "GET"},
+  {"id": "948", "code": "workflow:approval:review:api", "type": "api", "name": "处理角色审批", "sort": 8, "status": "active", "parentId": "931", "path": "/v1/workflow/approvals/cases/{id}/review/{action}", "method": "POST"},
+  {"id": "949", "code": "workflow:approval:revise:api", "type": "api", "name": "重提或作废申请", "sort": 9, "status": "active", "parentId": "932", "path": "/v1/workflow/approvals/cases/{id}/owner/{action}", "method": "POST"},
 ]

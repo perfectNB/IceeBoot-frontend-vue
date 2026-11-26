@@ -228,3 +228,61 @@ test('the starter approval survives a designer XML round trip with its assignee'
   assert.equal(loaded.elementsById.ToReview.targetRef, loaded.elementsById.Review)
   assert.equal(loaded.elementsById.ToEnd.targetRef, loaded.elementsById.End)
 })
+
+test('approval forms route by multiple fields, isolate role inboxes and retain both submission rounds', async () => {
+  const { load, login } = demo()
+  const api = load('@/api/approval').approvalApi
+  const { blankDesign, newExit } = load('@/utils/approval')
+  const d = blankDesign()
+  d.code = 'expense'
+  d.fields = ['state','sex','companyName'].map((key,i) => ({ key, label:key,
+    kind:i < 2 ? 'routing' : 'business', type:i < 2 ? 'number' : 'text', required:true }))
+  d.nodes = ['A','B','C'].map((id,i) => ({ id, name:'审批 '+id, role:i===0?'test':'admin', exit:newExit() }))
+  d.start = { fallback:'', branches:[['1','2','A'],['2','1','B'],['1','1','C']].map(([state,sex,target]) =>
+    ({ conditions:[{field:'state',value:state},{field:'sex',value:sex}], target })) }
+  await login('admin')
+  await api.save(d,0)
+  await assert.rejects(api.save(d,0))
+  await assert.rejects(api.submit(d.code,1,{}))
+  await api.publish(d.code,1)
+  const form = { state:'1.00', sex:'2',companyName:'一厂' }
+  const id = await api.submit(d.code,1,form)
+  assert.equal((await api.list('inbox')).length,0)
+  await assert.rejects(api.review(id,'approve',{revision:1}))
+  await login('user')
+  await assert.rejects(api.detail(id))
+  await login('user_admin')
+  assert.equal((await api.list('inbox'))[0].node,'A')
+  await assert.rejects(api.review(id,'reject',{revision:1,reason:' '}))
+  await api.review(id,'reject',{revision:1,reason:'请改正公司名称'})
+  await assert.rejects(api.revise(id,'void',{revision:2}))
+  await login('admin')
+  assert.equal((await api.list('rejected'))[0].id,id)
+  await api.revise(id,'resubmit',{revision:2,values:{...form,state:'2',sex:'1',companyName:'二厂'}})
+  assert.equal((await api.list('inbox'))[0].node,'B')
+  await api.review(id,'approve',{revision:3,reason:'已核对'})
+  const result = await api.detail(id)
+  assert.equal(result.item.status,'APPROVED')
+  assert.equal(result.history[0].values.companyName,'一厂')
+  assert.equal(result.history[2].values.companyName,'二厂')
+  assert.equal(result.history[1].actor,'user_admin')
+  assert.ok(result.history[1].time)
+  await assert.rejects(api.revise(id,'resubmit',{revision:4,values:form}))
+  await assert.rejects(api.submit(d.code,1,{...form,state:'2',sex:'2'}))
+  const third = await api.submit(d.code,1,{...form,sex:'1'})
+  assert.equal((await api.detail(third)).item.node,'C')
+})
+
+test('approval API uses the published version and sends the observed revision with review actions', async () => {
+  const calls = []
+  const { load } = demo(new Proxy({}, {get: (_,method) => async (url,data) => calls.push([method,url,data])}))
+  const api = load('@/api/approval').approvalApi
+  await api.submit('travel',3,{price:'80'})
+  await api.review('id/1','reject',{revision:2,reason:'需凭证'})
+  await api.revise('id/1','resubmit',{revision:3,values:{price:'60'}})
+  assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
+    ['post','/api/v1/workflow/approvals/cases',{code:'travel',version:3,values:{price:'80'}}],
+    ['post','/api/v1/workflow/approvals/cases/id%2F1/review/reject',{revision:2,reason:'需凭证'}],
+    ['post','/api/v1/workflow/approvals/cases/id%2F1/owner/resubmit',{revision:3,values:{price:'60'}}],
+  ])
+})

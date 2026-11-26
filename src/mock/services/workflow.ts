@@ -277,7 +277,7 @@ export class MockWorkflowService {
   // 获取用户任务
   static async getUserTasks(assignee: string): Promise<TaskItem[]> {
     await mockDelay()
-    mockLog('获取用户任务', assignee)
+    if (![String(actor().id), actor().username].includes(assignee)) throw Error('只能查询自己的待办')
 
     return mockTasks.filter(task => task.assignee === assignee)
   }
@@ -285,7 +285,7 @@ export class MockWorkflowService {
   // 获取候选任务
   static async getCandidateTasks(candidateUser: string): Promise<TaskItem[]> {
     await mockDelay()
-    mockLog('获取候选任务', candidateUser)
+    if (![String(actor().id), actor().username].includes(candidateUser)) throw Error('只能查询自己的待办')
 
     // 返回未分配的任务（assignee为null）
     return mockTasks.filter(task => candidate(task, candidateUser))

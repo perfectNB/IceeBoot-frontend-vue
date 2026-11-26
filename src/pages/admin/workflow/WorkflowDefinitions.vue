@@ -1,7 +1,8 @@
 <template>
   <div class="workflow-page admin-page">
-    <AdminPageHeader :title="t('workflowDefinitions.title')" :description="t('workflowDefinitions.description')">
+    <AdminPageHeader :title="t('workflowDefinitions.title')" :description="t('workflowDefinitions.pageDescription')">
       <el-space wrap>
+        <router-link v-if="hasPermission('workflow:design')" to="/admin/workflow/design">{{ t('bpmnDesign.designFirst') }} →</router-link>
         <el-button type="primary" :icon="Refresh" :loading="loadingDefinitions" @click="loadDefinitions">
           {{ t('workflowDefinitions.refresh') }}
         </el-button>
@@ -9,19 +10,28 @@
       </el-space>
     </AdminPageHeader>
 
+    <div v-if="startedId" class="run-actions" role="status">
+      <strong>{{ t('workflowDefinitions.processStarted') }}</strong>
+      <router-link v-if="hasPermission('workflow:task')" to="/admin/workflow/task">{{ t('bpmnDesign.myTasks') }} →</router-link>
+      <router-link v-if="hasPermission('workflow:diagram') && hasPermission('workflow:process:diagram:api')" :to="{ path: '/admin/workflow/diagram', query: { run: startedId } }">{{ t('workflowDiagram.title') }} →</router-link>
+    </div>
     <div class="table-section">
-      <el-table :data="definitions" v-loading="loadingDefinitions" stripe border style="width: 100%">
-        <el-table-column prop="id" :label="t('workflowDefinitions.definitionId')" min-width="180" show-overflow-tooltip />
-        <el-table-column prop="key" :label="t('workflowDefinitions.processKey')" min-width="160" show-overflow-tooltip />
-        <el-table-column prop="name" :label="t('workflowDefinitions.processName')" min-width="180" show-overflow-tooltip />
-        <el-table-column prop="version" :label="t('workflowDefinitions.version')" width="80" />
+      <el-table :data="definitions" v-loading="loadingDefinitions" style="width: 100%">
+        <el-table-column :label="t('workflowDefinitions.processName')" min-width="210">
+          <template #default="{ row }"><strong>{{ row.name || row.key }}</strong><small class="process-key">{{ row.key }}</small></template>
+        </el-table-column>
+        <el-table-column :label="t('workflowDefinitions.version')" width="90">
+          <template #default="{ row }"><el-tag effect="plain" round>v{{ row.version }}</el-tag></template>
+        </el-table-column>
         <el-table-column prop="category" :label="t('workflowDefinitions.category')" min-width="120" show-overflow-tooltip />
-        <el-table-column prop="deploymentId" :label="t('workflowDefinitions.deploymentId')" min-width="160" show-overflow-tooltip />
+        <template #empty><el-empty :description="t('bpmnDesign.none')">
+          <router-link v-if="hasPermission('workflow:design')" to="/admin/workflow/design">{{ t('bpmnDesign.designFirst') }} →</router-link>
+        </el-empty></template>
         <el-table-column :label="t('workflowDefinitions.operation')" width="260" fixed="right">
           <template #default="{ row }">
-            <el-button v-if="hasPermission('workflow:definition:xml:api')" type="primary" size="small" :icon="View" @click="handleViewXml(row)">{{ t('workflowDefinitions.xml') }}</el-button>
-            <el-button v-if="hasPermission('workflow:definition:diagram:api')" type="info" size="small" :icon="Picture" @click="handleViewDiagram(row)">{{ t('workflowDefinitions.diagram') }}</el-button>
-            <el-button v-if="hasPermission('workflow:process:start:api')" type="success" size="small" :icon="VideoPlay" @click="openStartDialog(row)">{{ t('workflowDefinitions.start') }}</el-button>
+            <el-button v-if="hasPermission('workflow:definition:xml:api')" link :icon="View" @click="handleViewXml(row)">{{ t('workflowDefinitions.xml') }}</el-button>
+            <el-button v-if="hasPermission('workflow:definition:diagram:api')" link type="primary" :icon="Picture" @click="handleViewDiagram(row)">{{ t('workflowDefinitions.diagram') }}</el-button>
+            <el-button v-if="hasPermission('workflow:process:start:api')" type="primary" size="small" :icon="VideoPlay" @click="openStartDialog(row)">{{ t('workflowDefinitions.start') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -55,7 +65,7 @@
 
       <div class="table-section">
         <div class="section-title">{{ t('workflowDefinitions.nodeStatus') }}</div>
-        <el-table :data="currentNodes" stripe border style="width: 100%">
+        <el-table :data="currentNodes" style="width: 100%">
           <el-table-column prop="activityId" :label="t('workflowDefinitions.nodeId')" min-width="160" show-overflow-tooltip />
           <el-table-column prop="name" :label="t('workflowDefinitions.nodeName')" min-width="160" show-overflow-tooltip />
           <el-table-column prop="type" :label="t('workflowDefinitions.type')" width="120" show-overflow-tooltip />
@@ -81,15 +91,15 @@
 
     <el-dialog v-model="startDialogVisible" :title="t('workflowDefinitions.startProcessInstance')" width="520px">
       <el-form :model="startDialogForm" label-width="90px">
-        <el-form-item :label="t('workflowDefinitions.processKey')">
-          <el-input v-model="startDialogForm.processDefinitionKey" readonly />
+        <el-form-item :label="t('workflowDefinitions.processName')">
+          <strong>{{ startName }}</strong>
         </el-form-item>
         <el-form-item :label="t('workflowDefinitions.businessKey')">
           <el-input v-model="startDialogForm.businessKey" :placeholder="t('workflowDefinitions.optional')" />
         </el-form-item>
-        <el-form-item :label="t('workflowDefinitions.processVariables')">
+        <details class="optional-fields"><summary>{{ t('bpmnDesign.advancedInput') }}</summary><el-form-item :label="t('workflowDefinitions.processVariables')">
           <el-input v-model="startDialogForm.variablesJson" type="textarea" :rows="6" :placeholder="t('workflowDefinitions.jsonObject')" />
-        </el-form-item>
+        </el-form-item></details>
         <el-form-item>
           <el-button type="primary" :loading="startingProcess" @click="handleStartDialog">{{ t('workflowDefinitions.start') }}</el-button>
           <el-button @click="startDialogVisible = false">{{ t('workflowDefinitions.cancel') }}</el-button>
@@ -130,6 +140,8 @@ const definitions = ref<WorkflowDefinition[]>([])
 const xmlDialogVisible = ref(false)
 const xmlContent = ref('')
 
+const startedId = ref('')
+const startName = ref('')
 const startDialogVisible = ref(false)
 const startingProcess = ref(false)
 const startDialogForm = reactive({
@@ -249,6 +261,7 @@ const openStartDialog = (definition: WorkflowDefinition) => {
     ElMessage.warning(t('workflowDefinitions.cannotRecognizeProcessKey'))
     return
   }
+  startName.value = definition.name || key
   startDialogForm.processDefinitionKey = key
   startDialogForm.businessKey = ''
   startDialogForm.variablesJson = ''
@@ -265,7 +278,8 @@ const handleStartDialog = async () => {
       businessKey: startDialogForm.businessKey || undefined,
       variables: variables || undefined
     }
-    await startWorkflowProcess(payload)
+    const run = await startWorkflowProcess(payload)
+    startedId.value = run.processInstanceId || run.id || ''
     startDialogVisible.value = false
     ElMessage.success(t('workflowDefinitions.processStarted'))
   } catch {
@@ -344,32 +358,12 @@ onUnmounted(() => {
 })
 </script>
 
+<style scoped src="./workflow.css"></style>
 <style scoped>
-.workflow-page {
-  padding: 20px;
-}
+.process-key { display: block; font-size: 12px; color: var(--el-text-color-secondary); }
 
-.table-section {
-  background: var(--bg-color);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-}
 
-.section-title {
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 16px;
-}
 
-.diagram-section {
-  background: var(--bg-color);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-}
 
 .diagram-container {
   width: 100%;

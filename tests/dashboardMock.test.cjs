@@ -177,7 +177,9 @@ test('workflow candidates claim and release tasks and terminated instances remai
   await api.completeTask('task-3')
   assert.ok(!(await api.myWorkflowTasks()).some(task => task.id === 'task-3'))
   assert.match((await api.workflowInstanceDiagram('process-1')).content, /<svg/)
+  assert.equal((await api.getWorkflowRuns()).find(run => run.id === 'process-1').status, 'active')
   await api.endWorkflowProcess('process-1')
+  assert.equal((await api.getWorkflowRuns()).find(run => run.id === 'process-1').status, 'completed')
   assert.equal((await api.getWorkflowProcess('process-1')).ended, true)
   await assert.rejects(api.endWorkflowProcess('process-1'))
   await assert.rejects(api.checkWorkflowProcessEnded('missing'))
@@ -196,6 +198,8 @@ test('live checkout and task actions use the corresponding server routes', async
   await pay.getPayRecordDetail(34)
   await pay.retryPaymentBusiness(34)
   await pay.updatePaymentConfigStatus(12, 'inactive')
+  await workflow.getWorkflowRuns()
+  assert.equal(calls.at(-1)[2].includeEnded, true)
   await workflow.myWorkflowTasks()
   await workflow.claimWorkflowTask('task 1')
   await workflow.claimWorkflowTask('task 1', true)
@@ -203,8 +207,24 @@ test('live checkout and task actions use the corresponding server routes', async
   assert.deepEqual(calls.map(([method, url]) => method + ' ' + url), [
     'get /api/v1/pay/channels', 'post /api/v1/pay/orders/12?channel=ALIPAY',
     'get /api/v1/pay/records/34', 'put /api/v1/pay/records/34/retry-business',
-    'put /api/v1/pay/configs/12/status?status=inactive', 'get /api/v1/workflow/tasks/my',
+    'put /api/v1/pay/configs/12/status?status=inactive', 'get /api/v1/workflow/process', 'get /api/v1/workflow/tasks/my',
     'post /api/v1/workflow/task/task%201/claim', 'post /api/v1/workflow/task/task%201/unclaim',
     'get /api/v1/workflow/process/run%201/diagram'
   ])
+})
+
+test('the starter approval survives a designer XML round trip with its assignee', async () => {
+  const { default: BpmnModdle } = await import('bpmn-moddle')
+  const activiti = require('../src/pages/admin/workflow/activitiAssignment.json')
+  const model = new BpmnModdle({ activiti })
+  const { approvalTemplate } = demo().load('@/pages/admin/workflow/approvalTemplate')
+  const xml = approvalTemplate('7', ['Approval', 'Start', 'Review', 'End'])
+  const { rootElement, warnings } = await model.fromXML(xml)
+  assert.equal(warnings.length, 0)
+  const serialized = await model.toXML(rootElement)
+  assert.match(serialized.xml, /<bpmn:userTask /)
+  const loaded = await model.fromXML(serialized.xml)
+  assert.equal(loaded.elementsById.Review.get('activiti:assignee'), '7')
+  assert.equal(loaded.elementsById.ToReview.targetRef, loaded.elementsById.Review)
+  assert.equal(loaded.elementsById.ToEnd.targetRef, loaded.elementsById.End)
 })

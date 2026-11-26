@@ -3,7 +3,7 @@
     <AdminPageHeader :title="t('workflowInstances.title')" :description="t('workflowInstances.description')" />
 
     <el-row :gutter="16">
-      <el-col :span="12">
+      <el-col :xs="24" :md="12">
         <div class="table-section">
           <div class="section-title">{{ t('workflowInstances.startProcess') }}</div>
           <el-form :model="startForm" label-width="90px">
@@ -15,9 +15,9 @@
             <el-form-item :label="t('workflowInstances.businessKey')">
               <el-input v-model="startForm.businessKey" :placeholder="t('workflowInstances.optional')" />
             </el-form-item>
-            <el-form-item :label="t('workflowInstances.processVariables')">
+            <details class="optional-fields"><summary>{{ t('bpmnDesign.advancedInput') }}</summary><el-form-item :label="t('workflowInstances.processVariables')">
               <el-input v-model="startForm.variablesJson" type="textarea" :rows="6" :placeholder="t('workflowInstances.jsonObject')" />
-            </el-form-item>
+            </el-form-item></details>
             <el-form-item>
               <el-button v-if="hasPermission('workflow:process:start:api')" type="primary" :loading="startingProcess" @click="handleStartProcess">{{ t('workflowInstances.startProcessBtn') }}</el-button>
               <el-button @click="resetStartForm">{{ t('workflowInstances.reset') }}</el-button>
@@ -25,22 +25,25 @@
           </el-form>
         </div>
       </el-col>
-      <el-col :span="12">
+      <el-col :xs="24" :md="12">
         <div class="table-section">
-          <div class="section-title">{{ t('workflowInstances.processInstanceOperation') }}</div>
+          <div class="section-title">{{ t('bpmnDesign.runLookup') }}</div>
           <el-form :model="instanceForm" label-width="100px">
             <el-form-item :label="t('workflowInstances.instanceId')">
-              <el-input v-model="instanceForm.processInstanceId" :placeholder="t('workflowInstances.inputProcessInstanceId')" />
-            </el-form-item>
-            <el-form-item :label="t('workflowInstances.deleteReason')">
-              <el-input v-model="instanceForm.deleteReason" :placeholder="t('workflowInstances.optional')" />
+              <WorkflowRunPicker v-model="instanceForm.processInstanceId" />
             </el-form-item>
             <el-form-item>
-              <el-button v-if="hasPermission('workflow:process:detail:api')" type="primary" :loading="loadingInstance" @click="handleLoadInstance">{{ t('workflowInstances.query') }}</el-button>
-              <el-button v-if="hasPermission('workflow:process:end:api')" type="warning" :loading="endingInstance" @click="handleEndInstance">{{ t('workflowInstances.end') }}</el-button>
-              <el-button v-if="hasPermission('workflow:process:delete:api')" type="danger" :loading="deletingInstance" @click="handleDeleteInstance">{{ t('workflowInstances.delete') }}</el-button>
-              <el-button v-if="hasPermission('workflow:process:ended:api')" type="info" :loading="checkingEnded" @click="handleCheckEnded">{{ t('workflowInstances.isEnded') }}</el-button>
+              <el-button v-if="hasPermission('workflow:process:detail:api')" type="primary" :disabled="!instanceForm.processInstanceId" :loading="loadingInstance" @click="handleLoadInstance">{{ t('workflowInstances.query') }}</el-button>
+              <el-button v-if="hasPermission('workflow:process:ended:api')" :disabled="!instanceForm.processInstanceId" :loading="checkingEnded" @click="handleCheckEnded">{{ t('workflowInstances.isEnded') }}</el-button>
             </el-form-item>
+            <details v-if="instanceForm.processInstanceId && instanceEnded !== true && (hasPermission('workflow:process:end:api') || hasPermission('workflow:process:delete:api'))" class="optional-fields">
+              <summary>{{ t('bpmnDesign.manageRun') }}</summary>
+              <el-form-item v-if="hasPermission('workflow:process:delete:api')" :label="t('workflowInstances.deleteReason')">
+                <el-input v-model="instanceForm.deleteReason" :placeholder="t('workflowInstances.optional')" />
+              </el-form-item>
+              <el-button v-if="hasPermission('workflow:process:end:api')" :loading="endingInstance" @click="handleEndInstance">{{ t('workflowInstances.end') }}</el-button>
+              <el-button v-if="hasPermission('workflow:process:delete:api')" type="danger" plain :loading="deletingInstance" @click="handleDeleteInstance">{{ t('workflowInstances.delete') }}</el-button>
+            </details>
           </el-form>
           <el-descriptions v-if="instanceResult" :column="2" border>
             <el-descriptions-item :label="t('workflowInstances.instanceId')">{{ instanceResult.processInstanceId || instanceResult.id }}</el-descriptions-item>
@@ -63,9 +66,10 @@
 
 <script setup lang="ts">
 import { hasPermission } from '@/utils/permission'
+import WorkflowRunPicker from './WorkflowRunPicker.vue'
 import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
-import { computed, onMounted, reactive, ref } from 'vue'
-import { ElMessage } from 'element-plus'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import {
   checkWorkflowProcessEnded,
@@ -104,6 +108,11 @@ const endingInstance = ref(false)
 const deletingInstance = ref(false)
 const checkingEnded = ref(false)
 
+watch(() => instanceForm.processInstanceId, () => {
+  instanceResult.value = null
+  instanceEnded.value = null
+}, { flush: 'sync' })
+
 const definitionKeyOptions = computed(() =>
   definitions.value
     .map(item => ({
@@ -135,8 +144,10 @@ const handleStartProcess = async () => {
       businessKey: startForm.businessKey || undefined,
       variables: variables || undefined
     }
-    instanceResult.value = await startWorkflowProcess(payload)
-    instanceForm.processInstanceId = instanceResult.value.processInstanceId || instanceResult.value.id || ''
+    const started = await startWorkflowProcess(payload)
+    instanceForm.processInstanceId = started.processInstanceId || started.id || ''
+    instanceResult.value = started
+    instanceEnded.value = !!started.ended
     ElMessage.success(t('workflowInstances.processStarted'))
     resetStartForm()
   } catch {
@@ -176,6 +187,9 @@ const handleEndInstance = async () => {
     ElMessage.warning(t('workflowInstances.inputProcessInstanceIdRequired'))
     return
   }
+  try {
+    await ElMessageBox.confirm(t('bpmnDesign.stopHint', { id: instanceForm.processInstanceId }), t('bpmnDesign.manageRun'), { type: 'warning' })
+  } catch { return }
   endingInstance.value = true
   try {
     await endWorkflowProcess(instanceForm.processInstanceId)
@@ -194,6 +208,9 @@ const handleDeleteInstance = async () => {
     ElMessage.warning(t('workflowInstances.inputProcessInstanceIdRequired'))
     return
   }
+  try {
+    await ElMessageBox.confirm(t('bpmnDesign.stopHint', { id: instanceForm.processInstanceId }), t('bpmnDesign.manageRun'), { type: 'warning' })
+  } catch { return }
   deletingInstance.value = true
   try {
     await deleteWorkflowProcess(instanceForm.processInstanceId, {
@@ -254,24 +271,10 @@ onMounted(() => {
 })
 </script>
 
+<style scoped src="./workflow.css"></style>
 <style scoped>
-.workflow-page {
-  padding: 20px;
-}
 
-.table-section {
-  background: var(--bg-color);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-}
 
-.section-title {
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 16px;
-}
 
 .ended-tip {
   margin-top: 12px;

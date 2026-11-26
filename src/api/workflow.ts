@@ -17,6 +17,7 @@ export interface WorkflowDefinition {
 }
 
 export interface WorkflowNode {
+  assignee?: string
   id?: string
   activityId?: string
   name?: string
@@ -149,6 +150,19 @@ export const startWorkflowProcess = async (data: ProcessStartDTO): Promise<Proce
     return await MockWorkflowService.startWorkflowProcess(data)
   }
   return await request.post<ProcessInstance>('/api/v1/workflow/start', data as unknown as Record<string, unknown>)
+}
+
+export interface WorkflowRunSummary {
+  id: string
+  key?: string
+  name?: string
+  businessKey?: string
+  status?: string
+}
+
+export async function getWorkflowRuns(): Promise<WorkflowRunSummary[]> {
+  if (isMockEnabled()) return MockWorkflowService.getWorkflowRuns()
+  return request.get('/api/v1/workflow/process', { includeEnded: true })
 }
 
 export const getWorkflowProcess = async (processInstanceId: string): Promise<ProcessInstance> => {

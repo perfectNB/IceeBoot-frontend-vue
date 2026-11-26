@@ -1,6 +1,6 @@
 <template>
   <div class="workflow-page admin-page">
-    <AdminPageHeader :title="t('workflowDiagram.title')" :description="t('workflowDiagram.description')" />
+    <AdminPageHeader :title="t('workflowDiagram.title')" :description="t('workflowDiagram.pageDescription')" />
 
     <div class="search-section">
       <el-form :model="diagramForm" inline>
@@ -16,10 +16,10 @@
           </el-select>
         </el-form-item>
         <el-form-item :label="t('workflowDiagram.processInstance')" v-else>
-          <el-input v-model="diagramForm.processInstanceId" :placeholder="t('workflowDiagram.inputProcessInstanceId')" style="width: 260px" />
+          <WorkflowRunPicker v-model="diagramForm.processInstanceId" style="width: min(340px, 100%)" />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :loading="loadingDiagram" @click="loadDiagram">{{ t('workflowDiagram.loadDiagram') }}</el-button>
+          <el-button type="primary" :disabled="!(diagramForm.mode === 'definition' ? diagramForm.definitionId : diagramForm.processInstanceId)" :loading="loadingDiagram" @click="loadDiagram">{{ t('workflowDiagram.loadDiagram') }}</el-button>
           <el-button :icon="FullScreen" @click="toggleDiagramFullscreen">
             {{ isDiagramFullscreen ? t('workflowDiagram.exitFullscreen') : t('workflowDiagram.fullscreen') }}
           </el-button>
@@ -28,6 +28,7 @@
     </div>
 
     <div class="diagram-section" :class="{ 'diagram-fullscreen': isDiagramFullscreen }">
+      <el-button v-if="isDiagramFullscreen" :icon="FullScreen" @click="toggleDiagramFullscreen">{{ t('workflowDiagram.exitFullscreen') }}</el-button>
       <div v-if="diagramImage" class="diagram-container">
         <div class="diagram-wrapper">
           <img ref="diagramImageRef" :src="diagramImage" class="diagram-image" @load="handleDiagramLoaded" />
@@ -48,8 +49,7 @@
       <el-empty v-else :description="t('workflowDiagram.noDiagram')" />
     </div>
 
-    <div class="table-section">
-      <div class="section-title">{{ t('workflowDiagram.nodeStatus') }}</div>
+    <details v-if="diagramImage" class="table-section"><summary>{{ t('workflowDiagram.nodeStatus') }} · {{ currentNodes.length }}</summary>
       <el-table :data="currentNodes" stripe border style="width: 100%">
         <el-table-column prop="activityId" :label="t('workflowDiagram.nodeId')" min-width="160" show-overflow-tooltip />
         <el-table-column prop="name" :label="t('workflowDiagram.nodeName')" min-width="160" show-overflow-tooltip />
@@ -61,22 +61,21 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="x" label="X" width="80" />
-        <el-table-column prop="y" label="Y" width="80" />
-        <el-table-column prop="width" :label="t('workflowDiagram.width')" width="80" />
-        <el-table-column prop="height" :label="t('workflowDiagram.height')" width="80" />
         <el-table-column :label="t('workflowDiagram.description')" min-width="240" show-overflow-tooltip>
           <template #default="{ row }">
             {{ getNodeDescription(row.type) }}
           </template>
         </el-table-column>
       </el-table>
-    </div>
+    </details>
   </div>
 </template>
 
 <script setup lang="ts">
 import { normalizeDiagramImage } from '@/utils/workflowDiagram'
+import { useRoute } from 'vue-router'
+import { hasPermission } from '@/utils/permission'
+import WorkflowRunPicker from './WorkflowRunPicker.vue'
 import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { computed, nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
@@ -106,6 +105,7 @@ const diagramForm = reactive({
   processInstanceId: ''
 })
 const isDiagramFullscreen = ref(false)
+const route = useRoute()
 const loadingDiagram = ref(false)
 const diagramImage = ref('')
 const currentNodes = ref<WorkflowNode[]>([])
@@ -167,40 +167,42 @@ const overlayNodes = computed(() => {
 const loadDefinitions = async () => {
   try {
     definitions.value = await getWorkflowDefinitions({ latestOnly: true })
+    if (diagramForm.mode === 'definition' && !diagramForm.definitionId && hasPermission('workflow:definition:diagram:api')) {
+      diagramForm.definitionId = definitionOptions.value[0]?.value || ''
+    }
   } catch {
     ElMessage.error(t('workflowDiagram.loadDefinitionsFailed'))
   }
 }
 
+let diagramRequest = 0
 const loadDiagram = async () => {
-  if (diagramForm.mode === 'definition' && !diagramForm.definitionId) {
-    ElMessage.warning(t('workflowDiagram.selectProcessDefinitionRequired'))
-    return
-  }
-  if (diagramForm.mode === 'instance' && !diagramForm.processInstanceId) {
-    ElMessage.warning(t('workflowDiagram.inputProcessInstanceIdRequired'))
-    return
-  }
+  const request = ++diagramRequest
+  const definition = diagramForm.mode === 'definition'
+  const id = definition ? diagramForm.definitionId : diagramForm.processInstanceId
+  diagramImage.value = ''
+  currentNodes.value = []
+  loadingDiagram.value = false
+  if (!id || !hasPermission(definition ? 'workflow:definition:diagram:api' : 'workflow:process:diagram:api')) return
   loadingDiagram.value = true
   try {
-    if (diagramForm.mode === 'definition') {
-      const diagramData = await getWorkflowDefinitionDiagram(diagramForm.definitionId)
-      diagramImage.value = normalizeDiagramImage(diagramData)
-      currentNodes.value = await getWorkflowDefinitionNodes(diagramForm.definitionId)
-    } else {
-      const instanceId = diagramForm.processInstanceId
-      const diagramData = await workflowInstanceDiagram(instanceId)
-      diagramImage.value = normalizeDiagramImage(diagramData)
-      currentNodes.value = await getWorkflowProcessNodes(instanceId)
-    }
+    const readNodes = hasPermission(definition ? 'workflow:definition:nodes:api' : 'workflow:process:nodes:api')
+    const [image, nodes] = await Promise.all([
+      definition ? getWorkflowDefinitionDiagram(id) : workflowInstanceDiagram(id),
+      readNodes ? (definition ? getWorkflowDefinitionNodes(id) : getWorkflowProcessNodes(id)) : []
+    ])
+    if (request !== diagramRequest) return
+    diagramImage.value = normalizeDiagramImage(image)
+    currentNodes.value = nodes
     await nextTick()
     updateDiagramSize()
   } catch {
-    ElMessage.error(t('workflowDiagram.loadDiagramFailed'))
+    if (request === diagramRequest) ElMessage.error(t('workflowDiagram.loadDiagramFailed'))
   } finally {
-    loadingDiagram.value = false
+    if (request === diagramRequest) loadingDiagram.value = false
   }
 }
+watch(() => [diagramForm.mode, diagramForm.definitionId, diagramForm.processInstanceId], loadDiagram)
 
 const handleDiagramLoaded = () => {
   updateDiagramSize()
@@ -257,11 +259,17 @@ const toggleDiagramFullscreen = () => {
 }
 
 onMounted(() => {
-  loadDefinitions()
+  const runId = route.query.run
+  if (typeof runId === 'string' && runId) {
+    diagramForm.mode = 'instance'
+    diagramForm.processInstanceId = runId
+  }
+  if (hasPermission('workflow:definition:list:api')) void loadDefinitions()
   window.addEventListener('resize', resizeHandler)
 })
 
 onUnmounted(() => {
+  if (isDiagramFullscreen.value) document.body.style.overflow = ''
   window.removeEventListener('resize', resizeHandler)
 })
 
@@ -274,40 +282,12 @@ watch(
 )
 </script>
 
+<style scoped src="./workflow.css"></style>
 <style scoped>
-.workflow-page {
-  padding: 20px;
-}
 
-.search-section {
-  background: var(--bg-color);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-}
 
-.table-section {
-  background: var(--bg-color);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-}
 
-.section-title {
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 16px;
-}
 
-.diagram-section {
-  background: var(--bg-color);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-}
 
 .diagram-fullscreen {
   position: fixed;

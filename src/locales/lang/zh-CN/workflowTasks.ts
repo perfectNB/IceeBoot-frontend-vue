@@ -1,6 +1,6 @@
 export default {
   title: '任务处理',
-  description: '查询负责人或候选任务，完成任务或执行跳转',
+  description: '先认领待办，再完成办理。按人员查询可查看其他负责人或候选人的任务。',
   assignee: '负责人',
   inputUserIdentifier: '请输入用户标识',
   candidateUser: '候选人',

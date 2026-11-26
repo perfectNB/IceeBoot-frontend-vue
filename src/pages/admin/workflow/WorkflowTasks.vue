@@ -2,26 +2,27 @@
   <div class="workflow-page admin-page">
     <AdminPageHeader :title="t('workflowTasks.title')" :description="t('workflowTasks.description')" />
 
-    <div class="search-section">
-      <el-form :model="taskQueryForm" inline>
-        <el-form-item :label="t('workflowTasks.assignee')">
-          <el-input v-model="taskQueryForm.assignee" :placeholder="t('workflowTasks.inputUserIdentifier')" style="width: 200px" />
-        </el-form-item>
-        <el-form-item :label="t('workflowTasks.candidateUser')">
-          <el-input v-model="taskQueryForm.candidateUser" :placeholder="t('workflowTasks.inputCandidateUser')" style="width: 200px" />
-        </el-form-item>
-        <el-form-item>
-          <el-button v-if="hasPermission('workflow:task:my:api')" @click="loadMyTasks">我的任务</el-button>
-          <el-button v-if="hasPermission('workflow:task:user:api')" type="primary" :loading="loadingTasks" @click="handleLoadUserTasks">{{ t('workflowTasks.queryAssigneeTasks') }}</el-button>
-          <el-button v-if="hasPermission('workflow:task:candidate:api')" type="success" :loading="loadingTasks" @click="handleLoadCandidateTasks">{{ t('workflowTasks.queryCandidateTasks') }}</el-button>
-          <el-button :icon="Refresh" @click="resetTaskQuery">{{ t('workflowTasks.reset') }}</el-button>
-        </el-form-item>
-      </el-form>
-    </div>
-
     <div class="table-section">
-      <el-table :data="tasks" v-loading="loadingTasks" stripe border style="width: 100%">
-        <el-table-column prop="id" :label="t('workflowTasks.taskId')" min-width="180" show-overflow-tooltip />
+      <div class="panel-tools"><strong>{{ listTitle }}</strong>
+        <el-button v-if="hasPermission('workflow:task:my:api')" :icon="Refresh" @click="loadMyTasks">{{ t('bpmnDesign.myTasks') }}</el-button>
+      </div>
+      <details class="search-section" :open="!hasPermission('workflow:task:my:api')"><summary>{{ t('bpmnDesign.searchPeople') }}</summary>
+        <el-form :model="taskQueryForm" inline>
+          <el-form-item :label="t('workflowTasks.assignee')">
+            <el-input v-model="taskQueryForm.assignee" :placeholder="t('workflowTasks.inputUserIdentifier')" style="width: 200px" />
+          </el-form-item>
+          <el-form-item :label="t('workflowTasks.candidateUser')">
+            <el-input v-model="taskQueryForm.candidateUser" :placeholder="t('workflowTasks.inputCandidateUser')" style="width: 200px" />
+          </el-form-item>
+          <el-form-item>
+            <el-button v-if="hasPermission('workflow:task:user:api')" type="primary" :loading="loadingTasks" @click="handleLoadUserTasks">{{ t('workflowTasks.queryAssigneeTasks') }}</el-button>
+            <el-button v-if="hasPermission('workflow:task:candidate:api')" type="success" :loading="loadingTasks" @click="handleLoadCandidateTasks">{{ t('workflowTasks.queryCandidateTasks') }}</el-button>
+            <el-button :icon="Refresh" @click="resetTaskQuery">{{ t('workflowTasks.reset') }}</el-button>
+          </el-form-item>
+        </el-form>
+      </details>
+
+      <el-table :data="tasks" v-loading="loadingTasks" :empty-text="t('bpmnDesign.noTasks')" style="width: 100%">
         <el-table-column prop="name" :label="t('workflowTasks.taskName')" min-width="160" show-overflow-tooltip />
         <el-table-column prop="assignee" :label="t('workflowTasks.assigneeLabel')" width="140" show-overflow-tooltip />
         <el-table-column prop="processInstanceId" :label="t('workflowTasks.instanceId')" min-width="180" show-overflow-tooltip />
@@ -38,12 +39,12 @@
 
     <el-dialog v-model="completeDialogVisible" :title="t('workflowTasks.completeTask')" width="520px">
       <el-form :model="completeForm" label-width="90px">
-        <el-form-item :label="t('workflowTasks.taskId')">
-          <el-input v-model="completeForm.taskId" readonly />
+        <el-form-item :label="t('workflowTasks.taskName')">
+          <strong>{{ taskName }}</strong>
         </el-form-item>
-        <el-form-item :label="t('workflowTasks.processVariables')">
+        <details class="optional-fields"><summary>{{ t('bpmnDesign.advancedInput') }}</summary><el-form-item :label="t('workflowTasks.processVariables')">
           <el-input v-model="completeForm.variablesJson" type="textarea" :rows="6" :placeholder="t('workflowTasks.jsonObject')" />
-        </el-form-item>
+        </el-form-item></details>
         <el-form-item>
           <el-button type="primary" :loading="completingTask" @click="handleCompleteTask">{{ t('workflowTasks.submit') }}</el-button>
           <el-button @click="completeDialogVisible = false">{{ t('workflowTasks.cancel') }}</el-button>
@@ -79,6 +80,7 @@ const taskQueryForm = reactive({
   candidateUser: ''
 })
 
+const taskName = ref('')
 const completeDialogVisible = ref(false)
 const completeForm = reactive({
   taskId: '',
@@ -88,10 +90,12 @@ const completingTask = ref(false)
 
 const store = useUserStore()
 const isMine = (row: TaskItem) => !!row.assignee && [String(store.user?.id), store.user?.username].includes(row.assignee)
+const listTitle = ref(t('bpmnDesign.myTasks'))
 let reload: () => Promise<void> = loadMyTasks
 
 async function loadMyTasks() {
   if (!hasPermission('workflow:task:my:api')) return
+  listTitle.value = t('bpmnDesign.myTasks')
   reload = loadMyTasks
   loadingTasks.value = true
   try { tasks.value = await myWorkflowTasks() }
@@ -118,6 +122,7 @@ const handleLoadUserTasks = async () => {
   try {
     reload = handleLoadUserTasks
     tasks.value = await getUserTasks(taskQueryForm.assignee)
+    listTitle.value = taskQueryForm.assignee + ' · ' + t('workflowTasks.assignee')
   } catch {
     ElMessage.error(t('workflowTasks.queryTasksFailed'))
   } finally {
@@ -134,6 +139,7 @@ const handleLoadCandidateTasks = async () => {
   try {
     reload = handleLoadCandidateTasks
     tasks.value = await getCandidateTasks(taskQueryForm.candidateUser)
+    listTitle.value = taskQueryForm.candidateUser + ' · ' + t('workflowTasks.candidateUser')
   } catch {
     ElMessage.error(t('workflowTasks.queryTasksFailed'))
   } finally {
@@ -148,6 +154,7 @@ const resetTaskQuery = () => {
 }
 
 const openCompleteDialog = (task: TaskItem) => {
+  taskName.value = task.name || task.id || ''
   completeForm.taskId = task.id || ''
   completeForm.variablesJson = ''
   completeDialogVisible.value = true
@@ -193,26 +200,10 @@ const parseJson = (value: string): Record<string, unknown> | undefined | null =>
 }
 </script>
 
+<style scoped src="./workflow.css"></style>
 <style scoped>
-.workflow-page {
-  padding: 20px;
-}
 
-.search-section {
-  background: var(--bg-color);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-}
 
-.table-section {
-  background: var(--bg-color);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-}
 
 :deep(.el-table .el-table__cell) {
   padding: 12px 0;

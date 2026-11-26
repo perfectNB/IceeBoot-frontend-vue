@@ -90,6 +90,7 @@ export class MockWorkflowService {
     mockWorkflowNodes[id] = Array.from(process.children)
       .filter(el => ['startEvent', 'endEvent', 'userTask'].includes(el.localName))
       .map((el, i) => ({ id: el.id, activityId: el.id, name: el.getAttribute('name') || el.id,
+        assignee: el.getAttributeNS('http://activiti.org/bpmn', 'assignee') || undefined,
         type: el.localName, x: 15 + i * 130, y: 30, width: 105, height: 45 }))
     mockWorkflowDefinitions.push(newDefinition)
 
@@ -175,7 +176,7 @@ export class MockWorkflowService {
     if (first) {
       newInstance.activityId = first.activityId
       mockTasks.push({ id: crypto.randomUUID(), processInstanceId: id, processDefinitionId: definition.id,
-        name: first.name, taskDefinitionKey: first.activityId, candidateUser: actor().username, createTime: newInstance.startTime })
+        name: first.name, taskDefinitionKey: first.activityId, assignee: first.assignee, candidateUser: first.assignee ? undefined : actor().username, createTime: newInstance.startTime })
     } else {
       newInstance.ended = true
     }
@@ -185,6 +186,15 @@ export class MockWorkflowService {
   }
 
   // 获取流程实例
+  static async getWorkflowRuns() {
+    await mockDelay()
+    return mockProcessInstances.map(run => ({
+      id: run.processInstanceId!, key: run.processDefinitionKey,
+      name: run.name || run.processDefinitionName, businessKey: run.businessKey,
+      status: run.ended ? 'completed' : 'active'
+    }))
+  }
+
   static async getWorkflowProcess(processInstanceId: string): Promise<ProcessInstance> {
     await mockDelay()
     mockLog('获取流程实例', processInstanceId)
@@ -314,7 +324,7 @@ export class MockWorkflowService {
       instance.activityId = next?.activityId || 'end'
       instance.ended = !next
       if (next) mockTasks.push({ ...task, id: crypto.randomUUID(), taskDefinitionKey: next.activityId,
-        name: next.name, assignee: undefined, candidateUser: actor().username })
+        name: next.name, assignee: next.assignee, candidateUser: next.assignee ? undefined : actor().username })
     }
   }
 

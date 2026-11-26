@@ -1,0 +1,13 @@
+{
+  "name": "Activiti",
+  "uri": "http://activiti.org/bpmn",
+  "prefix": "activiti",
+  "xml": { "tagAlias": "lowerCase" },
+  "types": [
+    {
+      "name": "Assignment",
+      "extends": ["bpmn:UserTask"],
+      "properties": [{ "name": "assignee", "isAttr": true, "type": "String" }]
+    }
+  ]
+}

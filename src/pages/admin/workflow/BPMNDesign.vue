@@ -1,648 +1,271 @@
 <template>
   <div class="workflow-page admin-page">
-    <AdminPageHeader :title="t('bpmnDesign.title')" :description="t('bpmnDesign.description')" />
+    <AdminPageHeader :title="t('bpmnDesign.studio')" :description="t('bpmnDesign.intro')">
+      <el-button :icon="FolderOpened" @click="openImport">{{ t('bpmnDesign.importProcess') }}</el-button>
+      <el-button v-if="canPublish" type="primary" :icon="Promotion" :disabled="!ready" @click="openPublish('canvas')">{{ t('bpmnDesign.publish') }}</el-button>
+    </AdminPageHeader>
 
-    <div class="designer-section" :class="{ 'designer-fullscreen': isDesignerFullscreen }">
-      <div class="designer-toolbar">
-        <el-space wrap>
-          <el-button type="primary" :icon="Plus" @click="handleCreateDiagram">{{ t('bpmnDesign.new') }}</el-button>
-          <el-button :icon="Upload" @click="importDialogVisible = true">{{ t('bpmnDesign.importXml') }}</el-button>
-          <el-button :icon="Document" @click="handleSaveDesignerXml">{{ t('bpmnDesign.saveXml') }}</el-button>
-          <el-button v-if="hasPermission('workflow:definition:deploy:api')" type="success" :icon="UploadFilled" :loading="deployingDesigner" @click="openDesignerDeployDialog">
-            {{ t('bpmnDesign.deploy') }}
-          </el-button>
-          <el-button :icon="FullScreen" @click="toggleDesignerFullscreen">
-            {{ isDesignerFullscreen ? t('bpmnDesign.exitFullscreen') : t('bpmnDesign.fullscreen') }}
-          </el-button>
-        </el-space>
-        <div class="designer-tip">{{ t('bpmnDesign.designerTip') }}</div>
+    <div v-if="published" class="published" role="status">
+      <span><el-icon><CircleCheck /></el-icon> {{ t('bpmnDesign.published', { name: published }) }}</span>
+      <router-link v-if="hasPermission('workflow:definition')" to="/admin/workflow/definition">{{ t('bpmnDesign.toDefinitions') }} →</router-link>
+    </div>
+
+    <section ref="studio" class="studio">
+      <header class="studio-bar">
+        <strong><el-icon><Share /></el-icon>{{ t('bpmnDesign.canvas') }}</strong>
+        <div class="studio-actions">
+          <el-button text :icon="Plus" :disabled="!ready" @click="newDesign">{{ t('bpmnDesign.new') }}</el-button>
+          <el-button text :icon="Download" :disabled="!ready" @click="download">{{ t('bpmnDesign.download') }}</el-button>
+          <el-button text :icon="FullScreen" @click="fullscreen">{{ t('bpmnDesign.fullscreen') }}</el-button>
+        </div>
+      </header>
+      <div class="studio-body">
+        <div class="board">
+          <div ref="container" class="canvas"></div>
+          <button type="button" class="fit" @click="fit">{{ t('bpmnDesign.fit') }}</button>
+        </div>
+        <aside class="inspector">
+          <h2>{{ selected ? t('bpmnDesign.nodeSettings') : t('bpmnDesign.getStarted') }}</h2>
+          <template v-if="selected">
+            <label>{{ t('bpmnDesign.nodeName') }}<el-input :model-value="nodeName" @change="setProperty('name', $event)" /></label>
+            <label v-if="selected.type === 'bpmn:UserTask'">{{ t('workflowTasks.assignee') }}
+              <el-input :model-value="assignee" :placeholder="t('bpmnDesign.assigneeHint')" @change="setProperty('activiti:assignee', $event)" />
+            </label>
+            <p>{{ t('bpmnDesign.nodeTip') }}</p>
+          </template>
+          <template v-else>
+            <div class="step"><i class="symbol start"></i><div><b>{{ t('bpmnDesign.stepStart') }}</b><p>{{ t('bpmnDesign.startHint') }}</p></div></div>
+            <div class="step"><i class="symbol task"></i><div><b>{{ t('bpmnDesign.stepReview') }}</b><p>{{ t('bpmnDesign.reviewHint') }}</p></div></div>
+            <div class="step"><i class="symbol end"></i><div><b>{{ t('bpmnDesign.stepEnd') }}</b><p>{{ t('bpmnDesign.endHint') }}</p></div></div>
+          </template>
+          <details class="guide"><summary>{{ t('bpmnDesign.nodeDescription') }}</summary>
+            <dl><template v-for="key in guideKeys" :key="key"><dt>{{ t('bpmnDesign.' + key) }}</dt><dd>{{ t('bpmnDesign.' + key + 'Desc') }}</dd></template></dl>
+          </details>
+        </aside>
       </div>
-      <div ref="designerRef" class="designer-canvas"></div>
-    </div>
+    </section>
 
-    <div class="table-section">
-      <div class="section-title">{{ t('bpmnDesign.usageGuide') }}</div>
-      <el-row :gutter="16">
-        <el-col :span="12">
-          <div class="guide-block">
-            <div class="guide-title">{{ t('bpmnDesign.howToBuild') }}</div>
-            <div class="guide-item">{{ t('bpmnDesign.step1') }}</div>
-            <div class="guide-item">{{ t('bpmnDesign.step2') }}</div>
-            <div class="guide-item">{{ t('bpmnDesign.step3') }}</div>
-          </div>
-        </el-col>
-        <el-col :span="12">
-          <div class="guide-block">
-            <div class="guide-title">{{ t('bpmnDesign.commonOperations') }}</div>
-            <div class="guide-item">{{ t('bpmnDesign.doubleClickNode') }}</div>
-            <div class="guide-item">{{ t('bpmnDesign.dragNode') }}</div>
-            <div class="guide-item">{{ t('bpmnDesign.connectionPoint') }}</div>
-          </div>
-        </el-col>
-      </el-row>
-    </div>
-
-    <div class="table-section">
-      <div class="section-title">{{ t('bpmnDesign.nodeDescription') }}</div>
-      <el-table :data="nodeGuideList" stripe border style="width: 100%">
-        <el-table-column prop="name" :label="t('bpmnDesign.nodeName')" width="160" />
-        <el-table-column prop="type" :label="t('bpmnDesign.typeIdentifier')" width="200" show-overflow-tooltip />
-        <el-table-column prop="description" :label="t('bpmnDesign.functionDescription')" min-width="320" show-overflow-tooltip />
-      </el-table>
-    </div>
-
-    <el-row :gutter="16">
-      <el-col :span="12">
-        <div class="table-section">
-          <div class="section-title">{{ t('bpmnDesign.uploadDeploy') }}</div>
-          <el-form :model="deployForm" label-width="90px">
-            <el-form-item :label="t('bpmnDesign.processName')">
-              <el-input v-model="deployForm.name" :placeholder="t('bpmnDesign.optional')" />
-            </el-form-item>
-            <el-form-item :label="t('bpmnDesign.processCategory')">
-              <el-input v-model="deployForm.category" :placeholder="t('bpmnDesign.optional')" />
-            </el-form-item>
-            <el-form-item :label="t('bpmnDesign.tenantId')">
-              <el-input v-model="deployForm.tenantId" :placeholder="t('bpmnDesign.optional')" />
-            </el-form-item>
-            <el-form-item :label="t('bpmnDesign.bpmnFile')">
-              <el-upload
-                :auto-upload="false"
-                :limit="1"
-                :file-list="deployFileList"
-                :on-change="handleDeployFileChange"
-                :on-remove="handleDeployFileRemove"
-                accept=".bpmn,.xml"
-              >
-                <el-button type="primary">{{ t('bpmnDesign.selectFile') }}</el-button>
-              </el-upload>
-            </el-form-item>
-            <el-form-item>
-              <el-button v-if="hasPermission('workflow:definition:deploy:api')" type="primary" :loading="deploying" @click="handleDeployFile">{{ t('bpmnDesign.deploy') }}</el-button>
-              <el-button @click="resetDeployForm">{{ t('bpmnDesign.reset') }}</el-button>
-            </el-form-item>
-          </el-form>
-        </div>
-      </el-col>
-      <el-col :span="12">
-        <div class="table-section">
-          <div class="section-title">{{ t('bpmnDesign.xmlDesignDeploy') }}</div>
-          <el-form :model="xmlForm" label-width="90px">
-            <el-form-item :label="t('bpmnDesign.processName')">
-              <el-input v-model="xmlForm.name" :placeholder="t('bpmnDesign.optional')" />
-            </el-form-item>
-            <el-form-item :label="t('bpmnDesign.processCategory')">
-              <el-input v-model="xmlForm.category" :placeholder="t('bpmnDesign.optional')" />
-            </el-form-item>
-            <el-form-item :label="t('bpmnDesign.tenantId')">
-              <el-input v-model="xmlForm.tenantId" :placeholder="t('bpmnDesign.optional')" />
-            </el-form-item>
-            <el-form-item :label="t('bpmnDesign.bpmnXml')">
-              <el-input v-model="xmlForm.xml" type="textarea" :rows="12" :placeholder="t('bpmnDesign.inputBpmnXml')" />
-            </el-form-item>
-            <el-form-item>
-              <el-button v-if="hasPermission('workflow:definition:deploy:api')" type="primary" :loading="deployingXml" @click="handleDeployXml">{{ t('bpmnDesign.saveDeploy') }}</el-button>
-              <el-button @click="resetXmlForm">{{ t('bpmnDesign.reset') }}</el-button>
-            </el-form-item>
-          </el-form>
-        </div>
-      </el-col>
-    </el-row>
-
-    <el-dialog v-model="importDialogVisible" :title="t('bpmnDesign.importBpmnXml')" width="70%">
-      <el-input v-model="importXml" type="textarea" :rows="20" :placeholder="t('bpmnDesign.pasteBpmnXml')" />
+    <el-dialog v-model="importOpen" :title="t('bpmnDesign.importProcess')" width="min(570px, 92vw)">
+      <el-tabs v-model="importMode"><el-tab-pane :label="t('bpmnDesign.bpmnFile')" name="file">
+        <label class="file-pick"><el-icon><FolderOpened /></el-icon><span>{{ file?.name || t('bpmnDesign.selectFile') }}</span>
+          <input type="file" accept=".bpmn,.xml,.bpmn20.xml" @change="pickFile" /></label>
+      </el-tab-pane><el-tab-pane :label="t('bpmnDesign.pasteXml')" name="xml">
+        <el-input v-model="sourceText" type="textarea" :rows="9" :placeholder="t('bpmnDesign.pasteBpmnXml')" />
+      </el-tab-pane></el-tabs>
       <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="importDialogVisible = false">{{ t('bpmnDesign.cancel') }}</el-button>
-          <el-button type="primary" @click="handleImportXml">{{ t('bpmnDesign.import') }}</el-button>
-        </span>
+        <el-button v-if="canPublish" :disabled="!hasSource" @click="openPublish('source')">{{ t('bpmnDesign.publishSource') }}</el-button>
+        <el-button type="primary" :disabled="!hasSource" :loading="importing" @click="importSource">{{ t('bpmnDesign.openCanvas') }}</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="designerDeployDialogVisible" :title="t('bpmnDesign.deployProcess')" width="520px" @close="resetDesignerDeployForm">
-      <el-form :model="designerDeployForm" label-width="90px">
-        <el-form-item :label="t('bpmnDesign.processName')">
-          <el-input v-model="designerDeployForm.name" :placeholder="t('bpmnDesign.required')" />
-        </el-form-item>
-        <el-form-item :label="t('bpmnDesign.processCategory')">
-          <el-input v-model="designerDeployForm.category" :placeholder="t('bpmnDesign.optional')" />
-        </el-form-item>
-        <el-form-item :label="t('bpmnDesign.tenantId')">
-          <el-input v-model="designerDeployForm.tenantId" :placeholder="t('bpmnDesign.optional')" />
-        </el-form-item>
-        <el-form-item>
-          <el-button v-if="hasPermission('workflow:definition:deploy:api')" type="primary" :loading="deployingDesigner" @click="handleConfirmDesignerDeploy">{{ t('bpmnDesign.deploy') }}</el-button>
-          <el-button @click="designerDeployDialogVisible = false">{{ t('bpmnDesign.cancel') }}</el-button>
-        </el-form-item>
+    <el-dialog v-model="publishOpen" :title="t('bpmnDesign.publish')" width="min(480px, 92vw)">
+      <el-form label-position="top" @submit.prevent="publish">
+        <el-form-item :label="t('bpmnDesign.processName')" required><el-input v-model="form.name" autofocus /></el-form-item>
+        <details class="guide"><summary>{{ t('bpmnDesign.advanced') }}</summary>
+          <el-form-item :label="t('bpmnDesign.processCategory')"><el-input v-model="form.category" /></el-form-item>
+          <el-form-item :label="t('bpmnDesign.tenantId')"><el-input v-model="form.tenantId" /></el-form-item>
+        </details>
       </el-form>
+      <template #footer><el-button @click="publishOpen = false">{{ t('bpmnDesign.cancel') }}</el-button>
+        <el-button type="primary" :loading="publishing" :disabled="!form.name.trim()" @click="publish">{{ t('bpmnDesign.publish') }}</el-button>
+      </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { hasPermission } from '@/utils/permission'
-import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
-import { nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
-import { ElMessage, type UploadFile, type UploadUserFile } from 'element-plus'
-import { Document, FullScreen, Plus, Upload, UploadFilled } from '@element-plus/icons-vue'
-import Modeler from 'bpmn-js/lib/Modeler'
-import 'bpmn-js/dist/assets/diagram-js.css'
-import 'bpmn-js/dist/assets/bpmn-font/css/bpmn.css'
-import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css'
-import { deployWorkflowDefinition, getWorkflowDefinitions, type WorkflowDefinition } from '@/api'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, shallowRef } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { CircleCheck, Download, FolderOpened, FullScreen, Plus, Promotion, Share } from '@element-plus/icons-vue'
+import Modeler from 'bpmn-js/lib/Modeler'
+import type Modeling from 'bpmn-js/lib/features/modeling/Modeling'
+import type { Element } from 'bpmn-js/lib/model/Types'
+import type Canvas from 'diagram-js/lib/core/Canvas'
+import 'bpmn-js/dist/assets/diagram-js.css'
+import 'bpmn-js/dist/assets/bpmn-font/css/bpmn-embedded.css'
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
+import { deployWorkflowDefinition } from '@/api/workflow'
+import { useUserStore } from '@/stores/user'
+import { hasPermission } from '@/utils/permission'
+import activitiAssignment from './activitiAssignment.json'
+import { approvalTemplate } from './approvalTemplate'
+import { createDesignerTranslate } from './designerTranslate'
 
-defineOptions({
-  name: 'BPMNDesign'
-})
+const { t, locale } = useI18n()
+const store = useUserStore()
+const canPublish = computed(() => hasPermission('workflow:definition:deploy:api'))
+const container = ref<HTMLDivElement>()
+const studio = ref<HTMLElement>()
+const ready = ref(false)
+const dirty = ref(false)
+const selected = shallowRef<Element>()
+const nodeName = ref('')
+const assignee = ref('')
+const published = ref('')
+const importOpen = ref(false)
+const importMode = ref('file')
+const sourceText = ref('')
+const file = ref<File>()
+const importing = ref(false)
+const hasSource = computed(() => importMode.value === 'file' ? !!file.value : !!sourceText.value.trim())
+const publishOpen = ref(false)
+const publishing = ref(false)
+const source = ref<'source' | 'canvas'>('canvas')
+const form = reactive({ name: '', category: '', tenantId: '' })
+const guideKeys = ['startEvent','userTask','exclusiveGateway','parallelGateway','endEvent','serviceTask','scriptTask','manualTask','receiveTask','inclusiveGateway','callActivity','subProcess']
+let modeler: Modeler | undefined
 
-const { t } = useI18n()
-
-const latestOnly = ref(true)
-const definitions = ref<WorkflowDefinition[]>([])
-
-const deployForm = reactive({
-  name: '',
-  category: '',
-  tenantId: ''
-})
-const deployFileList = ref<UploadUserFile[]>([])
-const deployFile = ref<File | null>(null)
-const deploying = ref(false)
-
-const xmlForm = reactive({
-  name: '',
-  category: '',
-  tenantId: '',
-  xml: ''
-})
-const deployingXml = ref(false)
-
-const designerRef = ref<HTMLDivElement>()
-const isDesignerFullscreen = ref(false)
-const importDialogVisible = ref(false)
-const importXml = ref('')
-const deployingDesigner = ref(false)
-const designerDeployDialogVisible = ref(false)
-const designerDeployForm = reactive({
-  name: '',
-  category: '',
-  tenantId: ''
-})
-let bpmnModeler: Modeler | null = null
-
-const nodeGuideList = [
-  { name: t('bpmnDesign.startEvent'), type: 'startEvent', description: t('bpmnDesign.startEventDesc') },
-  { name: t('bpmnDesign.endEvent'), type: 'endEvent', description: t('bpmnDesign.endEventDesc') },
-  { name: t('bpmnDesign.userTask'), type: 'userTask', description: t('bpmnDesign.userTaskDesc') },
-  { name: t('bpmnDesign.serviceTask'), type: 'serviceTask', description: t('bpmnDesign.serviceTaskDesc') },
-  { name: t('bpmnDesign.scriptTask'), type: 'scriptTask', description: t('bpmnDesign.scriptTaskDesc') },
-  { name: t('bpmnDesign.manualTask'), type: 'manualTask', description: t('bpmnDesign.manualTaskDesc') },
-  { name: t('bpmnDesign.receiveTask'), type: 'receiveTask', description: t('bpmnDesign.receiveTaskDesc') },
-  { name: t('bpmnDesign.exclusiveGateway'), type: 'exclusiveGateway', description: t('bpmnDesign.exclusiveGatewayDesc') },
-  { name: t('bpmnDesign.parallelGateway'), type: 'parallelGateway', description: t('bpmnDesign.parallelGatewayDesc') },
-  { name: t('bpmnDesign.inclusiveGateway'), type: 'inclusiveGateway', description: t('bpmnDesign.inclusiveGatewayDesc') },
-  { name: t('bpmnDesign.callActivity'), type: 'callActivity', description: t('bpmnDesign.callActivityDesc') },
-  { name: t('bpmnDesign.subProcess'), type: 'subProcess', description: t('bpmnDesign.subProcessDesc') }
-]
-
-const designerTranslations: Record<string, string> = {
-  'Activate the hand tool': '启用抓手工具',
-  'Activate the lasso tool': '启用套索工具',
-  'Activate the create/remove space tool': '启用空间调整工具',
-  'Activate the global connect tool': '启用全局连线工具',
-  'Start Event': '开始事件',
-  'Start event': '开始事件',
-  'End Event': '结束事件',
-  'End event': '结束事件',
-  'Intermediate Throw Event': '中间抛出事件',
-  'Intermediate Catch Event': '中间捕获事件',
-  'Boundary Event': '边界事件',
-  'Task': '任务',
-  'User Task': '用户任务',
-  'Service Task': '服务任务',
-  'Script Task': '脚本任务',
-  'Manual Task': '人工任务',
-  'Receive Task': '接收任务',
-  'Send Task': '发送任务',
-  'Business Rule Task': '规则任务',
-  'Call Activity': '调用活动',
-  'Sub Process': '子流程',
-  'Event Sub Process': '事件子流程',
-  'Transaction': '事务子流程',
-  'Collapsed Sub Process': '折叠子流程',
-  'Expanded Sub Process': '展开子流程',
-  'Data Object Reference': '数据对象',
-  'Data Store Reference': '数据存储',
-  'Data Input': '数据输入',
-  'Data Output': '数据输出',
-  'Pool/Participant': '泳池/参与者',
-  'Lane': '泳道',
-  'Group': '分组',
-  'Gateway': '排他网关',
-  'Create Gateway': '创建排他网关',
-  'Append Gateway': '追加排他网关',
-  'Exclusive Gateway': '排他网关',
-  'Parallel Gateway': '并行网关',
-  'Inclusive Gateway': '包含网关',
-  'Event based Gateway': '事件网关',
-  'Complex Gateway': '复杂网关',
-  'Message Start Event': '消息开始事件',
-  'Timer Start Event': '定时开始事件',
-  'Error Start Event': '错误开始事件',
-  'Signal Start Event': '信号开始事件',
-  'Message End Event': '消息结束事件',
-  'Error End Event': '错误结束事件',
-  'Signal End Event': '信号结束事件',
-  'Terminate End Event': '终止结束事件',
-  'Compensation End Event': '补偿结束事件',
-  'Message Intermediate Throw Event': '消息中间抛出事件',
-  'Message Intermediate Catch Event': '消息中间捕获事件',
-  'Timer Intermediate Catch Event': '定时中间捕获事件',
-  'Signal Intermediate Throw Event': '信号中间抛出事件',
-  'Signal Intermediate Catch Event': '信号中间捕获事件',
-  'Conditional Intermediate Catch Event': '条件中间捕获事件',
-  'Link Intermediate Throw Event': '链接中间抛出事件',
-  'Link Intermediate Catch Event': '链接中间捕获事件',
-  'Compensation Intermediate Throw Event': '补偿中间抛出事件',
-  'Compensation Intermediate Catch Event': '补偿中间捕获事件',
-  'Message Boundary Event': '消息边界事件',
-  'Timer Boundary Event': '定时边界事件',
-  'Error Boundary Event': '错误边界事件',
-  'Signal Boundary Event': '信号边界事件',
-  'Cancel Boundary Event': '取消边界事件',
-  'Compensation Boundary Event': '补偿边界事件',
-  'Conditional Boundary Event': '条件边界事件',
-  'Parallel Multi Instance': '并行多实例',
-  'Sequential Multi Instance': '串行多实例',
-  'Loop': '循环',
-  'Create StartEvent': '创建开始事件',
-  'Create EndEvent': '创建结束事件',
-  'Create Task': '创建任务',
-  'Create UserTask': '创建用户任务',
-  'Create ServiceTask': '创建服务任务',
-  'Create ScriptTask': '创建脚本任务',
-  'Create ManualTask': '创建人工任务',
-  'Create ReceiveTask': '创建接收任务',
-  'Create SendTask': '创建发送任务',
-  'Create BusinessRuleTask': '创建规则任务',
-  'Create CallActivity': '创建调用活动',
-  'Create SubProcess': '创建子流程',
-  'Create Expanded SubProcess': '创建展开子流程',
-  'Create DataObjectReference': '创建数据对象',
-  'Create DataStoreReference': '创建数据存储',
-  'Create Pool/Participant': '创建泳池/参与者',
-  'Create Lane': '创建泳道',
-  'Create Group': '创建分组',
-  'Create ExclusiveGateway': '创建排他网关',
-  'Create ParallelGateway': '创建并行网关',
-  'Create InclusiveGateway': '创建包含网关',
-  'Create EventBasedGateway': '创建事件网关',
-  'Create ComplexGateway': '创建复杂网关'
+function templateXml() {
+  return approvalTemplate(store.user?.id, ['sample','stepStart','reviewName','stepEnd'].map(key => t('bpmnDesign.' + key)))
 }
-
-const createDesignerTranslate = (translations: Record<string, string>) => {
-  return (template: string, replacements?: Record<string, string>) => {
-    const text = translations[template] || template
-    if (!replacements) return text
-    return text.replace(/\{([^}]+)\}/g, (_, key) => replacements[key] || `{${key}}`)
+function fit() {
+  const canvas = modeler?.get<Canvas>('canvas')
+  if (canvas) {
+    const { width, height } = canvas.getSize()
+    canvas.zoom('fit-viewport', { x: width / 2, y: height / 2 })
   }
 }
-
-const newDiagramXml = () => {
-  const processId = 'Process_' + crypto.randomUUID().replace(/-/g, '')
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
-  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
-  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
-  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
-  id="Definitions_1"
-  targetNamespace="http://bpmn.io/schema/bpmn">
-  <bpmn:process id="${processId}" isExecutable="true">
-    <bpmn:startEvent id="StartEvent_1" />
-    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="EndEvent_1" />
-    <bpmn:endEvent id="EndEvent_1" />
-  </bpmn:process>
-  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="${processId}">
-      <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
-        <dc:Bounds x="152" y="102" width="36" height="36" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1"><dc:Bounds x="310" y="102" width="36" height="36" /></bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1"><di:waypoint x="188" y="120" /><di:waypoint x="310" y="120" /></bpmndi:BPMNEdge>
-    </bpmndi:BPMNPlane>
-  </bpmndi:BPMNDiagram>
-</bpmn:definitions>`
+async function fullscreen() {
+  if (document.fullscreenElement) await document.exitFullscreen()
+  else await studio.value?.requestFullscreen()
+  fit()
 }
-
-const initDesigner = async () => {
-  if (!designerRef.value) return
-  if (bpmnModeler) {
-    bpmnModeler.destroy()
-    bpmnModeler = null
-  }
-  bpmnModeler = new Modeler({
-    container: designerRef.value,
-    additionalModules: [
-      {
-        translate: ['value', createDesignerTranslate(designerTranslations)]
-      }
-    ]
-  })
-  await importXmlToDesigner(newDiagramXml())
+function showNode(element?: Element) {
+  selected.value = element
+  nodeName.value = element?.businessObject.name || ''
+  assignee.value = element?.businessObject.get('activiti:assignee') || ''
 }
-
-const ensureDesignerReady = async () => {
-  if (bpmnModeler) return
-  await nextTick()
-  if (!designerRef.value) return
-  await initDesigner()
+function setProperty(key: string, value: string) {
+  if (!selected.value || !modeler) return
+  modeler.get<Modeling>('modeling').updateProperties(selected.value, { [key]: value.trim() || undefined })
 }
-
-const importXmlToDesigner = async (xml: string) => {
-  if (!bpmnModeler) return
+async function loadXml(xml: string) {
+  await modeler!.importXML(xml)
+  showNode()
+  fit()
+  dirty.value = false
+}
+async function allowReplace() {
+  if (!dirty.value) return true
   try {
-    await bpmnModeler.importXML(xml)
-    const canvas = bpmnModeler.get('canvas') as { zoom: (value: string) => void }
-    canvas.zoom('fit-viewport')
+    await ElMessageBox.confirm(t('bpmnDesign.replaceHint'), t('bpmnDesign.replace'), { type: 'warning' })
     return true
+  } catch { return false }
+}
+async function newDesign() {
+  if (await allowReplace()) {
+    await loadXml(templateXml())
+    published.value = ''
+  }
+}
+function openImport() {
+  importOpen.value = true
+}
+function pickFile(event: Event) {
+  file.value = (event.target as HTMLInputElement).files?.[0]
+}
+async function readSource() {
+  return importMode.value === 'file' ? (await file.value?.text()) || '' : sourceText.value
+}
+async function importSource() {
+  if (!modeler || !await allowReplace()) return
+  importing.value = true
+  const wasDirty = dirty.value
+  let backup: string | undefined
+  try {
+    backup = (await modeler.saveXML()).xml
+    await loadXml(await readSource())
+    dirty.value = true
+    published.value = ''
+    importOpen.value = false
   } catch {
+    if (backup) await loadXml(backup)
+    dirty.value = wasDirty
     ElMessage.error(t('bpmnDesign.importFailed'))
-    return false
-  }
+  } finally { importing.value = false }
 }
-
-const handleCreateDiagram = async () => {
-  if (!bpmnModeler) {
-    await ensureDesignerReady()
-  }
-  await importXmlToDesigner(newDiagramXml())
-}
-
-const handleImportXml = async () => {
-  if (!importXml.value.trim()) {
-    ElMessage.warning(t('bpmnDesign.inputBpmnXmlContent'))
-    return
-  }
-  if (!bpmnModeler) {
-    await ensureDesignerReady()
-  }
-  if (!await importXmlToDesigner(importXml.value)) return
-  importDialogVisible.value = false
-  ElMessage.success(t('bpmnDesign.importSuccess'))
-}
-
-const handleSaveDesignerXml = async () => {
-  if (!bpmnModeler) {
-    await ensureDesignerReady()
-  }
-  if (!bpmnModeler) return
+async function download() {
   try {
-    const { xml } = await bpmnModeler.saveXML({ format: true })
-    if (!xml) {
-      ElMessage.error(t('bpmnDesign.saveXmlFailed'))
-      return
-    }
-    xmlForm.xml = xml
-    ElMessage.success(t('bpmnDesign.syncedToXmlInput'))
-  } catch {
-    ElMessage.error(t('bpmnDesign.saveXmlFailed'))
-  }
+    const xml = (await modeler?.saveXML({ format: true }))?.xml
+    if (!xml) return
+    const url = URL.createObjectURL(new Blob([xml], { type: 'application/xml' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = (modeler?.get<Canvas>('canvas').getRootElement().businessObject.name || 'workflow') + '.bpmn'
+    link.click()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  } catch { ElMessage.error(t('bpmnDesign.saveXmlFailed')) }
 }
-
-const openDesignerDeployDialog = () => {
-  designerDeployDialogVisible.value = true
+function openPublish(mode: 'source' | 'canvas') {
+  source.value = mode
+  form.name = mode === 'canvas' ? modeler?.get<Canvas>('canvas').getRootElement().businessObject.name || '' :
+    importMode.value === 'file' ? file.value?.name.replace(/\.(bpmn20\.xml|bpmn|xml)$/i, '') || '' : ''
+  form.category = ''
+  form.tenantId = ''
+  publishOpen.value = true
 }
-
-const resetDesignerDeployForm = () => {
-  designerDeployForm.name = ''
-  designerDeployForm.category = ''
-  designerDeployForm.tenantId = ''
-}
-
-const handleConfirmDesignerDeploy = async () => {
-  if (!designerDeployForm.name.trim()) {
-    ElMessage.warning(t('bpmnDesign.inputProcessName'))
-    return
-  }
-  if (!bpmnModeler) {
-    await ensureDesignerReady()
-  }
-  if (!bpmnModeler) return
-  deployingDesigner.value = true
+async function publish() {
+  if (publishing.value || !canPublish.value || !form.name.trim()) return
+  publishing.value = true
   try {
-    const { xml } = await bpmnModeler.saveXML({ format: true })
-    if (!xml) {
-      ElMessage.error(t('bpmnDesign.deployFailed'))
-      return
-    }
-    const name = designerDeployForm.name.trim()
-    const file = new File([xml], `${name}.bpmn`, { type: 'text/xml' })
-    await deployWorkflowDefinition({
-      file,
-      name,
-      category: designerDeployForm.category || undefined,
-      tenantId: designerDeployForm.tenantId || undefined
-    })
+    const name = form.name.trim()
+    const xml = source.value === 'source' ? await readSource() : (await modeler?.saveXML({ format: true }))?.xml
+    if (!xml) throw new Error()
+    const doc = new DOMParser().parseFromString(xml, 'application/xml')
+    const process = doc.getElementsByTagNameNS('http://www.omg.org/spec/BPMN/20100524/MODEL', 'process')[0]
+    if (!process || doc.querySelector('parsererror')) throw new Error()
+    // The engine displays the BPMN process name, independently of the deployment name.
+    if (doc.getElementsByTagNameNS(process.namespaceURI!, 'process').length === 1) process.setAttribute('name', name)
+    const payload = new File([new XMLSerializer().serializeToString(doc)], name + '.bpmn', { type: 'application/xml' })
+    await deployWorkflowDefinition({ file: payload, name, category: form.category || undefined, tenantId: form.tenantId || undefined })
+    if (source.value === 'canvas') dirty.value = false
+    publishOpen.value = false
+    importOpen.value = false
+    published.value = name
     ElMessage.success(t('bpmnDesign.deploySuccess'))
-    designerDeployDialogVisible.value = false
-    resetDesignerDeployForm()
-    await loadDefinitions()
-  } catch {
-    ElMessage.error(t('bpmnDesign.deployFailed'))
-  } finally {
-    deployingDesigner.value = false
-  }
+  } catch { ElMessage.error(t('bpmnDesign.deployFailed')) }
+  finally { publishing.value = false }
 }
-
-const loadDefinitions = async () => {
-  try {
-    definitions.value = await getWorkflowDefinitions({ latestOnly: latestOnly.value })
-  } catch {
-    ElMessage.error(t('bpmnDesign.loadDefinitionsFailed'))
-  }
-}
-
-const handleDeployFileChange = (file: UploadFile) => {
-  deployFile.value = file.raw || null
-  deployFileList.value = file.raw ? [{ name: file.name, url: file.url, uid: file.uid }] : []
-}
-
-const handleDeployFileRemove = () => {
-  deployFile.value = null
-  deployFileList.value = []
-}
-
-const handleDeployFile = async () => {
-  if (!deployFile.value) {
-    ElMessage.warning(t('bpmnDesign.selectBpmnFile'))
-    return
-  }
-  deploying.value = true
-  try {
-    await deployWorkflowDefinition({
-      file: deployFile.value,
-      name: deployForm.name || undefined,
-      category: deployForm.category || undefined,
-      tenantId: deployForm.tenantId || undefined
-    })
-    ElMessage.success(t('bpmnDesign.deploySuccess'))
-    resetDeployForm()
-    await loadDefinitions()
-  } catch {
-    ElMessage.error(t('bpmnDesign.deployFailed'))
-  } finally {
-    deploying.value = false
-  }
-}
-
-const resetDeployForm = () => {
-  deployForm.name = ''
-  deployForm.category = ''
-  deployForm.tenantId = ''
-  deployFile.value = null
-  deployFileList.value = []
-}
-
-const handleDeployXml = async () => {
-  if (!xmlForm.xml.trim()) {
-    ElMessage.warning(t('bpmnDesign.inputBpmnXmlContentRequired'))
-    return
-  }
-  deployingXml.value = true
-  try {
-    const filename = `${xmlForm.name || 'process'}.bpmn`
-    const file = new File([xmlForm.xml], filename, { type: 'text/xml' })
-    await deployWorkflowDefinition({
-      file,
-      name: xmlForm.name || undefined,
-      category: xmlForm.category || undefined,
-      tenantId: xmlForm.tenantId || undefined
-    })
-    ElMessage.success(t('bpmnDesign.deploySuccess'))
-    resetXmlForm()
-    await loadDefinitions()
-  } catch {
-    ElMessage.error(t('bpmnDesign.deployFailed'))
-  } finally {
-    deployingXml.value = false
-  }
-}
-
-const resetXmlForm = () => {
-  xmlForm.name = ''
-  xmlForm.category = ''
-  xmlForm.tenantId = ''
-  xmlForm.xml = ''
-}
-
-const toggleDesignerFullscreen = () => {
-  isDesignerFullscreen.value = !isDesignerFullscreen.value
-}
-
 onMounted(async () => {
-  await loadDefinitions()
-  await ensureDesignerReady()
+  modeler = new Modeler({ container: container.value, additionalModules: locale.value.startsWith('zh') ? [{ translate: ['value', createDesignerTranslate()] }] : [],
+    moddleExtensions: { activiti: activitiAssignment }
+  })
+  modeler.on('selection.changed', ({ newSelection }: { newSelection: Element[] }) => showNode(newSelection.length === 1 ? newSelection[0] : undefined))
+  modeler.on('commandStack.changed', () => { dirty.value = true; showNode(selected.value) })
+  await loadXml(templateXml())
+  ready.value = true
 })
-
-onUnmounted(() => {
-  if (bpmnModeler) {
-    bpmnModeler.destroy()
-    bpmnModeler = null
-  }
-})
-
-watch(
-  () => isDesignerFullscreen.value,
-  value => {
-    document.body.style.overflow = value ? 'hidden' : ''
-  },
-  { immediate: true }
-)
+onBeforeUnmount(() => modeler?.destroy())
 </script>
 
+<style scoped src="./workflow.css"></style>
 <style scoped>
-.workflow-page {
-  padding: 20px;
-}
-
-.designer-section {
-  background: var(--bg-color);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-}
-
-.designer-toolbar {
-  margin-bottom: 16px;
-}
-
-.designer-tip {
-  margin-top: 12px;
-  color: var(--text-secondary);
-  font-size: 13px;
-}
-
-.designer-canvas {
-  width: 100%;
-  height: 560px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background: var(--bg-color);
-}
-
-.guide-block {
-  background: var(--bg-color);
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
-  padding: 16px;
-  height: 100%;
-}
-
-.guide-title {
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 12px;
-}
-
-.guide-item {
-  color: var(--text-secondary);
-  font-size: 13px;
-  line-height: 1.8;
-}
-
-.table-section {
-  background: var(--bg-color);
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 20px;
-}
-
-.section-title {
-  font-weight: 600;
-  color: var(--text-primary);
-  margin-bottom: 16px;
-}
-
-.designer-fullscreen {
-  position: fixed;
-  inset: 16px;
-  z-index: 3000;
-  height: auto;
-}
-
-.designer-fullscreen .designer-canvas {
-  height: calc(100vh - 200px);
-}
-
-:deep(.el-table .el-table__cell) {
-  padding: 12px 0;
-}
-
-:deep(.el-button + .el-button) {
-  margin-left: 8px;
-}
+.studio { overflow: hidden; border: 1px solid var(--el-border-color-light); border-radius: 16px; background: var(--el-bg-color); box-shadow: 0 8px 28px rgb(25 43 74 / 5%); }
+.studio:fullscreen { border-radius: 0; display: flex; flex-direction: column; }
+.studio:fullscreen .studio-body { flex: 1; }
+.studio-bar, .studio-actions, .studio-bar strong, .published, .published span { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.studio-bar { min-height: 52px; padding: 8px 18px; justify-content: space-between; border-bottom: 1px solid var(--el-border-color-light); }
+.studio-bar strong .el-icon { color: var(--el-color-primary); }
+.studio-body { display: grid; grid-template-columns: minmax(0,1fr) minmax(190px, 23%); }
+.board { position: relative; min-width: 0; background-color: #f7faff; background-image: radial-gradient(#cad7e6 1px, transparent 1px); background-size: 16px 16px; }
+.canvas { height: clamp(360px, 54vh, 620px); width: 100%; color-scheme: light; }
+.studio:fullscreen .canvas { height: 100%; }
+.fit { position: absolute; left: 14px; bottom: 14px; border: 1px solid #cdd9e7; border-radius: 7px; padding: 6px 12px; background: white; color: #38526d; cursor: pointer; }
+.inspector { border-left: 1px solid var(--el-border-color-light); padding: 22px 18px; }
+.inspector h2 { font-size: 16px; margin: 0 0 23px; }
+.inspector label { display: grid; gap: 7px; margin-bottom: 15px; font-size: 13px; }
+.step { position: relative; display: flex; gap: 12px; padding: 0 0 18px; }
+.step:not(:last-of-type)::before { content: ''; position: absolute; left: 7px; top: 20px; bottom: 0; border-left: 1px dashed var(--el-border-color); }
+.symbol { flex: 0 0 15px; width: 15px; height: 15px; margin-top: 3px; border-radius: 50%; box-sizing: border-box; border: 2px solid #319377; background: #ecfaf5; }
+.symbol.task { border-color: #5171c1; background: #eff4ff; border-radius: 4px; }
+.symbol.end { border: 3px double #748096; background: transparent; }
+.inspector b { font-size: 14px; }.inspector p { font-size: 13px; color: var(--el-text-color-regular); line-height: 1.65; margin: 4px 0; }
+.guide { border-top: 1px solid var(--el-border-color-light); padding-top: 10px; }
+.guide dl { max-height: 245px; overflow: auto; font-size: 13px; }.guide dt { font-weight: 600; }.guide dd { margin: 4px 0 10px; color: var(--el-text-color-regular); }
+.published { justify-content: space-between; padding: 12px 16px; margin-bottom: 14px; border-radius: 10px; background: var(--el-color-success-light-9); }
+.published a { color: var(--el-text-color-primary); }
+.file-pick { position: relative; display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 110px; border: 1px dashed var(--el-border-color); border-radius: 10px; background: var(--el-fill-color-lighter); }
+.file-pick:focus-within { outline: 2px solid var(--el-color-primary); }.file-pick input { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; }
+@media(max-width: 850px) { .studio-body { grid-template-columns: 1fr; }.inspector { border-left: 0; border-top: 1px solid var(--el-border-color-light); }.canvas { height: 360px; }.studio:fullscreen { overflow: auto; } }
 </style>

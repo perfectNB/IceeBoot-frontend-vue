@@ -1,29 +1,20 @@
 <template>
   <section class="approval-shell designer" v-loading="busy">
-    <AdminPageHeader title="审批流程设计" description="绘制审批路径，为每个节点指定办理角色。">
-      <el-button @click="fresh">新建流程</el-button>
+    <AdminPageHeader
+      :title="blueprint ? '修改流程' : '新建审批流程'"
+      :description="
+        blueprint
+          ? '保存草稿后可继续修改，发布后供新申请使用。'
+          : '设置申请表单和审批路径，保存后可在流程定义中继续修改。'
+      "
+    >
+      <el-button v-if="blueprint" @click="cancel">返回流程定义</el-button>
       <el-button v-if="can('save')" @click="save(false)">保存草稿</el-button>
       <el-button v-if="can('publish') && can('save')" type="primary" @click="save(true)">
         保存并发布
       </el-button>
     </AdminPageHeader>
     <div class="approval-panel design-basics">
-      <div class="approval-toolbar">
-        <el-select
-          :model-value="current || undefined"
-          placeholder="打开已保存的草稿"
-          clearable
-          @change="selectDraft"
-        >
-          <el-option
-            v-for="b in drafts"
-            :key="b.design.code"
-            :label="b.design.name + ' · ' + b.design.code"
-            :value="b.design.code"
-          />
-        </el-select>
-        <el-tag effect="plain">{{ version ? '已发布 v' + version : '未发布' }}</el-tag>
-      </div>
       <div class="approval-fields">
         <label>
           流程名称
@@ -186,7 +177,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue'
-import { onBeforeRouteLeave } from 'vue-router'
+import { onBeforeRouteLeave, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { approvalApi } from '@/api/approval'
@@ -194,15 +185,24 @@ import { hasPermission } from '@/utils/permission'
 import { Delete, EditPen, MoreFilled, Plus, Position, User } from '@element-plus/icons-vue'
 import ApprovalBranchEditor from './ApprovalBranchEditor.vue'
 import { branchLabel, reviewerRoles, blankDesign, end, newExit, validateDesign } from '@/utils/approval'
-import type { ApprovalField, ApprovalNode, ApprovalRole, Blueprint, Exit } from '@/types/approval'
+import type {
+  ApprovalDesign,
+  ApprovalField,
+  ApprovalNode,
+  ApprovalRole,
+  Blueprint,
+  Exit
+} from '@/types/approval'
 import ApprovalGraph from './ApprovalGraph.vue'
 const can = (p: string) => hasPermission('workflow:approval:' + p + ':api')
-const drafts = ref<Blueprint[]>([]),
-  roles = ref<ApprovalRole[]>([])
-const d = ref(blankDesign()),
-  current = ref(''),
-  revision = ref(0),
-  version = ref(0),
+const props = defineProps<{ blueprint?: Blueprint }>()
+const emit = defineEmits<{ close: [] }>()
+const router = useRouter()
+const roles = ref<ApprovalRole[]>([])
+const d = ref<ApprovalDesign>(
+    props.blueprint ? JSON.parse(JSON.stringify(props.blueprint.design)) : blankDesign()
+  ),
+  revision = ref(props.blueprint?.revision || 0),
   selected = ref('@start'),
   tab = ref('graph'),
   busy = ref(false)
@@ -263,20 +263,20 @@ async function discard() {
     return false
   }
 }
-function open(b?: Blueprint) {
-  d.value = b ? JSON.parse(JSON.stringify(b.design)) : blankDesign()
-  current.value = b?.design.code || ''
-  revision.value = b?.revision || 0
-  version.value = b?.version || 0
-  selected.value = '@start'
-  saved = JSON.stringify(d.value)
-}
 onBeforeRouteLeave(discard)
-async function fresh() {
-  if (await discard()) open()
+async function cancel() {
+  if (await discard()) emit('close')
 }
-async function selectDraft(code: string) {
-  if (await discard()) open(drafts.value.find((b) => b.design.code === code))
+async function finish() {
+  if (props.blueprint) emit('close')
+  else if (hasPermission('workflow:definition')) await router.push('/admin/workflow/definition')
+  else {
+    d.value = blankDesign()
+    revision.value = 0
+    selected.value = '@start'
+    tab.value = 'graph'
+    saved = JSON.stringify(d.value)
+  }
 }
 function createNode(next: string) {
   const id = 'node_' + crypto.randomUUID().slice(0, 8)
@@ -313,18 +313,20 @@ async function save(publish: boolean) {
     if (!revision.value || JSON.stringify(d.value) !== saved) {
       await approvalApi.save(d.value, revision.value)
       revision.value++
-      current.value = d.value.code
       saved = JSON.stringify(d.value)
     }
     if (publish) {
       await approvalApi.publish(d.value.code, revision.value)
       revision.value++
-      version.value++
     }
     ElMessage.success(publish ? '已发布，可在发起审批时选择' : '草稿已保存')
-    drafts.value = await approvalApi.drafts()
+    await finish()
   } catch (e) {
-    ElMessage.error(e instanceof Error ? e.message : '保存失败')
+    const message = e instanceof Error ? e.message : '保存失败'
+    if (publish && !props.blueprint && revision.value) {
+      ElMessage.warning('草稿已保存，发布失败：' + message)
+      await finish()
+    } else ElMessage.error(message)
   } finally {
     busy.value = false
   }
@@ -332,10 +334,7 @@ async function save(publish: boolean) {
 onMounted(async () => {
   busy.value = true
   try {
-    ;[drafts.value, roles.value] = await Promise.all([
-      can('drafts') ? approvalApi.drafts() : [],
-      can('roles') ? approvalApi.roles() : []
-    ])
+    if (can('roles')) roles.value = await approvalApi.roles()
   } finally {
     busy.value = false
   }
@@ -349,12 +348,6 @@ onMounted(async () => {
   align-items: flex-end;
   gap: 12px 24px;
   padding: 16px 20px;
-}
-.design-basics .approval-toolbar {
-  order: 2;
-  flex: 1 1 240px;
-  margin: 0;
-  justify-content: flex-end;
 }
 .design-basics .approval-fields {
   flex: 2 1 325px;
@@ -491,9 +484,6 @@ onMounted(async () => {
 @media (max-width: 800px) {
   .designer .approval-studio {
     grid-template-columns: 1fr;
-  }
-  .design-basics .approval-toolbar {
-    justify-content: space-between;
   }
   .node-properties {
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));

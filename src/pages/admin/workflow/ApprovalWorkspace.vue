@@ -19,7 +19,7 @@
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { hasPermission } from '@/utils/permission'
-const props = defineProps<{ label: string; permission: string }>()
+const props = defineProps<{ label: string; permission: string | string[] }>()
 const route = useRoute()
 const legacy = ref(
   route.query.mode === 'bpmn' ||
@@ -33,7 +33,10 @@ function returnToApproval() {
   visitedApproval.value = true
   legacy.value = false
 }
-const available = computed(() => hasPermission('workflow:approval:' + props.permission + ':api'))
+const available = computed(() => {
+  const permissions = Array.isArray(props.permission) ? props.permission : [props.permission]
+  return permissions.some((p) => hasPermission('workflow:approval:' + p + ':api'))
+})
 </script>
 <style scoped>
 .advanced-entry {

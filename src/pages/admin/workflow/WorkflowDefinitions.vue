@@ -1,5 +1,5 @@
 <template>
-  <ApprovalWorkspace label="审批模板" permission="published">
+  <ApprovalWorkspace label="审批模板" :permission="['published', 'drafts']">
     <ApprovalCatalog />
     <template #legacy><LegacyWorkflowDefinitions /></template>
   </ApprovalWorkspace>

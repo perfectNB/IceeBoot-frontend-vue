@@ -1,90 +1,141 @@
 <template>
-  <section class="approval-shell" v-loading="busy">
+  <ApprovalDesigner v-if="editing" :blueprint="editing" @close="returnToList" />
+  <section v-else class="approval-shell" v-loading="busy">
     <AdminPageHeader
-      :title="diagram ? '审批流程图' : '已发布审批模板'"
-      description="选择流程查看表单和审批路径。"
-    />
-    <div class="approval-panel">
-      <div class="approval-toolbar">
-        <h3>已发布流程</h3>
-        <el-button @click="load">刷新</el-button>
-      </div>
-      <el-empty v-if="!items.length" description="暂无已发布的审批流程" :image-size="64" />
-      <div v-for="b in items" :key="b.design.code" class="approval-list-item">
-        <span class="approval-mark">
-          <el-icon><Share /></el-icon>
-        </span>
-        <div class="approval-list-name">
-          <strong>{{ b.design.name }}</strong>
-          <small>{{ b.design.code }} · v{{ b.version }} · {{ b.design.nodes.length }} 个审批节点</small>
-        </div>
-        <el-button @click="selected = b">查看流程图</el-button>
-        <router-link
-          v-if="canStart"
-          :to="{ path: '/admin/workflow/instance', query: { approval: b.design.code } }"
-        >
-          发起审批
-        </router-link>
-      </div>
-    </div>
-    <el-drawer
-      :model-value="!!selected"
-      size="min(700px,100vw)"
-      title="审批流程图"
-      @close="selected = undefined"
+      :title="diagram ? '审批流程图' : '流程定义'"
+      :count="rows.length"
+      :description="
+        diagram ? '查看已发布版本的审批路径与表单。' : '查看流程版本、继续编辑草稿，或发起已发布的审批。'
+      "
     >
-      <template v-if="selected">
-        <h3>{{ selected.design.name }}</h3>
-        <ApprovalGraph :design="selected.design" :roles="[]" :selected="nodeId" @select="nodeId = $event" />
-        <div v-if="exit" class="approval-rule">
-          <strong>流转条件</strong>
-          <p v-for="(b, i) in exit.branches" :key="i">
-            {{ branchLabel(selected.design.fields, b) }} → {{ target(b.target) }}
-          </p>
-          <p>默认 → {{ target(exit.fallback) }}</p>
+      <el-button :icon="Refresh" @click="load">刷新</el-button>
+    </AdminPageHeader>
+    <div class="approval-panel">
+      <el-empty v-if="!rows.length" description="暂无可查看的流程" :image-size="64" />
+      <article v-for="row in rows" :key="row.code" class="approval-list-item">
+        <span class="approval-mark"
+          ><el-icon><Share /></el-icon
+        ></span>
+        <div class="approval-list-name">
+          <strong>{{ row.name }}</strong>
+          <small>{{ row.code }}</small>
         </div>
-        <h3>申请表单</h3>
-        <p v-for="f in selected.design.fields" :key="f.key">
-          {{ f.label }} · {{ f.kind === 'routing' ? '判断字段' : '业务字段' }}
-        </p>
-      </template>
-    </el-drawer>
+        <div class="status">
+          <el-tag v-if="row.live" type="success" effect="light">已发布 v{{ row.live.version }}</el-tag>
+          <el-tag v-if="row.draft && (!row.draft.version || row.changed)" type="warning" effect="plain">
+            {{ row.draft.version ? '有未发布修改' : '草稿' }}
+          </el-tag>
+          <el-tag v-else-if="!row.live && row.draft?.version" type="success"
+            >已发布 v{{ row.draft.version }}</el-tag
+          >
+        </div>
+        <div class="row-actions">
+          <el-button v-if="row.live || row.draft" @click="preview(row.live || row.draft!, !!row.live)">
+            {{ row.live ? '查看流程图' : '预览草稿' }}
+          </el-button>
+          <el-button v-if="row.draft && can('save')" :icon="EditPen" @click="editing = row.draft">
+            修改流程
+          </el-button>
+          <router-link
+            v-if="row.live && canStart"
+            :to="{ path: '/admin/workflow/instance', query: { approval: row.code } }"
+            >发起审批</router-link
+          >
+        </div>
+      </article>
+    </div>
+    <ApprovalPreview
+      v-if="selected"
+      :blueprint="selected"
+      :published="publishedPreview"
+      :roles="roles"
+      @close="selected = undefined"
+    />
   </section>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
-import { Share } from '@element-plus/icons-vue'
+import { computed, onMounted, ref } from 'vue'
+import { EditPen, Refresh, Share } from '@element-plus/icons-vue'
 import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
-import { branchLabel } from '@/utils/approval'
-import ApprovalGraph from './ApprovalGraph.vue'
+import ApprovalDesigner from './ApprovalDesigner.vue'
+import ApprovalPreview from './ApprovalPreview.vue'
 import { approvalApi } from '@/api/approval'
 import { hasPermission } from '@/utils/permission'
-import type { Blueprint } from '@/types/approval'
-defineProps<{ diagram?: boolean }>()
-const busy = ref(false),
-  items = ref<Blueprint[]>([]),
-  selected = ref<Blueprint>(),
-  nodeId = ref('@start')
-const canStart = computed(
-  () => hasPermission('workflow:approval:start:api') && hasPermission('workflow:instance')
-)
-const exit = computed(() =>
-  nodeId.value === '@start'
-    ? selected.value?.design.start
-    : selected.value?.design.nodes.find((n) => n.id === nodeId.value)?.exit
-)
-const target = (id: string) =>
-  selected.value?.design.nodes.find((n) => n.id === id)?.name || (id === '@end' ? '结束' : '阻止提交')
-watch(selected, () => {
-  nodeId.value = '@start'
+import type { ApprovalRole, Blueprint } from '@/types/approval'
+const props = defineProps<{ diagram?: boolean }>()
+const can = (p: string) => hasPermission('workflow:approval:' + p + ':api')
+const canStart = computed(() => can('start') && hasPermission('workflow:instance'))
+const busy = ref(false)
+const published = ref<Blueprint[]>([])
+const drafts = ref<Blueprint[]>([])
+const roles = ref<ApprovalRole[]>([])
+const editing = ref<Blueprint>()
+const selected = ref<Blueprint>()
+const publishedPreview = ref(false)
+const rows = computed(() => {
+  const liveByCode = new Map(published.value.map((b) => [b.design.code, b]))
+  const draftByCode = new Map(drafts.value.map((b) => [b.design.code, b]))
+  return [...new Set([...liveByCode.keys(), ...draftByCode.keys()])].map((code) => {
+    const live = liveByCode.get(code)
+    const draft = draftByCode.get(code)
+    return {
+      code,
+      live,
+      draft,
+      name: live?.design.name || draft?.design.name || code,
+      changed: !!live && !!draft && JSON.stringify(live.design) !== JSON.stringify(draft.design)
+    }
+  })
 })
+function preview(b: Blueprint, isPublished: boolean) {
+  selected.value = b
+  publishedPreview.value = isPublished
+}
+function returnToList() {
+  editing.value = undefined
+  load()
+}
 async function load() {
+  if (busy.value) return
   busy.value = true
   try {
-    items.value = await approvalApi.published()
+    const [live, saved, reviewers] = await Promise.all([
+      can('published') ? approvalApi.published() : [],
+      !props.diagram && can('drafts') ? approvalApi.drafts() : [],
+      can('roles') ? approvalApi.roles() : []
+    ])
+    published.value = live
+    drafts.value = saved
+    roles.value = reviewers
   } finally {
     busy.value = false
   }
 }
 onMounted(load)
 </script>
+<style scoped>
+.approval-list-item:first-child {
+  padding-top: 0;
+}
+.approval-list-item:last-child {
+  border: 0;
+  padding-bottom: 0;
+}
+.approval-list-name {
+  overflow-wrap: anywhere;
+}
+.status,
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.row-actions :deep(.el-button + .el-button) {
+  margin: 0;
+}
+.row-actions a {
+  color: var(--el-color-primary);
+  font-size: 14px;
+}
+</style>

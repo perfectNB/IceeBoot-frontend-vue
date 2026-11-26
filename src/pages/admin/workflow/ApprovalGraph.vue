@@ -116,7 +116,9 @@ const layout = computed(() => {
     top += h + 34
     return items
   })
-  return { boxes: placed, width: cols * pitch + 8, height: top - 12 }
+  const width = cols * pitch + 8
+  const hasBypass = links.some((link) => (levels.get(link.to) || 0) - (levels.get(link.from) || 0) > 1)
+  return { boxes: placed, levels, bypassX: width + 5, width: width + (hasBypass ? 18 : 0), height: top - 12 }
 })
 const edges = computed(() => {
   const positions = new Map(layout.value.boxes.map((n) => [n.id, n]))
@@ -128,12 +130,12 @@ const edges = computed(() => {
       y = a.y + a.h,
       tx = b.x + 81,
       mid = (y + b.y) / 2
-    return [
-      {
-        conditional: link.conditional,
-        path: `M ${x} ${y} C ${x} ${mid}, ${tx} ${mid}, ${tx} ${b.y} m -3 -5 l 3 5 3 -5`
-      }
-    ]
+    const { levels, bypassX } = layout.value
+    const skipsRow = levels.get(b.id)! - levels.get(a.id)! > 1
+    const path = skipsRow
+      ? `M ${x} ${y} v 12 H ${bypassX} V ${b.y - 12} H ${tx} V ${b.y}`
+      : `M ${x} ${y} C ${x} ${mid}, ${tx} ${mid}, ${tx} ${b.y}`
+    return [{ conditional: link.conditional, path: path + ' m -3 -5 l 3 5 3 -5' }]
   })
 })
 </script>

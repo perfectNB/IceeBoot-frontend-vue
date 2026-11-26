@@ -115,7 +115,9 @@ export {
   getUserTasks,
   getCandidateTasks,
   completeTask,
-  jumpTask
+  myWorkflowTasks,
+  claimWorkflowTask,
+  workflowInstanceDiagram
 } from './workflow'
 
 // 消息相关接口
@@ -176,8 +178,7 @@ export type {
   ProcessStartDTO,
   ProcessInstanceDeleteDTO,
   TaskItem,
-  TaskCompleteDTO,
-  TaskJumpDTO
+  TaskCompleteDTO
 } from './workflow'
 
 export type {
@@ -197,8 +198,7 @@ export {
   getPayRecords,
   getPayRecordDetail,
   createPayQrCode,
-  deletePayRecord,
-  deletePayRecords,
+  retryPaymentBusiness,
   type PaymentConfigVO,
   type PaymentConfigQueryParams,
   type PayRecordVO,

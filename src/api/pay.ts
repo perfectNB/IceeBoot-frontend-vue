@@ -38,6 +38,10 @@ export interface PayRecordVO {
   configName: string
   payAmount: number
   payAmountYuan: string
+  legacyGrantMissing?: boolean
+  entitlementCode?: string
+  businessStatus?: string
+  businessError?: string
   payStatus: number
   payStatusName: string
   userId: number
@@ -234,30 +238,19 @@ export const createPayQrCode = async (configId: number | string): Promise<string
   }
 }
 
-/**
- * 删除支付记录
- */
-export const deletePayRecord = async (id: number | string): Promise<void> => {
-  if (isMockEnabled()) {
-    // 使用Mock数据
-    await MockPayService.deletePayRecordService(id)
-  } else {
-    // 调用真实API
-    await request.delete(`/api/v1/pay/records/${id}`)
-  }
+export type PaymentChannel = 'YUNGOUOS' | 'WECHAT_NATIVE' | 'ALIPAY'
+
+export async function paymentChannels(): Promise<PaymentChannel[]> {
+  if (isMockEnabled()) return ['YUNGOUOS', 'WECHAT_NATIVE', 'ALIPAY']
+  return request.get('/api/v1/pay/channels')
 }
 
-/**
- * 批量删除支付记录
- */
-export const deletePayRecords = async (ids: (number | string)[]): Promise<void> => {
-  if (isMockEnabled()) {
-    // 使用Mock数据
-    await MockPayService.deletePayRecordsService(ids)
-  } else {
-    // 调用真实API
-    await request.delete('/api/v1/pay/records/batch', {}, {
-      data: ids
-    })
-  }
+export async function createPaymentOrder(id: number, channel: PaymentChannel): Promise<string> {
+  if (isMockEnabled()) return MockPayService.createOrder(id, channel)
+  return request.post(`/api/v1/pay/orders/${id}?channel=${channel}`, {})
+}
+
+export async function retryPaymentBusiness(id: number): Promise<boolean> {
+  if (isMockEnabled()) return MockPayService.retryBusiness(id)
+  return request.put(`/api/v1/pay/records/${id}/retry-business`, {})
 }

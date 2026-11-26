@@ -1,12 +1,17 @@
 /**
  * 支付管理 Mock 服务
  */
-import type { PaymentConfigVO, PayRecordQueryParams, PaymentConfigQueryParams } from '@/api/pay'
+import type { PayRecordVO, PaymentChannel, PaymentConfigVO, PayRecordQueryParams, PaymentConfigQueryParams } from '@/api/pay'
 import { mockPaymentConfigs, mockPayRecords, generateQrCodeUrl } from '../data/pay'
+
+import { demoUserId } from './auth'
+import { mockUsers } from '../data/user'
 
 // 复制数据避免污染原始数据
 let paymentConfigs = [...mockPaymentConfigs]
-let payRecords = [...mockPayRecords]
+const payRecords: PayRecordVO[] = mockPayRecords.map(row => ({
+  ...row, businessStatus: row.payStatus === 2 ? (row.id === 1 ? 'FAILED' : 'SUCCESS') : 'PENDING'
+}))
 
 /**
  * 分页查询支付配置列表
@@ -23,6 +28,8 @@ export const getPaymentConfigsService = (params: PaymentConfigQueryParams) => {
 
   // 筛选数据
   let filteredConfigs = [...paymentConfigs]
+
+  if (params.status) filteredConfigs = filteredConfigs.filter(row => row.status === params.status)
 
   if (configName) {
     filteredConfigs = filteredConfigs.filter(c => c.configName.includes(configName))
@@ -213,7 +220,8 @@ export const getPayRecordsService = (params: PayRecordQueryParams) => {
   } = params
 
   // 筛选数据
-  let filteredRecords = [...payRecords]
+  const userId = demoUserId()
+  let filteredRecords = payRecords.filter(row => row.userId === userId)
 
   if (outTradeNo) {
     filteredRecords = filteredRecords.filter(r => r.outTradeNo.includes(outTradeNo))
@@ -280,7 +288,7 @@ export const getPayRecordsService = (params: PayRecordQueryParams) => {
  * 获取支付记录详情
  */
 export const getPayRecordDetailService = (id: number | string) => {
-  const record = payRecords.find(r => r.id === Number(id))
+  const record = payRecords.find(r => r.id === Number(id) && r.userId === demoUserId())
   if (!record) {
     return {
       code: 404,
@@ -336,44 +344,27 @@ export const createPayQrCodeService = (configId: number | string) => {
   }
 }
 
-/**
- * 删除支付记录
- */
-export const deletePayRecordService = (id: number | string) => {
-  const index = payRecords.findIndex(r => r.id === Number(id))
-  if (index === -1) {
-    return {
-      code: 404,
-      message: '记录不存在',
-      data: null,
-      success: false,
-      timestamp: Date.now()
-    }
-  }
-
-  payRecords.splice(index, 1)
-
-  return {
-    code: 200,
-    message: '删除成功',
-    data: null,
-    success: true,
-    timestamp: Date.now()
-  }
+export function retryBusiness(id: number) {
+  const record = payRecords.find(row => row.id === id && row.userId === demoUserId())
+  if (!record || record.payStatus !== 2) return false
+  record.businessStatus = 'SUCCESS'
+  record.businessError = undefined
+  return true
 }
 
-/**
- * 批量删除支付记录
- */
-export const deletePayRecordsService = (ids: (number | string)[]) => {
-  const numIds = ids.map(id => Number(id))
-  payRecords = payRecords.filter(r => !numIds.includes(r.id))
-
-  return {
-    code: 200,
-    message: `成功删除 ${ids.length} 条记录`,
-    data: null,
-    success: true,
-    timestamp: Date.now()
-  }
+export function createOrder(configId: number, channel: PaymentChannel) {
+  const config = paymentConfigs.find(row => row.id === configId)
+  if (!config || config.status !== 'active') throw new Error('该支付配置不可用')
+  const id = Math.max(0, ...payRecords.map(row => row.id)) + 1
+  const now = new Date().toISOString()
+  const userId = demoUserId()
+  const username = mockUsers.find(row => Number(row.id) === userId)!.username
+  payRecords.unshift({
+    id, outTradeNo: 'DEMO-' + id, tradeNo: '', orderName: config.configName,
+    payType: channel === 'ALIPAY' ? 2 : 1, payTypeName: channel === 'ALIPAY' ? '支付宝' : '微信支付',
+    configId, configName: config.configName, payAmount: config.amount, payAmountYuan: (config.amount / 100).toFixed(2),
+    payStatus: 1, payStatusName: '支付中', userId, username, remark: '演示订单',
+    createBy: String(userId), createTime: now, updateTime: now, businessStatus: 'PENDING'
+  })
+  return 'iceeboot-demo:' + channel + '/' + id
 }

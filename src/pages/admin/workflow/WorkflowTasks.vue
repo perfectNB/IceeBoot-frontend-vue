@@ -11,8 +11,9 @@
           <el-input v-model="taskQueryForm.candidateUser" :placeholder="t('workflowTasks.inputCandidateUser')" style="width: 200px" />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :loading="loadingTasks" @click="handleLoadUserTasks">{{ t('workflowTasks.queryAssigneeTasks') }}</el-button>
-          <el-button type="success" :loading="loadingTasks" @click="handleLoadCandidateTasks">{{ t('workflowTasks.queryCandidateTasks') }}</el-button>
+          <el-button v-if="hasPermission('workflow:task:my:api')" @click="loadMyTasks">我的任务</el-button>
+          <el-button v-if="hasPermission('workflow:task:user:api')" type="primary" :loading="loadingTasks" @click="handleLoadUserTasks">{{ t('workflowTasks.queryAssigneeTasks') }}</el-button>
+          <el-button v-if="hasPermission('workflow:task:candidate:api')" type="success" :loading="loadingTasks" @click="handleLoadCandidateTasks">{{ t('workflowTasks.queryCandidateTasks') }}</el-button>
           <el-button :icon="Refresh" @click="resetTaskQuery">{{ t('workflowTasks.reset') }}</el-button>
         </el-form-item>
       </el-form>
@@ -27,8 +28,9 @@
         <el-table-column prop="createTime" :label="t('workflowTasks.createTime')" width="160" show-overflow-tooltip />
         <el-table-column :label="t('workflowTasks.operation')" width="200" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" size="small" :icon="Check" @click="openCompleteDialog(row)">{{ t('workflowTasks.complete') }}</el-button>
-            <el-button type="warning" size="small" :icon="RefreshRight" @click="openJumpDialog(row)">{{ t('workflowTasks.jump') }}</el-button>
+            <el-button v-if="isMine(row) && hasPermission('workflow:task:complete:api')" type="primary" size="small" :icon="Check" @click="openCompleteDialog(row)">{{ t('workflowTasks.complete') }}</el-button>
+            <el-button v-if="!row.assignee && hasPermission('workflow:task:claim:api')" link type="primary" @click="claim(row, false)">认领</el-button>
+            <el-button v-if="isMine(row) && hasPermission('workflow:task:unclaim:api')" link @click="claim(row, true)">取消认领</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -49,30 +51,20 @@
       </el-form>
     </el-dialog>
 
-    <el-dialog v-model="jumpDialogVisible" :title="t('workflowTasks.jumpTask')" width="520px">
-      <el-form :model="jumpForm" label-width="100px">
-        <el-form-item :label="t('workflowTasks.taskId')">
-          <el-input v-model="jumpForm.taskId" readonly />
-        </el-form-item>
-        <el-form-item :label="t('workflowTasks.targetNode')">
-          <el-input v-model="jumpForm.targetActivityId" :placeholder="t('workflowTasks.inputTargetNodeId')" />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" :loading="jumpingTask" @click="handleJumpTask">{{ t('workflowTasks.submit') }}</el-button>
-          <el-button @click="jumpDialogVisible = false">{{ t('workflowTasks.cancel') }}</el-button>
-        </el-form-item>
-      </el-form>
-    </el-dialog>
+
   </div>
 </template>
 
 <script setup lang="ts">
 import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
-import { reactive, ref } from 'vue'
+import { reactive, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { Check, Refresh, RefreshRight } from '@element-plus/icons-vue'
+import { Check, Refresh } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
-import { completeTask, getCandidateTasks, getUserTasks, jumpTask, type TaskCompleteDTO, type TaskItem, type TaskJumpDTO } from '@/api'
+import { completeTask, getCandidateTasks, getUserTasks, myWorkflowTasks, claimWorkflowTask, type TaskCompleteDTO, type TaskItem } from '@/api'
+
+import { useUserStore } from '@/stores/user'
+import { hasPermission } from '@/utils/permission'
 
 defineOptions({
   name: 'WorkflowTasks'
@@ -94,12 +86,28 @@ const completeForm = reactive({
 })
 const completingTask = ref(false)
 
-const jumpDialogVisible = ref(false)
-const jumpForm = reactive({
-  taskId: '',
-  targetActivityId: ''
-})
-const jumpingTask = ref(false)
+const store = useUserStore()
+const isMine = (row: TaskItem) => !!row.assignee && [String(store.user?.id), store.user?.username].includes(row.assignee)
+let reload: () => Promise<void> = loadMyTasks
+
+async function loadMyTasks() {
+  if (!hasPermission('workflow:task:my:api')) return
+  reload = loadMyTasks
+  loadingTasks.value = true
+  try { tasks.value = await myWorkflowTasks() }
+  catch { ElMessage.error(t('workflowTasks.queryTasksFailed')) }
+  finally { loadingTasks.value = false }
+}
+
+async function claim(row: TaskItem, release: boolean) {
+  if (!row.id) return
+  try {
+    await claimWorkflowTask(row.id, release)
+    await reload()
+  } catch { ElMessage.error('任务状态已变化或当前用户无权办理，请刷新任务') }
+}
+
+onMounted(loadMyTasks)
 
 const handleLoadUserTasks = async () => {
   if (!taskQueryForm.assignee) {
@@ -108,6 +116,7 @@ const handleLoadUserTasks = async () => {
   }
   loadingTasks.value = true
   try {
+    reload = handleLoadUserTasks
     tasks.value = await getUserTasks(taskQueryForm.assignee)
   } catch {
     ElMessage.error(t('workflowTasks.queryTasksFailed'))
@@ -123,6 +132,7 @@ const handleLoadCandidateTasks = async () => {
   }
   loadingTasks.value = true
   try {
+    reload = handleLoadCandidateTasks
     tasks.value = await getCandidateTasks(taskQueryForm.candidateUser)
   } catch {
     ElMessage.error(t('workflowTasks.queryTasksFailed'))
@@ -134,7 +144,7 @@ const handleLoadCandidateTasks = async () => {
 const resetTaskQuery = () => {
   taskQueryForm.assignee = ''
   taskQueryForm.candidateUser = ''
-  tasks.value = []
+  void loadMyTasks()
 }
 
 const openCompleteDialog = (task: TaskItem) => {
@@ -158,38 +168,12 @@ const handleCompleteTask = async () => {
     }
     await completeTask(completeForm.taskId, payload)
     completeDialogVisible.value = false
+    await reload()
     ElMessage.success(t('workflowTasks.taskCompleted'))
   } catch {
     ElMessage.error(t('workflowTasks.taskCompleteFailed'))
   } finally {
     completingTask.value = false
-  }
-}
-
-const openJumpDialog = (task: TaskItem) => {
-  jumpForm.taskId = task.id || ''
-  jumpForm.targetActivityId = ''
-  jumpDialogVisible.value = true
-}
-
-const handleJumpTask = async () => {
-  if (!jumpForm.taskId || !jumpForm.targetActivityId) {
-    ElMessage.warning(t('workflowTasks.taskIdAndTargetNodeCannotBeEmpty'))
-    return
-  }
-  jumpingTask.value = true
-  try {
-    const payload: TaskJumpDTO = {
-      taskId: jumpForm.taskId,
-      targetActivityId: jumpForm.targetActivityId
-    }
-    await jumpTask(jumpForm.taskId, payload)
-    jumpDialogVisible.value = false
-    ElMessage.success(t('workflowTasks.taskJumped'))
-  } catch {
-    ElMessage.error(t('workflowTasks.taskJumpFailed'))
-  } finally {
-    jumpingTask.value = false
   }
 }
 

@@ -6,14 +6,14 @@ const vm = require('node:vm')
 const ts = require('typescript')
 
 // Run the public API facades with transport disabled, as on a standalone demo site.
-function demo() {
+function demo(transport) {
   let token = ''
   const cache = new Map()
   const root = path.resolve(__dirname, '../src')
   const fixtures = {
-    '@/config/mock': { isMockEnabled: () => true, mockDelay: async () => {}, mockLog() {} },
+    '@/config/mock': { isMockEnabled: () => !transport, mockDelay: async () => {}, mockLog() {} },
     '@/stores/user': { useUserStore: () => ({ getToken: () => token }) },
-    '@/utils/request': { request: new Proxy({}, { get() { throw Error('Unexpected network request') } }) },
+    '@/utils/request': { normalizeApiResponse: value => value, request: transport || new Proxy({}, { get() { throw Error('Unexpected network request') } }) },
   }
   function load(id, base = root) {
     if (fixtures[id]) return fixtures[id]
@@ -25,7 +25,7 @@ function demo() {
       compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.CommonJS },
     })
     vm.runInNewContext(compiled.outputText, {
-      exports, Blob, require: next => load(next, path.dirname(filename)), structuredClone, setTimeout, console,
+      exports, Blob, crypto: require('node:crypto').webcrypto, require: next => load(next, path.dirname(filename)), structuredClone, setTimeout, console,
     })
     return exports
   }
@@ -141,4 +141,70 @@ test('mock usage uses the same local calendar day for totals and daily trends at
     if (previousTimezone === undefined) delete process.env.TZ
     else process.env.TZ = previousTimezone
   }
+})
+
+test('checkout preserves orders, restricts detail to the buyer and retries paid benefits', async () => {
+  const { load, login } = demo()
+  await login('admin')
+  const api = load('@/api/pay')
+  const methods = await api.paymentChannels()
+  assert.deepEqual(Array.from(methods), ['YUNGOUOS', 'WECHAT_NATIVE', 'ALIPAY'])
+  for (const method of methods) assert.match(await api.createPaymentOrder(1, method), /^iceeboot-demo:/)
+  const orders = (await api.getPayRecords({})).records
+  const fresh = orders.find(row => row.outTradeNo.startsWith('DEMO-'))
+  assert.equal(await api.retryPaymentBusiness(fresh.id), false)
+  assert.equal(await api.retryPaymentBusiness(1), true)
+  assert.equal((await api.getPayRecordDetail(1)).businessStatus, 'SUCCESS')
+  await api.updatePaymentConfigStatus(1, 'inactive')
+  await assert.rejects(api.createPaymentOrder(1, 'WECHAT_NATIVE'))
+  await login('user')
+  await assert.rejects(api.getPayRecordDetail(fresh.id))
+  assert.equal((await api.getPayRecords({})).records.some(row => row.id === fresh.id), false)
+  assert.equal(await api.retryPaymentBusiness(1), false)
+})
+
+test('workflow candidates claim and release tasks and terminated instances remain accessible', async () => {
+  const { load, login } = demo()
+  await login('user')
+  const api = load('@/api/workflow')
+  await assert.rejects(api.claimWorkflowTask('task-3'))
+  await login('admin')
+  assert.ok((await api.myWorkflowTasks()).some(task => task.id === 'task-3'))
+  await api.claimWorkflowTask('task-3')
+  await api.claimWorkflowTask('task-3', true)
+  await assert.rejects(api.completeTask('task-3'))
+  await api.claimWorkflowTask('task-3')
+  await api.completeTask('task-3')
+  assert.ok(!(await api.myWorkflowTasks()).some(task => task.id === 'task-3'))
+  assert.match((await api.workflowInstanceDiagram('process-1')).content, /<svg/)
+  await api.endWorkflowProcess('process-1')
+  assert.equal((await api.getWorkflowProcess('process-1')).ended, true)
+  await assert.rejects(api.endWorkflowProcess('process-1'))
+  await assert.rejects(api.checkWorkflowProcessEnded('missing'))
+})
+
+test('live checkout and task actions use the corresponding server routes', async () => {
+  const calls = []
+  const transport = Object.fromEntries(['get', 'put', 'post'].map(method => [
+    method, async (url, body) => { calls.push([method, url, body]) }
+  ]))
+  const { load } = demo(transport)
+  const pay = load('@/api/pay')
+  const workflow = load('@/api/workflow')
+  await pay.paymentChannels()
+  await pay.createPaymentOrder(12, 'ALIPAY')
+  await pay.getPayRecordDetail(34)
+  await pay.retryPaymentBusiness(34)
+  await pay.updatePaymentConfigStatus(12, 'inactive')
+  await workflow.myWorkflowTasks()
+  await workflow.claimWorkflowTask('task 1')
+  await workflow.claimWorkflowTask('task 1', true)
+  await workflow.workflowInstanceDiagram('run 1')
+  assert.deepEqual(calls.map(([method, url]) => method + ' ' + url), [
+    'get /api/v1/pay/channels', 'post /api/v1/pay/orders/12?channel=ALIPAY',
+    'get /api/v1/pay/records/34', 'put /api/v1/pay/records/34/retry-business',
+    'put /api/v1/pay/configs/12/status?status=inactive', 'get /api/v1/workflow/tasks/my',
+    'post /api/v1/workflow/task/task%201/claim', 'post /api/v1/workflow/task/task%201/unclaim',
+    'get /api/v1/workflow/process/run%201/diagram'
+  ])
 })

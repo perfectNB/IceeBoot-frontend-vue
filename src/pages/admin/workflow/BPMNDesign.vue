@@ -8,7 +8,7 @@
           <el-button type="primary" :icon="Plus" @click="handleCreateDiagram">{{ t('bpmnDesign.new') }}</el-button>
           <el-button :icon="Upload" @click="importDialogVisible = true">{{ t('bpmnDesign.importXml') }}</el-button>
           <el-button :icon="Document" @click="handleSaveDesignerXml">{{ t('bpmnDesign.saveXml') }}</el-button>
-          <el-button type="success" :icon="UploadFilled" :loading="deployingDesigner" @click="openDesignerDeployDialog">
+          <el-button v-if="hasPermission('workflow:definition:deploy:api')" type="success" :icon="UploadFilled" :loading="deployingDesigner" @click="openDesignerDeployDialog">
             {{ t('bpmnDesign.deploy') }}
           </el-button>
           <el-button :icon="FullScreen" @click="toggleDesignerFullscreen">
@@ -78,7 +78,7 @@
               </el-upload>
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" :loading="deploying" @click="handleDeployFile">{{ t('bpmnDesign.deploy') }}</el-button>
+              <el-button v-if="hasPermission('workflow:definition:deploy:api')" type="primary" :loading="deploying" @click="handleDeployFile">{{ t('bpmnDesign.deploy') }}</el-button>
               <el-button @click="resetDeployForm">{{ t('bpmnDesign.reset') }}</el-button>
             </el-form-item>
           </el-form>
@@ -101,7 +101,7 @@
               <el-input v-model="xmlForm.xml" type="textarea" :rows="12" :placeholder="t('bpmnDesign.inputBpmnXml')" />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" :loading="deployingXml" @click="handleDeployXml">{{ t('bpmnDesign.saveDeploy') }}</el-button>
+              <el-button v-if="hasPermission('workflow:definition:deploy:api')" type="primary" :loading="deployingXml" @click="handleDeployXml">{{ t('bpmnDesign.saveDeploy') }}</el-button>
               <el-button @click="resetXmlForm">{{ t('bpmnDesign.reset') }}</el-button>
             </el-form-item>
           </el-form>
@@ -131,7 +131,7 @@
           <el-input v-model="designerDeployForm.tenantId" :placeholder="t('bpmnDesign.optional')" />
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" :loading="deployingDesigner" @click="handleConfirmDesignerDeploy">{{ t('bpmnDesign.deploy') }}</el-button>
+          <el-button v-if="hasPermission('workflow:definition:deploy:api')" type="primary" :loading="deployingDesigner" @click="handleConfirmDesignerDeploy">{{ t('bpmnDesign.deploy') }}</el-button>
           <el-button @click="designerDeployDialogVisible = false">{{ t('bpmnDesign.cancel') }}</el-button>
         </el-form-item>
       </el-form>
@@ -140,6 +140,7 @@
 </template>
 
 <script setup lang="ts">
+import { hasPermission } from '@/utils/permission'
 import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { nextTick, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import { ElMessage, type UploadFile, type UploadUserFile } from 'element-plus'
@@ -308,7 +309,9 @@ const createDesignerTranslate = (translations: Record<string, string>) => {
   }
 }
 
-const defaultBpmnXml = `<?xml version="1.0" encoding="UTF-8"?>
+const newDiagramXml = () => {
+  const processId = 'Process_' + crypto.randomUUID().replace(/-/g, '')
+  return `<?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL"
   xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
@@ -316,17 +319,22 @@ const defaultBpmnXml = `<?xml version="1.0" encoding="UTF-8"?>
   xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
   id="Definitions_1"
   targetNamespace="http://bpmn.io/schema/bpmn">
-  <bpmn:process id="Process_1" isExecutable="true">
+  <bpmn:process id="${processId}" isExecutable="true">
     <bpmn:startEvent id="StartEvent_1" />
+    <bpmn:sequenceFlow id="Flow_1" sourceRef="StartEvent_1" targetRef="EndEvent_1" />
+    <bpmn:endEvent id="EndEvent_1" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_1">
-    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="${processId}">
       <bpmndi:BPMNShape id="StartEvent_1_di" bpmnElement="StartEvent_1">
         <dc:Bounds x="152" y="102" width="36" height="36" />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="EndEvent_1_di" bpmnElement="EndEvent_1"><dc:Bounds x="310" y="102" width="36" height="36" /></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1_di" bpmnElement="Flow_1"><di:waypoint x="188" y="120" /><di:waypoint x="310" y="120" /></bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </bpmn:definitions>`
+}
 
 const initDesigner = async () => {
   if (!designerRef.value) return
@@ -342,7 +350,7 @@ const initDesigner = async () => {
       }
     ]
   })
-  await importXmlToDesigner(defaultBpmnXml)
+  await importXmlToDesigner(newDiagramXml())
 }
 
 const ensureDesignerReady = async () => {
@@ -358,8 +366,10 @@ const importXmlToDesigner = async (xml: string) => {
     await bpmnModeler.importXML(xml)
     const canvas = bpmnModeler.get('canvas') as { zoom: (value: string) => void }
     canvas.zoom('fit-viewport')
+    return true
   } catch {
     ElMessage.error(t('bpmnDesign.importFailed'))
+    return false
   }
 }
 
@@ -367,7 +377,7 @@ const handleCreateDiagram = async () => {
   if (!bpmnModeler) {
     await ensureDesignerReady()
   }
-  await importXmlToDesigner(defaultBpmnXml)
+  await importXmlToDesigner(newDiagramXml())
 }
 
 const handleImportXml = async () => {
@@ -378,7 +388,7 @@ const handleImportXml = async () => {
   if (!bpmnModeler) {
     await ensureDesignerReady()
   }
-  await importXmlToDesigner(importXml.value)
+  if (!await importXmlToDesigner(importXml.value)) return
   importDialogVisible.value = false
   ElMessage.success(t('bpmnDesign.importSuccess'))
 }

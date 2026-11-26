@@ -10,7 +10,7 @@ export const mockPaymentConfigs: PaymentConfigVO[] = [
   {
     id: 1,
     configName: '基础套餐',
-    payCode: 'BASIC_PACKAGE',
+    payCode: 'ESSENTIAL_OIL_MEMBER',
     amount: 9900,
     amountYuan: '99.00',
     description: '适合个人用户，包含基础功能',
@@ -23,7 +23,7 @@ export const mockPaymentConfigs: PaymentConfigVO[] = [
   {
     id: 2,
     configName: '专业套餐',
-    payCode: 'PRO_PACKAGE',
+    payCode: 'MMK_MEMBER',
     amount: 19900,
     amountYuan: '199.00',
     description: '适合专业用户，包含高级功能',
@@ -36,7 +36,7 @@ export const mockPaymentConfigs: PaymentConfigVO[] = [
   {
     id: 3,
     configName: '企业套餐',
-    payCode: 'ENTERPRISE_PACKAGE',
+    payCode: 'NINETY_EIGHT_MEMBER',
     amount: 49900,
     amountYuan: '499.00',
     description: '适合企业用户，包含所有功能',
@@ -49,7 +49,7 @@ export const mockPaymentConfigs: PaymentConfigVO[] = [
   {
     id: 4,
     configName: '旗舰套餐',
-    payCode: 'FLAGSHIP_PACKAGE',
+    payCode: 'SCRUB_MEMBER',
     amount: 99900,
     amountYuan: '999.00',
     description: '适合大型企业，提供定制化服务',
@@ -62,7 +62,7 @@ export const mockPaymentConfigs: PaymentConfigVO[] = [
   {
     id: 5,
     configName: '体验套餐',
-    payCode: 'TRIAL_PACKAGE',
+    payCode: 'SPA_MEMBER',
     amount: 100,
     amountYuan: '1.00',
     description: '新用户体验套餐，限时优惠',
@@ -284,6 +284,6 @@ export const mockPayRecords: PayRecordVO[] = [
  * 生成支付二维码 URL
  */
 export const generateQrCodeUrl = (configId: number) => {
-  return `https://qr.alipay.com/mock_qrcode_${configId}_${Date.now()}`
+  return `iceeboot-demo:YUNGOUOS/${configId}_${Date.now()}`
 }
 

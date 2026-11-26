@@ -19,7 +19,7 @@
               <el-input v-model="startForm.variablesJson" type="textarea" :rows="6" :placeholder="t('workflowInstances.jsonObject')" />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" :loading="startingProcess" @click="handleStartProcess">{{ t('workflowInstances.startProcessBtn') }}</el-button>
+              <el-button v-if="hasPermission('workflow:process:start:api')" type="primary" :loading="startingProcess" @click="handleStartProcess">{{ t('workflowInstances.startProcessBtn') }}</el-button>
               <el-button @click="resetStartForm">{{ t('workflowInstances.reset') }}</el-button>
             </el-form-item>
           </el-form>
@@ -36,10 +36,10 @@
               <el-input v-model="instanceForm.deleteReason" :placeholder="t('workflowInstances.optional')" />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" :loading="loadingInstance" @click="handleLoadInstance">{{ t('workflowInstances.query') }}</el-button>
-              <el-button type="warning" :loading="endingInstance" @click="handleEndInstance">{{ t('workflowInstances.end') }}</el-button>
-              <el-button type="danger" :loading="deletingInstance" @click="handleDeleteInstance">{{ t('workflowInstances.delete') }}</el-button>
-              <el-button type="info" :loading="checkingEnded" @click="handleCheckEnded">{{ t('workflowInstances.isEnded') }}</el-button>
+              <el-button v-if="hasPermission('workflow:process:detail:api')" type="primary" :loading="loadingInstance" @click="handleLoadInstance">{{ t('workflowInstances.query') }}</el-button>
+              <el-button v-if="hasPermission('workflow:process:end:api')" type="warning" :loading="endingInstance" @click="handleEndInstance">{{ t('workflowInstances.end') }}</el-button>
+              <el-button v-if="hasPermission('workflow:process:delete:api')" type="danger" :loading="deletingInstance" @click="handleDeleteInstance">{{ t('workflowInstances.delete') }}</el-button>
+              <el-button v-if="hasPermission('workflow:process:ended:api')" type="info" :loading="checkingEnded" @click="handleCheckEnded">{{ t('workflowInstances.isEnded') }}</el-button>
             </el-form-item>
           </el-form>
           <el-descriptions v-if="instanceResult" :column="2" border>
@@ -62,6 +62,7 @@
 </template>
 
 <script setup lang="ts">
+import { hasPermission } from '@/utils/permission'
 import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
@@ -159,8 +160,11 @@ const handleLoadInstance = async () => {
   loadingInstance.value = true
   try {
     instanceResult.value = await getWorkflowProcess(instanceForm.processInstanceId)
+    instanceEnded.value = !!instanceResult.value.ended
     ElMessage.success(t('workflowInstances.queryCompleted'))
   } catch {
+    instanceResult.value = null
+    instanceEnded.value = null
     ElMessage.error(t('workflowInstances.queryFailed'))
   } finally {
     loadingInstance.value = false
@@ -175,6 +179,8 @@ const handleEndInstance = async () => {
   endingInstance.value = true
   try {
     await endWorkflowProcess(instanceForm.processInstanceId)
+    instanceResult.value = await getWorkflowProcess(instanceForm.processInstanceId)
+    instanceEnded.value = true
     ElMessage.success(t('workflowInstances.processEnded'))
   } catch {
     ElMessage.error(t('workflowInstances.endFailed'))
@@ -213,6 +219,8 @@ const handleCheckEnded = async () => {
   try {
     instanceEnded.value = await checkWorkflowProcessEnded(instanceForm.processInstanceId)
   } catch {
+    instanceResult.value = null
+    instanceEnded.value = null
     ElMessage.error(t('workflowInstances.queryFailed'))
   } finally {
     checkingEnded.value = false

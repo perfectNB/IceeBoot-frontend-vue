@@ -1,12 +1,6 @@
 <template>
-  <div class="permission-management">
-    <div class="page-header">
-      <h2>{{ t('permissionManagement.pageTitle') }}</h2>
-      <p>{{ t('permissionManagement.pageDescription') }}</p>
-    </div>
-
-    <!-- 操作区域 -->
-    <div class="action-section">
+  <div class="permission-management admin-page">
+    <AdminPageHeader :title="t('permissionManagement.pageTitle')" :description="t('permissionManagement.pageDescription')">
       <el-button
         type="primary"
         :icon="Plus"
@@ -38,7 +32,7 @@
         <el-icon><Sort /></el-icon>
         {{ t('permissionManagement.collapseAll') }}
       </el-button>
-    </div>
+    </AdminPageHeader>
 
     <!-- 搜索区域 -->
     <div class="search-section">
@@ -262,6 +256,7 @@
 </template>
 
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { ref, computed, onMounted, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
@@ -717,25 +712,6 @@ onMounted(() => {
 <style scoped>
 .permission-management {
   padding: 20px;
-}
-
-.page-header {
-  margin-bottom: 20px;
-}
-
-.page-header h2 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-}
-
-.page-header p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.action-section {
-  margin-bottom: 20px;
 }
 
 .search-section {

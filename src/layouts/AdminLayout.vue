@@ -1,13 +1,14 @@
 <template>
-  <div class="admin-layout">
+  <div class="admin-layout" @keydown.esc="mobile.matches && (isCollapsed = true)">
     <!-- 侧边栏 -->
     <aside
       class="sidebar"
+      :inert="mobile.matches && isCollapsed"
       :class="{ 'sidebar-collapsed': isCollapsed }"
     >
       <div class="sidebar-header">
         <div class="logo">
-          <img src="@/assets/logo.svg" alt="IceeBoot" class="logo-img" />
+          <img src="@/assets/logo.png" :alt="isCollapsed ? 'IceeBoot' : ''" class="logo-img" />
           <span v-show="!isCollapsed" class="logo-text">IceeBoot</span>
         </div>
       </div>
@@ -17,6 +18,7 @@
       </div>
     </aside>
 
+    <button v-if="!isCollapsed" type="button" class="sidebar-scrim" :aria-label="t('layout.toggleSidebar')" @click="toggleSidebar" />
     <!-- 主内容区 -->
     <div class="main-container">
       <!-- 顶部导航 -->
@@ -24,6 +26,8 @@
         <div class="header-left">
           <el-button
             :icon="isCollapsed ? Expand : Fold"
+            :aria-label="t('layout.toggleSidebar')"
+            :aria-expanded="!isCollapsed"
             @click="toggleSidebar"
             text
             class="collapse-btn"
@@ -60,6 +64,7 @@
               <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99">
                 <el-button
                   :icon="Bell"
+                  :aria-label="t('layout.messageCenter')"
                   text
                   class="message-btn"
                 />
@@ -130,7 +135,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
@@ -148,7 +153,6 @@ import {
 } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { logout } from '@/api/auth'
-import { isMockEnabled } from '@/config/mock'
 import { isDark, toggleTheme } from '@/utils/theme'
 import { getMessageStats, allRead } from '@/api/message'
 import SidebarMenu from '@/components/common/SidebarMenu.vue'
@@ -161,7 +165,10 @@ const router = useRouter()
 const userStore = useUserStore()
 
 // 侧边栏状态
-const isCollapsed = ref(false)
+const mobile = window.matchMedia('(max-width: 768px)')
+const isCollapsed = ref(mobile.matches)
+function syncSidebar() { isCollapsed.value = mobile.matches }
+watch(() => route.path, () => { if (mobile.matches) isCollapsed.value = true })
 
 // 未读消息数量
 const unreadCount = ref(0)
@@ -244,28 +251,20 @@ const handleLogout = () => {
     type: 'warning'
   }).then(async () => {
     try {
-      // 调用退出登录API（非mock模式）
-      if (isMockEnabled()) {
-        await logout()
-      }
-
-      // 清除本地状态
-      userStore.logout()
-      router.push('/')
-      ElMessage.success(t('layout.logoutSuccess'))
+      await logout()
     } catch (error) {
       console.error('退出登录失败:', error)
-      // 即使API调用失败，也要清除本地状态
+    } finally {
       userStore.logout()
       router.push('/')
       ElMessage.success(t('layout.logoutSuccess'))
     }
-  })
+  }).catch(() => { /* 已取消退出 */ })
 }
 
 // 组件挂载时加载数据
 onMounted(() => {
-  // 菜单数据通过computed从user store获取，无需额外加载
+  mobile.addEventListener('change', syncSidebar)
   // 加载未读消息数量
   loadUnreadCount()
 
@@ -274,6 +273,7 @@ onMounted(() => {
 })
 
 onBeforeUnmount(() => {
+  mobile.removeEventListener('change', syncSidebar)
   if (unreadTimer !== undefined) {
     window.clearInterval(unreadTimer)
     unreadTimer = undefined
@@ -295,7 +295,7 @@ onBeforeUnmount(() => {
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-right: 1px solid var(--border-extra-light);
-  transition: all var(--transition-duration) cubic-bezier(0.4, 0, 0.2, 1);
+  transition: width 180ms ease-out, transform 180ms ease-out;
   overflow: hidden;
   z-index: 50;
   display: flex;
@@ -323,21 +323,18 @@ onBeforeUnmount(() => {
     height: 100%;
     width: 100%;
     overflow: hidden;
-    transition: all 0.3s;
+    transition: background-color 160ms ease;
     
     .logo-img {
       width: 32px;
       height: 32px;
       flex-shrink: 0;
-      filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
     }
 
     .logo-text {
       font-size: 18px;
       font-weight: 700;
-      background: linear-gradient(120deg, var(--primary-color), var(--secondary-color));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+      color: var(--el-text-color-primary);
       white-space: nowrap;
       letter-spacing: -0.5px;
       opacity: 1;
@@ -381,7 +378,7 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   padding: 0 24px;
   z-index: 40;
-  transition: all 0.3s;
+  transition: background-color 160ms ease;
 }
 
 .header-left {
@@ -399,7 +396,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: background-color 140ms, border-color 140ms, color 140ms;
   cursor: pointer;
 
   &:hover {
@@ -443,7 +440,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: background-color 140ms, border-color 140ms, color 140ms;
   
   &:hover {
     background: var(--bg-color-soft);
@@ -458,7 +455,7 @@ onBeforeUnmount(() => {
   padding: 4px 8px 4px 4px;
   border-radius: 50px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background-color 140ms, border-color 140ms, color 140ms;
   border: 1px solid transparent;
   margin-left: 12px;
 
@@ -506,8 +503,10 @@ onBeforeUnmount(() => {
   // We just ensure the scroll container is nice.
 }
 
-// 响应式设计
+.sidebar-scrim { display: none; }
 @media (max-width: 768px) {
+  .sidebar-scrim { display: block; position: fixed; inset: 0; z-index: 45; border: none; background: rgb(0 0 0 / 30%); }
+  .content { padding: 14px; }
   .sidebar {
     position: fixed;
     top: 0;
@@ -536,5 +535,8 @@ onBeforeUnmount(() => {
   .user-name {
     display: none;
   }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sidebar, .header, .logo, .logo-text, .collapse-btn, .theme-btn, .message-btn, .user-info { transition: none; }
 }
 </style>

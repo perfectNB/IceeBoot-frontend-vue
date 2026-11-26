@@ -9,7 +9,7 @@ export interface LogItem {
   stackTrace?: string
 }
 
-export const logData: LogItem[] = [
+const examples: LogItem[] = [
   {
     id: '1',
     level: 'INFO',
@@ -150,3 +150,10 @@ export const logData: LogItem[] = [
     stackTrace: 'java.io.FileNotFoundException: application-prod.yml (No such file or directory)\n\tat java.io.FileInputStream.open0(Native Method)\n\tat java.io.FileInputStream.open(FileInputStream.java:195)\n\tat java.io.FileInputStream.<init>(FileInputStream.java:138)'
   }
 ]
+// Keep demo records within the same reporting period as the dashboard.
+export const logData: LogItem[] = examples.map((row, index) => {
+  const day = new Date()
+  day.setDate(day.getDate() - Math.floor(index / 3))
+  const date = [day.getFullYear(), String(day.getMonth() + 1).padStart(2, '0'), String(day.getDate()).padStart(2, '0')].join('-')
+  return { ...row, timestamp: date + ' ' + row.timestamp.slice(11) }
+})

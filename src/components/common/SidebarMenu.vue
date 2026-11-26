@@ -36,6 +36,8 @@ const activeMenu = computed(() => {
 </script>
 
 <style scoped lang="scss">
+@use '@/styles/navigation' as nav;
+
 .sidebar-menu {
   height: 100%;
 }
@@ -51,26 +53,17 @@ const activeMenu = computed(() => {
     margin: 4px 0;
     border-radius: 8px;
     color: var(--text-secondary);
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: background-color 160ms ease, color 160ms ease;
     position: relative;
     overflow: hidden;
     
     &:hover {
       background: var(--bg-color-soft);
       color: var(--text-primary);
-      transform: translateX(4px);
     }
     
     &.is-active {
-      background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
-      color: #ffffff !important;
-      font-weight: 500;
-      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-      transform: translateX(4px);
-      
-      &::before {
-        display: none;
-      }
+      @include nav.selected-item;
     }
     
     .el-icon {
@@ -93,7 +86,6 @@ const activeMenu = computed(() => {
       &:hover {
         background: var(--bg-color-soft);
         color: var(--text-primary);
-        transform: translateX(4px);
       }
       
       .el-icon {
@@ -125,26 +117,10 @@ const activeMenu = computed(() => {
         &:hover {
           background: var(--bg-color-soft);
           color: var(--text-primary);
-          transform: translateX(4px);
         }
         
         &.is-active {
-          background: rgba(59, 130, 246, 0.1); // softer active for subitems
-          color: var(--primary-color) !important;
-          box-shadow: none;
-          font-weight: 600;
-          
-          &::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 50%;
-            transform: translateY(-50%);
-            width: 3px;
-            height: 16px;
-            background: var(--primary-color);
-            border-radius: 0 4px 4px 0;
-          }
+          @include nav.selected-item;
         }
       }
     }

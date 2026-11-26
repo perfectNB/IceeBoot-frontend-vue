@@ -3,7 +3,7 @@
     <a class="skip-link" href="#capabilities">{{ t('home.skipContent') }}</a>
     <header class="launch-header">
       <div class="launch-width header-inner">
-        <a class="brand" href="#" aria-label="IceeBoot"><span class="brand-symbol" aria-hidden="true"><el-icon><Cpu /></el-icon></span>IceeBoot<span class="brand-dot">.</span></a>
+        <a class="brand" href="#" aria-label="IceeBoot"><img class="brand-symbol" src="@/assets/logo.png" alt="" width="32" height="32">IceeBoot<span class="brand-dot">.</span></a>
         <nav :aria-label="t('home.navigation')"><a href="#capabilities">{{ t('home.navCapabilities') }}</a><a href="#integration">{{ t('home.navIntegration') }}</a><a :href="docsUrl" target="_blank" rel="noopener noreferrer">{{ t('home.docs') }}<el-icon aria-hidden="true"><TopRight /></el-icon></a></nav>
         <div class="header-actions"><button class="motion-button" :disabled="prefersReducedMotion" :aria-label="t(ambientPaused ? 'home.resumeMotion' : 'home.pauseMotion')" :aria-pressed="ambientPaused" @click="ambientPaused = !ambientPaused"><el-icon aria-hidden="true"><component :is="ambientPaused ? VideoPlay : VideoPause" /></el-icon></button><LanguageSwitcher /><button class="utility-button" :aria-label="t(isDark ? 'home.lightTheme' : 'home.darkTheme')" @click="toggleTheme"><el-icon aria-hidden="true"><component :is="isDark ? Sunny : Moon" /></el-icon></button><button class="nav-cta" @click="handleExperience">{{ t(isLoggedIn ? 'home.console' : 'home.login') }}<el-icon aria-hidden="true"><ArrowRight /></el-icon></button></div>
       </div>
@@ -91,7 +91,7 @@
       <section class="finale-section" data-scene="finale"><div class="finale-art"><AgentCoreScene kind="hero" :label="t('home.scene_hero')" :progress="sceneProgress.finale || 0" :reduced-motion="motionStopped" :dark="isDark" /></div><div class="launch-width finale-content"><p class="eyebrow">MAKE IT YOURS.</p><h2>{{ t('home.calloutTitle') }}<span>{{ t('home.calloutHighlight') }}</span></h2><p>{{ t('home.calloutDescription') }}</p><button class="launch-button primary" @click="handleExperience">{{ t(isLoggedIn ? 'home.console' : 'home.experience') }}<el-icon aria-hidden="true"><ArrowRight /></el-icon></button></div></section>
     </main>
 
-    <footer class="launch-footer"><div class="launch-width"><div class="footer-main"><a class="brand" href="#"><span class="brand-symbol" aria-hidden="true"><el-icon><Cpu /></el-icon></span>IceeBoot.</a><p>{{ t('home.footerDescription') }}</p><div class="footer-links"><a :href="sourceUrl" target="_blank" rel="noopener noreferrer">Gitee<el-icon aria-hidden="true"><TopRight /></el-icon></a><a :href="docsUrl" target="_blank" rel="noopener noreferrer">{{ t('home.docs') }}</a><button @click="showContactDialog = true">{{ t('home.contactUs') }}</button><button v-if="isLoggedIn" @click="handleLogout">{{ t('home.logoutBtn') }}</button></div></div><div class="footer-bottom"><span>© {{ currentYear }} IceeBoot</span><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">京ICP备2024086986号-2</a></div></div></footer>
+    <footer class="launch-footer"><div class="launch-width"><div class="footer-main"><a class="brand" href="#"><img class="brand-symbol" src="@/assets/logo.png" alt="" width="32" height="32">IceeBoot.</a><p>{{ t('home.footerDescription') }}</p><div class="footer-links"><a :href="sourceUrl" target="_blank" rel="noopener noreferrer">Gitee<el-icon aria-hidden="true"><TopRight /></el-icon></a><a :href="docsUrl" target="_blank" rel="noopener noreferrer">{{ t('home.docs') }}</a><button @click="showContactDialog = true">{{ t('home.contactUs') }}</button><button v-if="isLoggedIn" @click="handleLogout">{{ t('home.logoutBtn') }}</button></div></div><div class="footer-bottom"><span>© {{ currentYear }} IceeBoot</span><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">京ICP备2024086986号-2</a></div></div></footer>
     <LoginDialog v-model="showLoginDialog" @success="handleLoginSuccess" />
     <el-dialog v-model="showMockDialog" :title="t('home.mockTitle')" width="min(400px, calc(100vw - 32px))" align-center><p>{{ t('home.mockContent') }}</p><template #footer><el-button @click="showMockDialog = false">{{ t('home.mockDismiss') }}</el-button><el-button type="primary" @click="openGitee">{{ t('home.getSource') }}</el-button></template></el-dialog>
     <el-dialog v-model="showContactDialog" :title="t('home.contactUs')" width="min(560px, calc(100vw - 32px))" align-center><div class="contact-grid"><figure v-for="platform in socialPlatforms" :key="platform.name"><img :src="platform.qrCode" :alt="t('home.contactQr', { name: platform.name })" loading="lazy" width="144" height="144" /><figcaption>{{ platform.name }}</figcaption></figure></div></el-dialog>
@@ -322,7 +322,6 @@ onBeforeUnmount(() => { if (mockTimer) clearTimeout(mockTimer) })
   .feature-agent .scene-halo { background: radial-gradient(ellipse, #ba42dd20, transparent 70%); }
   .feature-models .scene-halo { background: radial-gradient(ellipse, #286cff24, transparent 70%); }
   .feature-sandbox .scene-halo { background: radial-gradient(ellipse, #7550ed28, transparent 70%); }
-  .brand-symbol { filter: drop-shadow(0 0 7px #58aeff40); }
 }
 .launch-header, .hero-section, .feature-scene, .integration-section, .launch-footer { transition: background-color .28s ease, color .28s ease, border-color .28s ease; }
 .launch-width { width: min(1200px, calc(100% - clamp(64px, 16vw, 320px))); margin-inline: auto; }
@@ -330,7 +329,7 @@ onBeforeUnmount(() => { if (mockTimer) clearTimeout(mockTimer) })
 .launch-header { position: sticky; top: 0; z-index: 80; background: var(--header-bg); backdrop-filter: blur(24px); }
 .header-inner { min-height: 72px; display: flex; align-items: center; gap: 36px; }
 .brand { display: inline-flex; align-items: center; gap: 10px; font-size: 23px; font-weight: 650; letter-spacing: -1px; flex-shrink: 0; }
-.brand-symbol { display: grid; place-items: center; width: 29px; height: 32px; color: var(--accent-ink); font-size: 24px; }
+.brand-symbol { display: block; flex: none; }
 .brand-dot { color: var(--accent-ink); margin-left: -9px; }
 .header-inner nav { display: flex; gap: 32px; margin-left: auto; a { min-height: 44px; display: inline-flex; align-items: center; gap: 6px; color: var(--secondary); font-size: 12px; &:hover { color: var(--text); } } }
 .header-actions { display: flex; align-items: center; gap: 4px; :deep(.lang-btn) { width: 44px; height: 44px; margin: 0; color: var(--secondary); } }

@@ -1,5 +1,6 @@
 <template>
-  <div class="frontend-codegen">
+  <div class="frontend-codegen admin-page">
+    <AdminPageHeader />
     <!-- 基础配置 -->
     <el-card class="config-card" shadow="hover">
       <template #header>
@@ -193,6 +194,7 @@
 </template>
 
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { ref, reactive, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'

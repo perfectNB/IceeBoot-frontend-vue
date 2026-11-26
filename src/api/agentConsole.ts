@@ -1,3 +1,5 @@
+import { isMockEnabled } from '@/config/mock'
+import { mockAgentConsole } from '@/mock/services/agentConsole'
 import { request } from '@/utils/request'
 
 export type Provider =
@@ -91,6 +93,9 @@ export interface AgentView {
   draft: AgentSpec
   activeReleaseId: string
   activeVersion: number
+  totalInputTokens?: number
+  totalOutputTokens?: number
+  totalCachedTokens?: number | null
   callCount: number
 }
 export interface ReleaseView {
@@ -128,6 +133,7 @@ export interface AgentProgress {
   toolName: string
   status: string
   timestamp: number
+  cachedTokens?: number | null
   durationMs?: number | null
   inputTokens?: number | null
   outputTokens?: number | null
@@ -163,6 +169,7 @@ export interface InvokeResult {
   output: string
   inputTokens: number
   outputTokens: number
+  cachedTokens?: number | null
   usageKnown: boolean
 }
 export interface RunView {
@@ -179,6 +186,7 @@ export interface RunView {
   error: string
   inputTokens: number
   outputTokens: number
+  cachedTokens?: number | null
   usageKnown: boolean
   startedAt: string
   finishedAt: string
@@ -196,6 +204,7 @@ export interface ModelCall {
   output: string
   inputTokens: number
   outputTokens: number
+  cachedTokens?: number | null
   usageKnown: boolean
   createdAt: string
 }
@@ -204,6 +213,7 @@ export interface RunDetail {
   modelCalls: ModelCall[]
   totalInputTokens: number
   totalOutputTokens: number
+  totalCachedTokens?: number | null
   usageKnown: boolean
 }
 export interface AgentQuota {
@@ -339,7 +349,27 @@ function capabilityPayload(value: Capability) {
   }
 }
 
-export const agentConsole = {
+export type UsagePeriod = 'TODAY' | 'MONTH' | 'ALL'
+export interface UsageRow {
+  label: string
+  provider: string | null
+  calls: number
+  knownCalls: number
+  pricedCalls: number
+  inputTokens: number
+  outputTokens: number
+  cachedTokens: number | null
+  cacheWriteTokens: number | null
+  costCny: number | null
+}
+export interface UsageOverview {
+  updatedAt: string
+  models: UsageRow[]
+  days: UsageRow[]
+}
+
+const liveAgentConsole = {
+  usageOverview: (period: UsagePeriod) => request.get<UsageOverview>(`${root}/usage`, { period }),
   schedules: () => request.get<AgentSchedule[]>(`${root}/schedules`),
   createSchedule: (value: AgentScheduleRequest) => request.post<AgentSchedule>(`${root}/schedules`, { ...value }),
   updateSchedule: (id: number, value: AgentScheduleRequest) => request.put<AgentSchedule>(`${root}/schedules`, { ...value, id }),
@@ -395,7 +425,7 @@ export const agentConsole = {
   },
   files: (id: number, session: string, runId: string) => request.get<AgentFile[]>(`${root}/agents/${id}/sessions/${encodeURIComponent(session)}/files`, { runId }),
   downloadFile: (id: number, session: string, fileId: string) => request.download(`${root}/agents/${id}/sessions/${encodeURIComponent(session)}/files/${encodeURIComponent(fileId)}`),
-  deleteFile: (id: number, session: string, fileId: string) => request.delete(`${root}/agents/${id}/sessions/${encodeURIComponent(session)}/files/${encodeURIComponent(fileId)}`),
+  deleteFile: (id: number, session: string, fileId: string) => request.delete<void>(`${root}/agents/${id}/sessions/${encodeURIComponent(session)}/files/${encodeURIComponent(fileId)}`),
   recover: (id: number, session: string, runId: string) => request.post<AgentRecovery>(`${root}/agents/${id}/sessions/${encodeURIComponent(session)}/runs/${encodeURIComponent(runId)}/recovery`),
   invoke: (code: string, input: string, sessionId?: string) =>
     request.post<InvokeResult>(
@@ -446,3 +476,6 @@ export const providers: Provider[] = [
   'KIMI',
   'MINIMAX',
 ]
+
+export type AgentConsoleApi = typeof liveAgentConsole
+export const agentConsole: typeof liveAgentConsole = isMockEnabled() ? mockAgentConsole : liveAgentConsole

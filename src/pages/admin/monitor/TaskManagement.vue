@@ -1,12 +1,6 @@
 <template>
-  <div class="task-management">
-    <div class="page-header">
-      <h2>{{ t('taskManagement.pageTitle') }}</h2>
-      <p>{{ t('taskManagement.pageDescription') }}</p>
-    </div>
-
-    <!-- 操作栏 -->
-    <div class="action-section">
+  <div class="task-management admin-page">
+    <AdminPageHeader :title="t('taskManagement.pageTitle')" :description="t('taskManagement.pageDescription')">
       <el-button
         type="primary"
         @click="handleAdd"
@@ -24,7 +18,7 @@
         <el-icon><Delete /></el-icon>
         {{ t('taskManagement.actions.batchDelete') }}
       </el-button>
-    </div>
+    </AdminPageHeader>
 
     <!-- 搜索区域 -->
     <div class="search-section">
@@ -186,6 +180,7 @@
 </template>
 
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import { Plus, Search, Refresh, VideoPlay, VideoPause, Edit, Delete } from '@element-plus/icons-vue'
@@ -490,25 +485,6 @@ onMounted(() => {
 <style scoped>
 .task-management {
   padding: 20px;
-}
-
-.page-header {
-  margin-bottom: 20px;
-}
-
-.page-header h2 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-}
-
-.page-header p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.action-section {
-  margin-bottom: 20px;
 }
 
 .search-section {

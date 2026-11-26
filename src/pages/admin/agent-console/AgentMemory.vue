@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { Notebook, Search } from '@element-plus/icons-vue'
+import { Search } from '@element-plus/icons-vue'
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { hasPermission } from '@/utils/permission'
 import { memoryApi, type MemoryUser } from '@/api/agentMemory'
 import MemoryPolicyEditor from './components/MemoryPolicyEditor.vue'
@@ -33,8 +34,8 @@ onBeforeUnmount(() => { alive = false; generation++ })
 </script>
 
 <template>
-  <main class="agent-console general-profiles">
-    <header class="console-heading"><div class="console-title-block"><span class="console-title-icon"><el-icon><Notebook /></el-icon></span><div><p class="console-eyebrow">跨智能体的用户信息</p><h1>通用画像</h1><p class="subtitle">统一配置提取规则，按用户管理画像内容。每位用户的记忆独立保存。</p></div></div></header>
+  <main class="agent-console general-profiles admin-page">
+    <AdminPageHeader title="通用画像" description="统一配置提取规则，按用户管理画像内容。每位用户的记忆独立保存。" />
     <section class="profiles-workspace">
       <el-tabs v-model="tab" class="profiles-tabs">
         <el-tab-pane v-if="canList" label="用户画像" name="profiles" />

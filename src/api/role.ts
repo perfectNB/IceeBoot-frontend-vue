@@ -99,7 +99,7 @@ export const deleteRole = async (id: string | number): Promise<boolean> => {
 export const getRoleById = async (id: string | number, include?: 'permissions' | 'menus'): Promise<Role> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    return await MockRoleService.getRoleById(Number(id))
+    return await MockRoleService.getRoleById(Number(id), include)
   } else {
     // 调用真实API
     return await request.get<Role>(`/api/v1/roles/${id}`, include ? { include } : undefined)

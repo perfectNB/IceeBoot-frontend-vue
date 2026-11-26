@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./src/assets/logo.svg" alt="IceeBoot Logo" width="120" height="120">
+  <img src="./src/assets/logo.png" alt="IceeBoot Logo" width="120" height="120">
   <h1>🚀 IceeBoot 超级脚手架 - 前端</h1>
   <p><strong>基于 Vue 3 + TypeScript + Element Plus 的现代化企业级管理系统</strong></p>
   <p>集成 AI 大模型 + 工作流引擎 + 代码生成器的全栈开发框架</p>
@@ -276,24 +276,15 @@ const envConfig: Record<string, string> = {
 
 ### 🎭 Mock 数据模式
 
-项目内置完整的 Mock 数据系统，支持前端独立开发：
+启动本地演示：
 
-```typescript
-// src/config/mock.ts
-export const mockConfig: MockConfig = {
-  enabled: true,  // true: 使用 Mock 数据, false: 调用真实 API
-  delay: 30,      // 模拟网络延迟(ms)
-  log: true       // 是否输出 Mock 日志
-}
+```sh
+npm run dev:mock
 ```
 
-**Mock 模式特点：**
-- ✅ 完整的 CRUD 操作模拟
-- ✅ 支持分页、搜索、排序
-- ✅ 数据持久化（内存中）
-- ✅ 真实的网络延迟模拟
-- ✅ 一键切换真实 API
+构建可独立部署的演示版使用 `npm run build:mock`。普通开发与构建默认连接后端。也可以在对应环境文件中设置 `VITE_USE_MOCK=true`，修改后重新启动或构建。
 
+演示账号 `admin` 的密码是 `111111`。看板和管理页共用演示账号及日志数据。智能体对话、技能导入和预检使用本地示例，计划任务仅演示配置。刷新页面会重置演示业务数据。
 
 ## 📁 项目结构
 
@@ -325,7 +316,7 @@ zboot-frontend-vue/
 │   │   ├── student.ts               # 示例 CRUD 模块
 │   │   └── index.ts                 # API 统一导出
 │   ├── assets/                      # 静态资源
-│   │   ├── logo.svg                 # Logo
+│   │   ├── logo.png                 # Logo
 │   │   ├── img/                     # 图片资源
 │   │   ├── base.css                 # 基础样式
 │   │   └── main.css                 # 主样式

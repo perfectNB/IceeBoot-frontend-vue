@@ -7,6 +7,8 @@
     "node": "^20.19.0 || >=22.12.0"
   },
   "scripts": {
+    "dev:mock": "vite --mode mock",
+    "build:mock": "npm run type-check && vite build --mode mock",
     "dev": "vite",
     "build": "run-p type-check \"build-only {@}\" --",
     "preview": "vite preview",
@@ -32,6 +34,7 @@
     "markdown-it": "^14.1.0",
     "marked": "^16.2.1",
     "pinia": "^3.0.3",
+    "qrcode.vue": "^3.6.0",
     "three": "^0.187.0",
     "vue": "^3.5.18",
     "vue-echarts": "^7.0.3",

@@ -49,7 +49,14 @@ export class MockPermissionService {
   static async getAllPermissions(): Promise<Permission[]> {
     await mockDelay()
     mockLog('获取所有权限')
-    return [...mockPermissions]
+    const nodes = new Map(mockPermissions.map(row => [String(row.id), { ...row, children: [] as Permission[] }]))
+    const roots: Permission[] = []
+    for (const node of nodes.values()) {
+      const parent = nodes.get(String(node.parentId))
+      if (parent) parent.children.push(node)
+      else roots.push(node)
+    }
+    return roots
   }
 
   // 根据ID获取权限
@@ -57,7 +64,7 @@ export class MockPermissionService {
     await mockDelay()
     mockLog('根据ID获取权限', { permissionId })
 
-    const permission = mockPermissions.find(p => p.id === permissionId)
+    const permission = mockPermissions.find(p => Number(p.id) === permissionId)
     if (!permission) {
       throw new Error('权限不存在')
     }
@@ -71,7 +78,7 @@ export class MockPermissionService {
     mockLog('创建权限', permissionData)
 
     const newPermission: Permission = {
-      id: Math.max(...mockPermissions.map(p => Number(p.id))) + 1,
+      id: Math.max(0, ...mockPermissions.map(p => Number(p.id))) + 1,
       name: permissionData.name || '',
       code: permissionData.code || '',
       type: permissionData.type || 'menu',
@@ -94,7 +101,7 @@ export class MockPermissionService {
     await mockDelay()
     mockLog('更新权限', { permissionId, permissionData })
 
-    const permissionIndex = mockPermissions.findIndex(p => p.id === permissionId)
+    const permissionIndex = mockPermissions.findIndex(p => Number(p.id) === permissionId)
     if (permissionIndex === -1) {
       throw new Error('权限不存在')
     }
@@ -115,7 +122,7 @@ export class MockPermissionService {
     await mockDelay()
     mockLog('删除权限', { permissionId })
 
-    const permissionIndex = mockPermissions.findIndex(p => p.id === permissionId)
+    const permissionIndex = mockPermissions.findIndex(p => Number(p.id) === permissionId)
     if (permissionIndex === -1) {
       throw new Error('权限不存在')
     }

@@ -1,0 +1,6 @@
+@mixin selected-item {
+  background: var(--el-color-primary-light-9);
+  color: var(--el-color-primary);
+  font-weight: 600;
+  box-shadow: inset 3px 0 var(--el-color-primary);
+}

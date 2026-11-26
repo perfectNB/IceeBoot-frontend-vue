@@ -1,12 +1,6 @@
 <template>
-  <div class="role-management">
-    <div class="page-header">
-      <h2>{{ t('roleManagement.pageTitle') }}</h2>
-      <p>{{ t('roleManagement.pageDescription') }}</p>
-    </div>
-
-    <!-- 操作栏 -->
-    <div class="action-section">
+  <div class="role-management admin-page">
+    <AdminPageHeader :title="t('roleManagement.pageTitle')" :description="t('roleManagement.pageDescription')">
       <el-button
         type="primary"
         @click="handleCreate"
@@ -24,7 +18,7 @@
         <el-icon><Delete /></el-icon>
         {{ t('roleManagement.batchDelete') }}
       </el-button>
-    </div>
+    </AdminPageHeader>
 
     <!-- 搜索区域 -->
     <div class="search-section">
@@ -301,6 +295,7 @@
 </template>
 
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules, type TreeInstance } from 'element-plus'
@@ -783,25 +778,6 @@ onBeforeUnmount(() => {
 <style scoped>
 .role-management {
   padding: 20px;
-}
-
-.page-header {
-  margin-bottom: 20px;
-}
-
-.page-header h2 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-}
-
-.page-header p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.action-section {
-  margin-bottom: 20px;
 }
 
 .search-section {

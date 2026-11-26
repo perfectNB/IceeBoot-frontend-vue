@@ -17,6 +17,7 @@ export interface WorkflowDefinition {
 }
 
 export interface WorkflowNode {
+  assignee?: string
   id?: string
   activityId?: string
   name?: string
@@ -95,11 +96,6 @@ export interface TaskCompleteDTO {
   variables?: Record<string, unknown>
 }
 
-export interface TaskJumpDTO {
-  taskId?: string
-  targetActivityId: string
-}
-
 export const getWorkflowDefinitions = async (params?: { latestOnly?: boolean }): Promise<WorkflowDefinition[]> => {
   if (isMockEnabled()) {
     return await MockWorkflowService.getWorkflowDefinitions(params)
@@ -132,21 +128,21 @@ export const getWorkflowDefinitionXml = async (definitionId: string): Promise<st
   if (isMockEnabled()) {
     return await MockWorkflowService.getWorkflowDefinitionXml(definitionId)
   }
-  return await request.get<string>(`/api/v1/workflow/definitions/${definitionId}/xml`)
+  return await request.get<string>(`/api/v1/workflow/definitions/${encodeURIComponent(definitionId)}/xml`)
 }
 
 export const getWorkflowDefinitionDiagram = async (definitionId: string): Promise<Record<string, unknown>> => {
   if (isMockEnabled()) {
     return await MockWorkflowService.getWorkflowDefinitionDiagram(definitionId)
   }
-  return await request.get<Record<string, unknown>>(`/api/v1/workflow/definitions/${definitionId}/diagram`)
+  return await request.get<Record<string, unknown>>(`/api/v1/workflow/definitions/${encodeURIComponent(definitionId)}/diagram`)
 }
 
 export const getWorkflowDefinitionNodes = async (definitionId: string): Promise<WorkflowNode[]> => {
   if (isMockEnabled()) {
     return await MockWorkflowService.getWorkflowDefinitionNodes(definitionId)
   }
-  return await request.get<WorkflowNode[]>(`/api/v1/workflow/definitions/${definitionId}/nodes`)
+  return await request.get<WorkflowNode[]>(`/api/v1/workflow/definitions/${encodeURIComponent(definitionId)}/nodes`)
 }
 
 export const startWorkflowProcess = async (data: ProcessStartDTO): Promise<ProcessInstance> => {
@@ -156,65 +152,85 @@ export const startWorkflowProcess = async (data: ProcessStartDTO): Promise<Proce
   return await request.post<ProcessInstance>('/api/v1/workflow/start', data as unknown as Record<string, unknown>)
 }
 
+export interface WorkflowRunSummary {
+  id: string
+  key?: string
+  name?: string
+  businessKey?: string
+  status?: string
+}
+
+export async function getWorkflowRuns(): Promise<WorkflowRunSummary[]> {
+  if (isMockEnabled()) return MockWorkflowService.getWorkflowRuns()
+  return request.get('/api/v1/workflow/process', { includeEnded: true })
+}
+
 export const getWorkflowProcess = async (processInstanceId: string): Promise<ProcessInstance> => {
   if (isMockEnabled()) {
     return await MockWorkflowService.getWorkflowProcess(processInstanceId)
   }
-  return await request.get<ProcessInstance>(`/api/v1/workflow/process/${processInstanceId}`)
+  return await request.get<ProcessInstance>(`/api/v1/workflow/process/${encodeURIComponent(processInstanceId)}`)
 }
 
 export const deleteWorkflowProcess = async (processInstanceId: string, data?: ProcessInstanceDeleteDTO): Promise<void> => {
   if (isMockEnabled()) {
     return await MockWorkflowService.deleteWorkflowProcess(processInstanceId, data)
   }
-  await request.delete(`/api/v1/workflow/process/${processInstanceId}`, {}, { data })
+  await request.delete(`/api/v1/workflow/process/${encodeURIComponent(processInstanceId)}`, {}, { data })
 }
 
 export const getWorkflowProcessNodes = async (processInstanceId: string): Promise<WorkflowNode[]> => {
   if (isMockEnabled()) {
     return await MockWorkflowService.getWorkflowProcessNodes(processInstanceId)
   }
-  return await request.get<WorkflowNode[]>(`/api/v1/workflow/process/${processInstanceId}/nodes`)
+  return await request.get<WorkflowNode[]>(`/api/v1/workflow/process/${encodeURIComponent(processInstanceId)}/nodes`)
 }
 
 export const checkWorkflowProcessEnded = async (processInstanceId: string): Promise<boolean> => {
   if (isMockEnabled()) {
     return await MockWorkflowService.checkWorkflowProcessEnded(processInstanceId)
   }
-  return await request.get<boolean>(`/api/v1/workflow/process/${processInstanceId}/ended`)
+  return await request.get<boolean>(`/api/v1/workflow/process/${encodeURIComponent(processInstanceId)}/ended`)
 }
 
 export const endWorkflowProcess = async (processInstanceId: string): Promise<void> => {
   if (isMockEnabled()) {
     return await MockWorkflowService.endWorkflowProcess(processInstanceId)
   }
-  await request.post(`/api/v1/workflow/process/${processInstanceId}/end`, {})
+  await request.post(`/api/v1/workflow/process/${encodeURIComponent(processInstanceId)}/end`, {})
 }
 
 export const getUserTasks = async (assignee: string): Promise<TaskItem[]> => {
   if (isMockEnabled()) {
     return await MockWorkflowService.getUserTasks(assignee)
   }
-  return await request.get<TaskItem[]>(`/api/v1/workflow/tasks/user/${assignee}`)
+  return await request.get<TaskItem[]>(`/api/v1/workflow/tasks/user/${encodeURIComponent(assignee)}`)
 }
 
 export const getCandidateTasks = async (candidateUser: string): Promise<TaskItem[]> => {
   if (isMockEnabled()) {
     return await MockWorkflowService.getCandidateTasks(candidateUser)
   }
-  return await request.get<TaskItem[]>(`/api/v1/workflow/tasks/candidate/${candidateUser}`)
+  return await request.get<TaskItem[]>(`/api/v1/workflow/tasks/candidate/${encodeURIComponent(candidateUser)}`)
 }
 
 export const completeTask = async (taskId: string, data?: TaskCompleteDTO): Promise<void> => {
   if (isMockEnabled()) {
     return await MockWorkflowService.completeTask(taskId, data)
   }
-  await request.post(`/api/v1/workflow/task/${taskId}/complete`, data as unknown as Record<string, unknown>)
+  await request.post(`/api/v1/workflow/task/${encodeURIComponent(taskId)}/complete`, data as unknown as Record<string, unknown>)
 }
 
-export const jumpTask = async (taskId: string, data: TaskJumpDTO): Promise<void> => {
-  if (isMockEnabled()) {
-    return await MockWorkflowService.jumpTask(taskId, data)
-  }
-  await request.post(`/api/v1/workflow/task/${taskId}/jump`, data as unknown as Record<string, unknown>)
+export async function myWorkflowTasks(): Promise<TaskItem[]> {
+  return isMockEnabled() ? MockWorkflowService.myTasks() : request.get('/api/v1/workflow/tasks/my')
+}
+
+export async function claimWorkflowTask(id: string, release = false): Promise<void> {
+  if (isMockEnabled()) return MockWorkflowService.claim(id, release)
+  await request.post(`/api/v1/workflow/task/${encodeURIComponent(id)}/${release ? 'unclaim' : 'claim'}`, {})
+}
+
+export async function workflowInstanceDiagram(id: string): Promise<Record<string, unknown>> {
+  return isMockEnabled() ? MockWorkflowService.instanceDiagram(id)
+    : request.get(`/api/v1/workflow/process/${encodeURIComponent(id)}/diagram`)
 }

@@ -1,12 +1,6 @@
 <template>
-  <div class="log-management">
-    <div class="page-header">
-      <h2>{{ t('logManagement.pageTitle') }}</h2>
-      <p>{{ t('logManagement.pageDescription') }}</p>
-    </div>
-
-    <!-- 操作区域 -->
-    <div class="action-section">
+  <div class="log-management admin-page">
+    <AdminPageHeader :title="t('logManagement.pageTitle')" :description="t('logManagement.pageDescription')">
       <el-button
         type="danger"
         @click="handleBatchDelete"
@@ -16,7 +10,7 @@
         <el-icon><Delete /></el-icon>
         {{ t('logManagement.actions.batchDelete') }}
       </el-button>
-    </div>
+    </AdminPageHeader>
 
     <!-- 搜索区域 -->
     <div class="search-section">
@@ -192,7 +186,9 @@
 </template>
 
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { ref, reactive, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, View, Delete } from '@element-plus/icons-vue'
 import { getLogs, deleteLog, deleteLogs } from '../../../api/log'
@@ -234,8 +230,9 @@ const currentLogItem = ref<LogItem | null>(null)
 const selectedLogs = ref<LogItem[]>([])
 
 // 搜索表单
+const route = useRoute()
 const searchForm = reactive<SearchForm>({
-  level: '',
+  level: route.query.level === 'ERROR' ? 'ERROR' : '',
   module: '',
   keyword: '',
   dateRange: null
@@ -420,21 +417,6 @@ onMounted(() => {
   padding: 20px;
 }
 
-.page-header {
-  margin-bottom: 20px;
-}
-
-.page-header h2 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-}
-
-.page-header p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
 .search-section {
   background: var(--bg-color);
   padding: 20px;
@@ -499,8 +481,4 @@ onMounted(() => {
 :deep(.el-button + .el-button) {
   margin-left: 8px;
 }
-.action-section {
-  margin-bottom: 20px;
-}
-
 </style>

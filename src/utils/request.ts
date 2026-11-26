@@ -1,5 +1,6 @@
 import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse, type InternalAxiosRequestConfig, type AxiosRequestHeaders } from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { isMockEnabled } from '@/config/mock'
 import { getBaseURL } from './env'
 import { readEventStream } from './sse'
 import { useUserStore } from '@/stores/user'
@@ -91,6 +92,12 @@ const refreshTokens = async (): Promise<LoginResponse | null> => {
   }
 
   try {
+    if (isMockEnabled()) {
+      const { MockAuthService } = await import('@/mock/services/auth')
+      const data = await MockAuthService.refreshToken(currentRefreshToken)
+      userStore.setAuthTokens(data)
+      return data
+    }
     const response = await refreshService.post<ApiResponse<LoginResponse>>(
       '/api/v1/auth/refresh',
       { refreshToken: currentRefreshToken }
@@ -140,6 +147,7 @@ const ensureFreshToken = async (): Promise<string | null> => {
 // 请求拦截器
 service.interceptors.request.use(
   async (config) => {
+    if (isMockEnabled()) throw new Error('该请求尚未配置演示数据')
     const requestConfig = config as InternalRequestConfig
     const userStore = useUserStore()
     const token = userStore.getToken()
@@ -317,6 +325,7 @@ const extractResponseData = <T>(response: AxiosResponse<ApiResponse<T>>): T => {
 export const request = {
   async stream<T>(url: string, data: Record<string, unknown>, onEvent: (event: T) => void, signal?: AbortSignal): Promise<void> {
     const userStore = useUserStore()
+    if (isMockEnabled()) throw new Error('该流式请求尚未配置演示数据')
     const expires = userStore.getTokenExpires()
     if (expires && expires - Date.now() <= refreshThresholdMs && userStore.getRefreshToken()) await ensureFreshToken()
     const token = userStore.getToken()

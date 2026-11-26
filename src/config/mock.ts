@@ -18,7 +18,7 @@ export const mockConfig: MockConfig = {
   // 注释：修改此字段控制是否使用Mock数据
   // true: 使用Mock数据进行开发
   // false: 调用真实后端API
-  enabled: false,
+  enabled: import.meta.env.VITE_USE_MOCK === 'true',
   delay: 30,
   log: true
 }

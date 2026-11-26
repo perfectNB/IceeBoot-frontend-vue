@@ -1,12 +1,6 @@
 <template>
-  <div class="redis-management">
-    <div class="page-header">
-      <h2>{{ t('redisManagement.pageTitle') }}</h2>
-      <p>{{ t('redisManagement.pageDescription') }}</p>
-    </div>
-
-    <!-- 操作区域 -->
-    <div class="action-section">
+  <div class="redis-management admin-page">
+    <AdminPageHeader :title="t('redisManagement.pageTitle')" :description="t('redisManagement.pageDescription')">
       <el-button
         type="primary"
         @click="handleCreate"
@@ -24,7 +18,7 @@
         <el-icon><Delete /></el-icon>
         {{ t('redisManagement.actions.batchDelete') }}
       </el-button>
-    </div>
+    </AdminPageHeader>
 
     <!-- 搜索区域 -->
     <div class="search-section">
@@ -330,6 +324,7 @@
 </template>
 
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Search, Refresh, View, Delete, Plus } from '@element-plus/icons-vue'
@@ -765,21 +760,6 @@ onMounted(() => {
   padding: 20px;
 }
 
-.page-header {
-  margin-bottom: 20px;
-}
-
-.page-header h2 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-}
-
-.page-header p {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
 .search-section {
   background: var(--bg-color);
   padding: 20px;
@@ -817,10 +797,6 @@ onMounted(() => {
 
 :deep(.el-button + .el-button) {
   margin-left: 8px;
-}
-
-.action-section {
-  margin-bottom: 20px;
 }
 
 .form-tip {

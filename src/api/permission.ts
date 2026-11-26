@@ -10,7 +10,7 @@ export const getPermissions = async (params: PageParams): Promise<PageResult<Per
     return await MockPermissionService.getPermissions(params)
   } else {
     // 调用真实API
-    return await request.get<PageResult<Permission>>('/permissions', params)
+    return await request.get<PageResult<Permission>>('/api/v1/permissions/page', params)
   }
 }
 

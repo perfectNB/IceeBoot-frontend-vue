@@ -1,12 +1,6 @@
 <template>
-  <div class="student-management">
-    <div class="page-header">
-      <h1>{{ t('frontendTest.pageTitle') }}</h1>
-      <p>{{ t('frontendTest.pageDescription') }}</p>
-    </div>
-
-    <!-- 操作按钮区域 -->
-    <div class="action-section">
+  <div class="student-management admin-page">
+    <AdminPageHeader :title="t('frontendTest.pageTitle')" :description="t('frontendTest.pageDescription')">
       <el-button type="primary" :icon="Plus" @click="handleCreate">
         {{ t('frontendTest.addStudent') }}
       </el-button>
@@ -18,8 +12,7 @@
         <el-icon><Delete /></el-icon>
         {{ t('frontendTest.batchDelete') }}
       </el-button>
-
-    </div>
+    </AdminPageHeader>
 
     <!-- 搜索区域 -->
     <div class="search-section">
@@ -169,6 +162,7 @@
 </template>
 
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -417,32 +411,6 @@ onMounted(() => {
   padding: 0;
 }
 
-.page-header {
-  margin-bottom: 24px;
-
-  h1 {
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 8px 0;
-  }
-
-  p {
-    color: var(--text-secondary);
-    margin: 0;
-  }
-}
-
-.action-section {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-
-  .el-button + .el-button {
-    margin-left: 0;
-  }
-}
-
 .search-section {
   margin-bottom: 20px;
   padding: 20px;
@@ -480,11 +448,6 @@ onMounted(() => {
 
 // 响应式设计
 @media (max-width: 768px) {
-  .action-section {
-    flex-direction: column;
-    gap: 12px;
-  }
-
   .search-section {
     .el-form {
       flex-direction: column;

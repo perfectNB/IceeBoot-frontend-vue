@@ -15,38 +15,11 @@ const HomePage = () => import('@/pages/home/HomePage.vue')
 // 自动导入 pages 目录下所有 vue 文件
 const modules = import.meta.glob('../pages/**/*.vue')
 
-
-
-
 function getComponentLoader(componentName: string) {
-  // 1. 检查别名映射
-  const targetName =  componentName
-
-  const pathKeys = Object.keys(modules)
-
-  // 2. 优先尝试匹配文件名 (兼容旧的 PascalCase 命名，如 UserManagement)
-  // 这是最精准的匹配方式，可以避免 "User" 匹配到 "UserDetail" 的问题
-  for (const key of pathKeys) {
-    const fileName = key.split('/').pop()?.replace(/\.\w+$/, '')
-    if (fileName === targetName) {
-      return modules[key]
-    }
-  }
-
-  // 3. 如果文件名没匹配上，且 targetName 包含 /，尝试作为路径后缀匹配
-  // 比如 targetName 是 "admin/system/UserManagement"
-  if (targetName.includes('/')) {
-    for (const key of pathKeys) {
-      // 移除 .vue 后缀后比较
-      // key: ../pages/admin/system/User.vue -> ../pages/admin/system/User
-      const keyWithoutExt = key.replace(/\.\w+$/, '')
-      if (keyWithoutExt.endsWith(targetName)) {
-        return modules[key]
-      }
-    }
-  }
-
-  console.warn(`未找到组件: ${componentName} (尝试查找: ${targetName})`)
+  const suffix = '/' + componentName.replace(/^\//, '') + '.vue'
+  const key = Object.keys(modules).find(path => path.endsWith(suffix))
+  if (key) return modules[key]
+  console.warn(`未找到菜单组件: ${componentName}`)
   return null
 }
 
@@ -93,7 +66,7 @@ function menuToRoute(menu: MenuItem, parentPath = ''): RouteRecordRaw {
     if (!route.component && route.children.length > 0) {
       const firstChild = route.children[0]
       if (firstChild.path) {
-        route.redirect = firstChild.path
+        route.redirect = { name: firstChild.name }
       }
     }
   }
@@ -102,6 +75,7 @@ function menuToRoute(menu: MenuItem, parentPath = ''): RouteRecordRaw {
 }
 
 // 动态路由是否已加载
+const removeDynamicRoutes: (() => void)[] = []
 let dynamicRoutesLoaded = false
 let firstMenuPath: string | null = null
 
@@ -109,6 +83,7 @@ let firstMenuPath: string | null = null
 export function resetDynamicRoutes(): void {
   dynamicRoutesLoaded = false
   firstMenuPath = null
+  for (const remove of removeDynamicRoutes.splice(0).reverse()) remove()
 }
 
 function normalizeMenuPath(path: string): string {
@@ -214,21 +189,22 @@ async function loadDynamicRoutes(): Promise<void> {
       const rootPath = getRootPath(fullPath)
       const layoutName = ensureLayoutRoute(rootPath)
       if (!layoutName) {
-        router.addRoute(menuToRoute(menu))
+        removeDynamicRoutes.push(router.addRoute(menuToRoute(menu)))
         return
       }
       if (fullPath === rootPath && menu.children && menu.children.length > 0) {
         menu.children.forEach(child => {
-          router.addRoute(layoutName, menuToRoute(child, rootPath))
+          removeDynamicRoutes.push(router.addRoute(layoutName, menuToRoute(child, rootPath)))
         })
       } else {
-        router.addRoute(layoutName, menuToRoute(menu, rootPath))
+        removeDynamicRoutes.push(router.addRoute(layoutName, menuToRoute(menu, rootPath)))
       }
     })
 
     dynamicRoutesLoaded = true
   } catch (error) {
-    console.error('加载动态路由失败:', error)
+    resetDynamicRoutes()
+    throw error
   }
 }
 
@@ -310,7 +286,8 @@ router.beforeEach(async (to, from, next) => {
     } catch (error) {
       console.error('加载动态路由失败:', error)
       ElMessage.error(t('router.loadFailed'))
-      next('/')
+      if (to.path === '/') next()
+      else next('/')
       return
     }
   }

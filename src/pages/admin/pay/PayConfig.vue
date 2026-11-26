@@ -1,17 +1,11 @@
 <template>
-  <div class="pay-config-management">
-    <div class="page-header">
-      <h1 class="page-title">{{ t('payConfig.title') }}</h1>
-      <p class="page-description">{{ t('payConfig.description') }}</p>
-    </div>
-
-    <!-- 操作区域 -->
-    <div class="action-section">
-      <el-button type="primary" @click="handleCreate">
+  <div class="pay-config-management admin-page">
+    <AdminPageHeader :title="t('payConfig.title')" :description="t('payConfig.description')">
+      <el-button v-if="hasPermission('pay:config:create:api')" type="primary" @click="handleCreate">
         <el-icon><Plus /></el-icon>
         {{ t('payConfig.create') }}
       </el-button>
-      <el-button
+      <el-button v-if="hasPermission('pay:config:delete:api')"
         type="danger"
         @click="handleBatchDelete"
         :disabled="selectedConfigs.length === 0"
@@ -19,7 +13,7 @@
         <el-icon><Delete /></el-icon>
         {{ t('payConfig.batchDelete') }}
       </el-button>
-    </div>
+    </AdminPageHeader>
 
     <!-- 搜索区域 -->
     <div class="search-section">
@@ -82,6 +76,7 @@
           <template #default="{ row }">
             <el-switch
               v-model="row.status"
+              :disabled="!hasPermission('pay:config:status:api')"
               :active-value="'active'"
               :inactive-value="'inactive'"
               :before-change="() => handleBeforeStatusChange(row)"
@@ -93,7 +88,7 @@
         <el-table-column :label="t('payConfig.table.operation')" width="280" fixed="right">
           <template #default="{ row }">
             <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-              <el-button
+              <el-button v-if="hasPermission('pay:config:update:api')"
                 type="primary"
                 size="small"
                 :icon="Edit"
@@ -105,11 +100,12 @@
                 type="success"
                 size="small"
                 :icon="QrCode"
+                :disabled="row.status === 'inactive'"
                 @click="handleShowQrCode(row)"
               >
                 {{ t('payConfig.goPay') }}
               </el-button>
-              <el-button
+              <el-button v-if="hasPermission('pay:config:delete:api')"
                 type="danger"
                 size="small"
                 :icon="Delete"
@@ -136,6 +132,19 @@
       </div>
     </div>
 
+    <el-dialog v-model="checkoutVisible" title="扫码支付" width="min(430px, 95vw)" @closed="qrValue = ''">
+      <p v-if="checkoutConfig">{{ checkoutConfig.configName }} · ¥{{ (checkoutConfig.amount / 100).toFixed(2) }}</p>
+      <p v-if="!channels.length">暂未配置可用的收款渠道</p>
+      <el-radio-group v-else v-model="channel" :disabled="creating" @change="qrValue = ''">
+        <el-radio-button v-for="item in channels" :key="item" :value="item">{{ channelNames[item] }}</el-radio-button>
+      </el-radio-group>
+      <div v-if="qrValue" class="payment-qr"><QrcodeVue :value="qrValue" :size="196" :margin="3" />
+        <p>{{ qrValue.startsWith('iceeboot-demo:') ? '演示二维码，无需付款' : '请使用对应支付应用扫码' }}</p>
+        <a v-if="channel === 'YUNGOUOS' && qrValue.startsWith('https://')" :href="qrValue" target="_blank" rel="noopener">打开收银台</a>
+      </div>
+      <template #footer><el-button type="primary" :disabled="!channels.length || !!qrValue" :loading="creating" @click="createQr">生成付款码</el-button></template>
+    </el-dialog>
+
     <!-- 配置表单对话框 -->
     <el-dialog
       v-model="dialogVisible"
@@ -153,7 +162,13 @@
           <el-input v-model="configForm.configName" :placeholder="t('payConfig.form.configNamePlaceholder')" />
         </el-form-item>
         <el-form-item :label="t('payConfig.form.payCode')" prop="payCode">
-          <el-input v-model="configForm.payCode" :placeholder="t('payConfig.form.payCodePlaceholder')" />
+          <el-select v-model="configForm.payCode" aria-label="权益策略">
+            <el-option label="精油会员" value="ESSENTIAL_OIL_MEMBER" />
+            <el-option label="MMK 会员" value="MMK_MEMBER" />
+            <el-option label="98 会员" value="NINETY_EIGHT_MEMBER" />
+            <el-option label="搓背会员" value="SCRUB_MEMBER" />
+            <el-option label="SPA 会员" value="SPA_MEMBER" />
+          </el-select>
         </el-form-item>
         <el-form-item :label="t('payConfig.form.amount')" prop="amountYuan">
           <el-input
@@ -205,6 +220,7 @@
 </template>
 
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import {
@@ -216,14 +232,16 @@ import {
   Link as QrCode
 } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
+import { hasPermission } from '@/utils/permission'
+import QrcodeVue from 'qrcode.vue'
+import { createPaymentOrder, paymentChannels, updatePaymentConfigStatus, type PaymentChannel } from '@/api/pay'
 import type { PaymentConfigVO, PaymentConfigQueryParams } from '@/api/pay'
 import {
   getPaymentConfigs,
   createPaymentConfig,
   updatePaymentConfig,
   deletePaymentConfig,
-  deletePaymentConfigs,
-  createPayQrCode
+  deletePaymentConfigs
 } from '@/api'
 
 const { t } = useI18n()
@@ -333,15 +351,9 @@ const loadConfigs = async () => {
       params.keyword = searchForm.configName
     }
 
+    if (searchForm.status) params.status = searchForm.status
     const result = await getPaymentConfigs(params)
-
-    // 根据状态筛选（前端过滤）
-    let filteredConfigs = result.records
-    if (searchForm.status) {
-      filteredConfigs = filteredConfigs.filter(c => c.status === searchForm.status)
-    }
-
-    tableData.value = filteredConfigs
+    tableData.value = result.records
     pagination.total = result.total
     pagination.pages = result.pages
     pagination.current = result.current
@@ -458,15 +470,7 @@ const handleBeforeStatusChange = async (row: PaymentConfigVO): Promise<boolean> 
       }
     )
 
-    // 用户确认后调用编辑接口更新状态
-    await updatePaymentConfig(row.id, {
-      configName: row.configName,
-      payCode: row.payCode,
-      amount: row.amount,
-      description: row.description,
-      sort: row.sort,
-      status: newStatus
-    })
+    await updatePaymentConfigStatus(row.id, newStatus)
     ElMessage.success(t('payConfig.statusUpdated', { status: statusText }))
     return true
   } catch (error) {
@@ -478,28 +482,37 @@ const handleBeforeStatusChange = async (row: PaymentConfigVO): Promise<boolean> 
   }
 }
 
-// 打开支付链接
-const handleShowQrCode = async (row: PaymentConfigVO) => {
-  const loadingMessage = ElMessage({
-    message: t('payConfig.generatingPayLink'),
-    type: 'info',
-    duration: 0
-  })
+const checkoutVisible = ref(false)
+const checkoutConfig = ref<PaymentConfigVO>()
+const channels = ref<PaymentChannel[]>([])
+const channelNames = { YUNGOUOS: 'YunGouOS 微信', WECHAT_NATIVE: '微信官方', ALIPAY: '支付宝官方' }
+const channel = ref<PaymentChannel>('YUNGOUOS')
+const qrValue = ref('')
+const creating = ref(false)
 
+async function handleShowQrCode(row: PaymentConfigVO) {
+  checkoutConfig.value = row
+  qrValue.value = ''
   try {
-    // 调用接口获取支付链接
-    const url = await createPayQrCode(row.id)
+    channels.value = await paymentChannels()
+    if (channels.value[0]) channel.value = channels.value[0]
+    checkoutVisible.value = true
+  } catch {
+    ElMessage.error('读取支付渠道失败')
+  }
+}
 
-    loadingMessage.close()
-
-    // 直接在新窗口打开支付链接
-    window.open(url, '_blank')
-
-    ElMessage.success(t('payConfig.payPageOpened'))
-  } catch (error) {
-    loadingMessage.close()
-    console.error('获取支付链接失败:', error)
+async function createQr() {
+  if (!checkoutConfig.value || creating.value) return
+  const config = checkoutConfig.value
+  creating.value = true
+  try {
+    const result = await createPaymentOrder(config.id, channel.value)
+    if (checkoutConfig.value === config && checkoutVisible.value) qrValue.value = result
+  } catch {
     ElMessage.error(t('payConfig.getPayLinkFailed'))
+  } finally {
+    creating.value = false
   }
 }
 
@@ -593,32 +606,9 @@ onMounted(() => {
 </script>
 
 <style scoped lang="scss">
+.payment-qr { margin-top: 20px; text-align: center; }
 .pay-config-management {
   padding: 0;
-}
-
-.page-header {
-  margin-bottom: 24px;
-
-  h1 {
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 8px 0;
-  }
-
-  p {
-    color: var(--text-secondary);
-    margin: 0;
-  }
-}
-
-.action-section {
-  margin-bottom: 16px;
-
-  .el-button + .el-button {
-    margin-left: 12px;
-  }
 }
 
 .search-section {
@@ -665,8 +655,5 @@ onMounted(() => {
     flex-wrap: wrap;
   }
 
-  .action-section {
-    justify-content: center;
-  }
 }
 </style>

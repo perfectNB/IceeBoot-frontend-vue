@@ -1,25 +1,7 @@
 <template>
-  <div class="pay-record-management">
-    <div class="page-header">
-      <h1 class="page-title">{{ t('payRecord.title') }}</h1>
-      <p class="page-description">{{ t('payRecord.description') }}</p>
-    </div>
-
-    <!-- 操作区域 -->
-    <div class="action-section">
-      <el-button
-        type="danger"
-        @click="handleBatchDelete"
-        :disabled="selectedRecords.length === 0"
-      >
-        <el-icon><Delete /></el-icon>
-        {{ t('payRecord.batchDelete') }}
-      </el-button>
-      <el-button @click="handleExport">
-        <el-icon><Download /></el-icon>
-        {{ t('payRecord.export') }}
-      </el-button>
-    </div>
+  <div class="pay-record-management admin-page">
+    <AdminPageHeader :title="t('payRecord.title')" :description="t('payRecord.description')">
+    </AdminPageHeader>
 
     <!-- 搜索区域 -->
     <div class="search-section">
@@ -100,9 +82,7 @@
         stripe
         border
         style="width: 100%"
-        @selection-change="handleSelectionChange"
       >
-        <el-table-column type="selection" width="55" />
         <el-table-column prop="id" :label="t('payRecord.table.id')" width="80" />
         <el-table-column prop="outTradeNo" :label="t('payRecord.table.outTradeNo')" min-width="180" />
         <el-table-column prop="tradeNo" :label="t('payRecord.table.tradeNo')" min-width="200" show-overflow-tooltip />
@@ -126,6 +106,7 @@
             </el-tag>
           </template>
         </el-table-column>
+        <el-table-column label="权益发放" width="110"><template #default="{ row }">{{ businessLabel(row.businessStatus) }}</template></el-table-column>
         <el-table-column prop="username" :label="t('payRecord.table.username')" width="120" />
         <el-table-column prop="configName" :label="t('payRecord.table.configName')" min-width="120" />
         <el-table-column prop="remark" :label="t('payRecord.table.remark')" min-width="120" show-overflow-tooltip />
@@ -136,19 +117,14 @@
               <el-button
                 type="primary"
                 size="small"
+                v-if="hasPermission('pay:record:detail:api')"
                 :icon="View"
                 @click="handleView(row)"
               >
                 {{ t('payRecord.detailButton') }}
               </el-button>
-              <el-button
-                type="danger"
-                size="small"
-                :icon="Delete"
-                @click="handleDelete(row)"
-              >
-                {{ t('payRecord.delete') }}
-              </el-button>
+              <el-button v-if="row.payStatus === 2 && ['PENDING','FAILED'].includes(row.businessStatus) && hasPermission('pay:record:retry-business:api')"
+                link type="primary" :loading="retrying === row.id" @click="retry(row)">重试发放权益</el-button>
             </div>
           </template>
         </el-table-column>
@@ -175,6 +151,9 @@
       width="600px"
     >
       <el-descriptions :column="2" border v-if="currentRecord">
+        <el-descriptions-item label="权益发放">{{ currentRecord.legacyGrantMissing ? '旧订单待核对' : businessLabel(currentRecord.businessStatus) }}</el-descriptions-item>
+        <el-descriptions-item v-if="currentRecord.entitlementCode" label="权益策略">{{ currentRecord.entitlementCode }}</el-descriptions-item>
+        <el-descriptions-item v-if="currentRecord.businessError" label="失败原因">{{ currentRecord.businessError }}</el-descriptions-item>
         <el-descriptions-item :label="t('payRecord.detail.id')">
           {{ currentRecord.id }}
         </el-descriptions-item>
@@ -222,6 +201,7 @@
 
       <template #footer>
         <div class="dialog-footer">
+          <el-button v-if="currentRecord?.legacyGrantMissing && hasPermission('pay:record:retry-business:api')" type="primary" :loading="retrying === currentRecord.id" @click="retry(currentRecord)">按当前商品策略补发一份</el-button>
           <el-button @click="detailDialogVisible = false">{{ t('payRecord.close') }}</el-button>
         </div>
       </template>
@@ -230,13 +210,13 @@
 </template>
 
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { ref, reactive, onMounted } from 'vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { hasPermission } from '@/utils/permission'
+import { ElMessage } from 'element-plus'
 import {
   Search,
   Refresh,
-  Download,
-  Delete,
   View
 } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
@@ -244,8 +224,7 @@ import type { PayRecordVO, PayRecordQueryParams } from '@/api/pay'
 import {
   getPayRecords,
   getPayRecordDetail,
-  deletePayRecord,
-  deletePayRecords
+  retryPaymentBusiness
 } from '@/api'
 
 const { t } = useI18n()
@@ -262,7 +241,7 @@ interface SearchForm {
 // 响应式数据
 const loading = ref(false)
 const detailDialogVisible = ref(false)
-const selectedRecords = ref<PayRecordVO[]>([])
+const retrying = ref<number>()
 const currentRecord = ref<PayRecordVO | null>(null)
 const dateRange = ref<string[]>([])
 
@@ -380,64 +359,21 @@ const handleView = async (row: PayRecordVO) => {
   }
 }
 
-// 删除记录
-const handleDelete = async (row: PayRecordVO) => {
+const businessStates: Record<string, string> = { PENDING: '待发放', PROCESSING: '发放中', SUCCESS: '已发放', FAILED: '发放失败' }
+const businessLabel = (value?: string) => businessStates[value || ''] || '未记录'
+
+async function retry(row: PayRecordVO) {
+  retrying.value = row.id
   try {
-    await ElMessageBox.confirm(
-      t('payRecord.deleteConfirm', { orderNo: row.outTradeNo }),
-      t('payRecord.deleteTitle'),
-      {
-        confirmButtonText: t('payRecord.confirm'),
-        cancelButtonText: t('payRecord.cancel'),
-        type: 'warning'
-      }
-    )
-
-    await deletePayRecord(row.id)
-    ElMessage.success(t('payRecord.deleteSuccess'))
+    if (await retryPaymentBusiness(row.id)) ElMessage.success('权益已发放')
+    else ElMessage.warning('权益尚未发放，请查看订单详情')
     await loadRecords()
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('删除支付记录失败:', error)
-      ElMessage.error(t('payRecord.deleteFailed'))
-    }
+    if (detailDialogVisible.value) currentRecord.value = await getPayRecordDetail(row.id)
+  } catch {
+    ElMessage.error('重试失败，请刷新订单确认状态')
+  } finally {
+    retrying.value = undefined
   }
-}
-
-// 批量删除记录
-const handleBatchDelete = async () => {
-  try {
-    await ElMessageBox.confirm(
-      t('payRecord.batchDeleteConfirm', { count: selectedRecords.value.length }),
-      t('payRecord.batchDeleteTitle'),
-      {
-        confirmButtonText: t('payRecord.confirm'),
-        cancelButtonText: t('payRecord.cancel'),
-        type: 'warning'
-      }
-    )
-
-    const recordIds = selectedRecords.value.map(record => record.id)
-    await deletePayRecords(recordIds)
-    ElMessage.success(t('payRecord.batchDeleteSuccess', { count: selectedRecords.value.length }))
-    selectedRecords.value = []
-    await loadRecords()
-  } catch (error) {
-    if (error !== 'cancel') {
-      console.error('批量删除支付记录失败:', error)
-      ElMessage.error(t('payRecord.batchDeleteFailed'))
-    }
-  }
-}
-
-// 导出
-const handleExport = () => {
-  ElMessage.info(t('payRecord.exportInProgress'))
-}
-
-// 选择变更
-const handleSelectionChange = (selection: PayRecordVO[]) => {
-  selectedRecords.value = selection
 }
 
 // 分页大小变更
@@ -462,30 +398,6 @@ onMounted(() => {
 <style scoped lang="scss">
 .pay-record-management {
   padding: 0;
-}
-
-.page-header {
-  margin-bottom: 24px;
-
-  h1 {
-    font-size: 24px;
-    font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 8px 0;
-  }
-
-  p {
-    color: var(--text-secondary);
-    margin: 0;
-  }
-}
-
-.action-section {
-  margin-bottom: 16px;
-
-  .el-button + .el-button {
-    margin-left: 12px;
-  }
 }
 
 .search-section {
@@ -532,8 +444,5 @@ onMounted(() => {
     flex-wrap: wrap;
   }
 
-  .action-section {
-    justify-content: center;
-  }
 }
 </style>

@@ -1,20 +1,8 @@
 <template>
-  <main class="third-workbench provider-workbench">
-    <header class="third-heading">
-      <div class="third-title">
-        <span class="third-title-icon">
-          <el-icon aria-hidden="true">
-            <Message />
-          </el-icon>
-        </span>
-        <div>
-          <p class="third-eyebrow">{{ t('thirdCommon.category') }}</p>
-          <h1>{{ t('thirdEmail.pageTitle') }}</h1>
-          <p class="third-description">{{ t('thirdEmail.pageDescription') }}</p>
-        </div>
-      </div>
+  <main class="third-workbench provider-workbench admin-page">
+    <AdminPageHeader :title="t('thirdEmail.pageTitle')" :description="t('thirdEmail.pageDescription')">
       <el-button :icon="Refresh" :loading="loading" @click="loadProviders">{{ t('thirdCommon.refresh') }}</el-button>
-    </header>
+    </AdminPageHeader>
     <section class="third-stats" :aria-label="t('thirdCommon.category')">
       <div>
         <span>{{ t('thirdCommon.providers') }}</span>
@@ -39,7 +27,7 @@
       <span>{{ visibleProviders.length }} {{ t('thirdCommon.providers') }}</span>
     </div>
     <div class="providers-grid" v-loading="loading">
-      <article v-for="provider in visibleProviders" :key="provider.providerName" class="provider-card">
+      <article v-for="provider in visibleProviders" :key="provider.providerName" class="provider-card admin-lift">
         <div class="provider-header">
           <div class="provider-info">
             <span class="provider-icon">
@@ -241,8 +229,9 @@
 </template>
 
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { computed, ref, reactive, onMounted } from 'vue'
-import { Message, Refresh, Search } from '@element-plus/icons-vue'
+import { Refresh, Search } from '@element-plus/icons-vue'
 import './third-management.scss'
 import { ElMessage, ElMessageBox, type FormInstance } from 'element-plus'
 import { useI18n } from 'vue-i18n'

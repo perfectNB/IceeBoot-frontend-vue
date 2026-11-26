@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, type FormInstance, type FormRules } from 'element-plus'
 import { getSMSProviders, sendSms, querySmsStatus, querySmsBalance, type SMSProvider, type SmsResponse, type SmsSendDTO, type SmsStatusQuery, type SmsBalanceQuery } from '@/api'
 
-import { ChatDotSquare, Refresh } from '@element-plus/icons-vue'
+import { Refresh } from '@element-plus/icons-vue'
 import '../third/third-management.scss'
 
 const { t } = useI18n()
@@ -267,22 +268,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <main class="third-workbench operation-workbench">
-    <header class="third-heading">
-      <div class="third-title">
-        <span class="third-title-icon">
-          <el-icon aria-hidden="true">
-            <ChatDotSquare />
-          </el-icon>
-        </span>
-        <div>
-          <p class="third-eyebrow">{{ t('thirdCommon.category') }}</p>
-          <h1>{{ t('smsManagement.title') }}</h1>
-          <p class="third-description">{{ t('smsManagement.description') }}</p>
-        </div>
-      </div>
+  <main class="third-workbench operation-workbench admin-page">
+    <AdminPageHeader :title="t('smsManagement.title')" :description="t('smsManagement.description')">
       <el-button :icon="Refresh" :loading="loadingProviders" @click="loadProviders">{{ t('thirdCommon.refresh') }}</el-button>
-    </header>
+    </AdminPageHeader>
     <el-tabs v-model="activeTab" class="operation-tabs">
       <el-tab-pane :label="t('smsManagement.sendSms')" name="send">
         <div class="panel-card" v-loading="loadingProviders">

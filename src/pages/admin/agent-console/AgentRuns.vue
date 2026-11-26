@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount, ref } from 'vue'
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
+import { cacheSummary } from './components/runMetrics'
+import { computed, onMounted, onBeforeUnmount, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { hasPermission } from '@/utils/permission'
 import { agentConsole, type RunView, type RunDetail, type AgentQuota } from '@/api/agentConsole'
@@ -8,6 +10,7 @@ const rows = ref<RunView[]>([]),
   detail = ref<RunDetail>(),
   visible = ref(false),
   loading = ref(false)
+const cache = computed(() => cacheSummary(detail.value?.modelCalls ?? []))
 const labels: Record<string, string> = {
   RUNNING: '执行中',
   SUCCEEDED: '成功',
@@ -67,19 +70,11 @@ onBeforeUnmount(() => {
 })
 </script>
 <template>
-  <main class="agent-console">
-    <header class="console-heading">
-      <div>
-        <h1>执行记录</h1>
-        <p class="subtitle">
-          查看每次调用的输入、输出，以及父子智能体和每轮模型请求的 Token 消耗。
-        </p>
-      </div>
-      <div class="console-actions">
-        <span v-if="quota" class="quota-summary">今日模型请求（UTC）：{{ quota.usedRequests }} / {{ quota.dailyLimit || '不限' }}</span>
-        <el-button @click="load">刷新</el-button>
-      </div>
-    </header>
+  <main class="agent-console admin-page">
+    <AdminPageHeader title="执行记录" description="查看每次调用的输入、输出，以及父子智能体和每轮模型请求的 Token 消耗。">
+      <span v-if="quota" class="quota-summary">今日模型请求（UTC）：{{ quota.usedRequests }} / {{ quota.dailyLimit || '不限' }}</span>
+      <el-button @click="load">刷新</el-button>
+    </AdminPageHeader>
     <section class="console-panel">
       <el-table v-loading="loading" :data="rows" empty-text="还没有执行记录。">
         <el-table-column prop="agentCode" label="智能体 / 模型" min-width="180" />
@@ -117,6 +112,11 @@ onBeforeUnmount(() => {
           <div>
             <span>全智能体输出</span>
             <strong>{{ detail.totalOutputTokens.toLocaleString() }}</strong>
+          </div>
+          <div>
+            <span>已确认缓存命中</span>
+            <strong>{{ cache.hits?.toLocaleString() ?? '—' }}</strong>
+            <small>已确认 {{ cache.coverage }} 次请求</small>
           </div>
           <div>
             <span>参与执行</span>
@@ -181,6 +181,9 @@ onBeforeUnmount(() => {
               <el-table-column prop="model" label="模型" min-width="180" />
               <el-table-column prop="inputTokens" label="输入 Token" width="130" />
               <el-table-column prop="outputTokens" label="输出 Token" width="130" />
+              <el-table-column label="缓存命中 Token" min-width="140">
+                <template #default="{ row }">{{ row.cachedTokens?.toLocaleString() ?? '未确认' }}</template>
+              </el-table-column>
               <el-table-column prop="createdAt" label="记录时间" min-width="180" />
             </el-table>
           </el-tab-pane>
@@ -193,7 +196,7 @@ onBeforeUnmount(() => {
 .quota-summary { font-size: 12px; color: var(--el-text-color-secondary); }
 .usage-summary {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
   gap: 16px;
   margin: 8px 0 24px;
 }

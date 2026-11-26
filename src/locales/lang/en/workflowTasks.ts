@@ -1,6 +1,6 @@
 export default {
   title: 'Task Processing',
-  description: 'Query assignee or candidate tasks, complete tasks or execute jump',
+  description: 'Claim an available task, then complete it. Search by person to find assigned or candidate tasks.',
   assignee: 'Assignee',
   inputUserIdentifier: 'Please input user identifier',
   candidateUser: 'Candidate User',

@@ -48,6 +48,8 @@ const handleMenuClick = () => {
 </script>
 
 <style lang="scss">
+@use '@/styles/navigation' as nav;
+
 // 折叠状态下的弹出菜单样式
 .sidebar-popper {
   &.el-popper {
@@ -76,20 +78,15 @@ const handleMenuClick = () => {
       border-radius: 8px;
       height: 40px;
       line-height: 40px;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      transition: background-color 160ms ease, color 160ms ease;
       
       &:hover {
         background: var(--bg-color-soft);
         color: var(--text-primary);
-        transform: translateX(4px);
       }
       
       &.is-active {
-        background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
-        color: #ffffff !important;
-        font-weight: 500;
-        box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-        transform: translateX(4px);
+        @include nav.selected-item;
       }
     }
     
@@ -104,7 +101,6 @@ const handleMenuClick = () => {
         &:hover {
           background: var(--bg-color-soft);
           color: var(--text-primary);
-          transform: translateX(4px);
         }
       }
     }

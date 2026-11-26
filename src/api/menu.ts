@@ -52,8 +52,7 @@ export const getUserMenus = async (
 ): Promise<MenuItem[]> => {
   if (isMockEnabled()) {
     // 使用Mock数据
-    const response=await MockMenuService.getUserMenus(userId || 1)
-    return response
+    return MockMenuService.getUserMenus(userId)
   } else {
     // 调用真实API
     const menus = await request.get<MenuItem[]>('/api/v1/menus/user', undefined, config)

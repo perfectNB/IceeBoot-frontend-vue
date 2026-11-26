@@ -11,8 +11,10 @@
   >
     <div class="login-content">
       <div class="login-hero">
-        <div class="hero-glow"></div>
-        <div class="hero-title">{{ t('login.welcomeBack') }}</div>
+        <div class="hero-title">
+          <img src="@/assets/logo.png" alt="IceeBoot" width="32" height="32" />
+          {{ t('login.welcomeBack') }}
+        </div>
         <div class="hero-subtitle">{{ t('login.subtitle') }}</div>
       </div>
       <el-tabs v-model="activeTab" class="login-tabs">
@@ -393,11 +395,10 @@ watch(dialogVisible, (visible) => {
   margin-bottom: 24px;
   text-align: left;
 
-  .hero-glow {
-    display: none;
-  }
-
   .hero-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     margin-bottom: 9px;
     color: var(--login-ink);
     font-size: 27px;

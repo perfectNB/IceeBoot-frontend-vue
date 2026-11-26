@@ -176,6 +176,7 @@ export const mockTasks: TaskItem[] = [
   },
   {
     id: 'task-3',
+    candidateUser: 'admin',
     name: 'HR审批',
     description: '候选任务 - 需要认领',
     priority: 30,

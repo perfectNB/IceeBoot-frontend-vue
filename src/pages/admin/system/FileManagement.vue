@@ -1,10 +1,7 @@
 <template>
-  <div class="file-management">
+  <div class="file-management admin-page">
     <!-- 页面标题 -->
-    <div class="page-header">
-      <h2>{{ t('fileManagement.title') }}</h2>
-      <p>{{ t('fileManagement.pageDescription') }}</p>
-    </div>
+    <AdminPageHeader :title="t('fileManagement.title')" :description="t('fileManagement.pageDescription')" />
 
     <!-- 存储桶管理 -->
     <div class="bucket-section">
@@ -384,6 +381,7 @@
 </template>
 
 <script setup lang="ts">
+import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox, type FormInstance, type FormRules, type UploadInstance, type UploadFile } from 'element-plus'
@@ -992,23 +990,6 @@ onMounted(() => {
 <style scoped>
 .file-management {
   padding: 20px;
-}
-
-.page-header {
-  margin-bottom: 20px;
-}
-
-.page-header h2 {
-  margin: 0 0 8px 0;
-  color: var(--text-primary);
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.page-header p {
-  margin: 0;
-  color: var(--text-regular);
-  font-size: 14px;
 }
 
 .bucket-section {

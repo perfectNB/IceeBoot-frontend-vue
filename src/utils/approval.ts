@@ -11,13 +11,26 @@ export const blankDesign = (): ApprovalDesign => ({
 })
 
 const numeric = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i
+export const isApprovalNumber = (value: string) => numeric.test(value)
+
+export function branchLabel(fields: ApprovalDesign['fields'], branch: Exit['branches'][number]) {
+  return (
+    branch.conditions
+      .map(
+        (c) =>
+          (fields.find((f) => f.key === c.field)?.label || c.field || '未选字段') + ' = ' + (c.value || '…')
+      )
+      .join(' 且 ') || '待填写条件'
+  )
+}
+
 export const formValue = (values: Values, key: string) => (typeof values[key] === 'string' ? values[key] : '')
 
 export function validateForm(d: ApprovalDesign, values: Values) {
   for (const f of d.fields) {
     const value = formValue(values, f.key)
     if ((f.required || f.kind === 'routing') && !value.trim()) throw Error('请填写' + f.label)
-    if (value.length > 2000 || (value.trim() && f.type === 'number' && !numeric.test(value)))
+    if (value.length > 2000 || (value.trim() && f.type === 'number' && !isApprovalNumber(value)))
       throw Error('请检查' + f.label)
   }
   if (Object.keys(values).some((key) => !d.fields.some((f) => f.key === key)))
@@ -51,7 +64,12 @@ export function validateDesign(d: ApprovalDesign, roles: string[]) {
         !b.conditions.length ||
         b.conditions.some((c) => {
           const f = d.fields.find((f) => f.key === c.field && f.kind === 'routing')
-          if (!f || !c.value.trim() || used.has(c.field) || (f.type === 'number' && !numeric.test(c.value)))
+          if (
+            !f ||
+            !c.value.trim() ||
+            used.has(c.field) ||
+            (f.type === 'number' && !isApprovalNumber(c.value))
+          )
             return true
           used.add(c.field)
           return false

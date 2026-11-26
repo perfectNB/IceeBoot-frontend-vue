@@ -206,9 +206,9 @@ export const mockMenus: MenuItem[] = [
         requiresAuth: true, permissions: ['ai:run:read'],
       },
       {
-        id: 108, title: '长期记忆', name: 'AgentMemory', path: '/admin/agent-console/memory',
+        id: 108, title: '通用画像', name: 'AgentMemory', path: '/admin/agent-console/memory',
         component: 'AgentMemory', icon: 'Notebook', parentId: 4, type: 'menu', sort: 9,
-        requiresAuth: true, permissions: ['ai:memory:read:api'],
+        requiresAuth: true, permissions: ['ai:memory:user-list:api', 'ai:memory:platform-policy-read:api'],
       },
     ],
   },

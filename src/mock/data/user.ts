@@ -67,6 +67,7 @@ export const mockUsers: User[] = [
       'ai:memory:grant-read:api',
       'ai:memory:grant-write:api',
       'ai:memory:platform-policy-read:api',
+      'ai:memory:user-list:api',
       'ai:memory:platform-policy-write:api',
       'ai:memory:policy-read:api',
       'ai:memory:policy-write:api',

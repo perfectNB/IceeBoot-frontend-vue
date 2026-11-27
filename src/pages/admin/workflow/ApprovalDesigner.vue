@@ -29,33 +29,38 @@
       </AdminPageHeader>
       <section class="approval-panel launch-scope" aria-label="可见与发起范围">
         <header class="scope-heading">
-          <div>
+          <span class="scope-icon" aria-hidden="true"><el-icon><User /></el-icon></span>
+          <div class="scope-title">
             <h3>可见与发起范围</h3>
-            <p>设置谁能在「发起审批」中搜索并使用此流程。</p>
+            <p>{{ restricted ? '拥有任一所选角色的用户可以查找并发起此流程。' : '所有用户都可以查找并发起此流程。' }}</p>
           </div>
           <el-radio-group
             v-model="restricted"
             aria-label="可见与发起范围"
-            @change="!restricted && (selectedRoles = [])"
+            @change="changeAudience"
           >
             <el-radio-button :value="false">全部用户</el-radio-button>
             <el-radio-button :value="true">指定角色</el-radio-button>
           </el-radio-group>
         </header>
         <div v-if="restricted" class="scope-roles">
-          <label
-            >可发起角色
-            <el-select
-              v-model="selectedRoles"
-              multiple
-              filterable
-              aria-label="可发起角色"
-              placeholder="搜索并选择角色，可多选"
-            >
-              <el-option v-for="role in roles" :key="role.code" :value="role.code" :label="role.name" />
-            </el-select>
-          </label>
-          <p>用户拥有任一所选角色即可发起。节点办理人请在流程图中设置。</p>
+          <div class="role-toolbar">
+            <span>可发起角色 <small>已选 {{ selectedRoles.length }}</small></span>
+            <el-input
+              v-if="roleChoices.length > 6"
+              v-model="roleSearch"
+              clearable
+              :prefix-icon="Search"
+              placeholder="搜索角色"
+              aria-label="搜索可发起角色"
+            />
+          </div>
+          <el-checkbox-group v-model="selectedRoles" class="role-choices" aria-label="可发起角色">
+            <el-checkbox v-for="role in visibleRoles" :key="role.code" :value="role.code" border>
+              {{ role.name }}
+            </el-checkbox>
+          </el-checkbox-group>
+          <p v-if="!visibleRoles.length">{{ roleSearch ? '没有匹配的角色' : '暂无可选角色' }}</p>
         </div>
       </section>
       <el-dialog
@@ -239,7 +244,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { approvalApi } from '@/api/approval'
 import { hasPermission } from '@/utils/permission'
-import { Delete, EditPen, FullScreen, MoreFilled, Plus, Position, User } from '@element-plus/icons-vue'
+import { Delete, EditPen, FullScreen, MoreFilled, Plus, Position, Search, User } from '@element-plus/icons-vue'
 import ApprovalBranchEditor from './ApprovalBranchEditor.vue'
 import {
   branchLabel,
@@ -380,6 +385,22 @@ const selectedRoles = computed({
     d.value.additionalLaunchRoles = codes.slice(1)
   }
 })
+const roleSearch = ref('')
+const roleChoices = computed(() => {
+  const known = new Set(roles.value.map((role) => role.code))
+  const missing = selectedRoles.value.filter((code) => !known.has(code))
+  return [...roles.value, ...missing.map((code) => ({ code, name: code }))]
+})
+const visibleRoles = computed(() => {
+  const query = roleChoices.value.length > 6 ? roleSearch.value.trim().toLowerCase() : ''
+  return roleChoices.value.filter((role) =>
+    role.name.toLowerCase().includes(query) || role.code.toLowerCase().includes(query)
+  )
+})
+function changeAudience() {
+  roleSearch.value = ''
+  if (!restricted.value) selectedRoles.value = []
+}
 const audienceLabel = computed(() =>
   restricted.value
     ? selectedRoles.value
@@ -480,31 +501,76 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.scope-heading {
+.launch-scope {
+  padding: 16px 20px;
+}
+.scope-heading, .role-toolbar, .role-choices {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px 12px;
+}
+.scope-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  color: var(--el-color-primary);
+  background: var(--el-color-primary-light-9);
+}
+.scope-title {
+  flex: 1 1 220px;
 }
 .launch-scope h3 {
   margin: 0;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 650;
 }
 .launch-scope p {
-  margin: 4px 0 0;
+  margin: 3px 0 0;
   color: var(--el-text-color-regular);
   font-size: 13px;
 }
 .scope-roles {
-  margin-top: 14px;
-  padding-top: 14px;
+  margin-top: 12px;
+  padding-top: 12px;
   border-top: 1px solid var(--el-border-color-lighter);
 }
-.scope-roles label {
-  display: grid;
+.role-toolbar {
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.role-toolbar small {
+  margin-left: 6px;
+  font-weight: 400;
+  color: var(--el-text-color-secondary);
+}
+.role-toolbar .el-input {
+  width: min(100%, 220px);
+}
+.role-choices {
   gap: 6px;
-  max-width: 540px;
+  max-height: 150px;
+  overflow-y: auto;
+  padding: 2px;
+}
+.role-choices :deep(.el-checkbox) {
+  max-width: 100%;
+  min-height: 30px;
+  height: auto;
+  margin: 0;
+  padding: 5px 10px;
+  border-radius: 7px;
+}
+.role-choices :deep(.el-checkbox.is-checked) {
+  background: var(--el-color-primary-light-9);
+}
+.role-choices :deep(.el-checkbox__label) {
+  white-space: normal;
+  overflow-wrap: anywhere;
   font-size: 13px;
 }
 .scope-summary {

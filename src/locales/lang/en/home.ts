@@ -16,9 +16,9 @@ export default {
   sandboxEnvironment: "Environment variables",
 
   badge: "THE AI APP STARTER FOR INDEPENDENT BUILDERS",
-  heroTitle: "Your ideas.",
-  heroTitleHighlight: "Ready to run.",
-  heroDescription: "From everyday services to agent execution, IceeBoot connects the essentials. Write less foundation code. Spend more time on the application you want to build.",
+  heroTitle: "AI applications",
+  heroTitleHighlight: "start here.",
+  heroDescription: "Build agents, design approval workflows, and manage users, roles and model connections in one console.",
   experience: "Start building",
   docs: "Documentation",
   console: "Open console",

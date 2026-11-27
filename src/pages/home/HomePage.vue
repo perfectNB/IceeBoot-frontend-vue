@@ -21,10 +21,7 @@
               <div class="hero-spec"><span>JAVA + VUE</span><i></i><span>POWERED BY AGENTSCOPE</span></div>
             </div>
             <div class="hero-art">
-              <span class="orbit-caption caption-top" aria-hidden="true">FROM IDEA</span>
-              <AgentCoreScene kind="hero" :label="t('home.scene_hero')" :progress="sceneProgress.hero || 0" :reduced-motion="motionStopped" :dark="isDark" />
-              <span class="orbit-caption caption-bottom" aria-hidden="true">TO SOMETHING REAL.</span>
-              <span class="art-coordinate" aria-hidden="true">01 — ∞</span>
+              <BrandMascot :paused="motionStopped || showLoginDialog" />
             </div>
           </div>
           <div class="hero-bottom launch-width"><span>{{ t('home.visualCaption') }}</span><a href="#capabilities">{{ t('home.scrollExplore') }}<el-icon aria-hidden="true"><Bottom /></el-icon></a></div>
@@ -92,7 +89,7 @@
     </main>
 
     <footer class="launch-footer"><div class="launch-width"><div class="footer-main"><a class="brand" href="#"><img class="brand-symbol" src="@/assets/logo.png" alt="" width="32" height="32">IceeBoot.</a><p>{{ t('home.footerDescription') }}</p><div class="footer-links"><a :href="sourceUrl" target="_blank" rel="noopener noreferrer">Gitee<el-icon aria-hidden="true"><TopRight /></el-icon></a><a :href="docsUrl" target="_blank" rel="noopener noreferrer">{{ t('home.docs') }}</a><button @click="showContactDialog = true">{{ t('home.contactUs') }}</button><button v-if="isLoggedIn" @click="handleLogout">{{ t('home.logoutBtn') }}</button></div></div><div class="footer-bottom"><span>© {{ currentYear }} IceeBoot</span><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">京ICP备2024086986号-2</a></div></div></footer>
-    <LoginDialog v-model="showLoginDialog" @success="handleLoginSuccess" />
+    <LoginDialog v-model="showLoginDialog" :paused="motionStopped" @success="handleLoginSuccess" />
     <el-dialog v-model="showMockDialog" :title="t('home.mockTitle')" width="min(400px, calc(100vw - 32px))" align-center><p>{{ t('home.mockContent') }}</p><template #footer><el-button @click="showMockDialog = false">{{ t('home.mockDismiss') }}</el-button><el-button type="primary" @click="openGitee">{{ t('home.getSource') }}</el-button></template></el-dialog>
     <el-dialog v-model="showContactDialog" :title="t('home.contactUs')" width="min(560px, calc(100vw - 32px))" align-center><div class="contact-grid"><figure v-for="platform in socialPlatforms" :key="platform.name"><img :src="platform.qrCode" :alt="t('home.contactQr', { name: platform.name })" loading="lazy" width="144" height="144" /><figcaption>{{ platform.name }}</figcaption></figure></div></el-dialog>
   </div>
@@ -105,6 +102,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { Moon, Sunny, ArrowRight, TopRight, Cpu, Check, Connection, Lock, CopyDocument, Upload, Message, Key, ChatDotRound, Box, Tickets, Finished, Plus, Bottom, VideoPlay, VideoPause } from '@element-plus/icons-vue'
 import { isDark, toggleTheme } from '@/utils/theme'
+import BrandMascot from '@/components/common/BrandMascot.vue'
 import LoginDialog from '@/components/common/LoginDialog.vue'
 import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
 import { useUserStore } from '@/stores/user'
@@ -293,8 +291,8 @@ onBeforeUnmount(() => { if (mockTimer) clearTimeout(mockTimer) })
 .launch-site {
   --paper: #ffffff; --ink: #172b49; --muted: #536781; --line: #d9e3f0; --accent: #2563d9;
   --site-bg: #ffffff; --stage: #f4f8ff; --stage-alt: #eef4fd; --stage-model: #f8faff; --header-bg: #ffffffed;
-  --text: #172b49; --secondary: #506581; --subtle: #5c7392; --highlight: #2563d9; --accent-ink: #2966ce;
-  --hairline: #285c9e26; --wash: #2563df08; --halo: #91b8f330; --watermark: #194fa510;
+  --text: #172b49; --secondary: #506581; --subtle: #5c7392; --highlight: #077cc8; --accent-ink: #2966ce;
+  --hairline: #285c9e26; --wash: #2563df08; --halo: #99dcfd5c; --watermark: #194fa510;
   --button-bg: #2864dc; --button-ink: #ffffff; --button-hover: #1c50bc; --selected-bg: #2864dc; --selected-ink: #ffffff;
   --editor-bg: #12233e; --editor-ink: #dce8ff; --editor-muted: #9bb4d7; --editor-border: #6987b04d;
   color-scheme: light;
@@ -304,7 +302,7 @@ onBeforeUnmount(() => { if (mockTimer) clearTimeout(mockTimer) })
     --site-bg: #0a0a0a; --stage: #141414; --stage-alt: #181818; --stage-model: #111111; --header-bg: #141414f5;
     --text: #f2f2f2; --secondary: #c4c4c4; --subtle: #a3a3a3; --highlight: #80b5ff; --accent-ink: #80b5ff;
     --hairline: #879cff30; --wash: #7688ff09; --halo: #714dff29; --watermark: #9994ff0e;
-    --button-bg: #7546df; --button-ink: #ffffff; --button-hover: #8757ec; --selected-bg: #7546df; --selected-ink: #ffffff;
+    --button-bg: #1969ba; --button-ink: #ffffff; --button-hover: #2277ca; --selected-bg: #7546df; --selected-ink: #ffffff;
     --editor-bg: #181818; --editor-ink: #ededed; --editor-muted: #a3a3a3; --editor-border: #383838;
     color-scheme: dark;
   }
@@ -316,8 +314,8 @@ onBeforeUnmount(() => { if (mockTimer) clearTimeout(mockTimer) })
 // 夜间光色集中在交互与模型周围，正文保持清晰，避免全屏光污染。
 .launch-site.is-dark {
   .hero-section { background: var(--site-bg); }
-  .hero-copy h1 span, .finale-content h2 span { color: #b6a0ff; background: linear-gradient(110deg, #77cfff 0%, #b49aff 54%, #ed9bdf 100%); background-clip: text; -webkit-text-fill-color: transparent; }
-  .nav-cta, .launch-button.primary { background: linear-gradient(115deg, #6249da, #9138c7); border-color: #bfa0ff40; box-shadow: 0 4px 24px #7846e72b; &:hover { background: linear-gradient(115deg, #7358e8, #a445d7); box-shadow: 0 6px 30px #7846e745; } }
+  .hero-copy h1 span, .finale-content h2 span { color: #77cfff; background: linear-gradient(110deg, #a4eaff, #64b6ff); background-clip: text; -webkit-text-fill-color: transparent; }
+  .nav-cta, .launch-button.primary { background: linear-gradient(115deg, #165dbe, #1478b4); border-color: #bfa0ff40; box-shadow: 0 4px 24px #7846e72b; &:hover { background: linear-gradient(115deg, #1c69c9, #167fbb); box-shadow: 0 6px 30px #7846e745; } }
   .provider-list button[aria-pressed='true'], .capability-buttons button[aria-pressed='true'] { background: #34245d; border-color: #b08aff; color: #f1eaff; box-shadow: inset 0 0 18px #9b64ff16, 0 0 18px #8751ff18; }
   .feature-agent .scene-halo { background: radial-gradient(ellipse, #ba42dd20, transparent 70%); }
   .feature-models .scene-halo { background: radial-gradient(ellipse, #286cff24, transparent 70%); }
@@ -338,7 +336,7 @@ onBeforeUnmount(() => { if (mockTimer) clearTimeout(mockTimer) })
 .nav-cta { display: inline-flex; align-items: center; gap: 12px; padding: 0 20px; min-height: 40px; border: 1px solid var(--hairline); border-radius: 24px; background: var(--button-bg); color: var(--button-ink); font-size: 12px; }
 .eyebrow { display: flex; align-items: center; gap: 9px; font-size: 10px; letter-spacing: .13em; font-weight: 500; color: var(--subtle); line-height: 1.8; }
 .status-dot { width: 5px; height: 5px; border-radius: 50%; display: inline-block; background: var(--accent-ink); box-shadow: 0 0 12px var(--halo); flex-shrink: 0; }
-.hero-section { height: 125svh; min-height: 820px; background: radial-gradient(ellipse at 75% 44%, var(--halo), transparent 50%), var(--site-bg); }
+.hero-section { height: 125svh; min-height: 820px; background: radial-gradient(ellipse at 75% 44%, var(--halo), transparent 54%), linear-gradient(155deg, var(--site-bg) 38%, var(--stage)); }
 .hero-sticky { height: calc(100svh - 72px); min-height: 650px; position: sticky; top: 72px; overflow: hidden; }
 .hero-grid { display: grid; grid-template-columns: 1fr 1.05fr; align-items: center; height: calc(100% - 70px); }
 .hero-copy { position: relative; z-index: 2; padding-top: 8px; }
@@ -348,10 +346,8 @@ onBeforeUnmount(() => { if (mockTimer) clearTimeout(mockTimer) })
 .launch-button { display: inline-flex; align-items: center; justify-content: center; gap: 28px; min-height: 50px; padding: 0 25px; border: 1px solid transparent; border-radius: 28px; font-size: 13px; font-weight: 600; transition: background .2s, transform .2s; &.primary { background: var(--button-bg); color: var(--button-ink); } &:hover { background: var(--button-hover); transform: translateY(-2px); } }
 .text-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 12px; color: var(--secondary) !important; &:hover { color: var(--text) !important; } }
 .hero-spec { display: flex; align-items: center; gap: 12px; margin-top: 37px; color: var(--subtle); font-size: 9px; letter-spacing: .09em; i { width: 3px; height: 3px; background: var(--subtle); border-radius: 50%; } }
-.hero-art { position: relative; height: min(650px, 75svh); margin: 0; }
-.orbit-caption { position: absolute; z-index: 2; color: var(--subtle); font-size: 10px; letter-spacing: .2em; pointer-events: none; }
-.caption-top { top: 12%; left: 19%; }.caption-bottom { bottom: 14%; right: 11%; }
-.art-coordinate { position: absolute; bottom: 10%; left: 12%; color: var(--subtle); font-size: 11px; }
+.hero-art { display: grid; place-items: center; position: relative; height: min(650px, 75svh); margin: 0; }
+.hero-art .brand-scene { width: min(100%, 64svh); }
 .hero-bottom { display: flex; align-items: center; justify-content: space-between; height: 60px; color: var(--subtle); font-size: 11px; a { display: inline-flex; gap: 18px; align-items: center; min-height: 44px; } }
 .manifesto { padding-block: 120px 100px; text-align: center; .eyebrow { justify-content: center; } h2 { font-size: clamp(36px, 4.2vw, 60px); letter-spacing: -.055em; line-height: 1.4; font-weight: 500; margin-top: 25px; span { display: block; color: var(--highlight); } } > p:not(.eyebrow) { color: var(--secondary); max-width: 540px; font-size: 15px; line-height: 2; margin: 26px auto 0; } }
 .chapter-navigation { display: flex; justify-content: center; gap: 38px; margin-top: 55px; a { display: flex; align-items: center; gap: 12px; min-height: 48px; font-size: 12px; color: var(--text); span { font-size: 9px; color: var(--subtle); } .el-icon { color: var(--accent-ink); font-size: 11px; } &:hover { color: var(--accent-ink); } } }
@@ -423,7 +419,7 @@ onBeforeUnmount(() => { if (mockTimer) clearTimeout(mockTimer) })
 @media (max-width: 1100px) { .header-inner { gap: 20px; }.header-inner nav { gap: 18px; }.hero-copy h1 { font-size: 56px; }.feature-grid { gap: 35px; }.feature-copy h2 { font-size: 36px; }.integration-layout { gap: 45px; } }
 @media (max-width: 760px) {
   .launch-width { width: calc(100% - 48px); }.header-inner { width: calc(100% - 32px); min-height: 64px; gap: 8px; }.header-inner nav { display: none; }.header-actions { margin-left: auto; gap: 0; }.brand { font-size: 20px; gap: 4px; }.brand-dot { margin-left: -3px; }.nav-cta { min-height: 36px; padding-inline: 13px; }.motion-button { margin: 0; width: 32px; height: 32px; }.utility-button { width: 36px; }.header-actions :deep(.lang-btn) { width: 36px; }
-  .hero-section { min-height: 0; height: auto; }.hero-sticky { position: relative; top: 0; height: auto; min-height: 0; }.hero-grid { display: flex; flex-direction: column; align-items: stretch; }.hero-copy { padding-top: 55px; }.hero-copy h1 { font-size: clamp(42px, 8vw, 62px); margin-top: 20px; }.hero-description { max-width: 520px; font-size: 13px; line-height: 1.9; margin-top: 20px !important; }.hero-actions { margin-top: 25px; gap: 25px; }.hero-spec { margin-top: 27px; font-size: 8px; }.hero-art { height: 390px; margin: -5px 0 -10px; }.orbit-caption { font-size: 8px; }.caption-top { top: 10%; }.caption-bottom { bottom: 12%; }.hero-bottom { font-size: 9px; height: 64px; gap: 14px; > span { max-width: 145px; line-height: 1.8; } a { gap: 6px; } }
+  .hero-section { min-height: 0; height: auto; }.hero-sticky { position: relative; top: 0; height: auto; min-height: 0; }.hero-grid { display: flex; flex-direction: column; align-items: stretch; }.hero-copy { padding-top: 55px; }.hero-copy h1 { font-size: clamp(42px, 8vw, 62px); margin-top: 20px; }.hero-description { max-width: 520px; font-size: 13px; line-height: 1.9; margin-top: 20px !important; }.hero-actions { margin-top: 25px; gap: 25px; }.hero-spec { margin-top: 27px; font-size: 8px; }.hero-art { height: 390px; margin: -5px 0 -10px; }.hero-art .brand-scene { width: min(100%, 370px); }.hero-bottom { font-size: 9px; height: 64px; gap: 14px; > span { max-width: 145px; line-height: 1.8; } a { gap: 6px; } }
   .manifesto { padding-block: 75px; text-align: left; .eyebrow { justify-content: flex-start; } h2 { font-size: 34px; } > p:not(.eyebrow) { font-size: 13px; margin-top: 22px; } }.chapter-navigation { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; margin-top: 30px; a { justify-content: space-between; font-size: 11px; } }
   .feature-scene { height: auto; min-height: 0; scroll-margin-top: 64px; }.feature-sticky { position: relative; top: 0; height: auto; min-height: 0; }.feature-heading { padding-top: 28px; font-size: 8px; gap: 18px; }.feature-heading > span:last-child { display: none; }.feature-grid { display: flex; flex-direction: column; gap: 0; align-items: stretch; }.feature-art { order: 2; height: 410px; margin: -20px 0 30px; }.feature-copy { padding-block: 40px; h2 { font-size: 34px; margin-top: 13px; max-width: 560px; } }.feature-copy h2 > span { display: block; }.feature-description { font-size: 13px; margin-top: 18px !important; max-width: 560px; }.scene-watermark { font-size: 70px; top: 4%; }.scene-caption { font-size: 9px; inset-inline: 10%; }.service-list { margin-top: 23px; gap: 0 24px; }.capability-control,.model-control,.sandbox-control { margin-top: 24px; }.capability-buttons button { flex: 1; justify-content: center; padding-inline: 10px; }.provider-list { gap: 8px; button { padding-inline: 7px; gap: 3px; font-size: 11px; } .provider-check { width: 10px; font-size: 10px; } }.feature-foundation .feature-art { height: 380px; }.feature-models .feature-art { height: 430px; }.terminal-line { font-size: 11px; gap: 16px; }
   .integration-section { padding-block: 70px 85px; }.integration-intro h2 { font-size: 33px; }.integration-intro > p:last-child { font-size: 13px; }.integration-layout { grid-template-columns: 1fr; gap: 35px; margin-top: 35px; }.governance-list article { padding-block: 18px; }.code-content { padding-inline: 14px; code { font-size: 10px; } }.code-toolbar { padding-inline: 14px; gap: 10px; }.code-footnote > span { display: none; }.code-depth { right: -5px; }.code-window { transform: none; }.code-depth { transform: none; }

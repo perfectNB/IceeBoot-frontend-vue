@@ -1,9 +1,11 @@
 export default {
   title: '用户登录',
   welcomeBack: '欢迎回来',
-  subtitle: '登录后继续使用系统',
+  subtitle: '登录 IceeBoot 控制台',
   accountTab: '账号登录',
   wechatTab: '微信登录',
+  usernameLabel: '用户名',
+  passwordLabel: '密码',
   usernamePlaceholder: '请输入用户名',
   passwordPlaceholder: '请输入密码',
   loginBtn: '登录',

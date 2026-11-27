@@ -1,22 +1,25 @@
 <template>
   <el-dialog
     v-model="dialogVisible"
-    title=""
-    width="480px"
+    :title="t('login.title')"
+    width="min(780px, calc(100vw - 32px))"
     :before-close="handleClose"
     class="login-dialog"
     align-center
-    :modal-class="'custom-modal'"
+    modal-class="icee-login-overlay"
+    @closed="resetForm"
     :show-close="true"
   >
     <div class="login-content">
-      <div class="login-hero">
-        <div class="hero-title">
-          <img src="@/assets/logo.png" alt="IceeBoot" width="32" height="32" />
-          {{ t('login.welcomeBack') }}
+      <aside class="brand-panel" aria-hidden="true">
+        <div class="brand-signature"><img src="@/assets/logo.png" alt="" />IceeBoot</div>
+        <BrandMascot :paused="paused || !dialogVisible" :eyes-closed="passwordFocused" />
+      </aside>
+      <div class="login-fields">
+        <div class="login-hero">
+          <h2 class="hero-title">{{ t('login.welcomeBack') }}</h2>
+          <p class="hero-subtitle">{{ t('login.subtitle') }}</p>
         </div>
-        <div class="hero-subtitle">{{ t('login.subtitle') }}</div>
-      </div>
       <el-tabs v-model="activeTab" class="login-tabs">
         <!-- 账号密码登录 -->
         <el-tab-pane :label="t('login.accountTab')" name="account">
@@ -24,12 +27,15 @@
             ref="loginFormRef"
             :model="loginForm"
             :rules="loginRules"
-            label-width="0"
+            label-position="top"
+            @submit.prevent="handleLogin"
             class="login-form"
           >
-            <el-form-item prop="username">
+            <el-form-item prop="username" :label="t('login.usernameLabel')">
               <el-input
                 v-model="loginForm.username"
+                autocomplete="username"
+                :validate-event="false"
                 :placeholder="t('login.usernamePlaceholder')"
                 size="large"
                 :prefix-icon="User"
@@ -37,16 +43,19 @@
               />
             </el-form-item>
 
-            <el-form-item prop="password">
+            <el-form-item prop="password" :label="t('login.passwordLabel')">
               <el-input
                 v-model="loginForm.password"
+                autocomplete="current-password"
+                :validate-event="false"
+                @focus="passwordFocused = true"
+                @blur="passwordFocused = false"
                 type="password"
                 :placeholder="t('login.passwordPlaceholder')"
                 size="large"
                 :prefix-icon="Lock"
                 show-password
                 clearable
-                @keyup.enter="handleLogin"
               />
             </el-form-item>
 
@@ -55,7 +64,7 @@
                 type="primary"
                 size="large"
                 :loading="loading"
-                @click="handleLogin"
+                native-type="submit"
                 class="login-btn"
               >
                 {{ t('login.loginBtn') }}
@@ -63,7 +72,7 @@
             </el-form-item>
           </el-form>
 
-          <div class="login-tips">
+          <div v-if="isMockEnabled()" class="login-tips">
             <p>{{ t('login.testAccount') }}</p>
           </div>
         </el-tab-pane>
@@ -124,6 +133,7 @@
           </div>
         </el-tab-pane>
       </el-tabs>
+      </div>
     </div>
   </el-dialog>
 </template>
@@ -132,6 +142,7 @@
 import {ref, computed, watch} from 'vue'
 import {ElMessage, type FormInstance, type FormRules} from 'element-plus'
 import {User, Lock, Loading, Refresh, Warning} from '@element-plus/icons-vue'
+import BrandMascot from './BrandMascot.vue'
 import {useUserStore} from '@/stores/user'
 import {getWechatAuthUrl} from '@/api/auth'
 import {isMockEnabled} from '@/config/mock'
@@ -140,6 +151,7 @@ import { useI18n } from 'vue-i18n'
 
 interface Props {
   modelValue: boolean
+  paused?: boolean
 }
 
 interface Emits {
@@ -162,6 +174,7 @@ const dialogVisible = computed({
 
 // 当前激活的标签页
 const activeTab = ref('account')
+const passwordFocused = ref(false)
 
 // 登录表单
 const loginFormRef = ref<FormInstance>()
@@ -233,11 +246,10 @@ const resolveAuthUrl = (payload: unknown): string => {
 
 // 账号密码登录
 const handleLogin = async () => {
-  if (!loginFormRef.value) return
-
+  if (!loginFormRef.value || loading.value) return
+  loading.value = true
   try {
-    await loginFormRef.value.validate()
-    loading.value = true
+    if (!(await loginFormRef.value.validate().catch(() => false))) return
 
     await userStore.login(loginForm.value)
 
@@ -287,7 +299,12 @@ const refreshQrCode = () => {
 const handleClose = () => {
   dialogVisible.value = false
 
-  // 重置表单
+}
+
+const resetForm = () => {
+  if (dialogVisible.value) return
+  passwordFocused.value = false
+  loginFormRef.value?.clearValidate()
   loginForm.value = {
     username: '',
     password: ''
@@ -301,15 +318,9 @@ const handleClose = () => {
 watch(activeTab, (newTab) => {
   if (newTab === 'wechat' && !qrCode.value) {
     generateQrCode()
-  } else if (newTab === 'account') {
-    // no-op
   }
 })
 
-// 监听对话框关闭
-watch(dialogVisible, (visible) => {
-  if (!visible) return
-})
 </script>
 
 <style scoped lang="scss">
@@ -335,7 +346,7 @@ watch(dialogVisible, (visible) => {
   padding: 0;
   overflow-y: auto;
   border: 1px solid var(--login-line);
-  border-radius: 14px;
+  border-radius: 24px;
   background: var(--login-surface);
   color: var(--login-ink);
   box-shadow: 0 20px 60px -24px #14295840;
@@ -359,10 +370,11 @@ watch(dialogVisible, (visible) => {
 }
 
 :global(.login-dialog .el-dialog__body) {
-  padding: 46px 36px 32px;
+  padding: 0;
 }
 
 :global(.login-dialog .el-dialog__headerbtn) {
+  z-index: 2;
   top: 10px;
   right: 10px;
   width: 44px;
@@ -386,10 +398,46 @@ watch(dialogVisible, (visible) => {
   color: inherit;
 }
 
+/* Element Plus owns the dialog header and its accessible title. */
+:global(.login-dialog .el-dialog__title) {
+  position: absolute;
+  clip-path: inset(50%);
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+:global(.icee-login-overlay) { background: #102a4380; backdrop-filter: blur(5px); }
 .login-content {
+  display: grid;
+  grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr);
   min-width: 0;
   font-family: inherit;
 }
+
+.brand-panel {
+  position: relative;
+  display: grid;
+  align-items: center;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 17% 2%, #72dcff, transparent 58%),
+    linear-gradient(145deg, #42b6ef 5%, #1475cb 62%, #124b9c);
+}
+.brand-signature {
+  position: absolute;
+  top: 25px;
+  left: 24px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #092b54;
+  font-weight: 750;
+  font-size: 19px;
+}
+.brand-signature img { width: 26px; height: 26px; }
+.brand-panel .brand-scene { width: 110%; margin-left: -5%; color: #fff; }
+.login-fields { min-width: 0; padding: 42px 32px 26px; }
+.login-form :deep(.el-form-item__label) { margin-bottom: 5px; line-height: 18px; color: var(--login-ink); }
+.login-form :deep(.el-form-item__label::before) { display: none; }
 
 .login-hero {
   margin-bottom: 24px;
@@ -399,7 +447,7 @@ watch(dialogVisible, (visible) => {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-bottom: 9px;
+    margin: 0 0 6px;
     color: var(--login-ink);
     font-size: 27px;
     font-weight: 650;
@@ -408,6 +456,7 @@ watch(dialogVisible, (visible) => {
   }
 
   .hero-subtitle {
+    margin: 0;
     color: var(--login-muted);
     font-size: 14px;
     line-height: 1.7;
@@ -417,7 +466,7 @@ watch(dialogVisible, (visible) => {
 
 .login-tabs {
   :deep(.el-tabs__header) {
-    margin-bottom: 26px;
+    margin-bottom: 20px;
   }
 
   :deep(.el-tabs__nav-wrap::after) {
@@ -635,16 +684,15 @@ watch(dialogVisible, (visible) => {
   }
 }
 
-@media (max-width: 480px) {
-  :global(.login-dialog .el-dialog__body) {
-    padding: 44px 24px 24px;
-  }
-
-  .login-hero .hero-title {
-    font-size: 25px;
-  }
+@media (max-width: 640px) {
+  .login-content { grid-template-columns: 1fr; }
+  .brand-panel { height: 92px; }
+  .brand-signature { left: 24px; top: 29px; }
+  .brand-panel .brand-scene { position: absolute; width: 135px; right: 13%; top: -17px; }
+  .login-fields { padding: 20px 24px 24px; }
+  .login-hero { margin-bottom: 12px; }
+  :global(.login-dialog .el-dialog__headerbtn) { background: var(--login-surface); }
 }
-
 @media (prefers-reduced-motion: reduce) {
   :global(.login-dialog .el-dialog__headerbtn),
   .login-content :deep(.el-tabs__item),

@@ -9,7 +9,7 @@ import type {
   Scope,
   Values
 } from '@/types/approval'
-import { approvalPath, launchRoles, reviewerRoles, validateDesign } from '@/utils/approval'
+import { approvalPath, launchRoles, reviewerRoles, sliceApprovalPage, validateDesign } from '@/utils/approval'
 import { mockRoles } from '../data/role'
 import { mockUsers } from '../data/user'
 import { demoUserId } from './auth'
@@ -78,6 +78,21 @@ function move(c: Case, node?: string) {
     : []
   c.item.node = node || ''
   c.item.status = node ? 'PENDING' : 'APPROVED'
+}
+
+function scopedItems(scope: Scope) {
+  requireAccess('list')
+  const userId = Number(actor().id)
+  return [...cases.values()]
+    .filter((c) => {
+      if (scope === 'inbox') return allowed(c)
+      if (scope === 'handled') {
+        return c.history.some((e) => e.actorId === userId && ['REJECT', 'APPROVE'].includes(e.action))
+      }
+      return c.owner === userId && (scope === 'mine' || c.item.status === 'REJECTED')
+    })
+    .map((c) => c.item)
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || a.id.localeCompare(b.id))
 }
 
 export const mockApproval = {
@@ -198,20 +213,10 @@ export const mockApproval = {
     return id
   },
   async list(scope: Scope) {
-    requireAccess('list')
-    return copy(
-      [...cases.values()]
-        .filter((c) => {
-          if (scope === 'inbox') return allowed(c)
-          if (scope === 'handled')
-            return c.history.some(
-              (e) => e.actorId === Number(actor().id) && ['REJECT', 'APPROVE'].includes(e.action)
-            )
-          return c.owner === Number(actor().id) && (scope === 'mine' || c.item.status === 'REJECTED')
-        })
-        .map((c) => c.item)
-        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
-    )
+    return copy(scopedItems(scope))
+  },
+  async casePage(scope: Scope, page: number, size: number) {
+    return copy(sliceApprovalPage(scopedItems(scope), page, size))
   },
   async detail(id: string): Promise<ApprovalDetail> {
     requireAccess('detail')

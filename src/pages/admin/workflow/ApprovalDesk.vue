@@ -38,6 +38,21 @@
         </div>
         <el-empty v-if="!loading && !items.length" :image-size="68" :description="empty[scope]" />
       </div>
+      <footer class="case-pagination">
+        <span>共 {{ pagination.total }} 条</span>
+        <el-pagination
+          :key="scope"
+          :current-page="pagination.current"
+          :page-size="pagination.size"
+          :page-sizes="[10, 20, 50]"
+          :total="pagination.total"
+          :pager-count="5"
+          background
+          layout="sizes, prev, pager, next"
+          @update:current-page="changePage($event, pagination.size)"
+          @update:page-size="changePage(1, $event)"
+        />
+      </footer>
     </div>
     <el-dialog
       v-model="starting"
@@ -181,7 +196,7 @@
   </section>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRoute } from 'vue-router'
 import { Position, Document } from '@element-plus/icons-vue'
@@ -204,6 +219,16 @@ const can = (p: string) => hasPermission('workflow:approval:' + p + ':api')
 const scope = ref<Scope>(props.inbox ? 'inbox' : 'mine'),
   items = ref<ApprovalItem[]>([]),
   published = ref<Blueprint[]>([])
+const initialPage = () => ({ current: 1, size: 10, total: 0 })
+const tabPages = reactive({
+  mine: initialPage(), rejected: initialPage(), inbox: initialPage(), handled: initialPage()
+})
+const pagination = computed(() => tabPages[scope.value])
+function changePage(current: number, size: number) {
+  if (pagination.value.current === current && pagination.value.size === size) return
+  Object.assign(pagination.value, { current, size })
+  return load()
+}
 const detail = ref<ApprovalDetail>(),
   values = ref<Values>({}),
   reason = ref(''),
@@ -267,8 +292,13 @@ async function load() {
   loading.value = true
   items.value = []
   try {
-    const result = await approvalApi.list(scope.value)
-    if (seq === listRequest) items.value = result
+    const tab = scope.value
+    const state = tabPages[tab]
+    const result = await approvalApi.casePage(tab, state.current, state.size)
+    if (seq === listRequest && tab === scope.value) {
+      Object.assign(state, { current: result.current, total: result.total })
+      items.value = result.records
+    }
   } finally {
     if (seq === listRequest) loading.value = false
   }
@@ -318,6 +348,7 @@ async function submit() {
     validateForm(b.design, values.value)
     const id = await approvalApi.submit(b.design.code, b.version, values.value)
     starting.value = false
+    tabPages.mine.current = 1
     scope.value = 'mine'
     ElMessage.success('申请已提交')
     await load()
@@ -389,6 +420,21 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.case-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 16px;
+  color: var(--el-text-color-regular);
+  font-size: 13px;
+}
+.case-pagination :deep(.el-pagination) {
+  max-width: 100%;
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
 .approval-path small {
   display: block;
   margin-top: 4px;

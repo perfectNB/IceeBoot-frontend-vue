@@ -1,4 +1,5 @@
 import type { PageResult } from '@/types'
+import { sliceApprovalPage } from '@/utils/approval'
 import { hasPermission } from '@/utils/permission'
 import { request } from '@/utils/request'
 import { isMockEnabled } from '@/config/mock'
@@ -101,6 +102,11 @@ export const approvalApi = {
       : request.post<string>(base + '/cases', { code, version, values }),
   list: (scope: Scope) =>
     isMockEnabled() ? mockApproval.list(scope) : request.get<ApprovalItem[]>(base + '/cases', { scope }),
+  async casePage(scope: Scope, page: number, size: number): Promise<PageResult<ApprovalItem>> {
+    if (isMockEnabled()) return mockApproval.casePage(scope, page, size)
+    const result = await request.get<PageResult<ApprovalItem> | ApprovalItem[]>(base + '/cases', { scope, page, size })
+    return Array.isArray(result) ? sliceApprovalPage(result, page, size) : result
+  },
   detail: (id: string) =>
     isMockEnabled()
       ? mockApproval.detail(id)

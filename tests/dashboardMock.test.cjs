@@ -446,3 +446,58 @@ test('personal workflow menus can load while the database menu cache is upgraded
     ['我的审批', 'MyApprovals', 'MyApprovals', '/admin/workflow/task', 'workflow:task']
   ])
 })
+
+test('approval case pages count, sort and clamp within each personal scope', async () => {
+  const { load, login } = demo()
+  const api = load('@/api/approval').approvalApi
+  await login('admin')
+  const design = load('@/utils/approval').blankDesign()
+  Object.assign(design, { name: '分页审批', code: 'paged_cases' })
+  design.nodes[0].role = 'admin'
+  await api.save(design, 0)
+  await api.publish(design.code, 1)
+  await api.submit(design.code, 1, {})
+  await api.submit(design.code, 1, {})
+  await login('user_admin')
+  await api.submit(design.code, 1, {})
+  assert.equal((await api.casePage('mine', 1, 1)).total, 1)
+  assert.equal((await api.casePage('inbox', 2, 1)).total, 0)
+  await login('admin')
+  const first = await api.casePage('inbox', 1, 2)
+  const last = await api.casePage('inbox', 2, 2)
+  assert.equal(first.total, 3)
+  assert.equal(first.records.length, 2)
+  assert.equal(last.records.length, 1)
+  const id = last.records[0].id
+  assert.ok(!first.records.some(item => item.id === id))
+  await api.review(id, 'reject', { revision: 1, reason: '请补充' })
+  const remaining = await api.casePage('inbox', 2, 2)
+  assert.equal(remaining.current, 1)
+  assert.equal(remaining.total, 2)
+  assert.equal((await api.casePage('handled', 1, 1)).records[0].id, id)
+  for (const user of ['admin', 'user_admin']) {
+    await login(user)
+    const mine = await api.list('mine')
+    assert.equal((await api.casePage('rejected', 1, 10)).total, Number(mine.some(item => item.id === id)))
+  }
+  await assert.rejects(api.casePage('mine', 1, 101), /分页参数/)
+})
+
+test('approval case page requests support paginated and legacy list responses', async () => {
+  const calls = []
+  const page = { current: 2, size: 1, total: 2, pages: 2, records: [{ id: 'b' }], hasNext: false, hasPrevious: true }
+  const responses = [page, [{ id: 'a' }, { id: 'b' }]]
+  const { load } = demo({ get: async (path, params) => {
+    calls.push([path, { ...params }])
+    return responses.shift()
+  } })
+  const api = load('@/api/approval').approvalApi
+  assert.equal(await api.casePage('mine', 2, 1), page)
+  const legacy = await api.casePage('handled', 9, 1)
+  assert.equal(legacy.current, 2)
+  assert.equal(legacy.records[0].id, 'b')
+  assert.deepEqual(calls, [
+    ['/api/v1/workflow/approvals/cases', { scope: 'mine', page: 2, size: 1 }],
+    ['/api/v1/workflow/approvals/cases', { scope: 'handled', page: 9, size: 1 }]
+  ])
+})

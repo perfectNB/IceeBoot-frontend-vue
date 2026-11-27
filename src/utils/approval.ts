@@ -1,3 +1,4 @@
+import type { PageResult } from '@/types'
 import type { ApprovalDesign, ApprovalNode, Comparison, Exit, Values } from '@/types/approval'
 
 export const end = '@end'
@@ -164,4 +165,15 @@ export function approvalPath(d: ApprovalDesign, values: Values): ApprovalNode[] 
     path.push(node)
     exit = node.exit
   }
+}
+
+export function sliceApprovalPage<T>(items: T[], page: number, size: number): PageResult<T> {
+  if (!Number.isInteger(page) || page < 1 || !Number.isInteger(size) || size < 1 || size > 100) {
+    throw Error('分页参数无效')
+  }
+  const total = items.length
+  const pages = Math.ceil(total / size)
+  const current = Math.min(page, Math.max(1, pages))
+  const records = items.slice((current - 1) * size, current * size)
+  return { records, total, current, size, pages, hasPrevious: current > 1, hasNext: current < pages }
 }

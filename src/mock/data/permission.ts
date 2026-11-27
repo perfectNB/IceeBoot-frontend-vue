@@ -1207,6 +1207,7 @@ export const mockPermissions: Permission[] = [
   {"id": "940", "code": "workflow:approval:drafts:api", "type": "api", "name": "审批草稿列表", "sort": 0, "status": "active", "parentId": "930", "path": "/v1/workflow/approvals/drafts", "method": "GET"},
   {"id": "941", "code": "workflow:approval:roles:api", "type": "api", "name": "审批角色选项", "sort": 1, "status": "active", "parentId": "930", "path": "/v1/workflow/approvals/roles", "method": "GET"},
   {"id": "942", "code": "workflow:approval:save:api", "type": "api", "name": "保存审批草稿", "sort": 2, "status": "active", "parentId": "930", "path": "/v1/workflow/approvals/drafts", "method": "PUT"},
+  {"id": "959", "code": "workflow:approval:intake:api", "type": "api", "name": "停用或启用审批模板", "sort": 4, "status": "active", "parentId": "930", "path": "/v1/workflow/approvals/drafts/{code}/intake", "method": "PUT"},
   {"id": "943", "code": "workflow:approval:publish:api", "type": "api", "name": "发布审批模板", "sort": 3, "status": "active", "parentId": "930", "path": "/v1/workflow/approvals/drafts/{code}/publish", "method": "POST"},
   {"id": "944", "code": "workflow:approval:published:api", "type": "api", "name": "选择已发布审批", "sort": 4, "status": "active", "parentId": "932", "path": "/v1/workflow/approvals/published", "method": "GET"},
   {"id": "945", "code": "workflow:approval:start:api", "type": "api", "name": "提交审批申请", "sort": 5, "status": "active", "parentId": "932", "path": "/v1/workflow/approvals/cases", "method": "POST"},

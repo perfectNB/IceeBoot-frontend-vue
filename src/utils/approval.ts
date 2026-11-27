@@ -14,6 +14,8 @@ const numeric = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i
 export const isApprovalNumber = (value: string) => numeric.test(value)
 
 export const symbols: Record<Comparison, string> = { eq: '=', gt: '>', ge: '≥', lt: '<', le: '≤' }
+export const launchRoles = (design: ApprovalDesign): string[] =>
+  [design.launchRole || '', ...(design.additionalLaunchRoles || [])].filter(Boolean)
 export const reviewerRoles = (n: ApprovalNode) => [n.role, ...(n.coRoles || [])].filter(Boolean)
 
 export function branchLabel(fields: ApprovalDesign['fields'], branch: Exit['branches'][number]) {

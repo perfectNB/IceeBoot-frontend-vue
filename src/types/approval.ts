@@ -18,6 +18,8 @@ export interface ApprovalNode {
   exit: Exit
 }
 export interface ApprovalDesign {
+  launchRole?: string
+  additionalLaunchRoles?: string[]
   code: string
   name: string
   fields: ApprovalField[]
@@ -25,9 +27,18 @@ export interface ApprovalDesign {
   nodes: ApprovalNode[]
 }
 export interface Blueprint {
+  stopped?: boolean
   design: ApprovalDesign
   revision: number
   version: number
+}
+export interface TemplateRow {
+  code: string
+  name: string
+  revision: number
+  version: number
+  stopped: boolean
+  changed: boolean
 }
 export interface ApprovalRole {
   code: string
@@ -48,6 +59,7 @@ export interface ApprovalItem {
   updatedAt: string
 }
 export interface ApprovalEvent {
+  nodeId?: string
   role?: string
   round: number
   action: 'SUBMIT' | 'RESUBMIT' | 'APPROVE' | 'REJECT' | 'VOID'
@@ -66,6 +78,7 @@ export interface ApprovalDetail {
   history: ApprovalEvent[]
   route: string[]
   mine: boolean
+  candidates?: Record<string, string[]>
   roleNames?: Record<string, string>
   tasks?: { id: string; node: string; role: string; actionable: boolean }[]
   canReview: boolean

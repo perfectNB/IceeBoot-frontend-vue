@@ -29,6 +29,7 @@ export const mockUsers: User[] = [
       'workflow:approval:roles:api',
       'workflow:approval:save:api',
       'workflow:approval:publish:api',
+      'workflow:approval:intake:api',
       'workflow:approval:published:api',
       'workflow:approval:start:api',
       'workflow:approval:list:api',
@@ -235,7 +236,7 @@ export const mockUsers: User[] = [
     phone: '13800138003',
     roles: ['user_admin', 'test'],
     permissions: [
-      'workflow:task', 'workflow:instance', 'workflow:approval:list:api', 'workflow:approval:detail:api',
+      'workflow:task', 'workflow:instance', 'workflow:diagram', 'workflow:approval:list:api', 'workflow:approval:detail:api',
       'workflow:approval:published:api', 'workflow:approval:start:api', 'workflow:approval:revise:api', 'workflow:approval:review:api',
       'dashboard:view',
       'system:user',

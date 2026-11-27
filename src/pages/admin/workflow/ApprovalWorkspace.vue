@@ -16,6 +16,7 @@
   </div>
 </template>
 <script setup lang="ts">
+import './approval.css'
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { hasPermission } from '@/utils/permission'
@@ -45,4 +46,3 @@ const available = computed(() => {
   padding-inline: 20px;
 }
 </style>
-<style src="./approval.css"></style>

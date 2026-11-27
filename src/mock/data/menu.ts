@@ -342,7 +342,7 @@ export const mockMenus: MenuItem[] = [
       },
       {
         id: 33,
-        title: '流程图展示',
+        title: '发起审批',
         name: 'WorkflowDiagram',
         path: '/admin/workflow/diagram',
         component: 'WorkflowDiagram',

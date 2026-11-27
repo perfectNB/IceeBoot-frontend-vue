@@ -7,7 +7,7 @@
       "
     >
       <el-button @click="load">刷新</el-button>
-      <el-button v-if="can('start') && can('published')" type="primary" @click="openStart">
+      <el-button v-if="can('start') && can('published')" type="primary" @click="openStart()">
         发起审批
       </el-button>
     </AdminPageHeader>
@@ -46,7 +46,14 @@
       width="min(570px,94vw)"
       :close-on-click-modal="false"
     >
-      <label class="approval-label">
+      <div v-if="fixedTemplate && chosen" class="start-template">
+        <el-icon><Position /></el-icon>
+        <div>
+          <strong>{{ chosen.design.name }}</strong>
+        </div>
+        <el-tag size="small">v{{ chosen.version }}</el-tag>
+      </div>
+      <label v-else class="approval-label">
         已发布流程
         <el-select v-model="code" placeholder="选择审批流程" filterable @change="values = {}">
           <el-option
@@ -83,11 +90,13 @@
         <p class="approval-hint">{{ detail.design.code }} · 模板 v{{ detail.version }}</p>
         <h3>本轮审批路径</h3>
         <div class="approval-path">
-          <span>发起</span>
-          <span v-for="n in detail.route" :key="n" :class="{ active: n === detail.item.node }">
-            {{ nodeName(n) }}
+          <span
+            >发起<small>{{ roundStarter }}</small></span
+          >
+          <span v-for="step in routeSteps" :key="step.id" :class="{ active: step.id === detail.item.node }">
+            {{ step.name }}<small v-for="line in step.reviewers" :key="line">{{ line }}</small>
           </span>
-          <span>结束</span>
+          <span>{{ detail.item.status === 'REJECTED' ? '本轮驳回' : '结束' }}</span>
         </div>
         <template v-if="detail.tasks?.length">
           <h3>当前待办</h3>
@@ -114,7 +123,8 @@
               <time>{{ date(e.time) }}</time>
             </div>
             <small
-              >第 {{ e.round }} 轮 · {{ e.actor
+              >第 {{ e.round }} 轮 ·
+              {{ e.action === 'APPROVE' || e.action === 'REJECT' ? '审批人' : '操作人' }} {{ e.actor
               }}{{ e.role ? ' · ' + (detail.roleNames?.[e.role] || e.role) : '' }}</small
             >
             <p v-if="e.reason">{{ e.reason }}</p>
@@ -174,7 +184,7 @@
 import { computed, onMounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRoute } from 'vue-router'
-import { Document } from '@element-plus/icons-vue'
+import { Position, Document } from '@element-plus/icons-vue'
 import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import ApprovalForm from './ApprovalForm.vue'
 import { approvalApi } from '@/api/approval'
@@ -218,6 +228,37 @@ const tone = (s: ApprovalStatus) =>
   (({ PENDING: 'primary', REJECTED: 'danger', APPROVED: 'success', VOID: 'info' }) as const)[s]
 const date = (s: string) => new Date(s.replace(' ', 'T')).toLocaleString('zh-CN', { hour12: false })
 const nodeName = (id: string) => detail.value?.design.nodes.find((n) => n.id === id)?.name || id
+const roundEvents = computed(
+  () => detail.value?.history.filter((e) => e.round === detail.value?.item.round) || []
+)
+const roundStarter = computed(
+  () => roundEvents.value.find((e) => ['SUBMIT', 'RESUBMIT'].includes(e.action))?.actor
+)
+const routeSteps = computed(() => {
+  const item = detail.value
+  if (!item) return []
+  return item.route.map((id) => {
+    const node = item.design.nodes.find((n) => n.id === id)!
+    const uniqueName = item.design.nodes.filter((n) => n.name === node.name).length === 1
+    const reviewers = roundEvents.value
+      .filter(
+        (e) =>
+          (e.action === 'APPROVE' || e.action === 'REJECT') &&
+          (e.nodeId ? e.nodeId === id : uniqueName && e.node === node.name)
+      )
+      .map((e) => e.actor + ' · ' + actions[e.action])
+    if (item.item.status === 'PENDING' && item.item.node === id) {
+      const pending = item.tasks?.length
+        ? item.tasks.filter((t) => t.node === id).map((t) => t.role)
+        : [node.role]
+      for (const role of pending) {
+        const names = item.candidates?.[role]?.join('、')
+        reviewers.push((item.roleNames?.[role] || role) + '待办' + (names ? ' · ' + names : ''))
+      }
+    }
+    return { id, name: node.name, reviewers }
+  })
+})
 let listRequest = 0,
   detailRequest = 0
 async function load() {
@@ -242,9 +283,20 @@ async function show(id: string) {
   editing.value = false
   opened.value = true
 }
-async function openStart() {
-  published.value = await approvalApi.published()
-  code.value = ''
+const fixedTemplate = ref(false)
+async function openStart(preselected?: string, version?: string) {
+  if (preselected) {
+    const match = await approvalApi.template(true, preselected)
+    if (match.stopped || (version && String(match.version) !== version)) {
+      ElMessage.warning(match.stopped ? '流程已停用，无法发起新申请' : '模板已发布新版，请重新选择流程')
+      return
+    }
+    published.value = [match]
+  } else {
+    published.value = await approvalApi.published()
+  }
+  fixedTemplate.value = !!preselected
+  code.value = preselected || ''
   values.value = {}
   starting.value = true
 }
@@ -328,8 +380,43 @@ const route = useRoute()
 onMounted(async () => {
   await load()
   if (typeof route.query.approval === 'string' && can('start') && can('published')) {
-    await openStart()
-    code.value = route.query.approval
+    await openStart(
+      route.query.approval,
+      typeof route.query.version === 'string' ? route.query.version : undefined
+    )
   }
 })
 </script>
+
+<style scoped>
+.approval-path small {
+  display: block;
+  margin-top: 4px;
+  color: var(--el-text-color-regular);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.start-template {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border-radius: 10px;
+  background: var(--el-color-primary-light-9);
+}
+.start-template > .el-icon {
+  color: var(--el-color-primary);
+  font-size: 19px;
+}
+.start-template > div {
+  flex: 1;
+  display: grid;
+  gap: 3px;
+  overflow-wrap: anywhere;
+}
+.start-template small {
+  color: var(--el-text-color-regular);
+}
+</style>

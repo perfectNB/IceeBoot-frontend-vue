@@ -1,191 +1,255 @@
 <template>
-  <section class="approval-shell designer" v-loading="busy">
-    <AdminPageHeader
-      :title="blueprint ? '修改流程' : '新建审批流程'"
-      :description="
-        blueprint
-          ? '保存草稿后可继续修改，发布后供新申请使用。'
-          : '设置申请表单和审批路径，保存后可在流程定义中继续修改。'
-      "
-    >
-      <el-button v-if="blueprint" @click="cancel">返回流程定义</el-button>
-      <el-button v-if="can('save')" @click="save(false)">保存草稿</el-button>
-      <el-button v-if="can('publish') && can('save')" type="primary" @click="save(true)">
-        保存并发布
-      </el-button>
-    </AdminPageHeader>
-    <div class="approval-panel design-basics">
-      <div class="approval-fields">
-        <label>
-          流程名称
-          <el-input v-model="d.name" maxlength="120" />
-        </label>
-        <label>
-          唯一流程码
-          <el-input
-            v-model="d.code"
-            :disabled="!!revision"
-            placeholder="例如 purchase_review"
-            maxlength="64"
-          />
-        </label>
-      </div>
-    </div>
-    <div class="approval-panel">
-      <el-tabs v-model="tab">
-        <el-tab-pane label="流程图" name="graph" />
-        <el-tab-pane :label="'表单字段 · ' + d.fields.length" name="fields" />
-      </el-tabs>
-      <div v-if="tab === 'graph'" class="approval-studio">
-        <div class="diagram-pane">
-          <div class="approval-toolbar">
-            <h3>审批路径</h3>
-            <el-button :icon="Plus" @click="addNode">插入审批节点</el-button>
+  <Teleport to="body" :disabled="!fullscreen"
+    ><section class="approval-shell designer" :class="{ 'designer-fullscreen': fullscreen }" v-loading="busy">
+      <AdminPageHeader
+        :title="blueprint ? '修改流程' : '新建审批流程'"
+        :description="
+          blueprint
+            ? '保存草稿后可继续修改，发布后供新申请使用。'
+            : '设置申请表单和审批路径，保存后可在流程定义中继续修改。'
+        "
+      >
+        <el-button :icon="FullScreen" :aria-pressed="fullscreen" @click="fullscreen = !fullscreen">{{
+          fullscreen ? '退出全屏' : '全屏画图'
+        }}</el-button>
+        <el-popconfirm
+          v-if="blueprint?.version && can('intake')"
+          :title="stopped ? '恢复接收新申请？' : '停止接收新申请？在途审批仍可继续。'"
+          @confirm="toggleIntake"
+        >
+          <template #reference
+            ><el-button>{{ stopped ? '恢复使用' : '停用模板' }}</el-button></template
+          >
+        </el-popconfirm>
+        <el-button v-if="blueprint" @click="cancel">返回流程定义</el-button>
+        <el-button v-if="can('save')" @click="openSave(false)">保存草稿</el-button>
+        <el-button v-if="can('publish') && can('save')" type="primary" @click="openSave(true)">
+          保存并发布
+        </el-button>
+      </AdminPageHeader>
+      <section class="approval-panel launch-scope" aria-label="可见与发起范围">
+        <header class="scope-heading">
+          <div>
+            <h3>可见与发起范围</h3>
+            <p>设置谁能在「发起审批」中搜索并使用此流程。</p>
           </div>
-          <ApprovalGraph
-            :design="d"
-            :roles="roles"
-            :selected="selected"
-            @select="selectNode"
-            @branch="editBranch"
-          />
+          <el-radio-group
+            v-model="restricted"
+            aria-label="可见与发起范围"
+            @change="!restricted && (selectedRoles = [])"
+          >
+            <el-radio-button :value="false">全部用户</el-radio-button>
+            <el-radio-button :value="true">指定角色</el-radio-button>
+          </el-radio-group>
+        </header>
+        <div v-if="restricted" class="scope-roles">
+          <label
+            >可发起角色
+            <el-select
+              v-model="selectedRoles"
+              multiple
+              filterable
+              aria-label="可发起角色"
+              placeholder="搜索并选择角色，可多选"
+            >
+              <el-option v-for="role in roles" :key="role.code" :value="role.code" :label="role.name" />
+            </el-select>
+          </label>
+          <p>用户拥有任一所选角色即可发起。节点办理人请在流程图中设置。</p>
         </div>
-        <aside ref="inspector" class="node-inspector">
-          <header class="inspector-head">
-            <span class="node-glyph">
-              <el-icon><component :is="node ? User : Position" /></el-icon>
-            </span>
-            <div>
-              <small>{{ node ? '审批节点' : '开始节点' }}</small>
-              <h3>{{ node?.name || '提交申请' }}</h3>
+      </section>
+      <el-dialog
+        v-model="saveDialog"
+        :title="publishing ? '发布审批流程' : '保存流程草稿'"
+        append-to-body
+        width="min(480px,94vw)"
+        :close-on-click-modal="false"
+      >
+        <el-form label-position="top" @submit.prevent="save">
+          <el-form-item label="流程名称" required
+            ><el-input v-model="metadata.name" maxlength="120" placeholder="例如 办公用品申领"
+          /></el-form-item>
+          <el-form-item label="流程码" required
+            ><el-input
+              v-model="metadata.code"
+              :disabled="!!revision"
+              maxlength="64"
+              placeholder="例如 purchase_review"
+          /></el-form-item>
+          <el-form-item label="可见与发起范围">
+            <div class="scope-summary">{{ audienceLabel }}</div>
+          </el-form-item>
+        </el-form>
+        <template #footer
+          ><el-button @click="saveDialog = false">取消</el-button
+          ><el-button type="primary" :loading="busy" @click="save">{{
+            publishing ? '确认发布' : '确认保存'
+          }}</el-button></template
+        >
+      </el-dialog>
+      <div class="approval-panel">
+        <el-tabs v-model="tab">
+          <el-tab-pane label="流程图" name="graph" />
+          <el-tab-pane :label="'表单字段 · ' + d.fields.length" name="fields" />
+        </el-tabs>
+        <div v-if="tab === 'graph'" class="approval-studio">
+          <div class="diagram-pane">
+            <div class="approval-toolbar">
+              <h3>审批路径</h3>
+              <el-button :icon="Plus" @click="addNode">插入审批节点</el-button>
             </div>
-            <el-popconfirm v-if="node" title="移除此节点及关联连线？" @confirm="removeNode">
-              <template #reference><el-button text :icon="Delete" aria-label="移除当前节点" /></template>
-            </el-popconfirm>
-          </header>
-          <div v-if="node" class="node-properties">
-            <label>
-              节点名称
-              <el-input v-model="node.name" maxlength="120" />
-            </label>
-            <label>
-              办理角色 · 多选会签
-              <el-select
-                :model-value="reviewerRoles(node)"
-                multiple
-                filterable
-                :multiple-limit="50"
-                placeholder="选择一个或多个角色"
-                @update:model-value="setReviewers"
-              >
-                <el-option v-for="r in roles" :key="r.code" :label="r.name" :value="r.code" />
+            <ApprovalGraph
+              :design="d"
+              :roles="roles"
+              :selected="selected"
+              @select="selectNode"
+              @branch="editBranch"
+            />
+          </div>
+          <aside ref="inspector" class="node-inspector">
+            <header class="inspector-head">
+              <span class="node-glyph">
+                <el-icon><component :is="node ? User : Position" /></el-icon>
+              </span>
+              <div>
+                <small>{{ node ? '审批节点' : '开始节点' }}</small>
+                <h3>{{ node?.name || '提交申请' }}</h3>
+              </div>
+              <el-popconfirm v-if="node" title="移除此节点及关联连线？" @confirm="removeNode">
+                <template #reference><el-button text :icon="Delete" aria-label="移除当前节点" /></template>
+              </el-popconfirm>
+            </header>
+            <div v-if="node" class="node-properties">
+              <label>
+                节点名称
+                <el-input v-model="node.name" maxlength="120" />
+              </label>
+              <label>
+                办理角色 · 多选会签
+                <el-select
+                  :model-value="reviewerRoles(node)"
+                  multiple
+                  filterable
+                  :multiple-limit="50"
+                  placeholder="选择一个或多个角色"
+                  @update:model-value="setReviewers"
+                >
+                  <el-option v-for="r in roles" :key="r.code" :label="r.name" :value="r.code" />
+                </el-select>
+              </label>
+              <p v-if="node.coRoles?.length" class="routing-note">
+                每个角色各派一份待办。全部通过后继续，任一方驳回即结束本轮。
+              </p>
+            </div>
+            <div class="rules-heading">
+              <h3>条件分支</h3>
+              <el-button link type="primary" :icon="Plus" @click="editorIndex = -1">添加分支</el-button>
+            </div>
+            <p class="routing-note">
+              {{
+                exit.branches.length
+                  ? '从上往下判断，命中第一条即流转。'
+                  : '需要按表单内容分流时，添加条件分支。'
+              }}
+            </p>
+            <ol class="branch-list">
+              <li v-for="(branch, i) in exit.branches" :key="i">
+                <button type="button" class="branch-row" @click="editorIndex = i">
+                  <span class="rank">{{ i + 1 }}</span>
+                  <span class="branch-copy">
+                    <strong>{{ branchLabel(d.fields, branch) }}</strong>
+                    <small>转到 {{ targetName(branch.target) }}</small>
+                  </span>
+                  <el-icon><EditPen /></el-icon>
+                </button>
+                <el-dropdown trigger="click" @command="branchAction(i, $event)">
+                  <el-button text :icon="MoreFilled" :aria-label="'分支 ' + (i + 1) + ' 更多操作'" />
+                  <template #dropdown>
+                    <el-dropdown-menu>
+                      <el-dropdown-item command="up" :disabled="i === 0">提高优先级</el-dropdown-item>
+                      <el-dropdown-item command="down" :disabled="i === exit.branches.length - 1">
+                        降低优先级
+                      </el-dropdown-item>
+                      <el-dropdown-item command="remove" divided>移除分支</el-dropdown-item>
+                    </el-dropdown-menu>
+                  </template>
+                </el-dropdown>
+              </li>
+            </ol>
+            <label class="fallback">
+              {{ exit.branches.length ? '都不匹配时' : '下一步' }}
+              <el-select v-model="exit.fallback" clearable placeholder="阻止提交">
+                <el-option v-for="t in targets" :key="t.id" :label="t.name" :value="t.id" />
               </el-select>
             </label>
-            <p v-if="node.coRoles?.length" class="routing-note">
-              每个角色各派一份待办。全部通过后继续，任一方驳回即结束本轮。
-            </p>
+          </aside>
+        </div>
+        <template v-else>
+          <div class="approval-toolbar">
+            <h3>申请人填写的字段</h3>
+            <el-button @click="addField">＋ 新增字段</el-button>
           </div>
-          <div class="rules-heading">
-            <h3>条件分支</h3>
-            <el-button link type="primary" :icon="Plus" @click="editorIndex = -1">添加分支</el-button>
+          <p class="approval-hint">判断字段用于选择审批路径。金额等数字业务字段也可以直接用于分支判断。</p>
+          <el-empty v-if="!d.fields.length" description="还没有表单字段" :image-size="55" />
+          <div v-for="(f, i) in d.fields" :key="i" class="approval-field-row">
+            <label>
+              显示名称
+              <el-input v-model="f.label" placeholder="例如 公司名称" />
+            </label>
+            <label>
+              唯一字段名
+              <el-input v-model="f.key" placeholder="companyName" />
+            </label>
+            <label>
+              用途
+              <el-select v-model="f.kind" @change="f.kind === 'routing' && (f.required = true)">
+                <el-option label="业务字段" value="business" />
+                <el-option label="判断字段" value="routing" />
+              </el-select>
+            </label>
+            <label>
+              类型
+              <el-select v-model="f.type">
+                <el-option label="文本" value="text" />
+                <el-option label="数字" value="number" />
+              </el-select>
+            </label>
+            <el-checkbox v-model="f.required" :disabled="f.kind === 'routing'">必填</el-checkbox>
+            <el-button link type="danger" @click="d.fields.splice(i, 1)">移除</el-button>
           </div>
-          <p class="routing-note">
-            {{
-              exit.branches.length
-                ? '从上往下判断，命中第一条即流转。'
-                : '需要按表单内容分流时，添加条件分支。'
-            }}
-          </p>
-          <ol class="branch-list">
-            <li v-for="(branch, i) in exit.branches" :key="i">
-              <button type="button" class="branch-row" @click="editorIndex = i">
-                <span class="rank">{{ i + 1 }}</span>
-                <span class="branch-copy">
-                  <strong>{{ branchLabel(d.fields, branch) }}</strong>
-                  <small>转到 {{ targetName(branch.target) }}</small>
-                </span>
-                <el-icon><EditPen /></el-icon>
-              </button>
-              <el-dropdown trigger="click" @command="branchAction(i, $event)">
-                <el-button text :icon="MoreFilled" :aria-label="'分支 ' + (i + 1) + ' 更多操作'" />
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item command="up" :disabled="i === 0">提高优先级</el-dropdown-item>
-                    <el-dropdown-item command="down" :disabled="i === exit.branches.length - 1">
-                      降低优先级
-                    </el-dropdown-item>
-                    <el-dropdown-item command="remove" divided>移除分支</el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-            </li>
-          </ol>
-          <label class="fallback">
-            {{ exit.branches.length ? '都不匹配时' : '下一步' }}
-            <el-select v-model="exit.fallback" clearable placeholder="阻止提交">
-              <el-option v-for="t in targets" :key="t.id" :label="t.name" :value="t.id" />
-            </el-select>
-          </label>
-        </aside>
+        </template>
       </div>
-      <template v-else>
-        <div class="approval-toolbar">
-          <h3>申请人填写的字段</h3>
-          <el-button @click="addField">＋ 新增字段</el-button>
-        </div>
-        <p class="approval-hint">判断字段用于选择审批路径。金额等数字业务字段也可以直接用于分支判断。</p>
-        <el-empty v-if="!d.fields.length" description="还没有表单字段" :image-size="55" />
-        <div v-for="(f, i) in d.fields" :key="i" class="approval-field-row">
-          <label>
-            显示名称
-            <el-input v-model="f.label" placeholder="例如 公司名称" />
-          </label>
-          <label>
-            唯一字段名
-            <el-input v-model="f.key" placeholder="companyName" />
-          </label>
-          <label>
-            用途
-            <el-select v-model="f.kind" @change="f.kind === 'routing' && (f.required = true)">
-              <el-option label="业务字段" value="business" />
-              <el-option label="判断字段" value="routing" />
-            </el-select>
-          </label>
-          <label>
-            类型
-            <el-select v-model="f.type">
-              <el-option label="文本" value="text" />
-              <el-option label="数字" value="number" />
-            </el-select>
-          </label>
-          <el-checkbox v-model="f.required" :disabled="f.kind === 'routing'">必填</el-checkbox>
-          <el-button link type="danger" @click="d.fields.splice(i, 1)">移除</el-button>
-        </div>
-      </template>
-    </div>
-    <ApprovalBranchEditor
-      v-if="editorIndex !== null"
-      :branch="exit.branches[editorIndex]"
-      :all-fields="d.fields"
-      :roles="roles"
-      :targets="targets"
-      @close="editorIndex = null"
-      @save="applyBranch"
-    />
-  </section>
+      <ApprovalBranchEditor
+        v-if="editorIndex !== null"
+        :branch="exit.branches[editorIndex]"
+        :all-fields="d.fields"
+        :roles="roles"
+        :targets="targets"
+        @close="editorIndex = null"
+        @save="applyBranch"
+      /></section
+  ></Teleport>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { onBeforeRouteLeave, useRouter } from 'vue-router'
 import { canOpenWorkflowPage } from './approvalNavigation'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import { approvalApi } from '@/api/approval'
 import { hasPermission } from '@/utils/permission'
-import { Delete, EditPen, MoreFilled, Plus, Position, User } from '@element-plus/icons-vue'
+import { Delete, EditPen, FullScreen, MoreFilled, Plus, Position, User } from '@element-plus/icons-vue'
 import ApprovalBranchEditor from './ApprovalBranchEditor.vue'
-import { branchLabel, reviewerRoles, blankDesign, end, newExit, validateDesign } from '@/utils/approval'
+import {
+  branchLabel,
+  launchRoles,
+  reviewerRoles,
+  blankDesign,
+  end,
+  newExit,
+  validateDesign
+} from '@/utils/approval'
 import type {
   ApprovalDesign,
   ApprovalField,
@@ -270,9 +334,11 @@ async function cancel() {
 }
 async function finish() {
   if (props.blueprint) emit('close')
-  else if (canOpenWorkflowPage(router, 'WorkflowDefinitions')) await router.push({ name: 'WorkflowDefinitions' })
+  else if (canOpenWorkflowPage(router, 'WorkflowDefinitions'))
+    await router.push({ name: 'WorkflowDefinitions' })
   else {
     d.value = blankDesign()
+    restricted.value = false
     revision.value = 0
     selected.value = '@start'
     tab.value = 'graph'
@@ -302,10 +368,73 @@ function removeNode() {
 function addField() {
   d.value.fields.push({ key: '', label: '', kind: 'business', type: 'text', required: true })
 }
-async function save(publish: boolean) {
+const fullscreen = ref(false)
+const stopped = ref(!!props.blueprint?.stopped)
+const saveDialog = ref(false)
+const publishing = ref(false)
+const restricted = ref(launchRoles(d.value).length > 0)
+const selectedRoles = computed({
+  get: () => launchRoles(d.value),
+  set: (codes: string[]) => {
+    d.value.launchRole = codes[0] || ''
+    d.value.additionalLaunchRoles = codes.slice(1)
+  }
+})
+const audienceLabel = computed(() =>
+  restricted.value
+    ? selectedRoles.value
+        .map((code) => roles.value.find((role) => role.code === code)?.name || code)
+        .join('、')
+    : '全部用户'
+)
+const metadata = ref({ name: '', code: '' })
+function openSave(publish: boolean) {
+  if (restricted.value && !selectedRoles.value.length) {
+    ElMessage.warning('请先选择至少一个可发起角色')
+    return
+  }
+  publishing.value = publish
+  metadata.value = { name: d.value.name, code: d.value.code }
+  saveDialog.value = true
+}
+async function toggleIntake() {
   if (busy.value) return
   busy.value = true
   try {
+    await approvalApi.setStopped(d.value.code, revision.value, !stopped.value)
+    stopped.value = !stopped.value
+    revision.value++
+    ElMessage.success(stopped.value ? '已停用模板' : '已恢复使用')
+  } finally {
+    busy.value = false
+  }
+}
+function escapeFullscreen(event: KeyboardEvent) {
+  if (
+    event.key === 'Escape' &&
+    fullscreen.value &&
+    !saveDialog.value &&
+    editorIndex.value === null &&
+    !document.querySelector(
+      '.el-popper:not([aria-hidden="true"]):not([style*="display: none"]), .el-message-box'
+    )
+  )
+    fullscreen.value = false
+}
+onMounted(() => window.addEventListener('keydown', escapeFullscreen))
+onBeforeUnmount(() => window.removeEventListener('keydown', escapeFullscreen))
+async function save() {
+  const publish = publishing.value
+  if (busy.value) return
+  busy.value = true
+  try {
+    if (!metadata.value.name.trim()) throw Error('请填写流程名称')
+    if (!/^[a-z][a-z0-9_]{0,63}$/.test(metadata.value.code.trim()))
+      throw Error('流程码须以小写字母开头，可包含小写字母、数字和下划线')
+    Object.assign(d.value, {
+      name: metadata.value.name.trim(),
+      code: metadata.value.code.trim()
+    })
     if (publish)
       validateDesign(
         d.value,
@@ -320,7 +449,15 @@ async function save(publish: boolean) {
       await approvalApi.publish(d.value.code, revision.value)
       revision.value++
     }
-    ElMessage.success(publish ? '已发布，可在发起审批时选择' : '草稿已保存')
+    saveDialog.value = false
+    fullscreen.value = false
+    ElMessage.success(
+      publish
+        ? stopped.value
+          ? '新版已发布，模板仍处于停用状态'
+          : '已发布，可在发起审批时选择'
+        : '草稿已保存'
+    )
     await finish()
   } catch (e) {
     const message = e instanceof Error ? e.message : '保存失败'
@@ -343,16 +480,45 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.designer .design-basics {
+.scope-heading {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
   flex-wrap: wrap;
-  align-items: flex-end;
-  gap: 12px 24px;
-  padding: 16px 20px;
+  gap: 12px;
 }
-.design-basics .approval-fields {
-  flex: 2 1 325px;
+.launch-scope h3 {
   margin: 0;
+  font-size: 16px;
+}
+.launch-scope p {
+  margin: 4px 0 0;
+  color: var(--el-text-color-regular);
+  font-size: 13px;
+}
+.scope-roles {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid var(--el-border-color-lighter);
+}
+.scope-roles label {
+  display: grid;
+  gap: 6px;
+  max-width: 540px;
+  font-size: 13px;
+}
+.scope-summary {
+  color: var(--el-text-color-primary);
+}
+
+.designer-fullscreen {
+  position: fixed;
+  inset: 0;
+  z-index: 1999;
+  overflow: auto;
+  align-content: start;
+  padding: clamp(16px, 3vw, 40px);
+  background: var(--el-bg-color-page);
 }
 .diagram-pane,
 .node-inspector {

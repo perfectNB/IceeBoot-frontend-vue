@@ -9,12 +9,13 @@ import type {
   Scope,
   Values
 } from '@/types/approval'
-import { approvalPath, reviewerRoles, validateDesign } from '@/utils/approval'
+import { approvalPath, launchRoles, reviewerRoles, validateDesign } from '@/utils/approval'
 import { mockRoles } from '../data/role'
 import { mockUsers } from '../data/user'
 import { demoUserId } from './auth'
 
 const drafts = new Map<string, Blueprint>()
+const stoppedCodes = new Set<string>()
 const published = new Map<string, Blueprint>()
 interface Case extends ApprovalDetail {
   owner: number
@@ -33,6 +34,10 @@ function requireAccess(action: string) {
 function canHandle(role: string) {
   return !!actor().roles?.includes(role) && mockRoles.some((r) => r.code === role && r.status === 'active')
 }
+function visible(b: Blueprint) {
+  const audience = launchRoles(b.design)
+  return !audience.length || audience.some(canHandle)
+}
 function allowed(c: Case) {
   return c.item.status === 'PENDING' && c.tasks?.some((t) => canHandle(t.role))
 }
@@ -48,7 +53,8 @@ function event(
   node: string,
   reason = '',
   values: Values | null = null,
-  role?: string
+  role?: string,
+  nodeId?: string
 ) {
   const u = actor()
   c.item.updatedAt = time()
@@ -58,7 +64,8 @@ function event(
     node,
     reason,
     time: c.item.updatedAt,
-    actor: u.username,
+    actor: u.nickname || u.username,
+    nodeId,
     role,
     actorId: Number(u.id),
     values: copy(values)
@@ -74,13 +81,61 @@ function move(c: Case, node?: string) {
 }
 
 export const mockApproval = {
+  async page(live: boolean, page: number, size: number, keyword?: string) {
+    requireAccess(live ? 'published' : 'drafts')
+    if (!Number.isInteger(page) || page < 1 || !Number.isInteger(size) || size < 1 || size > 100)
+      throw Error('分页参数无效')
+    const source = live ? published : drafts
+    const codes = [...source.keys()]
+      .filter((code) => {
+        const b = source.get(code)!
+        return (
+          !live ||
+          (visible(b) &&
+            (keyword === undefined ||
+              (!stoppedCodes.has(code) &&
+                b.design.name.toLocaleLowerCase().includes(keyword.trim().toLocaleLowerCase()))))
+        )
+      })
+      .sort()
+    const total = codes.length
+    const pages = Math.ceil(total / size)
+    const current = Math.min(page, Math.max(1, pages))
+    const records = codes.slice((current - 1) * size, current * size).map((code) => {
+      const b = source.get(code)!
+      return {
+        code,
+        name: published.get(code)?.design.name || b.design.name,
+        version: b.version,
+        revision: drafts.get(code)!.revision,
+        stopped: stoppedCodes.has(code),
+        changed:
+          !live && !!b.version && JSON.stringify(b.design) !== JSON.stringify(published.get(code)?.design)
+      }
+    })
+    return { records, total, current, size, pages, hasPrevious: current > 1, hasNext: current < pages }
+  },
+  async template(live: boolean, code: string, released = false) {
+    requireAccess(live ? 'published' : 'drafts')
+    const b = (live || released ? published : drafts).get(code)
+    if (!b || (live && !visible(b))) throw Error('流程模板不存在，请刷新')
+    return copy({ ...b, revision: drafts.get(code)!.revision, stopped: stoppedCodes.has(code) })
+  },
+  async setStopped(code: string, revision: number, stopped: boolean) {
+    requireAccess('intake')
+    const b = drafts.get(code)
+    if (!b?.version || b.revision !== revision) throw Error('记录已更新，请刷新后重试')
+    if (stopped) stoppedCodes.add(code)
+    else stoppedCodes.delete(code)
+    b.revision++
+  },
   async drafts() {
     requireAccess('drafts')
     return copy([...drafts.values()])
   },
   async published() {
     requireAccess('published')
-    return copy([...published.values()])
+    return copy([...published.values()].filter((b) => visible(b) && !stoppedCodes.has(b.design.code)))
   },
   async roles() {
     requireAccess('roles')
@@ -89,6 +144,7 @@ export const mockApproval = {
   async save(design: ApprovalDesign, revision: number) {
     requireAccess('save')
     if (!/^[a-z][a-z0-9_]{0,63}$/.test(design.code) || !design.name.trim()) throw Error('请检查流程码和名称')
+    if (design.additionalLaunchRoles?.length && !design.launchRole) throw Error('请选择可见与发起角色')
     const old = drafts.get(design.code)
     if ((old?.revision || 0) !== revision) throw Error('流程码已存在或草稿已更新')
     drafts.set(design.code, { design: copy(design), revision: revision + 1, version: old?.version || 0 })
@@ -97,6 +153,10 @@ export const mockApproval = {
     requireAccess('publish')
     const b = drafts.get(code)
     if (!b || b.revision !== revision) throw Error('草稿已更新')
+    if (
+      launchRoles(b.design).some((code) => !mockRoles.some((r) => r.code === code && r.status === 'active'))
+    )
+      throw Error('请选择有效的流程可见角色')
     validateDesign(
       b.design,
       mockRoles.filter((r) => r.status === 'active').map((r) => r.code)
@@ -109,6 +169,8 @@ export const mockApproval = {
     requireAccess('start')
     const b = published.get(code)
     if (!b || b.version !== version) throw Error('流程发布版本已变化')
+    if (!visible(b)) throw Error('无权发起该流程')
+    if (stoppedCodes.has(code)) throw Error('流程已停用，无法发起新申请')
     const route = approvalPath(b.design, values).map((n) => n.id)
     const id = crypto.randomUUID()
     const c: Case = {
@@ -161,6 +223,19 @@ export const mockApproval = {
       ...c,
       mine,
       canReview: !!allowed(c),
+      candidates: Object.fromEntries(
+        (c.tasks || []).map((t) => [
+          t.role,
+          mockUsers
+            .filter(
+              (u) =>
+                u.status === 'active' &&
+                u.roles?.includes(t.role) &&
+                mockRoles.some((r) => r.code === t.role && r.status === 'active')
+            )
+            .map((u) => u.nickname || u.username)
+        ])
+      ),
       roleNames: Object.fromEntries(
         mockRoles
           .filter((r) => c.design.nodes.some((n) => reviewerRoles(n).includes(r.code)))
@@ -187,7 +262,7 @@ export const mockApproval = {
       c.item.node = ''
     }
     c.item.revision++
-    event(c, action === 'approve' ? 'APPROVE' : 'REJECT', node.name, reason, null, choices[0].role)
+    event(c, action === 'approve' ? 'APPROVE' : 'REJECT', node.name, reason, null, choices[0].role, node.id)
   },
   async revise(id: string, action: OwnerAction, change: Change) {
     requireAccess('revise')

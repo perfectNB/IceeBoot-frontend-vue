@@ -265,7 +265,7 @@ test('approval forms route by multiple fields, isolate role inboxes and retain b
   assert.equal(result.item.status,'APPROVED')
   assert.equal(result.history[0].values.companyName,'一厂')
   assert.equal(result.history[2].values.companyName,'二厂')
-  assert.equal(result.history[1].actor,'user_admin')
+  assert.equal(result.history[1].actor,'用户管理员')
   assert.ok(result.history[1].time)
   await assert.rejects(api.revise(id,'resubmit',{revision:4,values:form}))
   await assert.rejects(api.submit(d.code,1,{...form,state:'2',sex:'2'}))
@@ -314,16 +314,123 @@ test('parallel sign-off enforces amount boundaries and cancels stale tasks acros
   assert.equal(result.history[4].role,'test')
 })
 
+test('approval catalog pages and intake changes preserve the version of pending cases', async () => {
+  const { load, login } = demo()
+  const api = load('@/api/approval').approvalApi
+  const { blankDesign } = load('@/utils/approval')
+  await login('admin')
+  const d = blankDesign()
+  d.code = 'supply'
+  d.nodes[0].role = 'admin'
+  await api.save(d,0)
+  await api.save({...d, code:'another'},0)
+  await api.publish(d.code,1)
+  const id = await api.submit(d.code,1,{})
+  const page = await api.page(false,2,1)
+  assert.equal(page.total,2)
+  assert.equal(page.records[0].code,d.code)
+  assert.equal((await api.page(true,2,1)).current,1)
+  await api.setStopped(d.code,2,true)
+  assert.equal((await api.published()).length,0)
+  assert.equal((await api.page(true,1,10)).records[0].stopped,true)
+  d.nodes[0].name = '新版复核'
+  d.nodes[0].role = 'test'
+  await api.save(d,3)
+  assert.equal((await api.page(false,2,1)).records[0].changed,true)
+  await api.publish(d.code,4)
+  await assert.rejects(api.submit(d.code,2,{}),/停用/)
+  await api.review(id,'approve',{revision:1})
+  assert.equal((await api.detail(id)).version,1)
+  assert.equal((await api.detail(id)).design.nodes[0].role,'admin')
+  await assert.rejects(api.setStopped(d.code,2,false),/刷新/)
+  await api.setStopped(d.code,5,false)
+  await assert.rejects(api.submit(d.code,1,{}),/版本/)
+  const fresh = await api.submit(d.code,2,{})
+  assert.equal((await api.detail(fresh)).tasks[0].role,'test')
+  await login('user_admin')
+  await assert.rejects(api.setStopped(d.code,6,true),/权限/)
+})
+
+test('published visibility applies before pagination, detail and submission, independently of reviewer roles',async () => {
+  const {load,login} = demo()
+  const api = load('@/api/approval').approvalApi
+  const d = load('@/utils/approval').blankDesign()
+  Object.assign(d,{code:'team_supply',name:'部门申领',launchRole:'test'})
+  d.nodes[0].role='admin'
+  await login('admin')
+  await api.save(d,0)
+  await api.publish(d.code,1)
+  assert.equal((await api.page(true,1,10,'申领')).total,0)
+  assert.equal((await api.published()).length,0)
+  await assert.rejects(api.template(true,d.code))
+  await assert.rejects(api.submit(d.code,1,{}))
+  assert.equal((await api.template(false,d.code,true)).version,1)
+  await login('user_admin')
+  assert.equal((await api.page(true,1,10,'申领')).total,1)
+  assert.equal((await api.page(true,1,10,'合同')).total,0)
+  const id = await api.submit(d.code,1,{})
+  const detail = await api.detail(id)
+  assert.ok(detail.candidates.admin.includes('超级管理员'))
+  await assert.rejects(api.review(id,'approve',{revision:1,taskId:detail.tasks[0].id}))
+  await login('admin')
+  await api.review(id,'approve',{revision:1})
+  assert.equal((await api.detail(id)).history.at(-1).actor,'超级管理员')
+})
+
+test('a catalog opened during a server upgrade can page and open the selected legacy template', async () => {
+  const templates = ['a','b'].map(code => ({design:{code,name:code},revision:2,version:1}))
+  const {load} = demo({get:async () => templates})
+  const api = load('@/api/approval').approvalApi
+  assert.equal((await api.page(false,2,1)).records[0].code,'b')
+  assert.equal((await api.template(true,'b')).design.code,'b')
+  await assert.rejects(api.template(true,'missing'),/不存在/)
+})
+
 test('approval API uses the published version and sends the observed revision with review actions', async () => {
   const calls = []
   const { load } = demo(new Proxy({}, {get: (_,method) => async (url,data) => calls.push([method,url,data])}))
   const api = load('@/api/approval').approvalApi
+  await api.page(false,2,20)
+  await api.page(true,1,10)
+  await api.template(true,'travel')
+  await api.setStopped('travel',4,true)
   await api.submit('travel',3,{price:'80'})
   await api.review('id/1','reject',{revision:2,taskId:'t1',reason:'需凭证'})
   await api.revise('id/1','resubmit',{revision:3,values:{price:'60'}})
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
+    ['get','/api/v1/workflow/approvals/drafts',{page:2,size:20}],
+    ['get','/api/v1/workflow/approvals/published',{page:1,size:10}],
+    ['get','/api/v1/workflow/approvals/published',{code:'travel'}],
+    ['put','/api/v1/workflow/approvals/drafts/travel/intake',{revision:4,stopped:true}],
     ['post','/api/v1/workflow/approvals/cases',{code:'travel',version:3,values:{price:'80'}}],
     ['post','/api/v1/workflow/approvals/cases/id%2F1/review/reject',{revision:2,taskId:'t1',reason:'需凭证'}],
     ['post','/api/v1/workflow/approvals/cases/id%2F1/owner/resubmit',{revision:3,values:{price:'60'}}],
   ])
+})
+
+test('research budget can be found and started by any published launch role', async () => {
+  const { load, login } = demo()
+  const api = load('@/api/approval').approvalApi
+  const design = load('@/utils/approval').blankDesign()
+  load('@/mock/data/role').mockRoles.push({ id: 99, code: 'ai_researcher', name: 'AI研究员', status: 'active' })
+  const researcher = load('@/mock/data/user').mockUsers.find(user => user.username === 'user_admin')
+  researcher.roles.push('ai_researcher')
+  Object.assign(design, { code: 'research_budget', name: '研发经费审批', launchRole: 'ai_researcher' })
+  design.nodes[0].role = 'admin'
+  await login('admin')
+  await api.save(design, 0)
+  await api.publish(design.code, 1)
+  assert.equal((await api.page(true, 1, 10, '研发')).total, 0)
+  await assert.rejects(api.template(true, design.code))
+  await assert.rejects(api.submit(design.code, 1, {}))
+  await login('user_admin')
+  assert.equal((await api.page(true, 1, 10, '研发')).total, 1)
+  assert.ok(await api.submit(design.code, 1, {}))
+  await login('admin')
+  design.additionalLaunchRoles = ['admin']
+  await api.save(design, 2)
+  assert.equal((await api.page(true, 1, 10, '研发')).total, 0)
+  await api.publish(design.code, 3)
+  assert.equal((await api.page(true, 1, 10, '研发')).total, 1)
+  assert.ok(await api.submit(design.code, 2, {}))
 })

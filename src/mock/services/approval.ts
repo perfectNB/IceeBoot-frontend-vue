@@ -9,7 +9,7 @@ import type {
   Scope,
   Values
 } from '@/types/approval'
-import { approvalPath, launchRoles, reviewerRoles, sliceApprovalPage, validateDesign } from '@/utils/approval'
+import { approvalPath, launchRoles, reviewerRoles, pageApprovalCases, validateDesign } from '@/utils/approval'
 import { mockRoles } from '../data/role'
 import { mockUsers } from '../data/user'
 import { demoUserId } from './auth'
@@ -215,8 +215,8 @@ export const mockApproval = {
   async list(scope: Scope) {
     return copy(scopedItems(scope))
   },
-  async casePage(scope: Scope, page: number, size: number) {
-    return copy(sliceApprovalPage(scopedItems(scope), page, size))
+  async casePage(scope: Scope, page: number, size: number, keyword = '') {
+    return copy(pageApprovalCases(scopedItems(scope), page, size, keyword))
   },
   async detail(id: string): Promise<ApprovalDetail> {
     requireAccess('detail')

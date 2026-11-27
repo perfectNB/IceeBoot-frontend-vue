@@ -18,6 +18,17 @@
         <el-tab-pane v-if="!inbox" label="我发起的" name="mine" />
         <el-tab-pane v-if="!inbox" label="被驳回的申请" name="rejected" />
       </el-tabs>
+      <form class="case-search" role="search" @submit.prevent="search">
+        <el-input
+          v-model="activeTab.input"
+          clearable
+          aria-label="流程名称"
+          placeholder="搜索流程名称"
+          :prefix-icon="Search"
+          @clear="search"
+        />
+        <el-button native-type="submit" type="primary">查询</el-button>
+      </form>
       <div v-loading="loading" class="approval-list">
         <div v-for="r in items" :key="r.id" class="approval-list-item">
           <span class="approval-mark">
@@ -36,20 +47,20 @@
             {{ scope === 'inbox' ? '办理' : '查看详情' }}
           </el-button>
         </div>
-        <el-empty v-if="!loading && !items.length" :image-size="68" :description="empty[scope]" />
+        <el-empty v-if="!loading && !items.length" :image-size="68" :description="activeTab.keyword ? '没有匹配的流程' : empty[scope]" />
       </div>
       <footer class="case-pagination">
-        <span>共 {{ pagination.total }} 条</span>
+        <span>共 {{ activeTab.total }} 条</span>
         <el-pagination
           :key="scope"
-          :current-page="pagination.current"
-          :page-size="pagination.size"
+          :current-page="activeTab.current"
+          :page-size="activeTab.size"
           :page-sizes="[10, 20, 50]"
-          :total="pagination.total"
+          :total="activeTab.total"
           :pager-count="5"
           background
           layout="sizes, prev, pager, next"
-          @update:current-page="changePage($event, pagination.size)"
+          @update:current-page="changePage($event, activeTab.size)"
           @update:page-size="changePage(1, $event)"
         />
       </footer>
@@ -199,7 +210,7 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRoute } from 'vue-router'
-import { Position, Document } from '@element-plus/icons-vue'
+import { Position, Document, Search } from '@element-plus/icons-vue'
 import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import ApprovalForm from './ApprovalForm.vue'
 import { approvalApi } from '@/api/approval'
@@ -219,14 +230,20 @@ const can = (p: string) => hasPermission('workflow:approval:' + p + ':api')
 const scope = ref<Scope>(props.inbox ? 'inbox' : 'mine'),
   items = ref<ApprovalItem[]>([]),
   published = ref<Blueprint[]>([])
-const initialPage = () => ({ current: 1, size: 10, total: 0 })
-const tabPages = reactive({
-  mine: initialPage(), rejected: initialPage(), inbox: initialPage(), handled: initialPage()
+const initialTab = () => ({ input: '', keyword: '', current: 1, size: 10, total: 0 })
+const tabStates = reactive({
+  mine: initialTab(), rejected: initialTab(), inbox: initialTab(), handled: initialTab()
 })
-const pagination = computed(() => tabPages[scope.value])
+const activeTab = computed(() => tabStates[scope.value])
+function search() {
+  const tab = activeTab.value
+  tab.keyword = tab.input.trim()
+  tab.current = 1
+  return load()
+}
 function changePage(current: number, size: number) {
-  if (pagination.value.current === current && pagination.value.size === size) return
-  Object.assign(pagination.value, { current, size })
+  if (activeTab.value.current === current && activeTab.value.size === size) return
+  Object.assign(activeTab.value, { current, size })
   return load()
 }
 const detail = ref<ApprovalDetail>(),
@@ -293,8 +310,8 @@ async function load() {
   items.value = []
   try {
     const tab = scope.value
-    const state = tabPages[tab]
-    const result = await approvalApi.casePage(tab, state.current, state.size)
+    const state = tabStates[tab]
+    const result = await approvalApi.casePage(tab, state.current, state.size, state.keyword)
     if (seq === listRequest && tab === scope.value) {
       Object.assign(state, { current: result.current, total: result.total })
       items.value = result.records
@@ -348,7 +365,7 @@ async function submit() {
     validateForm(b.design, values.value)
     const id = await approvalApi.submit(b.design.code, b.version, values.value)
     starting.value = false
-    tabPages.mine.current = 1
+    tabStates.mine.current = 1
     scope.value = 'mine'
     ElMessage.success('申请已提交')
     await load()
@@ -420,6 +437,12 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+.case-search {
+  display: flex;
+  gap: 8px;
+  max-width: 420px;
+  margin-block: 4px 16px;
+}
 .case-pagination {
   display: flex;
   align-items: center;

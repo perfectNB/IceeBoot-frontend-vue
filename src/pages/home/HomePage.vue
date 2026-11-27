@@ -1,5 +1,5 @@
 <template>
-  <div ref="pageRoot" class="launch-site" :class="{ 'is-dark': isDark, 'can-reveal': canReveal && !prefersReducedMotion, 'reduce-motion': prefersReducedMotion }">
+  <div ref="pageRoot" class="launch-site" :class="{ 'is-dark': isDark, 'scroll-motion': !motionStopped, 'reduce-motion': prefersReducedMotion }">
     <a class="skip-link" href="#capabilities">{{ t('home.skipContent') }}</a>
     <header class="launch-header">
       <div class="launch-width header-inner">
@@ -21,17 +21,17 @@
               <div class="hero-spec"><span>JAVA + VUE</span><i></i><span>POWERED BY AGENTSCOPE</span></div>
             </div>
             <div class="hero-art">
-              <BrandMascot :paused="motionStopped || showLoginDialog" />
+              <HeroAssembly />
             </div>
           </div>
           <div class="hero-bottom launch-width"><span>{{ t('home.visualCaption') }}</span><a href="#capabilities">{{ t('home.scrollExplore') }}<el-icon aria-hidden="true"><Bottom /></el-icon></a></div>
         </div>
       </section>
 
-      <section id="capabilities" class="manifesto launch-width">
-        <p class="eyebrow" data-reveal>LESS PLUMBING. MORE BUILDING.</p>
-        <h2 data-reveal>{{ t('home.platformTitle') }}<span>{{ t('home.platformHighlight') }}</span></h2>
-        <p data-reveal>{{ t('home.platformDescription') }}</p>
+      <section id="capabilities" class="manifesto launch-width" data-scene="capabilities">
+        <p class="eyebrow" data-story-copy>LESS PLUMBING. MORE BUILDING.</p>
+        <h2 data-story-copy>{{ t('home.platformTitle') }}<span>{{ t('home.platformHighlight') }}</span></h2>
+        <p data-story-copy>{{ t('home.platformDescription') }}</p>
         <nav class="chapter-navigation" :aria-label="t('home.navCapabilities')"><a v-for="(feature, index) in features" :key="feature.kind" :href="`#${feature.kind}`"><span>0{{ index + 1 }}</span>{{ t(`home.section_${feature.kind}`) }}<el-icon aria-hidden="true"><Bottom /></el-icon></a></nav>
       </section>
 
@@ -42,7 +42,7 @@
             <div class="feature-art">
               <div class="scene-halo" aria-hidden="true"></div>
               <span class="scene-watermark" aria-hidden="true">{{ feature.mark }}</span>
-              <AgentCoreScene :kind="feature.kind" :label="t(`home.scene_${feature.kind}`)" :progress="sceneProgress[feature.kind] || 0" :reduced-motion="motionStopped" :dark="isDark" :selection="feature.kind === 'models' ? providers.findIndex(provider => provider.name === selectedProvider.name) : capabilityMask" />
+              <AgentCoreScene :kind="feature.kind" :label="t(`home.scene_${feature.kind}`)" :progress="motionStopped ? .45 : sceneProgress[feature.kind] || 0" :reduced-motion="motionStopped" :dark="isDark" :selection="feature.kind === 'models' ? providers.findIndex(provider => provider.name === selectedProvider.name) : capabilityMask" />
               <div class="scene-caption"><span class="status-dot"></span><span>{{ t(`home.scene_caption_${feature.kind}`) }}</span><span class="scene-coordinate" aria-hidden="true">[ {{ String(Math.round((sceneProgress[feature.kind] || 0) * 100)).padStart(3, '0') }} ]</span></div>
             </div>
             <div class="feature-copy">
@@ -73,19 +73,19 @@
 
       <section id="integration" class="integration-section" data-scene="integration">
         <div class="launch-width">
-          <div class="integration-intro" data-reveal><p class="eyebrow">04 → YOUR APPLICATION</p><h2>{{ t('home.integrationTitle') }}<span>{{ t('home.integrationHighlight') }}</span></h2><p>{{ t('home.integrationDescription') }}</p></div>
+          <div class="integration-intro" data-story-copy><p class="eyebrow">04 → YOUR APPLICATION</p><h2>{{ t('home.integrationTitle') }}<span>{{ t('home.integrationHighlight') }}</span></h2><p>{{ t('home.integrationDescription') }}</p></div>
           <div class="integration-layout">
-            <div class="governance-list"><article v-for="(item, index) in governance" :key="item.key" data-reveal><span class="governance-number">0{{ index + 1 }}</span><div><h3><el-icon aria-hidden="true"><component :is="item.icon" /></el-icon>{{ t(`home.governance_${item.key}`) }}</h3><p>{{ t(`home.governance_${item.key}_description`) }}</p></div></article><a :href="docsUrl" target="_blank" rel="noopener noreferrer" class="text-link">{{ t('home.integrationDocs') }}<el-icon aria-hidden="true"><TopRight /></el-icon></a></div>
+            <div class="governance-list"><article v-for="(item, index) in governance" :key="item.key" data-story-copy><span class="governance-number">0{{ index + 1 }}</span><div><h3><el-icon aria-hidden="true"><component :is="item.icon" /></el-icon>{{ t(`home.governance_${item.key}`) }}</h3><p>{{ t(`home.governance_${item.key}_description`) }}</p></div></article><a :href="docsUrl" target="_blank" rel="noopener noreferrer" class="text-link">{{ t('home.integrationDocs') }}<el-icon aria-hidden="true"><TopRight /></el-icon></a></div>
             <div class="code-perspective" :style="{ '--code-tilt': `${motionStopped ? 0 : (1 - (sceneProgress.integration || 0)) * 9}deg` }"><div class="code-depth" aria-hidden="true"></div><div class="code-window"><div class="code-toolbar"><div class="window-dots" aria-hidden="true"><i></i><i></i><i></i></div><div class="code-switch"><button v-for="mode in exampleModes" :key="mode" :aria-pressed="exampleMode === mode" :class="{ active: exampleMode === mode }" @click="exampleMode = mode">{{ mode === 'typescript' ? 'TypeScript' : 'HTTP' }}</button></div><button class="copy-button" :aria-label="t('home.copyCode')" @click="copyCode"><el-icon aria-hidden="true"><CopyDocument /></el-icon>{{ t('home.copy') }}</button></div><div class="code-content" tabindex="0" :aria-label="t('home.codeExample')"><pre><code><span v-for="(line, index) in exampleCode.split('\n')" :key="index" class="code-line"><span class="line-number" aria-hidden="true">{{ String(index + 1).padStart(2, '0') }}</span><span :class="{ 'code-comment': line.startsWith('//') }">{{ line || ' ' }}</span></span></code></pre></div><div class="code-footnote"><el-icon aria-hidden="true"><Lock /></el-icon>{{ t('home.previewPermission') }}<span>{{ t('home.codeExample') }}</span></div></div></div>
           </div>
         </div>
       </section>
-      <section id="getting-started" class="getting-started launch-width">
-        <div class="section-intro" data-reveal><p class="eyebrow">YOUR FIRST BUILD</p><h2>{{ t('home.startTitle') }}</h2><p>{{ t('home.startDescription') }}</p></div>
-        <ol class="steps"><li v-for="step in steps" :key="step" data-reveal><span class="step-number">0{{ step }}</span><h3>{{ t(`home.step${step}`) }}</h3><p>{{ t(`home.step${step}Desc`) }}</p></li></ol>
+      <section id="getting-started" class="getting-started launch-width" data-scene="steps">
+        <div class="section-intro" data-story-copy><p class="eyebrow">YOUR FIRST BUILD</p><h2>{{ t('home.startTitle') }}</h2><p>{{ t('home.startDescription') }}</p></div>
+        <ol class="steps"><li v-for="step in steps" :key="step" data-story-copy><span class="step-number">0{{ step }}</span><h3>{{ t(`home.step${step}`) }}</h3><p>{{ t(`home.step${step}Desc`) }}</p></li></ol>
         <div class="stack-strip" :aria-label="t('home.techTitle')"><span>{{ t('home.techTitle') }}</span><strong v-for="tech in techStack" :key="tech">{{ tech }}</strong></div>
       </section>
-      <section class="finale-section" data-scene="finale"><div class="finale-art"><AgentCoreScene kind="hero" :label="t('home.scene_hero')" :progress="sceneProgress.finale || 0" :reduced-motion="motionStopped" :dark="isDark" /></div><div class="launch-width finale-content"><p class="eyebrow">MAKE IT YOURS.</p><h2>{{ t('home.calloutTitle') }}<span>{{ t('home.calloutHighlight') }}</span></h2><p>{{ t('home.calloutDescription') }}</p><button class="launch-button primary" @click="handleExperience">{{ t(isLoggedIn ? 'home.console' : 'home.experience') }}<el-icon aria-hidden="true"><ArrowRight /></el-icon></button></div></section>
+      <section class="finale-section" data-scene="finale"><div class="finale-art"><AgentCoreScene kind="hero" :label="t('home.scene_hero')" :progress="motionStopped ? .45 : sceneProgress.finale || 0" :reduced-motion="motionStopped" :dark="isDark" /></div><div class="launch-width finale-content"><p class="eyebrow">MAKE IT YOURS.</p><h2>{{ t('home.calloutTitle') }}<span>{{ t('home.calloutHighlight') }}</span></h2><p>{{ t('home.calloutDescription') }}</p><button class="launch-button primary" @click="handleExperience">{{ t(isLoggedIn ? 'home.console' : 'home.experience') }}<el-icon aria-hidden="true"><ArrowRight /></el-icon></button></div></section>
     </main>
 
     <footer class="launch-footer"><div class="launch-width"><div class="footer-main"><a class="brand" href="#"><img class="brand-symbol" src="@/assets/logo.png" alt="" width="32" height="32">IceeBoot.</a><p>{{ t('home.footerDescription') }}</p><div class="footer-links"><a :href="sourceUrl" target="_blank" rel="noopener noreferrer">Gitee<el-icon aria-hidden="true"><TopRight /></el-icon></a><a :href="docsUrl" target="_blank" rel="noopener noreferrer">{{ t('home.docs') }}</a><button @click="showContactDialog = true">{{ t('home.contactUs') }}</button><button v-if="isLoggedIn" @click="handleLogout">{{ t('home.logoutBtn') }}</button></div></div><div class="footer-bottom"><span>© {{ currentYear }} IceeBoot</span><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">京ICP备2024086986号-2</a></div></div></footer>
@@ -102,7 +102,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { Moon, Sunny, ArrowRight, TopRight, Cpu, Check, Connection, Lock, CopyDocument, Upload, Message, Key, ChatDotRound, Box, Tickets, Finished, Plus, Bottom, VideoPlay, VideoPause } from '@element-plus/icons-vue'
 import { isDark, toggleTheme } from '@/utils/theme'
-import BrandMascot from '@/components/common/BrandMascot.vue'
+import HeroAssembly from './components/HeroAssembly.vue'
 import LoginDialog from '@/components/common/LoginDialog.vue'
 import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
 import { useUserStore } from '@/stores/user'
@@ -117,7 +117,7 @@ const route = useRoute()
 const userStore = useUserStore()
 const { t } = useI18n()
 const pageRoot = ref<HTMLElement>()
-const { sceneProgress, prefersReducedMotion, canReveal } = useScrollStory(pageRoot)
+const { sceneProgress, prefersReducedMotion } = useScrollStory(pageRoot)
 const ambientPaused = ref(false)
 const motionStopped = computed(() => prefersReducedMotion.value || ambientPaused.value)
 const isLoggedIn = computed(() => !!userStore.getToken())
@@ -347,7 +347,7 @@ onBeforeUnmount(() => { if (mockTimer) clearTimeout(mockTimer) })
 .text-link { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; font-size: 12px; color: var(--secondary) !important; &:hover { color: var(--text) !important; } }
 .hero-spec { display: flex; align-items: center; gap: 12px; margin-top: 37px; color: var(--subtle); font-size: 9px; letter-spacing: .09em; i { width: 3px; height: 3px; background: var(--subtle); border-radius: 50%; } }
 .hero-art { display: grid; place-items: center; position: relative; height: min(650px, 75svh); margin: 0; }
-.hero-art .brand-scene { width: min(100%, 64svh); }
+
 .hero-bottom { display: flex; align-items: center; justify-content: space-between; height: 60px; color: var(--subtle); font-size: 11px; a { display: inline-flex; gap: 18px; align-items: center; min-height: 44px; } }
 .manifesto { padding-block: 120px 100px; text-align: center; .eyebrow { justify-content: center; } h2 { font-size: clamp(36px, 4.2vw, 60px); letter-spacing: -.055em; line-height: 1.4; font-weight: 500; margin-top: 25px; span { display: block; color: var(--highlight); } } > p:not(.eyebrow) { color: var(--secondary); max-width: 540px; font-size: 15px; line-height: 2; margin: 26px auto 0; } }
 .chapter-navigation { display: flex; justify-content: center; gap: 38px; margin-top: 55px; a { display: flex; align-items: center; gap: 12px; min-height: 48px; font-size: 12px; color: var(--text); span { font-size: 9px; color: var(--subtle); } .el-icon { color: var(--accent-ink); font-size: 11px; } &:hover { color: var(--accent-ink); } } }
@@ -414,12 +414,59 @@ onBeforeUnmount(() => { if (mockTimer) clearTimeout(mockTimer) })
 .finale-content { position: relative; text-align: center; .eyebrow { justify-content: center; } h2 { font-size: clamp(36px, 4.5vw, 62px); font-weight: 500; line-height: 1.4; letter-spacing: -.055em; margin-top: 20px; span { display: block; color: var(--highlight); } } > p:not(.eyebrow) { color: var(--secondary); font-size: 14px; line-height: 1.9; margin-top: 25px; }.launch-button { margin-top: 30px; } }
 .launch-footer { background: var(--site-bg); padding-block: 32px 20px; }.footer-main { display: flex; align-items: center; gap: 24px; > p { font-size: 11px; color: var(--subtle); } }.footer-links { margin-left: auto; display: flex; gap: 22px; a,button { display: inline-flex; align-items: center; gap: 5px; min-height: 44px; border: 0; background: none; color: var(--secondary); font-size: 11px; } }.footer-bottom { display: flex; justify-content: space-between; gap: 16px; margin-top: 24px; padding-top: 20px; color: var(--subtle); font-size: 10px; }
 .contact-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 22px 16px; figure { margin: 0; text-align: center; } img { width: 100%; max-width: 144px; height: auto; aspect-ratio: 1; object-fit: contain; } figcaption { margin-top: 8px; font-size: 12px; } }
-.can-reveal [data-reveal] { opacity: 0; transform: translateY(20px); transition: opacity .8s ease, transform .8s cubic-bezier(.2,.7,.3,1); &.is-visible { opacity: 1; transform: none; } }
+/* The blue line passes the motion from the outgoing scene to the next heading. */
+[data-scene] { position: relative; }
+[data-scene]:not(.hero-section)::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  left: 18%;
+  width: 64%;
+  height: 1px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--hairline) 25%, var(--accent-ink) 52%, var(--hairline) 75%, transparent);
+}
+.scroll-motion [data-scene]:not(.hero-section)::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  top: -2px;
+  left: calc(18% + 64% * var(--arrival, 1));
+  width: 18px;
+  height: 4px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, #46bfff);
+  box-shadow: 2px 0 9px #50c8ff88;
+  opacity: min(calc(4 * var(--arrival, 1)), calc(4 * (1 - var(--arrival, 1))));
+}
+.launch-site:not(.scroll-motion) [data-scene] {
+  --departure: 0 !important;
+  --arrival: 1 !important;
+}
+.scroll-motion {
+  [data-scene]::before {
+    transform-origin: left;
+    transform: scaleX(var(--arrival, 1));
+    opacity: calc(.25 + .65 * var(--arrival, 1));
+  }
+  .hero-copy { transform: translateY(calc(-32px * var(--departure, 0))); }
+  .hero-art { transform: translateY(calc(42px * var(--departure, 0))); }
+  .feature-art {
+    transform: translateY(calc((1 - var(--arrival, 1)) * 56px - var(--departure, 0) * 32px))
+      scale(calc(.94 + var(--arrival, 1) * .06));
+  }
+  .feature-copy, [data-story-copy], .finale-content {
+    transform: translateY(calc((1 - var(--arrival, 1)) * 38px - var(--departure, 0) * 20px));
+    opacity: calc(.64 + var(--arrival, 1) * .36 - var(--departure, 0) * .20);
+  }
+}
 @media (min-width: 1700px) { .launch-width { width: min(1280px, 80%); } .hero-copy h1 { font-size: 90px; }.feature-copy h2 { font-size: 54px; }.hero-description, .feature-description { font-size: 16px; max-width: 500px; }.hero-art { height: 750px; }.feature-art { height: 650px; } }
 @media (max-width: 1100px) { .header-inner { gap: 20px; }.header-inner nav { gap: 18px; }.hero-copy h1 { font-size: 56px; }.feature-grid { gap: 35px; }.feature-copy h2 { font-size: 36px; }.integration-layout { gap: 45px; } }
 @media (max-width: 760px) {
   .launch-width { width: calc(100% - 48px); }.header-inner { width: calc(100% - 32px); min-height: 64px; gap: 8px; }.header-inner nav { display: none; }.header-actions { margin-left: auto; gap: 0; }.brand { font-size: 20px; gap: 4px; }.brand-dot { margin-left: -3px; }.nav-cta { min-height: 36px; padding-inline: 13px; }.motion-button { margin: 0; width: 32px; height: 32px; }.utility-button { width: 36px; }.header-actions :deep(.lang-btn) { width: 36px; }
-  .hero-section { min-height: 0; height: auto; }.hero-sticky { position: relative; top: 0; height: auto; min-height: 0; }.hero-grid { display: flex; flex-direction: column; align-items: stretch; }.hero-copy { padding-top: 55px; }.hero-copy h1 { font-size: clamp(42px, 8vw, 62px); margin-top: 20px; }.hero-description { max-width: 520px; font-size: 13px; line-height: 1.9; margin-top: 20px !important; }.hero-actions { margin-top: 25px; gap: 25px; }.hero-spec { margin-top: 27px; font-size: 8px; }.hero-art { height: 390px; margin: -5px 0 -10px; }.hero-art .brand-scene { width: min(100%, 370px); }.hero-bottom { font-size: 9px; height: 64px; gap: 14px; > span { max-width: 145px; line-height: 1.8; } a { gap: 6px; } }
+  .hero-section { min-height: 0; height: auto; }.hero-sticky { position: relative; top: 0; height: auto; min-height: 0; }.hero-grid { display: flex; flex-direction: column; align-items: stretch; }.hero-copy { padding-top: 55px; }.hero-copy h1 { font-size: clamp(42px, 8vw, 62px); margin-top: 20px; }.hero-description { max-width: 520px; font-size: 13px; line-height: 1.9; margin-top: 20px !important; }.hero-actions { margin-top: 25px; gap: 25px; }.hero-spec { margin-top: 27px; font-size: 8px; }.hero-art { height: 390px; margin: -5px 0 -10px; }.hero-bottom { font-size: 9px; height: 64px; gap: 14px; > span { max-width: 145px; line-height: 1.8; } a { gap: 6px; } }
   .manifesto { padding-block: 75px; text-align: left; .eyebrow { justify-content: flex-start; } h2 { font-size: 34px; } > p:not(.eyebrow) { font-size: 13px; margin-top: 22px; } }.chapter-navigation { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; margin-top: 30px; a { justify-content: space-between; font-size: 11px; } }
   .feature-scene { height: auto; min-height: 0; scroll-margin-top: 64px; }.feature-sticky { position: relative; top: 0; height: auto; min-height: 0; }.feature-heading { padding-top: 28px; font-size: 8px; gap: 18px; }.feature-heading > span:last-child { display: none; }.feature-grid { display: flex; flex-direction: column; gap: 0; align-items: stretch; }.feature-art { order: 2; height: 410px; margin: -20px 0 30px; }.feature-copy { padding-block: 40px; h2 { font-size: 34px; margin-top: 13px; max-width: 560px; } }.feature-copy h2 > span { display: block; }.feature-description { font-size: 13px; margin-top: 18px !important; max-width: 560px; }.scene-watermark { font-size: 70px; top: 4%; }.scene-caption { font-size: 9px; inset-inline: 10%; }.service-list { margin-top: 23px; gap: 0 24px; }.capability-control,.model-control,.sandbox-control { margin-top: 24px; }.capability-buttons button { flex: 1; justify-content: center; padding-inline: 10px; }.provider-list { gap: 8px; button { padding-inline: 7px; gap: 3px; font-size: 11px; } .provider-check { width: 10px; font-size: 10px; } }.feature-foundation .feature-art { height: 380px; }.feature-models .feature-art { height: 430px; }.terminal-line { font-size: 11px; gap: 16px; }
   .integration-section { padding-block: 70px 85px; }.integration-intro h2 { font-size: 33px; }.integration-intro > p:last-child { font-size: 13px; }.integration-layout { grid-template-columns: 1fr; gap: 35px; margin-top: 35px; }.governance-list article { padding-block: 18px; }.code-content { padding-inline: 14px; code { font-size: 10px; } }.code-toolbar { padding-inline: 14px; gap: 10px; }.code-footnote > span { display: none; }.code-depth { right: -5px; }.code-window { transform: none; }.code-depth { transform: none; }
@@ -428,5 +475,5 @@ onBeforeUnmount(() => { if (mockTimer) clearTimeout(mockTimer) })
 @media (max-width: 360px) { .provider-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-height: 760px) and (min-width: 761px) { .hero-sticky, .feature-sticky { min-height: 570px; }.feature-art { height: 480px; }.feature-copy { padding-block: 25px; }.feature-copy h2 { font-size: 35px; }.feature-description { font-size: 13px; margin-top: 17px !important; }.feature-heading { padding-top: 20px; }.service-list { margin-top: 20px; }.service-list > div { padding-block: 11px; }.hero-copy h1 { font-size: 58px; }.hero-art { height: 490px; } }
 .reduce-motion { .hero-section,.feature-scene { height: auto; min-height: 0; }.hero-sticky,.feature-sticky { position: relative; top: 0; height: auto; }.hero-grid { min-height: 650px; }.feature-grid { min-height: 650px; }.code-window,.code-depth { transform: none; } }
-@media (prefers-reduced-motion: reduce) { .launch-site *, .launch-site *::before, .launch-site *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }.can-reveal [data-reveal] { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .launch-site *, .launch-site *::before, .launch-site *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
 </style>

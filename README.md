@@ -2,7 +2,9 @@
 
 IceeBoot 是一个用 Vue 3 和 TypeScript 编写的 AI 应用管理台。访客从首页了解产品并登录，业务用户在工作台发起和办理审批，管理员配置角色、智能体、模型连接和基础服务。界面支持中文、英文与明暗主题。
 
-![IceeBoot 首页，左侧为控制台和文档入口，右侧为品牌形象](docs/screenshots/home.png)
+![IceeBoot 首页，左侧为控制台和文档入口，右侧为冰蓝色分层芯片](docs/screenshots/home.png)
+
+[观看首页上下滚动的动效预览](docs/screenshots/home-scroll.webp)
 
 ## 先跑起来
 

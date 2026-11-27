@@ -1,5 +1,5 @@
 import type { PageResult } from '@/types'
-import type { ApprovalDesign, ApprovalItem, ApprovalNode, Comparison, Exit, TemplateRow, TemplateStatus, Values } from '@/types/approval'
+import type { ApprovalDesign, ApprovalItem, ApprovalNode, ApprovalStatus, Comparison, Exit, TemplateRow, TemplateStatus, Values } from '@/types/approval'
 
 export function matchesTemplate(row: TemplateRow, keyword: string | undefined, status: TemplateStatus) {
   const state = row.stopped ? 'stopped' : row.version > 0 ? 'published' : 'draft'
@@ -173,14 +173,21 @@ export function approvalPath(d: ApprovalDesign, values: Values): ApprovalNode[] 
   }
 }
 
+export const approvalStatusLabels: Record<ApprovalStatus, string> = {
+  PENDING: '审批中', APPROVED: '已通过', REJECTED: '已驳回', VOID: '已作废'
+}
+
 export function pageApprovalCases(
-  items: ApprovalItem[], page: number, size: number, keyword = ''
+  items: ApprovalItem[], page: number, size: number, keyword = '', status?: ApprovalStatus
 ): PageResult<ApprovalItem> {
   if (!Number.isInteger(page) || page < 1 || !Number.isInteger(size) || size < 1 || size > 100) {
     throw Error('分页参数无效')
   }
   const query = keyword.trim().toLowerCase()
-  const matches = query ? items.filter((item) => item.title.toLowerCase().includes(query)) : items
+  if (status && !Object.keys(approvalStatusLabels).includes(status)) throw Error('未知的审批状态')
+  const matches = items.filter((item) =>
+    (!status || item.status === status) && (!query || item.title.toLowerCase().includes(query))
+  )
   const total = matches.length
   const pages = Math.ceil(total / size)
   const current = Math.min(page, Math.max(1, pages))

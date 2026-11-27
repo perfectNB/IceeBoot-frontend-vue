@@ -519,20 +519,20 @@ test('approval case pages count, sort and clamp within each personal scope', asy
 test('approval case page requests support paginated and legacy list responses', async () => {
   const calls = []
   const page = { current: 2, size: 1, total: 2, pages: 2, records: [{ id: 'b' }], hasNext: false, hasPrevious: true }
-  const responses = [page, [{ id: 'a', title: '采购' }, { id: 'b', title: '研发一期' }, { id: 'c', title: '研发二期' }]]
+  const responses = [page, [{ id: 'a', title: '采购' }, { id: 'b', title: '研发一期', status: 'APPROVED' }, { id: 'c', title: '研发二期', status: 'REJECTED' }]]
   const { load } = demo({ get: async (path, params) => {
     calls.push([path, { ...params }])
     return responses.shift()
   } })
   const api = load('@/api/approval').approvalApi
   assert.equal(await api.casePage('mine', 2, 1), page)
-  const legacy = await api.casePage('handled', 9, 1, '研发')
-  assert.equal(legacy.current, 2)
+  const legacy = await api.casePage('mine', 9, 1, '研发', 'REJECTED')
+  assert.equal(legacy.current, 1)
   assert.equal(legacy.records[0].id, 'c')
-  assert.equal(legacy.total, 2)
+  assert.equal(legacy.total, 1)
   assert.deepEqual(calls, [
     ['/api/v1/workflow/approvals/cases', { scope: 'mine', page: 2, size: 1 }],
-    ['/api/v1/workflow/approvals/cases', { scope: 'handled', page: 9, size: 1, keyword: '研发' }]
+    ['/api/v1/workflow/approvals/cases', { scope: 'mine', page: 9, size: 1, keyword: '研发', status: 'REJECTED' }]
   ])
 })
 
@@ -564,4 +564,15 @@ test('personal approval search filters the case title before paging each authori
   await login('user_admin')
   assert.equal((await api.casePage('rejected', 1, 10, '经费')).total, 1)
   assert.equal((await api.casePage('rejected', 1, 10, '%')).total, 0)
+  const filtered = await api.casePage('mine', 2, 1, '经费', 'REJECTED')
+  assert.equal(filtered.total, 1)
+  assert.equal(filtered.current, 1)
+  assert.equal(filtered.records[0].id, rejected)
+  assert.equal((await api.casePage('mine', 1, 10, '采购', 'REJECTED')).total, 0)
+  assert.equal((await api.casePage('mine', 1, 10, '', 'PENDING')).total, 1)
+  assert.equal((await api.casePage('rejected', 1, 10, '', 'PENDING')).total, 0)
+  await api.revise(rejected, 'void', { revision: 2 })
+  assert.equal((await api.casePage('mine', 1, 10, '经费', 'VOID')).total, 1)
+  await login('admin')
+  assert.equal((await api.casePage('mine', 1, 10, '', 'VOID')).total, 0)
 })

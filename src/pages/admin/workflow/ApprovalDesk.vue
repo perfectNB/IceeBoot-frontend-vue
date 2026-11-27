@@ -27,6 +27,10 @@
           :prefix-icon="Search"
           @clear="search"
         />
+        <el-select v-if="!inbox" v-model="activeTab.status" aria-label="审批状态" @change="search">
+          <el-option label="全部状态" value="all" />
+          <el-option v-for="(label, value) in statusOptions" :key="value" :label="label" :value="value" />
+        </el-select>
         <el-button native-type="submit" type="primary">查询</el-button>
       </form>
       <div v-loading="loading" class="approval-list">
@@ -47,7 +51,7 @@
             {{ scope === 'inbox' ? '办理' : '查看详情' }}
           </el-button>
         </div>
-        <el-empty v-if="!loading && !items.length" :image-size="68" :description="activeTab.keyword ? '没有匹配的流程' : empty[scope]" />
+        <el-empty v-if="!loading && !items.length" :image-size="68" :description="activeTab.keyword || activeTab.status !== 'all' ? '没有匹配的流程' : empty[scope]" />
       </div>
       <footer class="case-pagination">
         <span>共 {{ activeTab.total }} 条</span>
@@ -214,7 +218,7 @@ import { Position, Document, Search } from '@element-plus/icons-vue'
 import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import ApprovalForm from './ApprovalForm.vue'
 import { approvalApi } from '@/api/approval'
-import { formValue, validateForm } from '@/utils/approval'
+import { approvalStatusLabels as status, formValue, validateForm } from '@/utils/approval'
 import { hasPermission } from '@/utils/permission'
 import type {
   ApprovalDetail,
@@ -230,7 +234,7 @@ const can = (p: string) => hasPermission('workflow:approval:' + p + ':api')
 const scope = ref<Scope>(props.inbox ? 'inbox' : 'mine'),
   items = ref<ApprovalItem[]>([]),
   published = ref<Blueprint[]>([])
-const initialTab = () => ({ input: '', keyword: '', current: 1, size: 10, total: 0 })
+const initialTab = () => ({ status: 'all' as ApprovalStatus | 'all', input: '', keyword: '', current: 1, size: 10, total: 0 })
 const tabStates = reactive({
   mine: initialTab(), rejected: initialTab(), inbox: initialTab(), handled: initialTab()
 })
@@ -258,7 +262,7 @@ const loading = ref(false),
 const chosen = computed(() => published.value.find((b) => b.design.code === code.value))
 const taskId = ref('')
 const myTasks = computed(() => detail.value?.tasks?.filter((t) => t.actionable) || [])
-const status = { PENDING: '审批中', APPROVED: '已通过', REJECTED: '已驳回', VOID: '已作废' }
+const statusOptions = computed(() => scope.value === 'rejected' ? { REJECTED: status.REJECTED } : status)
 const empty = {
   inbox: '当前没有待你审批的任务',
   handled: '暂无你处理过的审批',
@@ -311,7 +315,9 @@ async function load() {
   try {
     const tab = scope.value
     const state = tabStates[tab]
-    const result = await approvalApi.casePage(tab, state.current, state.size, state.keyword)
+    const result = await approvalApi.casePage(
+      tab, state.current, state.size, state.keyword, state.status === 'all' ? undefined : state.status
+    )
     if (seq === listRequest && tab === scope.value) {
       Object.assign(state, { current: result.current, total: result.total })
       items.value = result.records
@@ -440,8 +446,14 @@ onMounted(async () => {
 .case-search {
   display: flex;
   gap: 8px;
-  max-width: 420px;
+  flex-wrap: wrap;
   margin-block: 4px 16px;
+}
+.case-search .el-input {
+  flex: 0 1 340px;
+}
+.case-search .el-select {
+  width: 140px;
 }
 .case-pagination {
   display: flex;

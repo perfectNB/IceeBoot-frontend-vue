@@ -1,6 +1,7 @@
 import type {
   ApprovalDesign,
   ApprovalDetail,
+  ApprovalStatus,
   ApprovalEvent,
   Blueprint,
   Change,
@@ -210,8 +211,8 @@ export const mockApproval = {
   async list(scope: Scope) {
     return copy(scopedItems(scope))
   },
-  async casePage(scope: Scope, page: number, size: number, keyword = '') {
-    return copy(pageApprovalCases(scopedItems(scope), page, size, keyword))
+  async casePage(scope: Scope, page: number, size: number, keyword = '', status?: ApprovalStatus) {
+    return copy(pageApprovalCases(scopedItems(scope), page, size, keyword, status))
   },
   async detail(id: string): Promise<ApprovalDetail> {
     requireAccess('detail')

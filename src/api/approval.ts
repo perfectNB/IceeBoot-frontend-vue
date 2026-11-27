@@ -7,6 +7,7 @@ import { mockApproval } from '@/mock/services/approval'
 import type {
   ApprovalDesign,
   ApprovalDetail,
+  ApprovalStatus,
   ApprovalItem,
   ApprovalRole,
   Blueprint,
@@ -101,12 +102,12 @@ export const approvalApi = {
       : request.post<string>(base + '/cases', { code, version, values }),
   list: (scope: Scope) =>
     isMockEnabled() ? mockApproval.list(scope) : request.get<ApprovalItem[]>(base + '/cases', { scope }),
-  async casePage(scope: Scope, page: number, size: number, keyword = ''): Promise<PageResult<ApprovalItem>> {
-    if (isMockEnabled()) return mockApproval.casePage(scope, page, size, keyword)
+  async casePage(scope: Scope, page: number, size: number, keyword = '', status?: ApprovalStatus): Promise<PageResult<ApprovalItem>> {
+    if (isMockEnabled()) return mockApproval.casePage(scope, page, size, keyword, status)
     const result = await request.get<PageResult<ApprovalItem> | ApprovalItem[]>(base + '/cases', {
-      scope, page, size, ...(keyword ? { keyword } : {})
+      scope, page, size, ...(keyword ? { keyword } : {}), ...(status ? { status } : {})
     })
-    return Array.isArray(result) ? pageApprovalCases(result, page, size, keyword) : result
+    return Array.isArray(result) ? pageApprovalCases(result, page, size, keyword, status) : result
   },
   detail: (id: string) =>
     isMockEnabled()

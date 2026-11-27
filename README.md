@@ -368,8 +368,8 @@ zboot-frontend-vue/
 │   │   │   │   └── BackendCodegen.vue
 │   │   │   ├── workflow/            # 工作流管理
 │   │   │   │   ├── WorkflowDefinitions.vue
-│   │   │   │   ├── WorkflowInstances.vue
-│   │   │   │   ├── WorkflowTasks.vue
+│   │   │   │   ├── MyApplications.vue
+│   │   │   │   ├── MyApprovals.vue
 │   │   │   │   ├── WorkflowDiagram.vue
 │   │   │   │   └── BPMNDesign.vue
 │   │   │   ├── third/               # 第三方服务

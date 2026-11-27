@@ -1,22 +1,22 @@
 <template>
   <section class="approval-shell">
     <AdminPageHeader
-      :title="inbox ? '审批工作台' : '我的申请'"
+      :title="inbox ? '我的审批' : '我的申请'"
       :description="
-        inbox ? '处理分配到你当前角色的任务，查看经手的审批。' : '从已发布的流程发起申请，在这里跟进结果。'
+        inbox ? '查看待我审批的任务和我已处理的审批。' : '从已发布的流程发起申请，在这里跟进结果。'
       "
     >
       <el-button @click="load">刷新</el-button>
-      <el-button v-if="can('start') && can('published')" type="primary" @click="openStart()">
+      <el-button v-if="!inbox && can('start') && can('published')" type="primary" @click="openStart()">
         发起审批
       </el-button>
     </AdminPageHeader>
     <div class="approval-panel">
       <el-tabs v-model="scope" @tab-change="load">
-        <el-tab-pane v-if="inbox" label="我的待办" name="inbox" />
-        <el-tab-pane v-if="inbox" label="我已处理" name="handled" />
-        <el-tab-pane label="我发起的" name="mine" />
-        <el-tab-pane label="被驳回的申请" name="rejected" />
+        <el-tab-pane v-if="inbox" label="待办" name="inbox" />
+        <el-tab-pane v-if="inbox" label="已处理" name="handled" />
+        <el-tab-pane v-if="!inbox" label="我发起的" name="mine" />
+        <el-tab-pane v-if="!inbox" label="被驳回的申请" name="rejected" />
       </el-tabs>
       <div v-loading="loading" class="approval-list">
         <div v-for="r in items" :key="r.id" class="approval-list-item">
@@ -139,7 +139,7 @@
             </details>
           </li>
         </ol>
-        <div v-if="detail.canReview && can('review')" class="approval-decision">
+        <div v-if="inbox && scope === 'inbox' && detail.canReview && can('review')" class="approval-decision">
           <label v-if="myTasks.length > 1" class="approval-label">
             以哪个角色办理
             <el-select v-model="taskId" placeholder="请选择本次办理角色">
@@ -167,7 +167,7 @@
           </div>
         </div>
         <div
-          v-if="detail.mine && detail.item.status === 'REJECTED' && can('revise')"
+          v-if="!inbox && detail.mine && detail.item.status === 'REJECTED' && can('revise')"
           class="approval-actions"
         >
           <el-button v-if="editing" @click="editing = false">取消修改</el-button>
@@ -379,7 +379,7 @@ async function voidCase() {
 const route = useRoute()
 onMounted(async () => {
   await load()
-  if (typeof route.query.approval === 'string' && can('start') && can('published')) {
+  if (!props.inbox && typeof route.query.approval === 'string' && can('start') && can('published')) {
     await openStart(
       route.query.approval,
       typeof route.query.version === 'string' ? route.query.version : undefined

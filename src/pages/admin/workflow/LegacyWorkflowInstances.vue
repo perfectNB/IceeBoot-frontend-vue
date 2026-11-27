@@ -83,7 +83,7 @@ import {
 } from '@/api'
 
 defineOptions({
-  name: 'WorkflowInstances'
+  name: 'LegacyWorkflowInstances'
 })
 
 const { t } = useI18n()

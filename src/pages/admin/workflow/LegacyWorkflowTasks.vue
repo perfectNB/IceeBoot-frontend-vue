@@ -57,7 +57,7 @@ import { useUserStore } from '@/stores/user'
 import { hasPermission } from '@/utils/permission'
 
 defineOptions({
-  name: 'WorkflowTasks'
+  name: 'LegacyWorkflowTasks'
 })
 
 const { t } = useI18n()

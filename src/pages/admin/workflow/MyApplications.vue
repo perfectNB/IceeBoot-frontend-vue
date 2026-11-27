@@ -1,5 +1,5 @@
 <template>
-  <ApprovalWorkspace label="审批申请" permission="list">
+  <ApprovalWorkspace label="我的申请" permission="list">
     <ApprovalDesk :inbox="false" />
     <template #legacy><LegacyWorkflowInstances /></template>
   </ApprovalWorkspace>

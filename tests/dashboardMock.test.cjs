@@ -434,3 +434,15 @@ test('research budget can be found and started by any published launch role', as
   assert.equal((await api.page(true, 1, 10, '研发')).total, 1)
   assert.ok(await api.submit(design.code, 2, {}))
 })
+
+test('personal workflow menus can load while the database menu cache is upgraded', async () => {
+  const { load } = demo({ get: async () => [
+    { component: 'WorkflowInstances', path: '/admin/workflow/instance', permissions: 'workflow:instance' },
+    { component: 'WorkflowTasks', path: '/admin/workflow/task', permissions: 'workflow:task' }
+  ] })
+  const menus = await load('@/api/menu').getUserMenus()
+  assert.deepEqual(Array.from(menus, m => [m.title, m.name, m.component, m.path, ...m.permissions]), [
+    ['我的申请', 'MyApplications', 'MyApplications', '/admin/workflow/instance', 'workflow:instance'],
+    ['我的审批', 'MyApprovals', 'MyApprovals', '/admin/workflow/task', 'workflow:task']
+  ])
+})

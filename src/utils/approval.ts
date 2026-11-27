@@ -1,5 +1,11 @@
 import type { PageResult } from '@/types'
-import type { ApprovalDesign, ApprovalItem, ApprovalNode, Comparison, Exit, Values } from '@/types/approval'
+import type { ApprovalDesign, ApprovalItem, ApprovalNode, Comparison, Exit, TemplateRow, TemplateStatus, Values } from '@/types/approval'
+
+export function matchesTemplate(row: TemplateRow, keyword: string | undefined, status: TemplateStatus) {
+  const state = row.stopped ? 'stopped' : row.version > 0 ? 'published' : 'draft'
+  return (status === 'all' || state === status) &&
+    row.name.toLowerCase().includes((keyword || '').trim().toLowerCase())
+}
 
 export const end = '@end'
 export const newExit = (fallback = end): Exit => ({ branches: [], fallback })

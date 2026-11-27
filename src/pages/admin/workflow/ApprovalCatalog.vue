@@ -20,9 +20,26 @@
       <el-button v-else :icon="Refresh" @click="load">刷新</el-button>
     </AdminPageHeader>
     <div class="approval-panel">
+      <form v-if="!diagram" class="definition-filters" role="search" @submit.prevent="searchNow">
+        <el-input
+          v-model="search"
+          clearable
+          :prefix-icon="Search"
+          aria-label="流程名称"
+          placeholder="搜索流程名称"
+          @clear="searchNow"
+        />
+        <el-select v-model="filterStatus" aria-label="流程状态" @change="searchNow">
+          <el-option label="全部状态" value="all" />
+          <el-option v-if="manageDrafts" label="草稿" value="draft" />
+          <el-option label="已发布" value="published" />
+          <el-option label="已停用" value="stopped" />
+        </el-select>
+        <el-button type="primary" native-type="submit">查询</el-button>
+      </form>
       <el-empty
         v-if="!rows.length"
-        :description="diagram ? (search ? '没有匹配的流程' : '暂无可发起的流程') : '暂无可查看的流程'"
+        :description="keyword || filterStatus !== 'all' ? '没有匹配的流程' : diagram ? '暂无可发起的流程' : '暂无可查看的流程'"
         :image-size="64"
       />
       <article v-for="row in rows" :key="row.code" class="approval-list-item">
@@ -126,7 +143,7 @@ import ApprovalDesigner from './ApprovalDesigner.vue'
 import ApprovalPreview from './ApprovalPreview.vue'
 import { approvalApi } from '@/api/approval'
 import { hasPermission } from '@/utils/permission'
-import type { ApprovalRole, Blueprint, TemplateRow, Values } from '@/types/approval'
+import type { ApprovalRole, Blueprint, TemplateRow, TemplateStatus, Values } from '@/types/approval'
 const props = defineProps<{ diagram?: boolean }>()
 const can = (p: string) => hasPermission('workflow:approval:' + p + ':api')
 const manageDrafts = computed(() => !props.diagram && can('drafts'))
@@ -141,11 +158,14 @@ const selected = ref<Blueprint>()
 const publishedPreview = ref(false)
 let requestId = 0
 const search = ref('')
+const keyword = ref('')
+const filterStatus = ref<TemplateStatus>('all')
 const application = ref<Blueprint>()
 const values = ref<Values>({})
 let timer: ReturnType<typeof setTimeout>
 function searchNow() {
   clearTimeout(timer)
+  keyword.value = search.value.trim()
   loadPage(1, size.value)
 }
 function scheduleSearch() {
@@ -203,7 +223,8 @@ async function loadPage(next: number, limit: number) {
       !manageDrafts.value,
       next,
       limit,
-      props.diagram ? search.value.trim() : undefined
+      keyword.value,
+      props.diagram ? undefined : filterStatus.value
     )
     if (seq !== requestId) return
     rows.value = result.records
@@ -229,6 +250,20 @@ onMounted(async () => {
 })
 </script>
 <style scoped>
+.definition-filters {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--el-border-color-lighter);
+}
+.definition-filters .el-input {
+  width: min(290px, 100%);
+}
+.definition-filters .el-select {
+  width: 130px;
+}
 .catalog-search {
   width: min(290px, 100%);
 }

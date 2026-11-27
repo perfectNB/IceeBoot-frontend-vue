@@ -1,5 +1,5 @@
 import type { PageResult } from '@/types'
-import { pageApprovalCases } from '@/utils/approval'
+import { matchesTemplate, pageApprovalCases } from '@/utils/approval'
 import { hasPermission } from '@/utils/permission'
 import { request } from '@/utils/request'
 import { isMockEnabled } from '@/config/mock'
@@ -15,6 +15,7 @@ import type {
   OwnerAction,
   Scope,
   TemplateRow,
+  TemplateStatus,
   Values
 } from '@/types/approval'
 
@@ -24,14 +25,16 @@ export const approvalApi = {
     published: boolean,
     page: number,
     size: number,
-    keyword?: string
+    keyword?: string,
+    status?: TemplateStatus
   ): Promise<PageResult<TemplateRow>> {
-    if (isMockEnabled()) return mockApproval.page(published, page, size, keyword)
+    if (isMockEnabled()) return mockApproval.page(published, page, size, keyword, status)
     const path = base + (published ? '/published' : '/drafts')
     const result = await request.get<PageResult<TemplateRow> | Blueprint[]>(path, {
       page,
       size,
-      ...(keyword !== undefined ? { keyword } : {})
+      ...(keyword !== undefined ? { keyword } : {}),
+      ...(status !== undefined ? { status } : {})
     })
     if (!Array.isArray(result)) return result
     // Older servers return the complete list while the backend is being upgraded.
@@ -40,27 +43,23 @@ export const approvalApi = {
         ? await request.get<Blueprint[]>(base + '/published')
         : []
     const live = new Map(released.map((b) => [b.design.code, b.design]))
-    const filtered =
-      keyword === undefined
-        ? result
-        : result.filter(
-            (b) =>
-              !b.stopped && b.design.name.toLocaleLowerCase().includes(keyword.trim().toLocaleLowerCase())
-          )
-    const total = filtered.length
-    const pages = Math.ceil(total / size)
-    const current = Math.min(page, Math.max(1, pages))
-    const records = filtered.slice((current - 1) * size, current * size).map((b) => {
+    const filterStatus = status ?? (published && keyword !== undefined ? 'published' : 'all')
+    const rows = result.map((b) => {
       const snapshot = live.get(b.design.code)
       return {
         code: b.design.code,
         name: snapshot?.name || b.design.name,
         version: b.version,
         revision: b.revision,
-        stopped: false,
+        stopped: !!b.stopped,
         changed: !!snapshot && JSON.stringify(snapshot) !== JSON.stringify(b.design)
       }
     })
+    const filtered = rows.filter((row) => matchesTemplate(row, keyword, filterStatus))
+    const total = filtered.length
+    const pages = Math.ceil(total / size)
+    const current = Math.min(page, Math.max(1, pages))
+    const records = filtered.slice((current - 1) * size, current * size)
     return { records, total, current, size, pages, hasPrevious: current > 1, hasNext: current < pages }
   },
   async template(published: boolean, code: string, released = false): Promise<Blueprint> {

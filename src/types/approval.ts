@@ -32,6 +32,8 @@ export interface Blueprint {
   revision: number
   version: number
 }
+export type TemplateStatus = 'all' | 'draft' | 'published' | 'stopped'
+
 export interface TemplateRow {
   code: string
   name: string

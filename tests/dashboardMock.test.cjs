@@ -351,6 +351,34 @@ test('approval catalog pages and intake changes preserve the version of pending 
   await assert.rejects(api.setStopped(d.code,6,true),/权限/)
 })
 
+test('definition catalog filters the displayed name and lifecycle state before pagination', async () => {
+  const { load, login } = demo()
+  const api = load('@/api/approval').approvalApi
+  await login('admin')
+  const design = load('@/utils/approval').blankDesign()
+  design.nodes[0].role = 'admin'
+  for (const code of ['draft_a', 'draft_b', 'active', 'stopped', 'other']) {
+    const name = (code === 'other' ? '差旅' : 'AI研发') + code
+    await api.save({ ...design, code, name }, 0)
+    if (['active', 'stopped'].includes(code)) await api.publish(code, 1)
+  }
+  await api.save({ ...design, code: 'active', name: '待发布新名称' }, 2)
+  await api.setStopped('stopped', 2, true)
+  const search = (status, page = 1) => api.page(false, page, 1, ' ai研 ', status)
+  const drafts = await search('draft', 2)
+  assert.equal(drafts.total, 2)
+  assert.equal(drafts.records[0].code, 'draft_b')
+  const published = await search('published', 2)
+  assert.equal(published.current, 1)
+  assert.equal(published.records[0].code, 'active')
+  assert.equal(published.records[0].changed, true)
+  assert.equal((await search('all')).total, 4)
+  assert.equal((await search('stopped')).records[0].code, 'stopped')
+  assert.equal((await api.page(false, 1, 10, '待发布新名称', 'all')).total, 0)
+  assert.equal((await api.page(true, 1, 10, '研发', 'all')).total, 2)
+  assert.equal((await api.page(true, 1, 10, '研发')).total, 1)
+})
+
 test('published visibility applies before pagination, detail and submission, independently of reviewer roles',async () => {
   const {load,login} = demo()
   const api = load('@/api/approval').approvalApi
@@ -382,6 +410,9 @@ test('a catalog opened during a server upgrade can page and open the selected le
   const {load} = demo({get:async () => templates})
   const api = load('@/api/approval').approvalApi
   assert.equal((await api.page(false,2,1)).records[0].code,'b')
+  templates[0].stopped = true
+  assert.equal((await api.page(false,2,1,'A','stopped')).records[0].stopped,true)
+  assert.equal((await api.page(false,1,1,'a','published')).total,0)
   assert.equal((await api.template(true,'b')).design.code,'b')
   await assert.rejects(api.template(true,'missing'),/不存在/)
 })
@@ -392,6 +423,7 @@ test('approval API uses the published version and sends the observed revision wi
   const api = load('@/api/approval').approvalApi
   await api.page(false,2,20)
   await api.page(true,1,10)
+  await api.page(false,1,10,'经费','stopped')
   await api.template(true,'travel')
   await api.setStopped('travel',4,true)
   await api.submit('travel',3,{price:'80'})
@@ -400,6 +432,7 @@ test('approval API uses the published version and sends the observed revision wi
   assert.deepEqual(JSON.parse(JSON.stringify(calls)), [
     ['get','/api/v1/workflow/approvals/drafts',{page:2,size:20}],
     ['get','/api/v1/workflow/approvals/published',{page:1,size:10}],
+    ['get','/api/v1/workflow/approvals/drafts',{page:1,size:10,keyword:'经费',status:'stopped'}],
     ['get','/api/v1/workflow/approvals/published',{code:'travel'}],
     ['put','/api/v1/workflow/approvals/drafts/travel/intake',{revision:4,stopped:true}],
     ['post','/api/v1/workflow/approvals/cases',{code:'travel',version:3,values:{price:'80'}}],

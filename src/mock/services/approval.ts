@@ -7,9 +7,10 @@ import type {
   Decision,
   OwnerAction,
   Scope,
+  TemplateStatus,
   Values
 } from '@/types/approval'
-import { approvalPath, launchRoles, reviewerRoles, pageApprovalCases, validateDesign } from '@/utils/approval'
+import { approvalPath, matchesTemplate, launchRoles, reviewerRoles, pageApprovalCases, validateDesign } from '@/utils/approval'
 import { mockRoles } from '../data/role'
 import { mockUsers } from '../data/user'
 import { demoUserId } from './auth'
@@ -96,38 +97,32 @@ function scopedItems(scope: Scope) {
 }
 
 export const mockApproval = {
-  async page(live: boolean, page: number, size: number, keyword?: string) {
+  async page(live: boolean, page: number, size: number, keyword?: string, status?: TemplateStatus) {
     requireAccess(live ? 'published' : 'drafts')
     if (!Number.isInteger(page) || page < 1 || !Number.isInteger(size) || size < 1 || size > 100)
       throw Error('分页参数无效')
     const source = live ? published : drafts
-    const codes = [...source.keys()]
-      .filter((code) => {
-        const b = source.get(code)!
-        return (
-          !live ||
-          (visible(b) &&
-            (keyword === undefined ||
-              (!stoppedCodes.has(code) &&
-                b.design.name.toLocaleLowerCase().includes(keyword.trim().toLocaleLowerCase()))))
-        )
-      })
+    const filterStatus = status ?? (live && keyword !== undefined ? 'published' : 'all')
+    const filtered = [...source.keys()]
       .sort()
-    const total = codes.length
+      .filter((code) => !live || visible(source.get(code)!))
+      .map((code) => {
+        const b = source.get(code)!
+        return {
+          code,
+          name: published.get(code)?.design.name || b.design.name,
+          version: b.version,
+          revision: drafts.get(code)!.revision,
+          stopped: stoppedCodes.has(code),
+          changed:
+            !live && !!b.version && JSON.stringify(b.design) !== JSON.stringify(published.get(code)?.design)
+        }
+      })
+      .filter((row) => matchesTemplate(row, keyword, filterStatus))
+    const total = filtered.length
     const pages = Math.ceil(total / size)
     const current = Math.min(page, Math.max(1, pages))
-    const records = codes.slice((current - 1) * size, current * size).map((code) => {
-      const b = source.get(code)!
-      return {
-        code,
-        name: published.get(code)?.design.name || b.design.name,
-        version: b.version,
-        revision: drafts.get(code)!.revision,
-        stopped: stoppedCodes.has(code),
-        changed:
-          !live && !!b.version && JSON.stringify(b.design) !== JSON.stringify(published.get(code)?.design)
-      }
-    })
+    const records = filtered.slice((current - 1) * size, current * size)
     return { records, total, current, size, pages, hasPrevious: current > 1, hasNext: current < pages }
   },
   async template(live: boolean, code: string, released = false) {

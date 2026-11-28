@@ -1,4 +1,11 @@
-import type { ApprovalDesign, ApprovalNode, Comparison, Exit, Values } from '@/types/approval'
+import type { PageResult } from '@/types'
+import type { ApprovalDesign, ApprovalItem, ApprovalNode, ApprovalStatus, Comparison, Exit, TemplateRow, TemplateStatus, Values } from '@/types/approval'
+
+export function matchesTemplate(row: TemplateRow, keyword: string | undefined, status: TemplateStatus) {
+  const state = row.stopped ? 'stopped' : row.version > 0 ? 'published' : 'draft'
+  return (status === 'all' || state === status) &&
+    row.name.toLowerCase().includes((keyword || '').trim().toLowerCase())
+}
 
 export const end = '@end'
 export const newExit = (fallback = end): Exit => ({ branches: [], fallback })
@@ -14,6 +21,8 @@ const numeric = /^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i
 export const isApprovalNumber = (value: string) => numeric.test(value)
 
 export const symbols: Record<Comparison, string> = { eq: '=', gt: '>', ge: '≥', lt: '<', le: '≤' }
+export const launchRoles = (design: ApprovalDesign): string[] =>
+  [design.launchRole || '', ...(design.additionalLaunchRoles || [])].filter(Boolean)
 export const reviewerRoles = (n: ApprovalNode) => [n.role, ...(n.coRoles || [])].filter(Boolean)
 
 export function branchLabel(fields: ApprovalDesign['fields'], branch: Exit['branches'][number]) {
@@ -162,4 +171,26 @@ export function approvalPath(d: ApprovalDesign, values: Values): ApprovalNode[] 
     path.push(node)
     exit = node.exit
   }
+}
+
+export const approvalStatusLabels: Record<ApprovalStatus, string> = {
+  PENDING: '审批中', APPROVED: '已通过', REJECTED: '已驳回', VOID: '已作废'
+}
+
+export function pageApprovalCases(
+  items: ApprovalItem[], page: number, size: number, keyword = '', status?: ApprovalStatus
+): PageResult<ApprovalItem> {
+  if (!Number.isInteger(page) || page < 1 || !Number.isInteger(size) || size < 1 || size > 100) {
+    throw Error('分页参数无效')
+  }
+  const query = keyword.trim().toLowerCase()
+  if (status && !Object.keys(approvalStatusLabels).includes(status)) throw Error('未知的审批状态')
+  const matches = items.filter((item) =>
+    (!status || item.status === status) && (!query || item.title.toLowerCase().includes(query))
+  )
+  const total = matches.length
+  const pages = Math.ceil(total / size)
+  const current = Math.min(page, Math.max(1, pages))
+  const records = matches.slice((current - 1) * size, current * size)
+  return { records, total, current, size, pages, hasPrevious: current > 1, hasNext: current < pages }
 }

@@ -16,9 +16,9 @@ export default {
   sandboxEnvironment: "环境变量",
 
   badge: "为独立开发者准备的 AI 应用脚手架",
-  heroTitle: "让想法，",
-  heroTitleHighlight: "真正运行起来。",
-  heroDescription: "从基础服务到 Agent 执行，IceeBoot 把常用能力接在一起。少写重复的底层代码，把时间留给你真正想做的应用。",
+  heroTitle: "AI 应用，",
+  heroTitleHighlight: "从这里起步。",
+  heroDescription: "在一个控制台编排智能体、设计审批流程，管理用户、角色和模型连接。",
   experience: "开始构建",
   docs: "开发文档",
   console: "进入控制台",

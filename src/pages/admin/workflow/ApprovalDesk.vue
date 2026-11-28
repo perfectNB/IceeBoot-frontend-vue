@@ -1,23 +1,38 @@
 <template>
   <section class="approval-shell">
     <AdminPageHeader
-      :title="inbox ? '审批工作台' : '我的申请'"
+      :title="inbox ? '我的审批' : '我的申请'"
       :description="
-        inbox ? '处理分配到你当前角色的任务，查看经手的审批。' : '从已发布的流程发起申请，在这里跟进结果。'
+        inbox ? '查看待我审批的任务和我已处理的审批。' : '从已发布的流程发起申请，在这里跟进结果。'
       "
     >
       <el-button @click="load">刷新</el-button>
-      <el-button v-if="can('start') && can('published')" type="primary" @click="openStart">
+      <el-button v-if="!inbox && can('start') && can('published')" type="primary" @click="openStart()">
         发起审批
       </el-button>
     </AdminPageHeader>
     <div class="approval-panel">
       <el-tabs v-model="scope" @tab-change="load">
-        <el-tab-pane v-if="inbox" label="我的待办" name="inbox" />
-        <el-tab-pane v-if="inbox" label="我已处理" name="handled" />
-        <el-tab-pane label="我发起的" name="mine" />
-        <el-tab-pane label="被驳回的申请" name="rejected" />
+        <el-tab-pane v-if="inbox" label="待办" name="inbox" />
+        <el-tab-pane v-if="inbox" label="已处理" name="handled" />
+        <el-tab-pane v-if="!inbox" label="我发起的" name="mine" />
+        <el-tab-pane v-if="!inbox" label="被驳回的申请" name="rejected" />
       </el-tabs>
+      <form class="case-search" role="search" @submit.prevent="search">
+        <el-input
+          v-model="activeTab.input"
+          clearable
+          aria-label="流程名称"
+          placeholder="搜索流程名称"
+          :prefix-icon="Search"
+          @clear="search"
+        />
+        <el-select v-if="!inbox" v-model="activeTab.status" aria-label="审批状态" @change="search">
+          <el-option label="全部状态" value="all" />
+          <el-option v-for="(label, value) in statusOptions" :key="value" :label="label" :value="value" />
+        </el-select>
+        <el-button native-type="submit" type="primary">查询</el-button>
+      </form>
       <div v-loading="loading" class="approval-list">
         <div v-for="r in items" :key="r.id" class="approval-list-item">
           <span class="approval-mark">
@@ -36,8 +51,23 @@
             {{ scope === 'inbox' ? '办理' : '查看详情' }}
           </el-button>
         </div>
-        <el-empty v-if="!loading && !items.length" :image-size="68" :description="empty[scope]" />
+        <el-empty v-if="!loading && !items.length" :image-size="68" :description="activeTab.keyword || activeTab.status !== 'all' ? '没有匹配的流程' : empty[scope]" />
       </div>
+      <footer class="case-pagination">
+        <span>共 {{ activeTab.total }} 条</span>
+        <el-pagination
+          :key="scope"
+          :current-page="activeTab.current"
+          :page-size="activeTab.size"
+          :page-sizes="[10, 20, 50]"
+          :total="activeTab.total"
+          :pager-count="5"
+          background
+          layout="sizes, prev, pager, next"
+          @update:current-page="changePage($event, activeTab.size)"
+          @update:page-size="changePage(1, $event)"
+        />
+      </footer>
     </div>
     <el-dialog
       v-model="starting"
@@ -46,7 +76,14 @@
       width="min(570px,94vw)"
       :close-on-click-modal="false"
     >
-      <label class="approval-label">
+      <div v-if="fixedTemplate && chosen" class="start-template">
+        <el-icon><Position /></el-icon>
+        <div>
+          <strong>{{ chosen.design.name }}</strong>
+        </div>
+        <el-tag size="small">v{{ chosen.version }}</el-tag>
+      </div>
+      <label v-else class="approval-label">
         已发布流程
         <el-select v-model="code" placeholder="选择审批流程" filterable @change="values = {}">
           <el-option
@@ -83,11 +120,13 @@
         <p class="approval-hint">{{ detail.design.code }} · 模板 v{{ detail.version }}</p>
         <h3>本轮审批路径</h3>
         <div class="approval-path">
-          <span>发起</span>
-          <span v-for="n in detail.route" :key="n" :class="{ active: n === detail.item.node }">
-            {{ nodeName(n) }}
+          <span
+            >发起<small>{{ roundStarter }}</small></span
+          >
+          <span v-for="step in routeSteps" :key="step.id" :class="{ active: step.id === detail.item.node }">
+            {{ step.name }}<small v-for="line in step.reviewers" :key="line">{{ line }}</small>
           </span>
-          <span>结束</span>
+          <span>{{ detail.item.status === 'REJECTED' ? '本轮驳回' : '结束' }}</span>
         </div>
         <template v-if="detail.tasks?.length">
           <h3>当前待办</h3>
@@ -114,7 +153,8 @@
               <time>{{ date(e.time) }}</time>
             </div>
             <small
-              >第 {{ e.round }} 轮 · {{ e.actor
+              >第 {{ e.round }} 轮 ·
+              {{ e.action === 'APPROVE' || e.action === 'REJECT' ? '审批人' : '操作人' }} {{ e.actor
               }}{{ e.role ? ' · ' + (detail.roleNames?.[e.role] || e.role) : '' }}</small
             >
             <p v-if="e.reason">{{ e.reason }}</p>
@@ -129,7 +169,7 @@
             </details>
           </li>
         </ol>
-        <div v-if="detail.canReview && can('review')" class="approval-decision">
+        <div v-if="inbox && scope === 'inbox' && detail.canReview && can('review')" class="approval-decision">
           <label v-if="myTasks.length > 1" class="approval-label">
             以哪个角色办理
             <el-select v-model="taskId" placeholder="请选择本次办理角色">
@@ -157,7 +197,7 @@
           </div>
         </div>
         <div
-          v-if="detail.mine && detail.item.status === 'REJECTED' && can('revise')"
+          v-if="!inbox && detail.mine && detail.item.status === 'REJECTED' && can('revise')"
           class="approval-actions"
         >
           <el-button v-if="editing" @click="editing = false">取消修改</el-button>
@@ -171,14 +211,14 @@
   </section>
 </template>
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRoute } from 'vue-router'
-import { Document } from '@element-plus/icons-vue'
+import { Position, Document, Search } from '@element-plus/icons-vue'
 import AdminPageHeader from '@/components/common/AdminPageHeader.vue'
 import ApprovalForm from './ApprovalForm.vue'
 import { approvalApi } from '@/api/approval'
-import { formValue, validateForm } from '@/utils/approval'
+import { approvalStatusLabels as status, formValue, validateForm } from '@/utils/approval'
 import { hasPermission } from '@/utils/permission'
 import type {
   ApprovalDetail,
@@ -194,6 +234,22 @@ const can = (p: string) => hasPermission('workflow:approval:' + p + ':api')
 const scope = ref<Scope>(props.inbox ? 'inbox' : 'mine'),
   items = ref<ApprovalItem[]>([]),
   published = ref<Blueprint[]>([])
+const initialTab = () => ({ status: 'all' as ApprovalStatus | 'all', input: '', keyword: '', current: 1, size: 10, total: 0 })
+const tabStates = reactive({
+  mine: initialTab(), rejected: initialTab(), inbox: initialTab(), handled: initialTab()
+})
+const activeTab = computed(() => tabStates[scope.value])
+function search() {
+  const tab = activeTab.value
+  tab.keyword = tab.input.trim()
+  tab.current = 1
+  return load()
+}
+function changePage(current: number, size: number) {
+  if (activeTab.value.current === current && activeTab.value.size === size) return
+  Object.assign(activeTab.value, { current, size })
+  return load()
+}
 const detail = ref<ApprovalDetail>(),
   values = ref<Values>({}),
   reason = ref(''),
@@ -206,7 +262,7 @@ const loading = ref(false),
 const chosen = computed(() => published.value.find((b) => b.design.code === code.value))
 const taskId = ref('')
 const myTasks = computed(() => detail.value?.tasks?.filter((t) => t.actionable) || [])
-const status = { PENDING: '审批中', APPROVED: '已通过', REJECTED: '已驳回', VOID: '已作废' }
+const statusOptions = computed(() => scope.value === 'rejected' ? { REJECTED: status.REJECTED } : status)
 const empty = {
   inbox: '当前没有待你审批的任务',
   handled: '暂无你处理过的审批',
@@ -218,6 +274,37 @@ const tone = (s: ApprovalStatus) =>
   (({ PENDING: 'primary', REJECTED: 'danger', APPROVED: 'success', VOID: 'info' }) as const)[s]
 const date = (s: string) => new Date(s.replace(' ', 'T')).toLocaleString('zh-CN', { hour12: false })
 const nodeName = (id: string) => detail.value?.design.nodes.find((n) => n.id === id)?.name || id
+const roundEvents = computed(
+  () => detail.value?.history.filter((e) => e.round === detail.value?.item.round) || []
+)
+const roundStarter = computed(
+  () => roundEvents.value.find((e) => ['SUBMIT', 'RESUBMIT'].includes(e.action))?.actor
+)
+const routeSteps = computed(() => {
+  const item = detail.value
+  if (!item) return []
+  return item.route.map((id) => {
+    const node = item.design.nodes.find((n) => n.id === id)!
+    const uniqueName = item.design.nodes.filter((n) => n.name === node.name).length === 1
+    const reviewers = roundEvents.value
+      .filter(
+        (e) =>
+          (e.action === 'APPROVE' || e.action === 'REJECT') &&
+          (e.nodeId ? e.nodeId === id : uniqueName && e.node === node.name)
+      )
+      .map((e) => e.actor + ' · ' + actions[e.action])
+    if (item.item.status === 'PENDING' && item.item.node === id) {
+      const pending = item.tasks?.length
+        ? item.tasks.filter((t) => t.node === id).map((t) => t.role)
+        : [node.role]
+      for (const role of pending) {
+        const names = item.candidates?.[role]?.join('、')
+        reviewers.push((item.roleNames?.[role] || role) + '待办' + (names ? ' · ' + names : ''))
+      }
+    }
+    return { id, name: node.name, reviewers }
+  })
+})
 let listRequest = 0,
   detailRequest = 0
 async function load() {
@@ -226,8 +313,15 @@ async function load() {
   loading.value = true
   items.value = []
   try {
-    const result = await approvalApi.list(scope.value)
-    if (seq === listRequest) items.value = result
+    const tab = scope.value
+    const state = tabStates[tab]
+    const result = await approvalApi.casePage(
+      tab, state.current, state.size, state.keyword, state.status === 'all' ? undefined : state.status
+    )
+    if (seq === listRequest && tab === scope.value) {
+      Object.assign(state, { current: result.current, total: result.total })
+      items.value = result.records
+    }
   } finally {
     if (seq === listRequest) loading.value = false
   }
@@ -242,9 +336,20 @@ async function show(id: string) {
   editing.value = false
   opened.value = true
 }
-async function openStart() {
-  published.value = await approvalApi.published()
-  code.value = ''
+const fixedTemplate = ref(false)
+async function openStart(preselected?: string, version?: string) {
+  if (preselected) {
+    const match = await approvalApi.template(true, preselected)
+    if (match.stopped || (version && String(match.version) !== version)) {
+      ElMessage.warning(match.stopped ? '流程已停用，无法发起新申请' : '模板已发布新版，请重新选择流程')
+      return
+    }
+    published.value = [match]
+  } else {
+    published.value = await approvalApi.published()
+  }
+  fixedTemplate.value = !!preselected
+  code.value = preselected || ''
   values.value = {}
   starting.value = true
 }
@@ -266,6 +371,7 @@ async function submit() {
     validateForm(b.design, values.value)
     const id = await approvalApi.submit(b.design.code, b.version, values.value)
     starting.value = false
+    tabStates.mine.current = 1
     scope.value = 'mine'
     ElMessage.success('申请已提交')
     await load()
@@ -327,9 +433,71 @@ async function voidCase() {
 const route = useRoute()
 onMounted(async () => {
   await load()
-  if (typeof route.query.approval === 'string' && can('start') && can('published')) {
-    await openStart()
-    code.value = route.query.approval
+  if (!props.inbox && typeof route.query.approval === 'string' && can('start') && can('published')) {
+    await openStart(
+      route.query.approval,
+      typeof route.query.version === 'string' ? route.query.version : undefined
+    )
   }
 })
 </script>
+
+<style scoped>
+.case-search {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-block: 4px 16px;
+}
+.case-search .el-input {
+  flex: 0 1 340px;
+}
+.case-search .el-select {
+  width: 140px;
+}
+.case-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-top: 16px;
+  color: var(--el-text-color-regular);
+  font-size: 13px;
+}
+.case-pagination :deep(.el-pagination) {
+  max-width: 100%;
+  flex-wrap: wrap;
+  row-gap: 8px;
+}
+.approval-path small {
+  display: block;
+  margin-top: 4px;
+  color: var(--el-text-color-regular);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.start-template {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  border-radius: 10px;
+  background: var(--el-color-primary-light-9);
+}
+.start-template > .el-icon {
+  color: var(--el-color-primary);
+  font-size: 19px;
+}
+.start-template > div {
+  flex: 1;
+  display: grid;
+  gap: 3px;
+  overflow-wrap: anywhere;
+}
+.start-template small {
+  color: var(--el-text-color-regular);
+}
+</style>

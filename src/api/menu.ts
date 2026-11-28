@@ -145,8 +145,18 @@ function normalizeMenuPermissions(menu: MenuItem): MenuItem {
   const raw: unknown = menu.permissions
   return {
     ...menu,
+    ...personalWorkflowMenu(menu.component),
     permissions: Array.isArray(raw) ? raw.filter((code): code is string => typeof code === 'string')
       : typeof raw === 'string' ? raw.split(',').map(code => code.trim()).filter(Boolean) : [],
     children: menu.children?.map(normalizeMenuPermissions),
+  }
+}
+
+function personalWorkflowMenu(component: MenuItem['component']) {
+  switch (component) {
+    case 'WorkflowInstances':
+      return { name: 'MyApplications', component: 'MyApplications', title: '我的申请' }
+    case 'WorkflowTasks':
+      return { name: 'MyApprovals', component: 'MyApprovals', title: '我的审批' }
   }
 }

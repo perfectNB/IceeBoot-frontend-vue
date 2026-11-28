@@ -1,9 +1,11 @@
 export default {
   title: 'Login',
   welcomeBack: 'Welcome Back',
-  subtitle: 'Sign in to continue',
+  subtitle: 'Sign in to the IceeBoot console',
   accountTab: 'Account',
   wechatTab: 'WeChat',
+  usernameLabel: 'Username',
+  passwordLabel: 'Password',
   usernamePlaceholder: 'Enter username',
   passwordPlaceholder: 'Enter password',
   loginBtn: 'Sign In',

@@ -2,7 +2,7 @@
   <el-dialog
     v-model="dialogVisible"
     :title="t('login.title')"
-    width="min(780px, calc(100vw - 32px))"
+    width="min(438px, calc(100vw - 32px))"
     :before-close="handleClose"
     class="login-dialog"
     align-center
@@ -11,15 +11,12 @@
     :show-close="true"
   >
     <div class="login-content">
-      <aside class="brand-panel" aria-hidden="true">
-        <div class="brand-signature"><img src="@/assets/logo.png" alt="" />IceeBoot</div>
-        <BrandMascot :paused="paused || !dialogVisible" :eyes-closed="passwordFocused" />
-      </aside>
+      <header class="login-hero">
+        <BrandMascot :active="dialogVisible && !paused" :eyes-closed="passwordFocused" />
+        <h2>{{ t('login.welcomeBack') }}</h2>
+        <p>{{ t('login.subtitle') }}</p>
+      </header>
       <div class="login-fields">
-        <div class="login-hero">
-          <h2 class="hero-title">{{ t('login.welcomeBack') }}</h2>
-          <p class="hero-subtitle">{{ t('login.subtitle') }}</p>
-        </div>
       <el-tabs v-model="activeTab" class="login-tabs">
         <!-- 账号密码登录 -->
         <el-tab-pane :label="t('login.accountTab')" name="account">
@@ -68,6 +65,7 @@
                 class="login-btn"
               >
                 {{ t('login.loginBtn') }}
+                <el-icon v-if="!loading" aria-hidden="true"><Right /></el-icon>
               </el-button>
             </el-form-item>
           </el-form>
@@ -141,7 +139,7 @@
 <script setup lang="ts">
 import {ref, computed, watch} from 'vue'
 import {ElMessage, type FormInstance, type FormRules} from 'element-plus'
-import {User, Lock, Loading, Refresh, Warning} from '@element-plus/icons-vue'
+import {User, Lock, Loading, Refresh, Warning, Right} from '@element-plus/icons-vue'
 import BrandMascot from './BrandMascot.vue'
 import {useUserStore} from '@/stores/user'
 import {getWechatAuthUrl} from '@/api/auth'
@@ -386,7 +384,7 @@ watch(activeTab, (newTab) => {
 
 :global(.login-dialog .el-dialog__headerbtn:hover) {
   background: var(--login-soft);
-  color: var(--login-accent);
+  color: var(--login-ink);
 }
 
 :global(.login-dialog .el-dialog__headerbtn:focus-visible) {
@@ -407,90 +405,64 @@ watch(activeTab, (newTab) => {
   overflow: hidden;
 }
 :global(.icee-login-overlay) { background: #102a4380; backdrop-filter: blur(5px); }
-.login-content {
-  display: grid;
-  grid-template-columns: minmax(0, .82fr) minmax(0, 1.18fr);
-  min-width: 0;
-  font-family: inherit;
-}
-
-.brand-panel {
-  position: relative;
-  display: grid;
-  align-items: center;
-  overflow: hidden;
-  background: radial-gradient(ellipse at 17% 2%, #72dcff, transparent 58%),
-    linear-gradient(145deg, #42b6ef 5%, #1475cb 62%, #124b9c);
-}
-.brand-signature {
-  position: absolute;
-  top: 25px;
-  left: 24px;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: #092b54;
-  font-weight: 750;
-  font-size: 19px;
-}
-.brand-signature img { width: 26px; height: 26px; }
-.brand-panel .brand-scene { width: 110%; margin-left: -5%; color: #fff; }
-.login-fields { min-width: 0; padding: 42px 32px 26px; }
-.login-form :deep(.el-form-item__label) { margin-bottom: 5px; line-height: 18px; color: var(--login-ink); }
-.login-form :deep(.el-form-item__label::before) { display: none; }
-
+.login-content { min-width: 0; }
 .login-hero {
-  margin-bottom: 24px;
-  text-align: left;
-
-  .hero-title {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin: 0 0 6px;
-    color: var(--login-ink);
-    font-size: 27px;
-    font-weight: 650;
-    line-height: 1.3;
-    letter-spacing: -0.03em;
-  }
-
-  .hero-subtitle {
-    margin: 0;
-    color: var(--login-muted);
-    font-size: 14px;
-    line-height: 1.7;
-    overflow-wrap: anywhere;
-  }
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  justify-items: center;
+  padding: 20px 28px 0;
+  text-align: center;
+  background: radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--login-accent) 10%, transparent), transparent 76%);
 }
+.login-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 25%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(var(--login-line) 1px, transparent 1px) center / 12px 12px;
+  mask-image: radial-gradient(ellipse at 50% 24%, black 12%, transparent 72%);
+}
+.login-hero h2 { margin: 8px 0 4px; color: var(--login-ink); font-size: 27px; font-weight: 650; letter-spacing: -.04em; line-height: 1.3; }
+.login-hero p { margin: 0; color: var(--login-muted); font-size: 13px; line-height: 1.6; }
+.login-fields { padding: 22px 32px 30px; }
+.login-form :deep(.el-form-item__label) { margin-bottom: 7px; line-height: 18px; font-weight: 550; color: var(--login-ink); }
+.login-form :deep(.el-form-item__label::before) { display: none; }
 
 .login-tabs {
   :deep(.el-tabs__header) {
-    margin-bottom: 20px;
+    margin-bottom: 23px;
   }
 
   :deep(.el-tabs__nav-wrap::after) {
-    height: 1px;
-    background: var(--login-line);
+    display: none;
   }
 
   :deep(.el-tabs__nav) {
     display: flex;
     float: none;
     width: 100%;
+    box-sizing: border-box;
+    gap: 4px;
+    padding: 4px;
+    border-radius: 13px;
+    background: var(--login-soft);
   }
 
   :deep(.el-tabs__item) {
     flex: 1;
-    height: 48px;
-    padding: 0 12px;
+    height: 36px;
+    border-radius: 9px;
+    padding: 0 12px !important;
     color: var(--login-muted);
     font-size: 14px;
     font-weight: 500;
     transition: color 160ms ease;
   }
 
-  :deep(.el-tabs__item.is-active),
+  :deep(.el-tabs__item.is-active) { background: var(--login-surface); box-shadow: 0 1px 5px #102d5420; color: var(--login-ink); font-weight: 650; }
+
   :deep(.el-tabs__item:hover) {
     color: var(--login-accent);
   }
@@ -502,8 +474,7 @@ watch(activeTab, (newTab) => {
   }
 
   :deep(.el-tabs__active-bar) {
-    height: 2px;
-    background: var(--login-accent);
+    display: none;
   }
 }
 
@@ -516,7 +487,7 @@ watch(activeTab, (newTab) => {
     min-height: 48px;
     padding: 0 14px;
     border: 1px solid var(--login-line);
-    border-radius: 8px;
+    border-radius: 11px;
     background: var(--login-surface);
     box-shadow: none;
     transition: border-color 160ms ease, background-color 160ms ease;
@@ -528,9 +499,7 @@ watch(activeTab, (newTab) => {
 
   :deep(.el-input__wrapper.is-focus) {
     border-color: var(--login-accent);
-    outline: 2px solid var(--login-accent);
-    outline-offset: 2px;
-    box-shadow: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--login-accent) 14%, transparent);
   }
 
   :deep(.el-form-item.is-error .el-input__wrapper) {
@@ -549,18 +518,22 @@ watch(activeTab, (newTab) => {
     color: var(--login-muted);
   }
 
+  :deep(.el-form-item:last-child) { margin-bottom: 0; }
+
   .login-btn {
     width: 100%;
     height: 48px;
     margin-top: 4px;
     border: 1px solid var(--login-button);
-    border-radius: 8px;
+    border-radius: 12px;
     background: var(--login-button);
     color: #fff;
     font-size: 15px;
     font-weight: 600;
     box-shadow: none;
     transition: background-color 160ms ease, border-color 160ms ease;
+
+    :deep(.el-icon) { margin-inline-start: 8px; }
 
     &:hover:not(.is-loading) {
       border-color: var(--login-button-hover);
@@ -575,6 +548,7 @@ watch(activeTab, (newTab) => {
 }
 
 .login-tips {
+  margin-top: 18px;
   padding: 12px 14px;
   border: 1px solid var(--login-line);
   border-radius: 8px;
@@ -684,14 +658,10 @@ watch(activeTab, (newTab) => {
   }
 }
 
-@media (max-width: 640px) {
-  .login-content { grid-template-columns: 1fr; }
-  .brand-panel { height: 92px; }
-  .brand-signature { left: 24px; top: 29px; }
-  .brand-panel .brand-scene { position: absolute; width: 135px; right: 13%; top: -17px; }
-  .login-fields { padding: 20px 24px 24px; }
-  .login-hero { margin-bottom: 12px; }
-  :global(.login-dialog .el-dialog__headerbtn) { background: var(--login-surface); }
+@media (max-width: 480px) {
+  .login-hero { padding-top: 12px; }
+  .login-hero h2 { font-size: 24px; margin-top: 4px; }
+  .login-fields { padding: 20px 22px 24px; }
 }
 @media (prefers-reduced-motion: reduce) {
   :global(.login-dialog .el-dialog__headerbtn),

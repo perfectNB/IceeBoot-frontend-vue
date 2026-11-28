@@ -1,82 +1,92 @@
 <template>
-  <div ref="pageRoot" class="launch-site" :class="{ 'is-dark': isDark, 'scroll-motion': !motionStopped, 'reduce-motion': prefersReducedMotion }">
+  <div ref="pageRoot" class="launch-site" :class="{ 'is-dark': isDark, 'scroll-motion': !prefersReducedMotion, 'shared-stage': sharedStage, 'reduce-motion': prefersReducedMotion }">
     <a class="skip-link" href="#capabilities">{{ t('home.skipContent') }}</a>
     <header class="launch-header">
       <div class="launch-width header-inner">
-        <a class="brand" href="#" aria-label="IceeBoot"><img class="brand-symbol" src="@/assets/logo.png" alt="" width="32" height="32">IceeBoot<span class="brand-dot">.</span></a>
+        <a class="brand" href="#" aria-label="IceeBoot"><IceeBootMark class="brand-symbol" width="36" height="36" />IceeBoot<span class="brand-dot">.</span></a>
         <nav :aria-label="t('home.navigation')"><a href="#capabilities">{{ t('home.navCapabilities') }}</a><a href="#integration">{{ t('home.navIntegration') }}</a><a :href="docsUrl" target="_blank" rel="noopener noreferrer">{{ t('home.docs') }}<el-icon aria-hidden="true"><TopRight /></el-icon></a></nav>
-        <div class="header-actions"><button class="motion-button" :disabled="prefersReducedMotion" :aria-label="t(ambientPaused ? 'home.resumeMotion' : 'home.pauseMotion')" :aria-pressed="ambientPaused" @click="ambientPaused = !ambientPaused"><el-icon aria-hidden="true"><component :is="ambientPaused ? VideoPlay : VideoPause" /></el-icon></button><LanguageSwitcher /><button class="utility-button" :aria-label="t(isDark ? 'home.lightTheme' : 'home.darkTheme')" @click="toggleTheme"><el-icon aria-hidden="true"><component :is="isDark ? Sunny : Moon" /></el-icon></button><button class="nav-cta" @click="handleExperience">{{ t(isLoggedIn ? 'home.console' : 'home.login') }}<el-icon aria-hidden="true"><ArrowRight /></el-icon></button></div>
+        <div class="header-actions"><LanguageSwitcher /><button class="utility-button" :aria-label="t(isDark ? 'home.lightTheme' : 'home.darkTheme')" @click="toggleTheme"><el-icon aria-hidden="true"><component :is="isDark ? Sunny : Moon" /></el-icon></button><button class="nav-cta" @click="handleExperience">{{ t(isLoggedIn ? 'home.console' : 'home.login') }}<el-icon aria-hidden="true"><ArrowRight /></el-icon></button></div>
       </div>
     </header>
 
     <main>
-      <section data-scene="hero" class="hero-section">
-        <div class="hero-sticky">
-          <div class="hero-grid launch-width">
-            <div class="hero-copy">
-              <p class="eyebrow"><span class="status-dot"></span>{{ t('home.chapter_foundation_eyebrow') }}</p>
-              <h1>{{ t('home.heroTitle') }}<span>{{ t('home.heroTitleHighlight') }}</span></h1>
-              <p class="hero-description">{{ t('home.heroDescription') }}</p>
-              <div class="hero-actions"><button class="launch-button primary" @click="handleExperience">{{ t(isLoggedIn ? 'home.console' : 'home.experience') }}<el-icon aria-hidden="true"><ArrowRight /></el-icon></button><a class="text-link" :href="docsUrl" target="_blank" rel="noopener noreferrer">{{ t('home.docs') }}<el-icon aria-hidden="true"><TopRight /></el-icon></a></div>
-              <div class="hero-spec"><span>JAVA + VUE</span><i></i><span>POWERED BY AGENTSCOPE</span></div>
+      <div class="story-journey">
+        <div class="story-track">
+          <div id="home-story-stage" class="story-stage"></div>
+          <section data-scene="hero" class="hero-section">
+            <div class="hero-sticky">
+              <div class="hero-grid launch-width">
+                <div class="hero-copy">
+                  <p class="eyebrow"><span class="status-dot"></span>{{ t('home.chapter_foundation_eyebrow') }}</p>
+                  <h1>{{ t('home.heroTitle') }}<span>{{ t('home.heroTitleHighlight') }}</span></h1>
+                  <p class="hero-description">{{ t('home.heroDescription') }}</p>
+                  <div class="hero-actions"><button class="launch-button primary" @click="handleExperience">{{ t(isLoggedIn ? 'home.console' : 'home.experience') }}<el-icon aria-hidden="true"><ArrowRight /></el-icon></button><a class="text-link" :href="docsUrl" target="_blank" rel="noopener noreferrer">{{ t('home.docs') }}<el-icon aria-hidden="true"><TopRight /></el-icon></a></div>
+                  <div class="hero-spec"><span>JAVA + VUE</span><i></i><span>POWERED BY AGENTSCOPE</span></div>
+                </div>
+                <Teleport defer to="#home-story-stage" :disabled="!sharedStage">
+                  <div class="hero-art" :style="{ ...layerStyle('capabilities'), '--intro-travel': prefersReducedMotion ? 0 : sceneProgress.capabilities || 0 }" :aria-hidden="sharedStage && layerWeight('capabilities') === 0">
+                    <HeroAssembly :intro-progress="sceneProgress.capabilities || 0" :paused="prefersReducedMotion || showLoginDialog || (sharedStage && layerWeight('capabilities') === 0)" />
+                  </div>
+                </Teleport>
+              </div>
+              <div class="hero-bottom launch-width"><span>{{ t('home.visualCaption') }}</span></div>
             </div>
-            <div class="hero-art">
-              <HeroAssembly />
-            </div>
-          </div>
-          <div class="hero-bottom launch-width"><span>{{ t('home.visualCaption') }}</span><a href="#capabilities">{{ t('home.scrollExplore') }}<el-icon aria-hidden="true"><Bottom /></el-icon></a></div>
-        </div>
-      </section>
+          </section>
 
-      <section id="capabilities" class="manifesto launch-width" data-scene="capabilities">
-        <p class="eyebrow" data-story-copy>LESS PLUMBING. MORE BUILDING.</p>
-        <h2 data-story-copy>{{ t('home.platformTitle') }}<span>{{ t('home.platformHighlight') }}</span></h2>
-        <p data-story-copy>{{ t('home.platformDescription') }}</p>
-        <nav class="chapter-navigation" :aria-label="t('home.navCapabilities')"><a v-for="(feature, index) in features" :key="feature.kind" :href="`#${feature.kind}`"><span>0{{ index + 1 }}</span>{{ t(`home.section_${feature.kind}`) }}<el-icon aria-hidden="true"><Bottom /></el-icon></a></nav>
-      </section>
+          <section id="capabilities" class="manifesto launch-width" data-scene="capabilities">
+            <p class="eyebrow" data-story-copy>LESS PLUMBING. MORE BUILDING.</p>
+            <h2 data-story-copy>{{ t('home.platformTitle') }}<span>{{ t('home.platformHighlight') }}</span></h2>
+            <p data-story-copy>{{ t('home.platformDescription') }}</p>
+            <nav class="chapter-navigation" :aria-label="t('home.navCapabilities')"><a v-for="(feature, index) in features" :key="feature.kind" :href="`#${feature.kind}`"><span>0{{ index + 1 }}</span>{{ t(`home.section_${feature.kind}`) }}<el-icon aria-hidden="true"><Bottom /></el-icon></a></nav>
+          </section>
 
-      <section v-for="(feature, index) in features" :id="feature.kind" :key="feature.kind" :data-scene="feature.kind" class="feature-scene" :class="[`feature-${feature.kind}`, { 'is-reversed': index % 2 === 1 }]">
-        <div class="feature-sticky">
-          <div class="feature-heading launch-width"><span>0{{ index + 1 }} / {{ feature.eyebrow }}</span><span>ICEEBOOT</span></div>
-          <div class="feature-grid launch-width">
-            <div class="feature-art">
-              <div class="scene-halo" aria-hidden="true"></div>
-              <span class="scene-watermark" aria-hidden="true">{{ feature.mark }}</span>
-              <AgentCoreScene :kind="feature.kind" :label="t(`home.scene_${feature.kind}`)" :progress="motionStopped ? .45 : sceneProgress[feature.kind] || 0" :reduced-motion="motionStopped" :dark="isDark" :selection="feature.kind === 'models' ? providers.findIndex(provider => provider.name === selectedProvider.name) : capabilityMask" />
-              <div class="scene-caption"><span class="status-dot"></span><span>{{ t(`home.scene_caption_${feature.kind}`) }}</span><span class="scene-coordinate" aria-hidden="true">[ {{ String(Math.round((sceneProgress[feature.kind] || 0) * 100)).padStart(3, '0') }} ]</span></div>
+          <section v-for="(feature, index) in features" :id="feature.kind" :key="feature.kind" :data-scene="feature.kind" class="feature-scene" :class="[`feature-${feature.kind}`, { 'is-reversed': index % 2 === 1 }]">
+            <div class="feature-sticky">
+              <div class="feature-heading launch-width"><span>0{{ index + 1 }} / {{ feature.eyebrow }}</span><span>ICEEBOOT</span></div>
+              <div class="feature-grid launch-width">
+                <Teleport defer to="#home-story-stage" :disabled="!sharedStage">
+                  <div class="feature-art" :class="`art-${feature.kind}`" :style="layerStyle(feature.kind)" :data-dominant="dominantLayer === feature.kind" :aria-hidden="sharedStage && layerWeight(feature.kind) < .5">
+                    <div class="scene-halo" aria-hidden="true"></div>
+                    <span class="scene-watermark" aria-hidden="true">{{ feature.mark }}</span>
+                    <AgentCoreScene :kind="feature.kind" :active="!sharedStage || layerWeight(feature.kind) > 0" :label="t(`home.scene_${feature.kind}`)" :progress="prefersReducedMotion ? .45 : sceneProgress[feature.kind] || 0" :reduced-motion="prefersReducedMotion" :dark="isDark" :selection="feature.kind === 'models' ? providers.findIndex(provider => provider.name === selectedProvider.name) : capabilityMask" />
+                    <div class="scene-caption"><span class="status-dot"></span><span>{{ t(`home.scene_caption_${feature.kind}`) }}</span><span class="scene-coordinate" aria-hidden="true">[ {{ String(Math.round((sceneProgress[feature.kind] || 0) * 100)).padStart(3, '0') }} ]</span></div>
+                  </div>
+                </Teleport>
+                <div class="feature-copy">
+                  <p class="eyebrow">{{ feature.subheading }}</p>
+                  <h2><span v-for="(part, partIndex) in t(`home.${feature.title}`).split('，')" :key="partIndex">{{ partIndex ? part : part + (t(`home.${feature.title}`).includes('，') ? '，' : '') }}</span></h2>
+                  <p class="feature-description">{{ t(`home.${feature.description}`) }}</p>
+                  <div v-if="feature.kind === 'foundation'" class="service-list"><div v-for="service in services" :key="service.key"><el-icon aria-hidden="true"><component :is="service.icon" /></el-icon><strong>{{ service.label }}</strong><span>{{ t(`home.service_${service.key}`) }}</span></div></div>
+                  <div v-else-if="feature.kind === 'agent'" class="capability-control">
+                    <span class="control-label">{{ t('home.composerLabel') }}</span>
+                    <div class="capability-buttons"><button v-for="capability in demoCapabilities" :key="capability" :aria-pressed="selectedCapabilities.includes(capability)" @click="toggleCapability(capability)"><el-icon aria-hidden="true"><Check v-if="selectedCapabilities.includes(capability)" /><Plus v-else /></el-icon>{{ capability }}</button></div>
+                    <div class="mount-line"><span>{{ t('home.composerMounted') }}</span><code>{{ selectedCapabilities.length ? selectedCapabilities.join(' / ') : t('home.composerEmpty') }}</code></div>
+                    <div class="agent-footnote"><span>HarnessAgent</span><span>Knowledge</span><span>Sub-agents</span></div>
+                  </div>
+                  <div v-else-if="feature.kind === 'models'" class="model-control">
+                    <div class="provider-list" :aria-label="t('home.providersLabel')"><button v-for="provider in providers" :key="provider.name" :aria-pressed="selectedProvider.name === provider.name" @click="selectedProvider = provider"><span>{{ provider.name }}</span><el-icon class="provider-check" aria-hidden="true"><Check /></el-icon></button></div>
+                    <div class="model-connection"><div><span>PROVIDER</span><strong>{{ selectedProvider.name }}</strong></div><el-icon aria-hidden="true"><Connection /></el-icon><div><span>PROTOCOL</span><strong>{{ selectedProvider.protocol }}</strong></div></div>
+                    <p class="configuration-hint">Base URL <span>/</span> API Key <span>/</span> Model</p>
+                  </div>
+                  <div v-else class="sandbox-control">
+                    <div class="runtime-heading"><span class="status-dot"></span><strong>ALIYUN E2B</strong><span>{{ t('home.composerExample') }}</span></div>
+                    <div class="terminal-line"><span>01</span><code><i>$</i> python scripts/analyze.py</code></div><div class="terminal-line"><span>02</span><code><i>$</i> curl https://api.example.com</code></div>
+                    <div class="runtime-options"><span><el-icon aria-hidden="true"><Box /></el-icon>{{ t('home.sandboxTemplate') }}</span><span><el-icon aria-hidden="true"><Key /></el-icon>{{ t('home.sandboxEnvironment') }}</span></div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="feature-copy">
-              <p class="eyebrow">{{ feature.subheading }}</p>
-              <h2><span v-for="(part, partIndex) in t(`home.${feature.title}`).split('，')" :key="partIndex">{{ partIndex ? part : part + (t(`home.${feature.title}`).includes('，') ? '，' : '') }}</span></h2>
-              <p class="feature-description">{{ t(`home.${feature.description}`) }}</p>
-              <div v-if="feature.kind === 'foundation'" class="service-list"><div v-for="service in services" :key="service.key"><el-icon aria-hidden="true"><component :is="service.icon" /></el-icon><strong>{{ service.label }}</strong><span>{{ t(`home.service_${service.key}`) }}</span></div></div>
-              <div v-else-if="feature.kind === 'agent'" class="capability-control">
-                <span class="control-label">{{ t('home.composerLabel') }}</span>
-                <div class="capability-buttons"><button v-for="capability in demoCapabilities" :key="capability" :aria-pressed="selectedCapabilities.includes(capability)" @click="toggleCapability(capability)"><el-icon aria-hidden="true"><Check v-if="selectedCapabilities.includes(capability)" /><Plus v-else /></el-icon>{{ capability }}</button></div>
-                <div class="mount-line"><span>{{ t('home.composerMounted') }}</span><code>{{ selectedCapabilities.length ? selectedCapabilities.join(' / ') : t('home.composerEmpty') }}</code></div>
-                <div class="agent-footnote"><span>HarnessAgent</span><span>Knowledge</span><span>Sub-agents</span></div>
-              </div>
-              <div v-else-if="feature.kind === 'models'" class="model-control">
-                <div class="provider-list" :aria-label="t('home.providersLabel')"><button v-for="provider in providers" :key="provider.name" :aria-pressed="selectedProvider.name === provider.name" @click="selectedProvider = provider"><span>{{ provider.name }}</span><el-icon class="provider-check" aria-hidden="true"><Check /></el-icon></button></div>
-                <div class="model-connection"><div><span>PROVIDER</span><strong>{{ selectedProvider.name }}</strong></div><el-icon aria-hidden="true"><Connection /></el-icon><div><span>PROTOCOL</span><strong>{{ selectedProvider.protocol }}</strong></div></div>
-                <p class="configuration-hint">Base URL <span>/</span> API Key <span>/</span> Model</p>
-              </div>
-              <div v-else class="sandbox-control">
-                <div class="runtime-heading"><span class="status-dot"></span><strong>ALIYUN E2B</strong><span>{{ t('home.composerExample') }}</span></div>
-                <div class="terminal-line"><span>01</span><code><i>$</i> python scripts/analyze.py</code></div><div class="terminal-line"><span>02</span><code><i>$</i> curl https://api.example.com</code></div>
-                <div class="runtime-options"><span><el-icon aria-hidden="true"><Box /></el-icon>{{ t('home.sandboxTemplate') }}</span><span><el-icon aria-hidden="true"><Key /></el-icon>{{ t('home.sandboxEnvironment') }}</span></div>
-              </div>
-            </div>
-          </div>
+          </section>
+
         </div>
-      </section>
+      </div>
 
       <section id="integration" class="integration-section" data-scene="integration">
         <div class="launch-width">
           <div class="integration-intro" data-story-copy><p class="eyebrow">04 → YOUR APPLICATION</p><h2>{{ t('home.integrationTitle') }}<span>{{ t('home.integrationHighlight') }}</span></h2><p>{{ t('home.integrationDescription') }}</p></div>
           <div class="integration-layout">
             <div class="governance-list"><article v-for="(item, index) in governance" :key="item.key" data-story-copy><span class="governance-number">0{{ index + 1 }}</span><div><h3><el-icon aria-hidden="true"><component :is="item.icon" /></el-icon>{{ t(`home.governance_${item.key}`) }}</h3><p>{{ t(`home.governance_${item.key}_description`) }}</p></div></article><a :href="docsUrl" target="_blank" rel="noopener noreferrer" class="text-link">{{ t('home.integrationDocs') }}<el-icon aria-hidden="true"><TopRight /></el-icon></a></div>
-            <div class="code-perspective" :style="{ '--code-tilt': `${motionStopped ? 0 : (1 - (sceneProgress.integration || 0)) * 9}deg` }"><div class="code-depth" aria-hidden="true"></div><div class="code-window"><div class="code-toolbar"><div class="window-dots" aria-hidden="true"><i></i><i></i><i></i></div><div class="code-switch"><button v-for="mode in exampleModes" :key="mode" :aria-pressed="exampleMode === mode" :class="{ active: exampleMode === mode }" @click="exampleMode = mode">{{ mode === 'typescript' ? 'TypeScript' : 'HTTP' }}</button></div><button class="copy-button" :aria-label="t('home.copyCode')" @click="copyCode"><el-icon aria-hidden="true"><CopyDocument /></el-icon>{{ t('home.copy') }}</button></div><div class="code-content" tabindex="0" :aria-label="t('home.codeExample')"><pre><code><span v-for="(line, index) in exampleCode.split('\n')" :key="index" class="code-line"><span class="line-number" aria-hidden="true">{{ String(index + 1).padStart(2, '0') }}</span><span :class="{ 'code-comment': line.startsWith('//') }">{{ line || ' ' }}</span></span></code></pre></div><div class="code-footnote"><el-icon aria-hidden="true"><Lock /></el-icon>{{ t('home.previewPermission') }}<span>{{ t('home.codeExample') }}</span></div></div></div>
+            <div class="code-perspective" :style="{ '--code-tilt': `${prefersReducedMotion ? 0 : (1 - (sceneProgress.integration || 0)) * 9}deg` }"><div class="code-depth" aria-hidden="true"></div><div class="code-window"><div class="code-toolbar"><div class="window-dots" aria-hidden="true"><i></i><i></i><i></i></div><div class="code-switch"><button v-for="mode in exampleModes" :key="mode" :aria-pressed="exampleMode === mode" :class="{ active: exampleMode === mode }" @click="exampleMode = mode">{{ mode === 'typescript' ? 'TypeScript' : 'HTTP' }}</button></div><button class="copy-button" :aria-label="t('home.copyCode')" @click="copyCode"><el-icon aria-hidden="true"><CopyDocument /></el-icon>{{ t('home.copy') }}</button></div><div class="code-content" tabindex="0" :aria-label="t('home.codeExample')"><pre><code><span v-for="(line, index) in exampleCode.split('\n')" :key="index" class="code-line"><span class="line-number" aria-hidden="true">{{ String(index + 1).padStart(2, '0') }}</span><span :class="{ 'code-comment': line.startsWith('//') }">{{ line || ' ' }}</span></span></code></pre></div><div class="code-footnote"><el-icon aria-hidden="true"><Lock /></el-icon>{{ t('home.previewPermission') }}<span>{{ t('home.codeExample') }}</span></div></div></div>
           </div>
         </div>
       </section>
@@ -85,11 +95,11 @@
         <ol class="steps"><li v-for="step in steps" :key="step" data-story-copy><span class="step-number">0{{ step }}</span><h3>{{ t(`home.step${step}`) }}</h3><p>{{ t(`home.step${step}Desc`) }}</p></li></ol>
         <div class="stack-strip" :aria-label="t('home.techTitle')"><span>{{ t('home.techTitle') }}</span><strong v-for="tech in techStack" :key="tech">{{ tech }}</strong></div>
       </section>
-      <section class="finale-section" data-scene="finale"><div class="finale-art"><AgentCoreScene kind="hero" :label="t('home.scene_hero')" :progress="motionStopped ? .45 : sceneProgress.finale || 0" :reduced-motion="motionStopped" :dark="isDark" /></div><div class="launch-width finale-content"><p class="eyebrow">MAKE IT YOURS.</p><h2>{{ t('home.calloutTitle') }}<span>{{ t('home.calloutHighlight') }}</span></h2><p>{{ t('home.calloutDescription') }}</p><button class="launch-button primary" @click="handleExperience">{{ t(isLoggedIn ? 'home.console' : 'home.experience') }}<el-icon aria-hidden="true"><ArrowRight /></el-icon></button></div></section>
+      <section class="finale-section" data-scene="finale"><div class="finale-art"><AgentCoreScene kind="hero" :label="t('home.scene_hero')" :progress="prefersReducedMotion ? .45 : sceneProgress.finale || 0" :reduced-motion="prefersReducedMotion" :dark="isDark" /></div><div class="launch-width finale-content"><p class="eyebrow">MAKE IT YOURS.</p><h2>{{ t('home.calloutTitle') }}<span>{{ t('home.calloutHighlight') }}</span></h2><p>{{ t('home.calloutDescription') }}</p><button class="launch-button primary" @click="handleExperience">{{ t(isLoggedIn ? 'home.console' : 'home.experience') }}<el-icon aria-hidden="true"><ArrowRight /></el-icon></button></div></section>
     </main>
 
     <footer class="launch-footer"><div class="launch-width"><div class="footer-main"><a class="brand" href="#"><img class="brand-symbol" src="@/assets/logo.png" alt="" width="32" height="32">IceeBoot.</a><p>{{ t('home.footerDescription') }}</p><div class="footer-links"><a :href="sourceUrl" target="_blank" rel="noopener noreferrer">Gitee<el-icon aria-hidden="true"><TopRight /></el-icon></a><a :href="docsUrl" target="_blank" rel="noopener noreferrer">{{ t('home.docs') }}</a><button @click="showContactDialog = true">{{ t('home.contactUs') }}</button><button v-if="isLoggedIn" @click="handleLogout">{{ t('home.logoutBtn') }}</button></div></div><div class="footer-bottom"><span>© {{ currentYear }} IceeBoot</span><a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">京ICP备2024086986号-2</a></div></div></footer>
-    <LoginDialog v-model="showLoginDialog" :paused="motionStopped" @success="handleLoginSuccess" />
+    <LoginDialog v-model="showLoginDialog" :paused="prefersReducedMotion" @success="handleLoginSuccess" />
     <el-dialog v-model="showMockDialog" :title="t('home.mockTitle')" width="min(400px, calc(100vw - 32px))" align-center><p>{{ t('home.mockContent') }}</p><template #footer><el-button @click="showMockDialog = false">{{ t('home.mockDismiss') }}</el-button><el-button type="primary" @click="openGitee">{{ t('home.getSource') }}</el-button></template></el-dialog>
     <el-dialog v-model="showContactDialog" :title="t('home.contactUs')" width="min(560px, calc(100vw - 32px))" align-center><div class="contact-grid"><figure v-for="platform in socialPlatforms" :key="platform.name"><img :src="platform.qrCode" :alt="t('home.contactQr', { name: platform.name })" loading="lazy" width="144" height="144" /><figcaption>{{ platform.name }}</figcaption></figure></div></el-dialog>
   </div>
@@ -98,10 +108,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, onBeforeUnmount, defineAsyncComponent } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useMediaQuery } from '@vueuse/core'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
-import { Moon, Sunny, ArrowRight, TopRight, Cpu, Check, Connection, Lock, CopyDocument, Upload, Message, Key, ChatDotRound, Box, Tickets, Finished, Plus, Bottom, VideoPlay, VideoPause } from '@element-plus/icons-vue'
+import { Moon, Sunny, ArrowRight, TopRight, Cpu, Check, Connection, Lock, CopyDocument, Upload, Message, Key, ChatDotRound, Box, Tickets, Finished, Plus, Bottom } from '@element-plus/icons-vue'
 import { isDark, toggleTheme } from '@/utils/theme'
+import IceeBootMark from '@/components/common/IceeBootMark.vue'
 import HeroAssembly from './components/HeroAssembly.vue'
 import LoginDialog from '@/components/common/LoginDialog.vue'
 import LanguageSwitcher from '@/components/common/LanguageSwitcher.vue'
@@ -117,9 +129,18 @@ const route = useRoute()
 const userStore = useUserStore()
 const { t } = useI18n()
 const pageRoot = ref<HTMLElement>()
-const { sceneProgress, prefersReducedMotion } = useScrollStory(pageRoot)
-const ambientPaused = ref(false)
-const motionStopped = computed(() => prefersReducedMotion.value || ambientPaused.value)
+const { sceneProgress, featureBlend, prefersReducedMotion } = useScrollStory(pageRoot)
+const wideStory = useMediaQuery('(min-width: 1000px) and (min-height: 680px)')
+const sharedStage = computed(() => wideStory.value && !prefersReducedMotion.value)
+
+const dominantLayer = computed(() => Object.entries(featureBlend.value)
+  .reduce((best, entry) => entry[1] > best[1] ? entry : best, ['capabilities', 0] as [string, number])[0])
+function layerWeight(name: string) {
+  return featureBlend.value[name] ?? Number(name === 'capabilities')
+}
+function layerStyle(name: string) {
+  return sharedStage.value ? { '--weight': layerWeight(name) } : undefined
+}
 const isLoggedIn = computed(() => !!userStore.getToken())
 const showLoginDialog = ref(false)
 const showMockDialog = ref(false)
@@ -317,9 +338,9 @@ onBeforeUnmount(() => { if (mockTimer) clearTimeout(mockTimer) })
   .hero-copy h1 span, .finale-content h2 span { color: #77cfff; background: linear-gradient(110deg, #a4eaff, #64b6ff); background-clip: text; -webkit-text-fill-color: transparent; }
   .nav-cta, .launch-button.primary { background: linear-gradient(115deg, #165dbe, #1478b4); border-color: #bfa0ff40; box-shadow: 0 4px 24px #7846e72b; &:hover { background: linear-gradient(115deg, #1c69c9, #167fbb); box-shadow: 0 6px 30px #7846e745; } }
   .provider-list button[aria-pressed='true'], .capability-buttons button[aria-pressed='true'] { background: #34245d; border-color: #b08aff; color: #f1eaff; box-shadow: inset 0 0 18px #9b64ff16, 0 0 18px #8751ff18; }
-  .feature-agent .scene-halo { background: radial-gradient(ellipse, #ba42dd20, transparent 70%); }
-  .feature-models .scene-halo { background: radial-gradient(ellipse, #286cff24, transparent 70%); }
-  .feature-sandbox .scene-halo { background: radial-gradient(ellipse, #7550ed28, transparent 70%); }
+  .art-agent .scene-halo { background: radial-gradient(ellipse, #ba42dd20, transparent 70%); }
+  .art-models .scene-halo { background: radial-gradient(ellipse, #286cff24, transparent 70%); }
+  .art-sandbox .scene-halo { background: radial-gradient(ellipse, #7550ed28, transparent 70%); }
 }
 .launch-header, .hero-section, .feature-scene, .integration-section, .launch-footer { transition: background-color .28s ease, color .28s ease, border-color .28s ease; }
 .launch-width { width: min(1200px, calc(100% - clamp(64px, 16vw, 320px))); margin-inline: auto; }
@@ -331,8 +352,7 @@ onBeforeUnmount(() => { if (mockTimer) clearTimeout(mockTimer) })
 .brand-dot { color: var(--accent-ink); margin-left: -9px; }
 .header-inner nav { display: flex; gap: 32px; margin-left: auto; a { min-height: 44px; display: inline-flex; align-items: center; gap: 6px; color: var(--secondary); font-size: 12px; &:hover { color: var(--text); } } }
 .header-actions { display: flex; align-items: center; gap: 4px; :deep(.lang-btn) { width: 44px; height: 44px; margin: 0; color: var(--secondary); } }
-.utility-button, .motion-button { width: 44px; height: 44px; display: grid; place-items: center; background: none; border: 0; color: var(--secondary); font-size: 17px; border-radius: 50%; &:hover { background: var(--wash); } }
-.motion-button { border: 1px solid var(--hairline); width: 36px; height: 36px; margin-right: 6px; }
+.utility-button { width: 44px; height: 44px; display: grid; place-items: center; background: none; border: 0; color: var(--secondary); font-size: 17px; border-radius: 50%; &:hover { background: var(--wash); } }
 .nav-cta { display: inline-flex; align-items: center; gap: 12px; padding: 0 20px; min-height: 40px; border: 1px solid var(--hairline); border-radius: 24px; background: var(--button-bg); color: var(--button-ink); font-size: 12px; }
 .eyebrow { display: flex; align-items: center; gap: 9px; font-size: 10px; letter-spacing: .13em; font-weight: 500; color: var(--subtle); line-height: 1.8; }
 .status-dot { width: 5px; height: 5px; border-radius: 50%; display: inline-block; background: var(--accent-ink); box-shadow: 0 0 12px var(--halo); flex-shrink: 0; }
@@ -348,7 +368,7 @@ onBeforeUnmount(() => { if (mockTimer) clearTimeout(mockTimer) })
 .hero-spec { display: flex; align-items: center; gap: 12px; margin-top: 37px; color: var(--subtle); font-size: 9px; letter-spacing: .09em; i { width: 3px; height: 3px; background: var(--subtle); border-radius: 50%; } }
 .hero-art { display: grid; place-items: center; position: relative; height: min(650px, 75svh); margin: 0; }
 
-.hero-bottom { display: flex; align-items: center; justify-content: space-between; height: 60px; color: var(--subtle); font-size: 11px; a { display: inline-flex; gap: 18px; align-items: center; min-height: 44px; } }
+.hero-bottom { display: flex; align-items: center; justify-content: space-between; height: 60px; color: var(--subtle); font-size: 11px; }
 .manifesto { padding-block: 120px 100px; text-align: center; .eyebrow { justify-content: center; } h2 { font-size: clamp(36px, 4.2vw, 60px); letter-spacing: -.055em; line-height: 1.4; font-weight: 500; margin-top: 25px; span { display: block; color: var(--highlight); } } > p:not(.eyebrow) { color: var(--secondary); max-width: 540px; font-size: 15px; line-height: 2; margin: 26px auto 0; } }
 .chapter-navigation { display: flex; justify-content: center; gap: 38px; margin-top: 55px; a { display: flex; align-items: center; gap: 12px; min-height: 48px; font-size: 12px; color: var(--text); span { font-size: 9px; color: var(--subtle); } .el-icon { color: var(--accent-ink); font-size: 11px; } &:hover { color: var(--accent-ink); } } }
 #capabilities, #integration, .feature-scene { scroll-margin-top: 72px; }
@@ -414,59 +434,20 @@ onBeforeUnmount(() => { if (mockTimer) clearTimeout(mockTimer) })
 .finale-content { position: relative; text-align: center; .eyebrow { justify-content: center; } h2 { font-size: clamp(36px, 4.5vw, 62px); font-weight: 500; line-height: 1.4; letter-spacing: -.055em; margin-top: 20px; span { display: block; color: var(--highlight); } } > p:not(.eyebrow) { color: var(--secondary); font-size: 14px; line-height: 1.9; margin-top: 25px; }.launch-button { margin-top: 30px; } }
 .launch-footer { background: var(--site-bg); padding-block: 32px 20px; }.footer-main { display: flex; align-items: center; gap: 24px; > p { font-size: 11px; color: var(--subtle); } }.footer-links { margin-left: auto; display: flex; gap: 22px; a,button { display: inline-flex; align-items: center; gap: 5px; min-height: 44px; border: 0; background: none; color: var(--secondary); font-size: 11px; } }.footer-bottom { display: flex; justify-content: space-between; gap: 16px; margin-top: 24px; padding-top: 20px; color: var(--subtle); font-size: 10px; }
 .contact-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 22px 16px; figure { margin: 0; text-align: center; } img { width: 100%; max-width: 144px; height: auto; aspect-ratio: 1; object-fit: contain; } figcaption { margin-top: 8px; font-size: 12px; } }
-/* The blue line passes the motion from the outgoing scene to the next heading. */
+/* In compact layouts, the illustration belongs to its own chapter in document order. */
+.story-stage { display: none; }
 [data-scene] { position: relative; }
-[data-scene]:not(.hero-section)::before {
-  content: '';
-  position: absolute;
-  z-index: 1;
-  top: 0;
-  left: 18%;
-  width: 64%;
-  height: 1px;
-  pointer-events: none;
-  background: linear-gradient(90deg, transparent, var(--hairline) 25%, var(--accent-ink) 52%, var(--hairline) 75%, transparent);
-}
-.scroll-motion [data-scene]:not(.hero-section)::after {
-  content: '';
-  position: absolute;
-  z-index: 2;
-  top: -2px;
-  left: calc(18% + 64% * var(--arrival, 1));
-  width: 18px;
-  height: 4px;
-  border-radius: 50%;
-  pointer-events: none;
-  background: linear-gradient(90deg, transparent, #46bfff);
-  box-shadow: 2px 0 9px #50c8ff88;
-  opacity: min(calc(4 * var(--arrival, 1)), calc(4 * (1 - var(--arrival, 1))));
-}
-.launch-site:not(.scroll-motion) [data-scene] {
-  --departure: 0 !important;
-  --arrival: 1 !important;
-}
 .scroll-motion {
-  [data-scene]::before {
-    transform-origin: left;
-    transform: scaleX(var(--arrival, 1));
-    opacity: calc(.25 + .65 * var(--arrival, 1));
-  }
-  .hero-copy { transform: translateY(calc(-32px * var(--departure, 0))); }
-  .hero-art { transform: translateY(calc(42px * var(--departure, 0))); }
-  .feature-art {
-    transform: translateY(calc((1 - var(--arrival, 1)) * 56px - var(--departure, 0) * 32px))
-      scale(calc(.94 + var(--arrival, 1) * .06));
-  }
-  .feature-copy, [data-story-copy], .finale-content {
-    transform: translateY(calc((1 - var(--arrival, 1)) * 38px - var(--departure, 0) * 20px));
-    opacity: calc(.64 + var(--arrival, 1) * .36 - var(--departure, 0) * .20);
+  [data-story-copy], .feature-copy, .finale-content {
+    transform: translateY(calc((1 - var(--arrival, 1)) * 20px));
   }
 }
+#integration { background: linear-gradient(var(--site-bg), var(--paper) 26%); }
 @media (min-width: 1700px) { .launch-width { width: min(1280px, 80%); } .hero-copy h1 { font-size: 90px; }.feature-copy h2 { font-size: 54px; }.hero-description, .feature-description { font-size: 16px; max-width: 500px; }.hero-art { height: 750px; }.feature-art { height: 650px; } }
 @media (max-width: 1100px) { .header-inner { gap: 20px; }.header-inner nav { gap: 18px; }.hero-copy h1 { font-size: 56px; }.feature-grid { gap: 35px; }.feature-copy h2 { font-size: 36px; }.integration-layout { gap: 45px; } }
 @media (max-width: 760px) {
-  .launch-width { width: calc(100% - 48px); }.header-inner { width: calc(100% - 32px); min-height: 64px; gap: 8px; }.header-inner nav { display: none; }.header-actions { margin-left: auto; gap: 0; }.brand { font-size: 20px; gap: 4px; }.brand-dot { margin-left: -3px; }.nav-cta { min-height: 36px; padding-inline: 13px; }.motion-button { margin: 0; width: 32px; height: 32px; }.utility-button { width: 36px; }.header-actions :deep(.lang-btn) { width: 36px; }
-  .hero-section { min-height: 0; height: auto; }.hero-sticky { position: relative; top: 0; height: auto; min-height: 0; }.hero-grid { display: flex; flex-direction: column; align-items: stretch; }.hero-copy { padding-top: 55px; }.hero-copy h1 { font-size: clamp(42px, 8vw, 62px); margin-top: 20px; }.hero-description { max-width: 520px; font-size: 13px; line-height: 1.9; margin-top: 20px !important; }.hero-actions { margin-top: 25px; gap: 25px; }.hero-spec { margin-top: 27px; font-size: 8px; }.hero-art { height: 390px; margin: -5px 0 -10px; }.hero-bottom { font-size: 9px; height: 64px; gap: 14px; > span { max-width: 145px; line-height: 1.8; } a { gap: 6px; } }
+  .launch-width { width: calc(100% - 48px); }.header-inner { width: calc(100% - 32px); min-height: 64px; gap: 8px; }.header-inner nav { display: none; }.header-actions { margin-left: auto; gap: 0; }.brand { font-size: 20px; gap: 4px; }.brand-dot { margin-left: -3px; }.nav-cta { min-height: 36px; padding-inline: 13px; }.utility-button { width: 36px; }.header-actions :deep(.lang-btn) { width: 36px; }
+  .hero-section { min-height: 0; height: auto; }.hero-sticky { position: relative; top: 0; height: auto; min-height: 0; }.hero-grid { display: flex; flex-direction: column; align-items: stretch; }.hero-copy { padding-top: 55px; }.hero-copy h1 { font-size: clamp(42px, 8vw, 62px); margin-top: 20px; }.hero-description { max-width: 520px; font-size: 13px; line-height: 1.9; margin-top: 20px !important; }.hero-actions { margin-top: 25px; gap: 25px; }.hero-spec { margin-top: 27px; font-size: 8px; }.hero-art { height: 390px; margin: -5px 0 -10px; }.hero-bottom { font-size: 9px; height: 64px; gap: 14px; > span { max-width: 145px; line-height: 1.8; } }
   .manifesto { padding-block: 75px; text-align: left; .eyebrow { justify-content: flex-start; } h2 { font-size: 34px; } > p:not(.eyebrow) { font-size: 13px; margin-top: 22px; } }.chapter-navigation { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 24px; margin-top: 30px; a { justify-content: space-between; font-size: 11px; } }
   .feature-scene { height: auto; min-height: 0; scroll-margin-top: 64px; }.feature-sticky { position: relative; top: 0; height: auto; min-height: 0; }.feature-heading { padding-top: 28px; font-size: 8px; gap: 18px; }.feature-heading > span:last-child { display: none; }.feature-grid { display: flex; flex-direction: column; gap: 0; align-items: stretch; }.feature-art { order: 2; height: 410px; margin: -20px 0 30px; }.feature-copy { padding-block: 40px; h2 { font-size: 34px; margin-top: 13px; max-width: 560px; } }.feature-copy h2 > span { display: block; }.feature-description { font-size: 13px; margin-top: 18px !important; max-width: 560px; }.scene-watermark { font-size: 70px; top: 4%; }.scene-caption { font-size: 9px; inset-inline: 10%; }.service-list { margin-top: 23px; gap: 0 24px; }.capability-control,.model-control,.sandbox-control { margin-top: 24px; }.capability-buttons button { flex: 1; justify-content: center; padding-inline: 10px; }.provider-list { gap: 8px; button { padding-inline: 7px; gap: 3px; font-size: 11px; } .provider-check { width: 10px; font-size: 10px; } }.feature-foundation .feature-art { height: 380px; }.feature-models .feature-art { height: 430px; }.terminal-line { font-size: 11px; gap: 16px; }
   .integration-section { padding-block: 70px 85px; }.integration-intro h2 { font-size: 33px; }.integration-intro > p:last-child { font-size: 13px; }.integration-layout { grid-template-columns: 1fr; gap: 35px; margin-top: 35px; }.governance-list article { padding-block: 18px; }.code-content { padding-inline: 14px; code { font-size: 10px; } }.code-toolbar { padding-inline: 14px; gap: 10px; }.code-footnote > span { display: none; }.code-depth { right: -5px; }.code-window { transform: none; }.code-depth { transform: none; }
@@ -475,5 +456,93 @@ onBeforeUnmount(() => { if (mockTimer) clearTimeout(mockTimer) })
 @media (max-width: 360px) { .provider-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-height: 760px) and (min-width: 761px) { .hero-sticky, .feature-sticky { min-height: 570px; }.feature-art { height: 480px; }.feature-copy { padding-block: 25px; }.feature-copy h2 { font-size: 35px; }.feature-description { font-size: 13px; margin-top: 17px !important; }.feature-heading { padding-top: 20px; }.service-list { margin-top: 20px; }.service-list > div { padding-block: 11px; }.hero-copy h1 { font-size: 58px; }.hero-art { height: 490px; } }
 .reduce-motion { .hero-section,.feature-scene { height: auto; min-height: 0; }.hero-sticky,.feature-sticky { position: relative; top: 0; height: auto; }.hero-grid { min-height: 650px; }.feature-grid { min-height: 650px; }.code-window,.code-depth { transform: none; } }
+/* One optical center from the first greeting through the last capability.
+   Copy determines row height and remains in native scroll and keyboard order. */
+.shared-stage {
+  .story-journey {
+    background: linear-gradient(to bottom, transparent, var(--stage) 38%, var(--stage-alt) 72%, var(--site-bg)),
+      radial-gradient(ellipse 55% 72svh at 76% 48svh, var(--halo), transparent 80%), var(--site-bg);
+  }
+  .story-track {
+    display: grid;
+    grid-template-columns: 1fr 1.05fr;
+    width: min(1200px, calc(100% - clamp(64px, 16vw, 320px)));
+    margin-inline: auto;
+  }
+  .story-stage {
+    grid-area: 1 / 2 / span 6;
+    display: grid;
+    place-items: center;
+    position: sticky;
+    align-self: start;
+    top: 72px;
+    height: calc(100svh - 72px);
+    isolation: isolate;
+    pointer-events: none;
+  }
+  .story-stage > .hero-art, .story-stage > .feature-art {
+    grid-area: 1 / 1;
+    width: 100%;
+    height: min(570px, 70svh);
+    margin: 0;
+    opacity: var(--weight, 0);
+    transform: scale(calc(.89 + .11 * var(--weight, 1)));
+  }
+  .story-stage > .hero-art { transform: translateY(calc(-3svh + 3svh * var(--intro-travel, 0)))
+      scale(calc(.83 + .17 * var(--weight, 1) - .10 * var(--intro-travel, 0))); }
+  .story-stage > .feature-art[data-dominant="true"] { pointer-events: auto; }
+  .story-stage .scene-caption, .story-stage .scene-watermark { opacity: clamp(0, (var(--weight) - .42) * 2.5, 1); }
+  .story-track > section { grid-column: 1; width: 100%; margin: 0; scroll-margin-top: 72px; }
+  .story-track > .hero-section, .feature-scene { height: auto; min-height: 0; background: transparent; }
+  .hero-sticky, .feature-sticky { position: relative; top: auto; height: auto; min-height: 0; overflow: visible; }
+  .hero-grid, .hero-bottom, .feature-heading, .feature-grid { width: 100%; }
+  .hero-grid { display: flex; height: auto; min-height: calc(100svh - 144px); }
+  .hero-bottom { height: 72px; gap: 20px; padding-right: 5%; }
+  .hero-copy { padding-right: 16px; }
+  .manifesto, .feature-sticky {
+    display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+    min-height: calc(100svh - 72px); box-sizing: border-box;
+    padding: clamp(48px, 8svh, 88px) clamp(18px, 3.5vw, 60px) clamp(48px, 8svh, 88px) 0;
+  }
+  .manifesto { text-align: start; }
+  .manifesto .eyebrow { justify-content: flex-start; }
+  .manifesto > p:not(.eyebrow) { margin-inline: 0; }
+  .manifesto h2 { font-size: clamp(36px, 3.3vw, 56px); }
+  .chapter-navigation { flex-wrap: wrap; justify-content: flex-start; gap: 0 22px; margin-top: 28px; }
+  .chapter-navigation a { gap: 7px; }
+  .feature-grid { display: block; flex: none; }
+  .feature-heading { padding: 0 0 16px; border-bottom: 1px solid var(--hairline); }
+  .feature-copy { padding: 26px 0 0; }
+  &.scroll-motion .feature-copy, &.scroll-motion .hero-copy {
+    transform: translateY(calc((1 - var(--arrival, 1)) * 22px - var(--departure, 0) * 18px));
+  }
+}
+@media (min-width: 1700px) { .shared-stage .story-track { width: min(1280px, 80%); } }
+@media (max-width: 999px), (max-height: 679px) {
+  .feature-scene { height: auto; min-height: 0; }
+  .feature-sticky { position: relative; top: auto; height: auto; min-height: 0; overflow: visible; }
+}
+/* Tie the return to normal page flow to each block's own entry into the viewport. */
+@supports (animation-timeline: view()) {
+  .scroll-motion .code-perspective, .scroll-motion .finale-art,
+  .scroll-motion:not(.shared-stage) .feature-art {
+    animation: scene-approach linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 90%;
+  }
+  .scroll-motion .governance-list article, .scroll-motion .steps li {
+    animation: copy-approach linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 95%;
+  }
+}
+@keyframes scene-approach {
+  from { transform: translateY(22px) scale(.965); }
+  to { transform: none; }
+}
+@keyframes copy-approach {
+  from { transform: translateY(14px); opacity: .78; }
+  to { transform: none; opacity: 1; }
+}
 @media (prefers-reduced-motion: reduce) { .launch-site *, .launch-site *::before, .launch-site *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; } }
 </style>

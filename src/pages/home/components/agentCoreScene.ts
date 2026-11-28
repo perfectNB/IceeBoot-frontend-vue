@@ -24,6 +24,8 @@ export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement,
   const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 60)
   const rig = new THREE.Group()
   scene.add(rig)
+  let renderWidth = 0
+  let renderHeight = 0
   let aspect = 1
   let disposed = false
   const dispose = () => {
@@ -38,9 +40,11 @@ export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement,
   }
   try {
     const studio = document.createElement('canvas')
-    studio.width = 1024; studio.height = 512
+    studio.width = 512; studio.height = 256
     const context = studio.getContext('2d')
     if (context) {
+      // The broad studio highlights need only a 128px reflection cubemap.
+      context.scale(.5, .5)
       context.fillStyle = '#101322'; context.fillRect(0, 0, 1024, 512)
       const glow = context.createLinearGradient(0, 0, 0, 512)
       glow.addColorStop(0, '#79829d'); glow.addColorStop(.45, '#171c32'); glow.addColorStop(1, '#050711')
@@ -167,7 +171,9 @@ export function createEngineScene(THREE: ThreeModule, canvas: HTMLCanvasElement,
     }
     return {
       resize(width, height) {
-        if (disposed || width <= 0 || height <= 0) return
+        if (disposed || width <= 0 || height <= 0 || (width === renderWidth && height === renderHeight)) return
+        renderWidth = width
+        renderHeight = height
         aspect = width / height; camera.aspect = aspect; camera.updateProjectionMatrix(); renderer.setSize(width, height, false)
       },
       render(progress, time, pointerX, pointerY, selection = 0) {
